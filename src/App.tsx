@@ -30,9 +30,9 @@ const App: React.FC = () => {
   const [lastLearnedWords, setLastLearnedWords] = useState<WordItem[]>([]);
   
   const initialQuests: DailyQuest[] = [
-    { id: 'q1', label: '解锁一个新魔法', target: 1, current: 0, completed: false, rewardXp: 100, rewardCoins: 10, targetView: 'CARDS' },
-    { id: 'q2', label: '游乐园大获全胜', target: 1, current: 0, completed: false, rewardXp: 200, rewardCoins: 25, targetView: 'ARCADE' },
-    { id: 'q3', label: '魔法净化行动', target: 1, current: 0, completed: false, rewardXp: 300, rewardCoins: 50, targetView: 'ARCADE', isReviewType: true },
+    { id: 'q1', label: '探索魔法森林新关卡', target: 1, current: 0, completed: false, rewardXp: 150, rewardCoins: 20, targetView: 'ADVENTURE' },
+    { id: 'q2', label: '复习森林旧魔法', target: 1, current: 0, completed: false, rewardXp: 100, rewardCoins: 15, targetView: 'ADVENTURE', isReviewType: true },
+    { id: 'q3', label: '游乐园大获全胜', target: 1, current: 0, completed: false, rewardXp: 200, rewardCoins: 30, targetView: 'ARCADE' },
   ];
 
   const [stats, setStats] = useState<UserStats>({
@@ -134,6 +134,14 @@ const App: React.FC = () => {
             onCompleteLevel={(words) => {
               setLastLearnedWords(words);
               setView('ARCADE');
+              updateQuest('q1');
+              setStats(prev => ({
+                ...prev,
+                xp: prev.xp + 200,
+                starCoins: prev.starCoins + 15,
+                totalWordsLearned: prev.totalWordsLearned + words.length,
+                level: Math.floor((prev.xp + 200) / 1000) + 1
+              }));
             }}
           />
         )}

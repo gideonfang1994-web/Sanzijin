@@ -213,9 +213,9 @@ const AdventurePage: React.FC<AdventureForestProps> = ({ onClose, onCompleteLeve
                           whileHover={!isLocked ? { scale: 1.05 } : {}}
                           className={`w-1/2 flex ${isEven ? 'justify-end pr-10' : 'justify-start pl-10'}`}
                         >
-                          <div className={`${isEven ? 'text-right' : 'text-left'} max-w-[140px]`}>
-                            <h4 className={`font-black text-lg leading-tight ${isLocked ? 'text-emerald-200' : 'text-emerald-800'}`}>{level.name}</h4>
-                            <div className="flex items-center mt-1 space-x-1 opacity-60">
+                          <div className={`${isEven ? 'text-right' : 'text-left'}`}>
+                            <h4 className={`font-black text-lg leading-tight whitespace-nowrap ${isLocked ? 'text-emerald-200' : 'text-emerald-800'}`}>{level.name}</h4>
+                            <div className="flex items-center mt-1 space-x-1 opacity-60 whitespace-nowrap">
                                <span className={`text-[10px] font-black uppercase tracking-tighter ${isLocked ? 'text-emerald-200' : 'text-emerald-500'}`}>关卡 {level.id} • {level.cards.length} 魔法</span>
                             </div>
                           </div>
@@ -330,7 +330,7 @@ const AdventurePage: React.FC<AdventureForestProps> = ({ onClose, onCompleteLeve
                     </div>
                     <div className="text-white font-black text-2xl leading-relaxed tracking-wide space-y-2">
                       {activeLevel.cards[cardIndex].rhyme.split(/[,，.。!！?？]/).filter(s => s.trim()).map((line, idx) => (
-                        <p key={idx}>{line.trim()}</p>
+                        <p key={idx} className="whitespace-nowrap">{line.trim()}</p>
                       ))}
                     </div>
                     <div className="absolute bottom-0 left-0 right-0 h-1 bg-white/20" />

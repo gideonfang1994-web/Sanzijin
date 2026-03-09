@@ -39,7 +39,7 @@ const DailyQuestBoard: React.FC<Props> = ({ quests, onQuestClick }) => {
               }`}>
                 {quest.completed ? <CheckCircle2 size={22} strokeWidth={3} /> : 
                  index === 0 ? <BookOpen size={20} /> : 
-                 index === 1 ? <Gamepad2 size={20} /> : <Swords size={20} />}
+                 index === 1 ? <Swords size={20} /> : <Gamepad2 size={20} />}
               </div>
               <div className="ml-4 flex-1 text-left">
                 <div className={`text-sm font-black transition-colors ${quest.completed ? 'text-slate-400 line-through' : 'text-slate-700'}`}>

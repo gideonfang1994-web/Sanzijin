@@ -20,7 +20,9 @@ export const WhackAMole: React.FC<Props> = ({ groups, isReviewMode, onFinish, on
   const [timeLeft, setTimeLeft] = useState(45);
   const [isGameOver, setIsGameOver] = useState(false);
   const [activeHole, setActiveHole] = useState<number | null>(null);
+  const [holeContent, setHoleContent] = useState<{ translation: string, isTarget: boolean } | null>(null);
   const [clearedWords, setClearedWords] = useState<Set<string>>(new Set());
+  const [showCelebration, setShowCelebration] = useState(false);
 
   const pool = useMemo(() => {
     if (isReviewMode) {
@@ -33,13 +35,13 @@ export const WhackAMole: React.FC<Props> = ({ groups, isReviewMode, onFinish, on
 
   const targetWord = useMemo(() => {
     const remaining = pool.filter(w => !clearedWords.has(w.text));
-    return remaining.length > 0 ? remaining[0] : pool[Math.floor(Math.random() * pool.length)];
+    return remaining.length > 0 ? remaining[0] : null;
   }, [pool, clearedWords]);
 
   useEffect(() => {
     audio.init();
     if (pool.length === 0) { onClose(); return; }
-    // Fixed: Replaced ternary logic that tested void endGame() return value for truthiness
+    
     const gameTimer = setInterval(() => setTimeLeft(prev => {
       if (prev <= 1) {
         endGame();
@@ -47,9 +49,10 @@ export const WhackAMole: React.FC<Props> = ({ groups, isReviewMode, onFinish, on
       }
       return prev - 1;
     }), 1000);
-    const moleTimer = setInterval(spawnMole, 1500);
+    
+    const moleTimer = setInterval(spawnMole, 2500); // Slower spawn
     return () => { clearInterval(gameTimer); clearInterval(moleTimer); };
-  }, [pool]);
+  }, [pool, targetWord]);
 
   const speak = (text: string) => {
     window.speechSynthesis.cancel();
@@ -60,33 +63,53 @@ export const WhackAMole: React.FC<Props> = ({ groups, isReviewMode, onFinish, on
   };
 
   const spawnMole = () => {
-    if (isGameOver) return;
+    if (isGameOver || showCelebration || !targetWord) return;
+    
     const newHole = Math.floor(Math.random() * 9);
+    const isTarget = Math.random() < 0.5;
+    const translation = isTarget 
+      ? targetWord.translation 
+      : pool[Math.floor(Math.random() * pool.length)].translation;
+    
+    setHoleContent({ translation, isTarget });
     setActiveHole(newHole);
     
-    // 出现时发出读音
-    if (targetWord) {
-      speak(targetWord.text);
-    }
+    speak(targetWord.text);
 
-    setTimeout(() => setActiveHole(null), 2000); // Longer for kids to click
+    setTimeout(() => {
+      setActiveHole(null);
+      setHoleContent(null);
+    }, 2000); // Longer hide time
   };
 
-  const handleWhack = (idx: number, isMoleTarget: boolean) => {
-    if (idx !== activeHole) return;
-    if (isMoleTarget) {
+  const handleWhack = (idx: number) => {
+    if (idx !== activeHole || !holeContent || showCelebration) return;
+    
+    if (holeContent.isTarget) {
       audio.playPop();
       setScore(prev => prev + 250);
       onSuccess(targetWord.text);
-      const newCleared = new Set(clearedWords);
-      newCleared.add(targetWord.text);
-      setClearedWords(newCleared);
-      setActiveHole(null);
       
-      // 成功后立即准备下一个单词（由 useMemo 自动处理 targetWord）
-      if (newCleared.size === pool.length) { 
-        setTimeout(endGame, 500); 
-      }
+      setShowCelebration(true);
+      setActiveHole(null);
+      setHoleContent(null);
+      
+      confetti({
+        particleCount: 40,
+        spread: 60,
+        origin: { y: 0.7 }
+      });
+
+      setTimeout(() => {
+        setShowCelebration(false);
+        const newCleared = new Set(clearedWords);
+        newCleared.add(targetWord.text);
+        setClearedWords(newCleared);
+        
+        if (newCleared.size === pool.length) { 
+          endGame(); 
+        }
+      }, 1500);
     } else {
       audio.playError();
       setHearts(prev => {
@@ -97,6 +120,7 @@ export const WhackAMole: React.FC<Props> = ({ groups, isReviewMode, onFinish, on
         return prev - 1;
       });
       setActiveHole(null);
+      setHoleContent(null);
     }
   };
 
@@ -105,7 +129,7 @@ export const WhackAMole: React.FC<Props> = ({ groups, isReviewMode, onFinish, on
     onFinish(score, Math.floor(score / 40));
   };
 
-  if (isGameOver || clearedWords.size === pool.length) {
+  if (isGameOver || (pool.length > 0 && clearedWords.size === pool.length)) {
     return (
       <div className="flex flex-col items-center justify-center h-full animate-in zoom-in-95">
         <div className="bg-white rounded-[50px] p-10 shadow-2xl border-[8px] border-emerald-500 text-center w-full max-sm:max-w-xs">
@@ -129,18 +153,25 @@ export const WhackAMole: React.FC<Props> = ({ groups, isReviewMode, onFinish, on
         <div className="font-black text-slate-700">{clearedWords.size} / {pool.length}</div>
         <div className="text-lg font-black text-emerald-600">{timeLeft}s</div>
       </div>
-      <div className="text-center bg-white rounded-[40px] p-8 border-4 border-emerald-100 shadow-puffy">
+      <div className="text-center bg-white rounded-[40px] p-8 border-4 border-emerald-100 shadow-puffy relative">
+        {showCelebration && (
+          <div className="absolute inset-0 bg-emerald-500 rounded-[36px] flex items-center justify-center z-20 animate-in zoom-in-95">
+            <div className="text-center">
+              <Sparkles className="w-10 h-10 text-white mx-auto mb-2 animate-bounce" />
+              <p className="text-white font-black text-2xl">太棒了!</p>
+            </div>
+          </div>
+        )}
         <p className="text-xs font-black text-slate-400 uppercase mb-2">击中该地鼠：</p>
         <h2 className="text-5xl font-black text-indigo-600 tracking-tight lowercase">{targetWord?.text}</h2>
       </div>
       <div className="grid grid-cols-3 gap-6 flex-1 items-center justify-center p-4">
         {[...Array(9)].map((_, i) => {
-          const isThisHoleTarget = Math.random() < 0.4;
           return (
             <div key={i} className="relative aspect-square bg-emerald-900/20 rounded-full shadow-inner">
-              {activeHole === i && (
-                <button onClick={() => handleWhack(i, isThisHoleTarget)} className="absolute inset-0 bg-amber-800 border-t-8 border-amber-900 rounded-t-full flex items-center justify-center shadow-lg animate-in slide-in-from-bottom-full duration-200">
-                  <span className="font-black text-xs text-white px-2 text-center">{isThisHoleTarget ? targetWord?.translation : pool[Math.floor(Math.random() * pool.length)].translation}</span>
+              {activeHole === i && holeContent && (
+                <button onClick={() => handleWhack(i)} className="absolute inset-0 bg-amber-800 border-t-8 border-amber-900 rounded-t-full flex items-center justify-center shadow-lg animate-in slide-in-from-bottom-full duration-200">
+                  <span className="font-black text-xs text-white px-2 text-center">{holeContent.translation}</span>
                 </button>
               )}
             </div>

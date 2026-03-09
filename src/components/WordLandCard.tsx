@@ -110,7 +110,7 @@ const WordLandCard: React.FC<Props> = ({ card, onLearned, onNext, isLast, onChal
             <div className="relative p-8 rounded-[40px] border-[4px] border-white/30 bg-white/10 backdrop-blur-md shadow-xl w-full">
               <p className="text-3xl font-black text-white leading-relaxed whitespace-pre-line">
                 {card.rhyme.split(/[，,。.]/).map((part, i) => (
-                  <span key={i} className="block">
+                  <span key={i} className="block whitespace-nowrap">
                     {part.split(new RegExp(`(${card.suffix})`, 'gi')).map((tp, j) => (
                       <span key={j} className={tp.toLowerCase() === card.suffix.toLowerCase() ? 'text-amber-300' : ''}>{tp}</span>
                     ))}

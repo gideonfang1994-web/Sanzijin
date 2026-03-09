@@ -124,16 +124,17 @@ const MemoryMatch: React.FC<Props> = ({ groups, onFinish, onClose }) => {
           <div 
             key={card.id} 
             onClick={() => handleFlip(i)} 
-            className={`relative rounded-2xl cursor-pointer transition-all duration-500 transform preserve-3d h-24 sm:h-32 ${card.isFlipped || card.isMatched ? 'rotate-y-180' : 'bg-amber-400 border-b-8 border-amber-600 active:scale-95'}`}
+            className={`relative rounded-2xl cursor-pointer transition-all duration-500 transform preserve-3d h-24 sm:h-32 ${card.isFlipped || card.isMatched ? 'rotate-y-180' : 'active:scale-95'}`}
           >
-            <div className={`absolute inset-0 flex items-center justify-center text-center p-2 rounded-2xl border-2 backface-hidden transition-opacity duration-300 ${card.isFlipped || card.isMatched ? 'bg-white border-amber-100 opacity-100 rotate-y-180' : 'opacity-0'}`}>
+            {/* Front of card (Yellow with Star) */}
+            <div className={`absolute inset-0 bg-amber-400 border-b-8 border-amber-600 rounded-2xl flex items-center justify-center backface-hidden ${card.isFlipped || card.isMatched ? 'opacity-0' : 'opacity-100'}`}>
+              <Star className="text-white/40 w-8 h-8" />
+            </div>
+
+            {/* Back of card (White with Content) */}
+            <div className={`absolute inset-0 bg-white border-2 border-amber-100 rounded-2xl flex items-center justify-center text-center p-2 backface-hidden rotate-y-180 ${card.isFlipped || card.isMatched ? 'opacity-100' : 'opacity-0'}`}>
               <span className={`font-black leading-tight break-words ${card.type === 'EN' ? 'text-indigo-600 text-sm sm:text-lg' : 'text-slate-700 text-xs sm:text-base'}`}>{card.content}</span>
             </div>
-            {!card.isFlipped && !card.isMatched && (
-               <div className="absolute inset-0 flex items-center justify-center">
-                  <Star className="text-white/40 w-8 h-8" />
-               </div>
-            )}
           </div>
         ))}
       </div>

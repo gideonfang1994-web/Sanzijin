@@ -30,16 +30,16 @@ const BalloonPop: React.FC<Props> = ({ groups, isReviewMode, onFinish, onMistake
   const [timeLeft, setTimeLeft] = useState(60);
   const [isGameOver, setIsGameOver] = useState(false);
   const [clearedWords, setClearedWords] = useState<Set<string>>(new Set());
+  const [mousePos, setMousePos] = useState({ x: 0, y: 0 });
   
-  // 核心改进：锁定任务单词池
   const pool = useMemo(() => {
-    return groups.flatMap(g => g.words);
+    const allWords = groups.flatMap(g => g.words);
+    return allWords.length > 0 ? allWords : [];
   }, [groups]);
 
-  // 当前需要点击的目标（从未完成的词中随机或按顺序选择）
   const targetWord = useMemo(() => {
     const remaining = pool.filter(w => !clearedWords.has(w.text));
-    return remaining.length > 0 ? remaining[0] : null;
+    return remaining.length > 0 ? remaining[0] : (pool.length > 0 ? pool[Math.floor(Math.random() * pool.length)] : null);
   }, [pool, clearedWords]);
 
   const requestRef = useRef<number>(0);
@@ -49,7 +49,10 @@ const BalloonPop: React.FC<Props> = ({ groups, isReviewMode, onFinish, onMistake
 
   useEffect(() => {
     audio.init();
-    if (pool.length === 0) { onClose(); return; }
+    if (pool.length === 0) { 
+      console.warn("BalloonPop: No words in pool");
+      // Don't close immediately, maybe show a message or wait for groups to load
+    }
     
     const timer = setInterval(() => {
       setTimeLeft(prev => {
@@ -66,25 +69,24 @@ const BalloonPop: React.FC<Props> = ({ groups, isReviewMode, onFinish, onMistake
   }, [pool]);
 
   const spawnBalloon = () => {
-    if (!targetWord || isGameOver) return;
+    if (pool.length === 0 || isGameOver) return;
     
-    // 增加目标词出现的概率
-    const isTarget = Math.random() < 0.4;
-    const word = isTarget ? targetWord : pool[Math.floor(Math.random() * pool.length)];
+    const isTarget = Math.random() < 0.3;
+    const word = isTarget && targetWord ? targetWord : pool[Math.floor(Math.random() * pool.length)];
     
     const newBalloon: Balloon = {
       id: Math.random(),
       word: word,
-      x: 10 + Math.random() * 80,
-      y: 110,
-      speed: 0.15 + Math.random() * 0.25,
+      x: 5 + Math.random() * 80,
+      y: 100,
+      speed: 0.2 + Math.random() * 0.3,
       color: colors[Math.floor(Math.random() * colors.length)]
     };
     setBalloons(prev => [...prev, newBalloon]);
   };
 
   const updateBalloons = (time: number) => {
-    if (time - lastSpawnTime.current > 1200) {
+    if (time - lastSpawnTime.current > 1000) {
       spawnBalloon();
       lastSpawnTime.current = time;
     }
@@ -101,11 +103,11 @@ const BalloonPop: React.FC<Props> = ({ groups, isReviewMode, onFinish, onMistake
   };
 
   const handlePop = (balloon: Balloon) => {
-    if (isGameOver) return;
+    if (isGameOver || !targetWord) return;
 
-    if (balloon.word.text === targetWord?.text) {
+    if (balloon.word.text === targetWord.text) {
       audio.playPop();
-      speak(balloon.word.text); // 点中时发音
+      speak(balloon.word.text);
       setScore(prev => prev + 150);
       onSuccess(balloon.word.text);
       
@@ -122,7 +124,6 @@ const BalloonPop: React.FC<Props> = ({ groups, isReviewMode, onFinish, onMistake
 
       setBalloons(prev => prev.filter(b => b.id !== balloon.id));
 
-      // 检查是否全词通关
       if (newCleared.size === pool.length) {
         setTimeout(endGame, 500);
       }
@@ -143,6 +144,13 @@ const BalloonPop: React.FC<Props> = ({ groups, isReviewMode, onFinish, onMistake
     onFinish(score, Math.floor(score / 50));
   };
 
+  const handleMouseMove = (e: React.MouseEvent | React.TouchEvent) => {
+    const rect = e.currentTarget.getBoundingClientRect();
+    const x = ('touches' in e) ? e.touches[0].clientX : (e as React.MouseEvent).clientX;
+    const y = ('touches' in e) ? e.touches[0].clientY : (e as React.MouseEvent).clientY;
+    setMousePos({ x: x - rect.left, y: y - rect.top });
+  };
+
   if (isGameOver || (pool.length > 0 && clearedWords.size === pool.length)) {
     return (
       <div className="flex flex-col items-center justify-center h-full animate-in zoom-in-95 duration-500">
@@ -158,9 +166,13 @@ const BalloonPop: React.FC<Props> = ({ groups, isReviewMode, onFinish, onMistake
   }
 
   return (
-    <div className="flex flex-col h-full space-y-4 relative overflow-hidden bg-gradient-to-b from-sky-50 to-white rounded-[60px] border-4 border-white shadow-inner">
+    <div 
+      className="flex flex-col h-full space-y-4 relative overflow-hidden bg-gradient-to-b from-sky-50 to-white rounded-[60px] border-4 border-white shadow-inner cursor-none"
+      onMouseMove={handleMouseMove}
+      onTouchMove={handleMouseMove}
+    >
       <div className="flex items-center justify-between p-6 z-10 relative">
-        <button onClick={onClose} className="p-2 hover:bg-white/50 rounded-xl transition-colors">
+        <button onClick={onClose} className="p-2 hover:bg-white/50 rounded-xl transition-colors cursor-pointer">
           <X size={24} className="text-slate-400" />
         </button>
         <div className="flex items-center space-x-2">
@@ -172,10 +184,22 @@ const BalloonPop: React.FC<Props> = ({ groups, isReviewMode, onFinish, onMistake
         <div className="text-xl font-black text-slate-400 tabular-nums">{timeLeft}s</div>
       </div>
 
-      <div className="absolute top-20 left-1/2 -translate-x-1/2 z-20 w-full px-10 text-center animate-bounce-subtle">
+      <div className="absolute top-20 left-1/2 -translate-x-1/2 z-20 w-full px-10 text-center">
         <div className="bg-white/90 backdrop-blur-md rounded-[40px] p-6 border-4 border-sky-200 shadow-xl inline-block min-w-[240px]">
           <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">请点破对应的气球：</p>
           <h2 className="text-4xl font-black text-slate-800">{targetWord?.translation}</h2>
+        </div>
+      </div>
+
+      {/* Dart Visual */}
+      <div 
+        className="absolute w-12 h-12 z-50 pointer-events-none transition-transform duration-75"
+        style={{ left: mousePos.x - 24, top: mousePos.y - 24 }}
+      >
+        <div className="relative w-full h-full rotate-45">
+          <div className="absolute top-0 left-1/2 -translate-x-1/2 w-1 h-full bg-slate-800 rounded-full"></div>
+          <div className="absolute top-0 left-1/2 -translate-x-1/2 w-4 h-4 bg-rose-500 rounded-sm -mt-1"></div>
+          <div className="absolute bottom-0 left-1/2 -translate-x-1/2 w-4 h-6 bg-sky-400 clip-path-feather"></div>
         </div>
       </div>
 
@@ -184,7 +208,7 @@ const BalloonPop: React.FC<Props> = ({ groups, isReviewMode, onFinish, onMistake
           <button 
             key={b.id} 
             onClick={() => handlePop(b)} 
-            className={`absolute w-24 h-28 ${b.color} rounded-[50%_50%_50%_50%_/_40%_40%_60%_60%] shadow-lg border-4 border-white/30 flex items-center justify-center transition-transform hover:scale-110 active:scale-90`} 
+            className={`absolute w-24 h-28 ${b.color} rounded-[50%_50%_50%_50%_/_40%_40%_60%_60%] shadow-lg border-4 border-white/30 flex items-center justify-center transition-transform hover:scale-110 active:scale-90 cursor-none`} 
             style={{ left: `${b.x}%`, top: `${b.y}%` }}
           >
             <span className="font-black text-white text-lg tracking-tight">{b.word.text}</span>
@@ -192,6 +216,12 @@ const BalloonPop: React.FC<Props> = ({ groups, isReviewMode, onFinish, onMistake
           </button>
         ))}
       </div>
+
+      <style>{`
+        .clip-path-feather {
+          clip-path: polygon(50% 0%, 0% 100%, 100% 100%);
+        }
+      `}</style>
     </div>
   );
 };
