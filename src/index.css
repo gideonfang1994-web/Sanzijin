@@ -1,0 +1,80 @@
+@import "tailwindcss";
+
+@theme {
+  --font-sans: "Quicksand", "PingFang SC", sans-serif;
+}
+
+@keyframes float {
+    0%, 100% { transform: translateY(0) rotate(0); }
+    50% { transform: translateY(-20px) rotate(5deg); }
+}
+@keyframes pulse-soft {
+    0%, 100% { transform: scale(1); opacity: 0.8; }
+    50% { transform: scale(1.05); opacity: 1; }
+}
+@keyframes jelly {
+    0% { transform: scale(1, 1); }
+    30% { transform: scale(1.25, 0.75); }
+    40% { transform: scale(0.75, 1.25); }
+    50% { transform: scale(1.15, 0.85); }
+    65% { transform: scale(0.95, 1.05); }
+    75% { transform: scale(1.05, 0.95); }
+    100% { transform: scale(1, 1); }
+}
+
+body {
+    font-family: var(--font-sans);
+    background: #FDFCFE;
+    color: #1E293B;
+    -webkit-font-smoothing: antialiased;
+    overflow-x: hidden;
+}
+
+/* 魔法动态背景 */
+.magic-bg {
+    position: fixed;
+    top: 0; left: 0; width: 100%; height: 100%;
+    z-index: -1;
+    background: linear-gradient(135deg, #FDFCFE 0%, #EEF2FF 100%);
+    overflow: hidden;
+}
+.bubble {
+    position: absolute;
+    border-radius: 50%;
+    background: linear-gradient(135deg, rgba(255,255,255,0.4) 0%, rgba(255,255,255,0.1) 100%);
+    backdrop-filter: blur(2px);
+    animation: float infinite ease-in-out;
+}
+
+.glass-pill {
+    background: rgba(255, 255, 255, 0.8);
+    backdrop-filter: blur(16px);
+    border: 2px solid rgba(255, 255, 255, 0.8);
+    box-shadow: 0 10px 30px -10px rgba(99, 102, 241, 0.15);
+}
+
+.puffy-button {
+    transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+    box-shadow: 0 6px 0 #CBD5E1;
+}
+.puffy-button:active {
+    animation: jelly 0.5s;
+    transform: translateY(4px);
+    box-shadow: 0 2px 0 #CBD5E1;
+}
+.puffy-primary {
+    background: linear-gradient(180deg, #6366F1 0%, #4F46E5 100%);
+    box-shadow: 0 6px 0 #312E81;
+    border: none;
+}
+
+/* 炫彩进度条 */
+.rainbow-progress {
+    background: linear-gradient(90deg, #FF6B6B, #FFD93D, #6BCB77, #4D96FF);
+    background-size: 200% 100%;
+    animation: move-bg 3s linear infinite;
+}
+@keyframes move-bg {
+    0% { background-position: 0% 0%; }
+    100% { background-position: 100% 0%; }
+}

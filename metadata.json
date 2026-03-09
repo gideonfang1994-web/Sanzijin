@@ -1,0 +1,8 @@
+{
+  "name": "Adventure Forest Word Quest",
+  "description": "A gamified word learning adventure in a magical forest. Choose your pace, unlock levels, and master vocabulary through challenges and games.",
+  "requestFramePermissions": [
+    "camera",
+    "microphone"
+  ]
+}
