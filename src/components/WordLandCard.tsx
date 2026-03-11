@@ -3,6 +3,7 @@ import React, { useState, useEffect } from 'react';
 import { WordCard } from '../types';
 import { Volume2, Music, Sparkles, Star, RotateCw, ChevronRight, PlayCircle, CheckCircle2 } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
+import audio from '../utils/AudioUtils';
 
 interface Props {
   card: WordCard;
@@ -22,20 +23,11 @@ const WordLandCard: React.FC<Props> = ({ card, onLearned, onNext, isLast, onChal
     setHasLearned(false);
   }, [card.id]);
 
-  const speak = (text: string, isRhyme: boolean = false) => {
-    window.speechSynthesis.cancel();
+  const handleSpeak = (text: string, isRhyme: boolean = false) => {
     setIsPlaying(text);
-    
-    let speechText = text;
-    if (isRhyme) {
-      speechText = text.replace(/\([^)]*\)/g, '').replace(/（[^）]*）/g, '');
-    }
-
-    const utterance = new SpeechSynthesisUtterance(speechText);
-    utterance.lang = /^[a-zA-Z\s,]+$/.test(speechText) ? 'en-US' : 'zh-CN';
-    utterance.rate = 0.9;
-    utterance.onend = () => setIsPlaying(null);
-    window.speechSynthesis.speak(utterance);
+    audio.speak(text);
+    // Reset playing state after a short delay since we don't have onend callback in audio.speak
+    setTimeout(() => setIsPlaying(null), 2000);
   };
 
   const handleFinishCard = () => {
@@ -43,6 +35,16 @@ const WordLandCard: React.FC<Props> = ({ card, onLearned, onNext, isLast, onChal
       onLearned();
       setHasLearned(true);
     }
+  };
+
+  const getRhymeFontSize = (rhyme: string) => {
+    const lines = rhyme.split(/[，,。.]/).filter(l => l.trim());
+    const maxLength = Math.max(...lines.map(l => l.length));
+    if (maxLength > 18) return 'text-base';
+    if (maxLength > 15) return 'text-lg';
+    if (maxLength > 12) return 'text-xl';
+    if (maxLength > 10) return 'text-2xl';
+    return 'text-3xl';
   };
 
   return (
@@ -66,7 +68,7 @@ const WordLandCard: React.FC<Props> = ({ card, onLearned, onNext, isLast, onChal
               <div 
                 key={idx} 
                 className="flex items-center justify-between group"
-                onClick={(e) => { e.stopPropagation(); speak(word.text); }}
+                onClick={(e) => { e.stopPropagation(); handleSpeak(word.text); }}
               >
                 <div className="flex items-center space-x-4">
                   <div className="text-4xl font-black tracking-tight text-slate-800">
@@ -105,10 +107,10 @@ const WordLandCard: React.FC<Props> = ({ card, onLearned, onNext, isLast, onChal
 
           <div 
             className="flex-1 flex flex-col justify-center items-center space-y-6 text-center"
-            onClick={(e) => { e.stopPropagation(); speak(card.rhyme, true); }}
+            onClick={(e) => { e.stopPropagation(); handleSpeak(card.rhyme, true); }}
           >
             <div className="relative p-8 rounded-[40px] border-[4px] border-white/30 bg-white/10 backdrop-blur-md shadow-xl w-full">
-              <p className="text-3xl font-black text-white leading-relaxed whitespace-pre-line">
+              <p className={`font-black text-white leading-relaxed whitespace-pre-line ${getRhymeFontSize(card.rhyme)}`}>
                 {card.rhyme.split(/[，,。.]/).map((part, i) => (
                   <span key={i} className="block whitespace-nowrap">
                     {part.split(new RegExp(`(${card.suffix})`, 'gi')).map((tp, j) => (

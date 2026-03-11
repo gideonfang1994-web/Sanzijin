@@ -131,6 +131,7 @@ const SheepMatch: React.FC<Props> = ({ groups, onFinish, onClose }) => {
         
         if (newTiles.length === 0 && filteredSlots.length === 0) {
           setGameState('WON');
+          audio.playCheer();
           confetti({ particleCount: 150, spread: 70, origin: { y: 0.6 } });
         }
       }, 400);

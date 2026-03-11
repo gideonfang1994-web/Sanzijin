@@ -1,9 +1,10 @@
 
-import React from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { WordGroup, UserStats, WordItem } from '../types';
-import { Trophy, Star, Award, Medal, Sparkles, ChevronRight } from 'lucide-react';
-import { motion } from 'framer-motion';
-import constants from '../constants';
+import { Trophy, Star, Award, Medal, Sparkles, BookOpen, Search, Filter, Info, X } from 'lucide-react';
+import audio from '../utils/AudioUtils';
+import { ALL_CARDS } from '../constants';
+import { motion, AnimatePresence } from 'framer-motion';
 
 interface Props {
   groups: WordGroup[];
@@ -12,193 +13,257 @@ interface Props {
 }
 
 const CollectionCenter: React.FC<Props> = ({ groups, stats, onClose }) => {
-  const [forestWords, setForestWords] = React.useState<WordItem[]>([]);
+  const [selectedWord, setSelectedWord] = useState<WordItem | null>(null);
+  const [searchQuery, setSearchQuery] = useState('');
+  const [filter, setFilter] = useState<'ALL' | 'MASTERED' | 'LEARNING'>('ALL');
   
-  React.useEffect(() => {
-    const savedProgress = localStorage.getItem('adventure_forest_progress');
-    if (savedProgress) {
-      const progress = JSON.parse(savedProgress);
-      // Extract all words from completed levels
-      const learned = constants.ALL_CARDS.filter(level => progress[level.id]?.completed).flatMap(level => level.words);
-      setForestWords(learned);
-    }
-  }, []);
+  const masteredWordsCount = stats.masteredWords.length;
 
-  const learnedGroups = groups.filter(g => g.learned);
-  const totalWords = stats.totalWordsLearned || (learnedGroups.length * 3 + forestWords.length);
+  const allWords = useMemo(() => {
+    const uniqueWords = new Map<string, WordItem>();
+    [...groups.flatMap(g => g.words), ...ALL_CARDS.flatMap(c => c.words)].forEach(w => {
+      uniqueWords.set(w.text, w);
+    });
+    return Array.from(uniqueWords.values());
+  }, [groups]);
+
+  const filteredWords = useMemo(() => {
+    return allWords.filter(w => {
+      const matchesSearch = w.text.toLowerCase().includes(searchQuery.toLowerCase()) || 
+                           w.translation.includes(searchQuery);
+      const mastery = stats.wordMastery[w.text] || 0;
+      const matchesFilter = filter === 'ALL' || 
+                           (filter === 'MASTERED' && mastery >= 5) || 
+                           (filter === 'LEARNING' && mastery > 0 && mastery < 5);
+      return matchesSearch && matchesFilter;
+    });
+  }, [allWords, searchQuery, filter, stats.wordMastery]);
+
+  const handleShare = () => {
+    const shareText = `我在魔法单词岛已经学习了 ${stats.streak} 天，掌握了 ${masteredWordsCount} 个魔法单词！快来和我一起探险吧！`;
+    alert(`分享成功！\n\n内容：${shareText}\n\n获得奖励：200 经验 & 50 星币！`);
+    audio.playCheer();
+  };
 
   const titles = [
-    { threshold: 0, name: '初级魔法徒', icon: '🌱', color: 'text-emerald-500', bg: 'bg-emerald-50' },
-    { threshold: 10, name: '词汇探险家', icon: '🧭', color: 'text-sky-500', bg: 'bg-sky-50' },
-    { threshold: 30, name: '大魔法师', icon: '🧙‍♂️', color: 'text-indigo-500', bg: 'bg-indigo-50' },
-    { threshold: 60, name: '知识守护者', icon: '🛡️', color: 'text-rose-500', bg: 'bg-rose-50' },
-    { threshold: 100, name: '词海之王', icon: '👑', color: 'text-amber-500', bg: 'bg-amber-50' },
-    { threshold: 200, name: '魔法主宰', icon: '🌌', color: 'text-violet-500', bg: 'bg-violet-50' },
+    { threshold: 0, name: '初级魔法徒', icon: '🌱', color: 'text-emerald-500' },
+    { threshold: 10, name: '词汇探险家', icon: '🧭', color: 'text-sky-500' },
+    { threshold: 30, name: '大魔法师', icon: '🧙‍♂️', color: 'text-indigo-500' },
+    { threshold: 60, name: '知识守护者', icon: '🛡️', color: 'text-rose-500' },
+    { threshold: 100, name: '词海之王', icon: '👑', color: 'text-amber-500' },
   ];
 
-  const currentTitleIdx = [...titles].reverse().findIndex(t => totalWords >= t.threshold);
-  const currentTitle = currentTitleIdx !== -1 ? [...titles].reverse()[currentTitleIdx] : titles[0];
-  const nextTitle = titles[titles.indexOf(currentTitle) + 1];
-  const progressToNext = nextTitle ? (totalWords / nextTitle.threshold) * 100 : 100;
-
-  const rankings = [
-    { name: '魔法小虎 (你)', score: totalWords, avatar: '🐯', isMe: true },
-    { name: '智慧猫头鹰', score: 185, avatar: '🦉' },
-    { name: '勤奋小兔', score: 142, avatar: '🐰' },
-    { name: '勇敢狮子', score: 98, avatar: '🦁' },
-    { name: '调皮猴子', score: 45, avatar: '🐒' },
-  ].sort((a, b) => b.score - a.score);
+  const currentTitle = [...titles].reverse().find(t => masteredWordsCount >= t.threshold) || titles[0];
 
   return (
-    <div className="animate-in fade-in slide-in-from-bottom-10 duration-700 space-y-8 pb-24">
-      {/* Header Card with Upgrade System */}
-      <div className="bg-gradient-to-br from-indigo-600 to-violet-700 rounded-[48px] p-8 text-white shadow-2xl relative overflow-hidden">
-        <div className="absolute top-0 right-0 w-40 h-40 bg-white/10 rounded-full -mr-20 -mt-20 blur-2xl"></div>
+    <div className="animate-in fade-in slide-in-from-bottom-10 duration-700 space-y-6 pb-24">
+      {/* Header Card */}
+      <div className="bg-gradient-to-br from-indigo-600 via-violet-700 to-purple-800 rounded-[48px] p-8 text-white shadow-2xl relative overflow-hidden">
+        <div className="absolute top-0 right-0 w-64 h-64 bg-white/10 rounded-full -mr-32 -mt-32 blur-3xl"></div>
+        <div className="absolute bottom-0 left-0 w-48 h-48 bg-indigo-400/20 rounded-full -ml-24 -mb-24 blur-2xl"></div>
+        
         <div className="relative z-10">
-          <div className="flex items-center justify-between mb-6">
+          <div className="flex items-center justify-between mb-8">
             <div className="flex items-center space-x-4">
-              <div className="w-16 h-16 bg-white/20 backdrop-blur-md rounded-3xl flex items-center justify-center text-4xl shadow-inner border border-white/20">
+              <div className="w-16 h-16 bg-white/20 backdrop-blur-md rounded-3xl flex items-center justify-center text-4xl shadow-inner border border-white/30">
                 {currentTitle.icon}
               </div>
               <div>
-                <h2 className="text-3xl font-black tracking-tight">图鉴中心</h2>
-                <p className="text-white/70 font-bold text-[10px] uppercase tracking-widest">Collection Gallery</p>
+                <h2 className="text-3xl font-black tracking-tight">魔法图鉴</h2>
+                <p className="text-white/70 font-bold text-[10px] uppercase tracking-widest">Magic Collection Gallery</p>
               </div>
             </div>
-            <div className="bg-amber-400 text-amber-900 px-4 py-2 rounded-2xl font-black text-xs shadow-lg border-2 border-amber-200">
-              LV.{stats.level}
-            </div>
+            <button 
+              onClick={handleShare}
+              className="bg-amber-400 hover:bg-amber-500 text-amber-900 px-4 py-2 rounded-2xl font-black text-xs shadow-lg transition-all active:scale-95 flex items-center space-x-2"
+            >
+              <Sparkles size={14} />
+              <span>分享成就</span>
+            </button>
           </div>
           
-          <div className="bg-black/20 backdrop-blur-sm rounded-[32px] p-6 border border-white/10">
-            <div className="flex items-center justify-between mb-3">
-              <div>
-                <p className="text-[10px] font-bold text-white/50 uppercase mb-1">当前称号</p>
-                <h3 className="text-2xl font-black text-amber-300 tracking-tight">{currentTitle.name}</h3>
-              </div>
-              <Award className="text-amber-300 animate-pulse" size={40} />
+          <div className="grid grid-cols-2 gap-4">
+            <div className="bg-black/20 backdrop-blur-sm rounded-3xl p-4 border border-white/10">
+              <p className="text-[10px] font-bold text-white/50 uppercase mb-1">当前称号</p>
+              <h3 className="text-lg font-black text-amber-300 flex items-center space-x-2">
+                <span>{currentTitle.name}</span>
+                <Award size={16} />
+              </h3>
             </div>
-            
-            {nextTitle && (
-              <div className="space-y-2">
-                <div className="flex justify-between items-end">
-                  <span className="text-[10px] font-bold text-white/40 uppercase">升级进度</span>
-                  <span className="text-xs font-black text-white/80">{totalWords} / {nextTitle.threshold} 词</span>
-                </div>
-                <div className="h-3 bg-white/10 rounded-full overflow-hidden border border-white/5 shadow-inner">
-                  <motion.div 
-                    initial={{ width: 0 }}
-                    animate={{ width: `${progressToNext}%` }}
-                    className="h-full bg-gradient-to-r from-amber-300 to-amber-500 rounded-full"
-                  />
-                </div>
-                <p className="text-[9px] text-white/40 font-bold text-center italic">距离 {nextTitle.name} 还差 {nextTitle.threshold - totalWords} 个单词</p>
+            <div className="bg-black/20 backdrop-blur-sm rounded-3xl p-4 border border-white/10">
+              <p className="text-[10px] font-bold text-white/50 uppercase mb-1">掌握进度</p>
+              <div className="flex items-end space-x-2">
+                <h3 className="text-2xl font-black text-white">{masteredWordsCount}</h3>
+                <span className="text-white/50 font-bold text-xs mb-1">/ {allWords.length}</span>
               </div>
-            )}
+            </div>
           </div>
         </div>
       </div>
 
-      {/* Stats Grid */}
-      <div className="grid grid-cols-2 gap-4">
-        <div className="bg-white rounded-[32px] p-6 border-2 border-indigo-50 shadow-sm flex flex-col items-center text-center group hover:border-indigo-200 transition-all">
-          <div className="w-12 h-12 bg-indigo-50 rounded-2xl flex items-center justify-center text-indigo-500 mb-3 group-hover:scale-110 transition-transform">
-            <Star fill="currentColor" size={24} />
-          </div>
-          <span className="text-3xl font-black text-slate-800 tabular-nums">{learnedGroups.length + Math.floor(forestWords.length / 3)}</span>
-          <span className="text-[10px] font-bold text-slate-400 uppercase mt-1">已解锁章节</span>
+      {/* Search & Filter */}
+      <div className="space-y-4">
+        <div className="relative">
+          <Search className="absolute left-5 top-1/2 -translate-y-1/2 text-slate-400" size={20} />
+          <input 
+            type="text"
+            placeholder="搜索你掌握的魔法..."
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            className="w-full bg-white border-2 border-slate-100 rounded-[24px] py-4 pl-14 pr-6 font-bold text-slate-700 focus:border-indigo-500 outline-none transition-all shadow-sm"
+          />
         </div>
-        <div className="bg-white rounded-[32px] p-6 border-2 border-rose-50 shadow-sm flex flex-col items-center text-center group hover:border-rose-200 transition-all">
-          <div className="w-12 h-12 bg-rose-50 rounded-2xl flex items-center justify-center text-rose-500 mb-3 group-hover:scale-110 transition-transform">
-            <Medal fill="currentColor" size={24} />
-          </div>
-          <span className="text-3xl font-black text-slate-800 tabular-nums">{totalWords}</span>
-          <span className="text-[10px] font-bold text-slate-400 uppercase mt-1">掌握词汇量</span>
-        </div>
-      </div>
-
-      {/* Ranking System */}
-      <div className="bg-white rounded-[40px] p-6 border-2 border-slate-50 shadow-sm">
-        <div className="flex items-center justify-between mb-6">
-          <h3 className="text-xl font-black text-slate-800 flex items-center">
-            <Trophy className="text-amber-400 mr-2" size={24} /> 魔法排行榜
-          </h3>
-          <span className="text-[10px] font-black text-slate-300 uppercase tracking-widest">Global Rank</span>
-        </div>
-        <div className="space-y-3">
-          {rankings.map((rank, idx) => (
-            <div key={rank.name} className={`flex items-center justify-between p-4 rounded-2xl border-2 transition-all ${rank.isMe ? 'bg-indigo-50 border-indigo-200 scale-105 shadow-md' : 'bg-slate-50 border-transparent'}`}>
-              <div className="flex items-center space-x-3">
-                <span className={`w-6 text-center font-black ${idx === 0 ? 'text-amber-500' : idx === 1 ? 'text-slate-400' : idx === 2 ? 'text-amber-700' : 'text-slate-300'}`}>
-                  {idx + 1}
-                </span>
-                <div className="w-10 h-10 bg-white rounded-xl flex items-center justify-center text-xl shadow-sm">
-                  {rank.avatar}
-                </div>
-                <span className={`font-black text-sm ${rank.isMe ? 'text-indigo-700' : 'text-slate-600'}`}>{rank.name}</span>
-              </div>
-              <span className="font-black text-slate-800 tabular-nums">{rank.score} <span className="text-[8px] opacity-50 uppercase">Words</span></span>
-            </div>
+        
+        <div className="flex space-x-2 overflow-x-auto pb-2 no-scrollbar">
+          {[
+            { id: 'ALL', label: '全部魔法', icon: <BookOpen size={14} /> },
+            { id: 'MASTERED', label: '已精通', icon: <Trophy size={14} /> },
+            { id: 'LEARNING', label: '修行中', icon: <Sparkles size={14} /> },
+          ].map((btn) => (
+            <button
+              key={btn.id}
+              onClick={() => setFilter(btn.id as any)}
+              className={`flex items-center space-x-2 px-5 py-2.5 rounded-2xl font-black text-xs whitespace-nowrap transition-all ${
+                filter === btn.id 
+                ? 'bg-indigo-600 text-white shadow-lg shadow-indigo-200' 
+                : 'bg-white text-slate-400 border-2 border-slate-100 hover:border-indigo-200'
+              }`}
+            >
+              {btn.icon}
+              <span>{btn.label}</span>
+            </button>
           ))}
         </div>
       </div>
 
-      {/* Gallery List */}
-      <div className="space-y-4">
-        <div className="flex items-center justify-between px-2">
-          <h3 className="text-xl font-black text-slate-800">成就图鉴</h3>
-          <Sparkles className="text-amber-400" size={20} />
-        </div>
-        
-        <div className="grid grid-cols-1 gap-4">
-          {/* Forest Words Gallery */}
-          {forestWords.length > 0 && (
-            <div className="bg-emerald-50 rounded-[32px] p-6 border-2 border-emerald-100">
-              <div className="flex items-center justify-between mb-4">
-                <h4 className="font-black text-emerald-800">森林冒险词汇</h4>
-                <span className="bg-emerald-200 text-emerald-800 px-2 py-0.5 rounded-full text-[10px] font-black">{forestWords.length} 词</span>
-              </div>
-              <div className="flex flex-wrap gap-3">
-                {forestWords.slice(0, 12).map((word, i) => (
-                  <div key={i} className="w-12 h-12 bg-white rounded-xl p-1 shadow-sm border border-emerald-100 group relative">
-                    <img src={word.imageUrl} className="w-full h-full object-contain" referrerPolicy="no-referrer" />
-                    <div className="absolute inset-0 bg-emerald-600/90 text-white text-[8px] font-black flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity rounded-xl p-1 text-center">
-                      {word.text}
-                    </div>
-                  </div>
-                ))}
-                {forestWords.length > 12 && (
-                  <div className="w-12 h-12 bg-white/50 rounded-xl flex items-center justify-center text-emerald-600 font-black text-xs border border-emerald-100">
-                    +{forestWords.length - 12}
+      {/* Word Grid */}
+      <div className="grid grid-cols-3 gap-4">
+        {filteredWords.map((word) => {
+          const mastery = stats.wordMastery[word.text] || 0;
+          const isMastered = mastery >= 5;
+          const isLearning = mastery > 0;
+          
+          return (
+            <motion.button
+              key={word.text}
+              whileHover={{ y: -5 }}
+              whileTap={{ scale: 0.95 }}
+              onClick={() => setSelectedWord(word)}
+              className={`relative bg-white rounded-[32px] p-4 border-2 transition-all flex flex-col items-center text-center ${
+                isMastered ? 'border-amber-200 shadow-md' : isLearning ? 'border-sky-100' : 'border-slate-50 opacity-60'
+              }`}
+            >
+              <div className="relative mb-2">
+                <img 
+                  src={word.imageUrl} 
+                  alt={word.text} 
+                  className={`w-14 h-14 object-contain ${!isLearning && 'grayscale'}`}
+                  referrerPolicy="no-referrer"
+                />
+                {isMastered && (
+                  <div className="absolute -top-2 -right-2 bg-amber-400 text-white p-1 rounded-full shadow-sm">
+                    <Trophy size={10} />
                   </div>
                 )}
               </div>
-            </div>
-          )}
-
-          {learnedGroups.map(group => (
-            <div key={group.id} className="bg-white rounded-[32px] p-5 border-2 border-slate-50 shadow-sm flex items-center justify-between group hover:border-indigo-100 transition-all">
-              <div className="flex items-center space-x-4">
-                <div className="w-14 h-14 bg-slate-50 rounded-2xl overflow-hidden flex items-center justify-center border border-slate-100">
-                  <img 
-                    src={group.words[0]?.imageUrl} 
-                    alt={group.title} 
-                    className="w-10 h-10 object-contain"
-                    referrerPolicy="no-referrer"
-                  />
-                </div>
-                <div>
-                  <h4 className="font-black text-slate-800">{group.title}</h4>
-                  <p className="text-[10px] font-bold text-emerald-500 uppercase tracking-tighter">已完美收集</p>
-                </div>
+              <span className="text-[10px] font-black text-slate-700 truncate w-full">{word.text}</span>
+              
+              {/* Mini Progress Bar */}
+              <div className="w-full h-1 bg-slate-100 rounded-full mt-2 overflow-hidden">
+                <div 
+                  className={`h-full transition-all duration-1000 ${isMastered ? 'bg-amber-400' : 'bg-sky-400'}`}
+                  style={{ width: `${Math.min(100, (mastery / 5) * 100)}%` }}
+                />
               </div>
-              <div className="w-10 h-10 rounded-full bg-slate-50 flex items-center justify-center text-slate-300 group-hover:bg-indigo-50 group-hover:text-indigo-500 transition-all">
-                <ChevronRight size={20} />
-              </div>
-            </div>
-          ))}
-        </div>
+            </motion.button>
+          );
+        })}
       </div>
+
+      {filteredWords.length === 0 && (
+        <div className="bg-slate-50 rounded-[40px] p-12 text-center border-2 border-dashed border-slate-200">
+          <p className="text-slate-400 font-bold">没有找到匹配的魔法哦</p>
+        </div>
+      )}
+
+      {/* Word Detail Modal */}
+      <AnimatePresence>
+        {selectedWord && (
+          <div className="fixed inset-0 z-[100] flex items-center justify-center p-6">
+            <motion.div 
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              onClick={() => setSelectedWord(null)}
+              className="absolute inset-0 bg-slate-900/60 backdrop-blur-sm"
+            />
+            <motion.div 
+              initial={{ scale: 0.9, opacity: 0, y: 20 }}
+              animate={{ scale: 1, opacity: 1, y: 0 }}
+              exit={{ scale: 0.9, opacity: 0, y: 20 }}
+              className="relative bg-white w-full max-w-sm rounded-[48px] overflow-hidden shadow-2xl border-4 border-white"
+            >
+              <div className="bg-gradient-to-br from-indigo-500 to-violet-600 p-8 text-center relative">
+                <button 
+                  onClick={() => setSelectedWord(null)}
+                  className="absolute top-6 right-6 p-2 bg-white/20 hover:bg-white/30 rounded-full text-white transition-colors"
+                >
+                  <X size={20} />
+                </button>
+                <img 
+                  src={selectedWord.imageUrl} 
+                  alt={selectedWord.text} 
+                  className="w-32 h-32 object-contain mx-auto drop-shadow-2xl mb-4"
+                  referrerPolicy="no-referrer"
+                />
+                <h3 className="text-3xl font-black text-white tracking-tight">{selectedWord.text}</h3>
+                <p className="text-white/80 font-bold text-lg">{selectedWord.translation}</p>
+              </div>
+              
+              <div className="p-8 space-y-6">
+                <div className="space-y-2">
+                  <div className="flex justify-between items-end">
+                    <span className="text-xs font-black text-slate-400 uppercase">掌握程度</span>
+                    <span className="text-lg font-black text-indigo-600">
+                      {Math.min(100, Math.floor(((stats.wordMastery[selectedWord.text] || 0) / 5) * 100))}%
+                    </span>
+                  </div>
+                  <div className="w-full h-3 bg-slate-100 rounded-full overflow-hidden">
+                    <motion.div 
+                      initial={{ width: 0 }}
+                      animate={{ width: `${Math.min(100, ((stats.wordMastery[selectedWord.text] || 0) / 5) * 100)}%` }}
+                      className="h-full bg-indigo-500 rounded-full"
+                    />
+                  </div>
+                </div>
+                
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="bg-slate-50 rounded-3xl p-4 border border-slate-100">
+                    <p className="text-[10px] font-bold text-slate-400 uppercase mb-1">正确次数</p>
+                    <p className="text-xl font-black text-slate-800">{stats.wordMastery[selectedWord.text] || 0}</p>
+                  </div>
+                  <div className="bg-slate-50 rounded-3xl p-4 border border-slate-100">
+                    <p className="text-[10px] font-bold text-slate-400 uppercase mb-1">魔法等级</p>
+                    <p className="text-xl font-black text-slate-800">
+                      {(stats.wordMastery[selectedWord.text] || 0) >= 5 ? '精通' : '修行'}
+                    </p>
+                  </div>
+                </div>
+                
+                <button 
+                  onClick={() => {
+                    audio.speak(selectedWord.text);
+                  }}
+                  className="w-full puffy-button bg-indigo-500 text-white py-4 rounded-3xl font-black flex items-center justify-center space-x-2"
+                >
+                  <Info size={18} />
+                  <span>聆听魔法发音</span>
+                </button>
+              </div>
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
 
       <button 
         onClick={onClose}

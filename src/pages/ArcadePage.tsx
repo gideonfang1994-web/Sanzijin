@@ -53,10 +53,9 @@ const ArcadePage: React.FC<ArcadePageProps> = ({ groups, lastLearnedWords = [], 
   const games: GameInfo[] = [
     { id: 'SCRAMBLE', title: '拼词大师', icon: <Zap />, color: 'bg-rose-500', xp: '+250' },
     { id: 'WHACK', title: '地鼠行动', icon: <Hammer />, color: 'bg-emerald-500', xp: '+180' },
-    { id: 'BALLOON', title: '气球砰砰', icon: <Music />, color: 'bg-sky-500', xp: '+150' },
+    { id: 'BALLOON', title: '飞飞飞刀', icon: <Music />, color: 'bg-sky-500', xp: '+150' },
     { id: 'DUBBING', title: '魔法配音', icon: <Mic />, color: 'bg-indigo-500', xp: '+300' },
     { id: 'CHALLENGE', title: '勇者决斗', icon: <Zap />, color: 'bg-indigo-500', xp: '+200' },
-    { id: 'MEMORY', title: '单词连连', icon: <Star />, color: 'bg-amber-500', xp: '+300' },
     { id: 'SHEEP', title: '羊羊消消乐', icon: <Layers />, color: 'bg-emerald-500', xp: '+400' },
   ];
 

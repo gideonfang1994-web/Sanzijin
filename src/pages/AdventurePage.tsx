@@ -94,9 +94,7 @@ const AdventurePage: React.FC<AdventureForestProps> = ({ onClose, onCompleteLeve
   };
 
   const speakRhyme = (rhyme: string) => {
-    // Remove content inside brackets/parentheses (the Chinese translations)
-    const cleanRhyme = rhyme.replace(/\([^)]*\)|（[^）]*）/g, '').replace(/\s+/g, ' ').trim();
-    audio.speak(cleanRhyme);
+    audio.speak(rhyme);
   };
 
   const handleGoToArcade = () => {
@@ -104,6 +102,16 @@ const AdventurePage: React.FC<AdventureForestProps> = ({ onClose, onCompleteLeve
       const levelWords = activeLevel.cards.flatMap(c => c.words);
       onCompleteLevel(levelWords);
     }
+  };
+
+  const getRhymeFontSize = (rhyme: string) => {
+    const lines = rhyme.split(/[,，.。!！?？]/).filter(l => l.trim());
+    const maxLength = Math.max(...lines.map(l => l.length));
+    if (maxLength > 18) return 'text-base';
+    if (maxLength > 15) return 'text-lg';
+    if (maxLength > 12) return 'text-xl';
+    if (maxLength > 10) return 'text-2xl';
+    return 'text-3xl';
   };
 
   return (
@@ -281,8 +289,11 @@ const AdventurePage: React.FC<AdventureForestProps> = ({ onClose, onCompleteLeve
                       key={i} 
                       whileHover={{ scale: 1.05, y: -5 }}
                       whileTap={{ scale: 0.95 }}
-                      onClick={() => audio.speak(word.text)} 
-                      className="flex flex-col items-center p-3 bg-emerald-50/50 rounded-[32px] cursor-pointer border-2 border-transparent hover:border-emerald-200 hover:bg-white transition-all shadow-sm"
+                      onClick={() => {
+                        audio.speak(word.text);
+                        audio.playClick();
+                      }} 
+                      className="flex flex-col items-center p-3 bg-emerald-50/50 rounded-[32px] cursor-pointer border-2 border-transparent hover:border-emerald-200 hover:bg-white transition-all shadow-sm active:bg-emerald-100"
                     >
                       <div className="w-full aspect-square bg-white rounded-2xl mb-3 flex items-center justify-center p-2 shadow-inner">
                         <img 
@@ -322,13 +333,16 @@ const AdventurePage: React.FC<AdventureForestProps> = ({ onClose, onCompleteLeve
                   <motion.div 
                     whileHover={{ scale: 1.02 }}
                     whileTap={{ scale: 0.98 }}
-                    onClick={() => speakRhyme(activeLevel.cards[cardIndex].rhyme)} 
-                    className="bg-gradient-to-br from-emerald-500 to-emerald-700 p-8 rounded-[40px] text-center cursor-pointer shadow-xl shadow-emerald-100 relative overflow-hidden group"
+                    onClick={() => {
+                      speakRhyme(activeLevel.cards[cardIndex].rhyme);
+                      audio.playClick();
+                    }} 
+                    className="bg-gradient-to-br from-emerald-500 to-emerald-700 p-8 rounded-[40px] text-center cursor-pointer shadow-xl shadow-emerald-100 relative overflow-hidden group active:brightness-110"
                   >
                     <div className="absolute top-4 right-4 p-2 bg-white/20 rounded-xl backdrop-blur-md opacity-40 group-hover:opacity-100 transition-opacity">
                       <Volume2 size={20} className="text-white" />
                     </div>
-                    <div className="text-white font-black text-2xl leading-relaxed tracking-wide space-y-2">
+                    <div className={`text-white font-black leading-relaxed tracking-wide space-y-2 ${getRhymeFontSize(activeLevel.cards[cardIndex].rhyme)}`}>
                       {activeLevel.cards[cardIndex].rhyme.split(/[,，.。!！?？]/).filter(s => s.trim()).map((line, idx) => (
                         <p key={idx} className="whitespace-nowrap">{line.trim()}</p>
                       ))}

@@ -86,7 +86,7 @@ export const WhackAMole: React.FC<Props> = ({ groups, isReviewMode, onFinish, on
     if (idx !== activeHole || !holeContent || showCelebration) return;
     
     if (holeContent.isTarget) {
-      audio.playPop();
+      audio.playSuccess();
       setScore(prev => prev + 250);
       onSuccess(targetWord.text);
       
@@ -126,6 +126,7 @@ export const WhackAMole: React.FC<Props> = ({ groups, isReviewMode, onFinish, on
 
   const endGame = () => {
     setIsGameOver(true);
+    audio.playCheer();
     onFinish(score, Math.floor(score / 40));
   };
 

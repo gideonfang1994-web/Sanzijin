@@ -104,6 +104,7 @@ const WordChallenge: React.FC<Props> = ({ groups, isReviewMode, onFinish, onMist
   const finish = () => {
     if (isGameOver) return;
     setIsGameOver(true);
+    audio.playCheer();
     onFinish(score, Math.floor(score / 50));
   };
 

@@ -131,6 +131,7 @@ const LetterScramble: React.FC<Props> = ({ groups, isReviewMode, onFinish, onClo
   const handleGameEnd = () => {
     if (isGameOver) return;
     setIsGameOver(true);
+    audio.playCheer();
     onFinish(score, Math.floor(score / 50));
   };
 

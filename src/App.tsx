@@ -7,9 +7,8 @@ import NavButton from './components/NavButton';
 import WordLandCard from './components/WordLandCard';
 import WordChallenge from './components/WordChallenge';
 import LetterScramble from './components/LetterScramble';
-import MemoryMatch from './components/MemoryMatch';
 import SheepMatch from './components/SheepMatch';
-import BalloonPop from './components/BalloonPop';
+import FlyingDagger from './components/FlyingDagger';
 import WhackAMole from './components/WhackAMole';
 import VoiceDubbing from './components/VoiceDubbing';
 import Leaderboard from './components/Leaderboard';
@@ -30,14 +29,15 @@ const App: React.FC = () => {
   const [lastLearnedWords, setLastLearnedWords] = useState<WordItem[]>([]);
   
   const initialQuests: DailyQuest[] = [
-    { id: 'q1', label: '探索魔法森林新关卡', target: 1, current: 0, completed: false, rewardXp: 150, rewardCoins: 20, targetView: 'ADVENTURE' },
-    { id: 'q2', label: '复习森林旧魔法', target: 1, current: 0, completed: false, rewardXp: 100, rewardCoins: 15, targetView: 'ADVENTURE', isReviewType: true },
-    { id: 'q3', label: '游乐园大获全胜', target: 1, current: 0, completed: false, rewardXp: 200, rewardCoins: 30, targetView: 'ARCADE' },
+    { id: 'q1', label: '解锁一个新魔法', target: 1, current: 0, completed: false, rewardXp: 100, rewardCoins: 10, targetView: 'CARDS' },
+    { id: 'q2', label: '游乐园大获全胜', target: 1, current: 0, completed: false, rewardXp: 200, rewardCoins: 25, targetView: 'ARCADE' },
+    { id: 'q3', label: '魔法净化行动', target: 1, current: 0, completed: false, rewardXp: 300, rewardCoins: 50, targetView: 'ARCADE', isReviewType: true },
   ];
 
   const [stats, setStats] = useState<UserStats>({
     xp: 0, level: 1, streak: 1, starCoins: 50,
-    totalWordsLearned: 0, bestChallengeScore: 0,
+    totalWordsLearned: 0, masteredWords: [], wordMastery: {},
+    bestChallengeScore: 0,
     rank: 12, hearts: 3, maxCombo: 0, quests: initialQuests
   });
 
@@ -115,9 +115,45 @@ const App: React.FC = () => {
     return groups;
   }, [groups, challengeGroupId, selectedDayId, lastLearnedWords]);
 
+  const handleGameSuccess = (wordText: string) => {
+    setStats(prev => {
+      const newMastery = { ...prev.wordMastery };
+      newMastery[wordText] = (newMastery[wordText] || 0) + 1;
+      
+      const newMasteredWords = [...prev.masteredWords];
+      if (!newMasteredWords.includes(wordText)) {
+        newMasteredWords.push(wordText);
+      }
+      
+      const newStats = { ...prev, wordMastery: newMastery, masteredWords: newMasteredWords };
+      localStorage.setItem('wordland_stats', JSON.stringify(newStats));
+      return newStats;
+    });
+  };
+
+  const handleGameFinish = (score: number, coins: number) => {
+    setStats(prev => {
+      const newXp = prev.xp + score;
+      const newCoins = prev.starCoins + coins;
+      const newLevel = Math.floor(newXp / 1000) + 1;
+      const newStats = { 
+        ...prev, 
+        xp: newXp, 
+        starCoins: newCoins, 
+        level: newLevel,
+        bestChallengeScore: Math.max(prev.bestChallengeScore, score)
+      };
+      localStorage.setItem('wordland_stats', JSON.stringify(newStats));
+      return newStats;
+    });
+    setView('ARCADE');
+    updateQuest('q2');
+    audio.playCheer();
+  };
+
   return (
     <div className="min-h-screen pt-10 pb-32 px-5 flex flex-col items-center max-w-lg mx-auto overflow-x-hidden relative bg-gradient-to-b from-indigo-50/50 to-white">
-      <main className="w-full">
+      <main className="w-full flex-1 flex flex-col">
         {view === 'HOME' && (
           <HomePage 
             stats={stats} 
@@ -134,14 +170,6 @@ const App: React.FC = () => {
             onCompleteLevel={(words) => {
               setLastLearnedWords(words);
               setView('ARCADE');
-              updateQuest('q1');
-              setStats(prev => ({
-                ...prev,
-                xp: prev.xp + 200,
-                starCoins: prev.starCoins + 15,
-                totalWordsLearned: prev.totalWordsLearned + words.length,
-                level: Math.floor((prev.xp + 200) / 1000) + 1
-              }));
             }}
           />
         )}
@@ -178,13 +206,12 @@ const App: React.FC = () => {
         )}
 
         {view === 'COLLECTION' && <CollectionCenter groups={groups} stats={stats} onClose={() => setView('HOME')} />}
-        {view === 'CHALLENGE' && <WordChallenge groups={activeGroups} isReviewMode={isReviewChallenge} onFinish={(s, c) => { setView('ARCADE'); updateQuest('q2'); }} onMistake={() => {}} onSuccess={() => {}} onClose={() => setView('ARCADE')} />}
-        {view === 'SCRAMBLE' && <LetterScramble groups={activeGroups} onFinish={(s, c) => { setView('ARCADE'); updateQuest('q2'); }} onClose={() => setView('ARCADE')} />}
-        {view === 'MEMORY' && <MemoryMatch groups={activeGroups} onFinish={() => setView('ARCADE')} onClose={() => setView('ARCADE')} />}
-        {view === 'SHEEP' && <SheepMatch groups={activeGroups} onFinish={() => setView('ARCADE')} onClose={() => setView('ARCADE')} />}
-        {view === 'BALLOON' && <BalloonPop groups={activeGroups} onFinish={() => setView('ARCADE')} onMistake={() => {}} onSuccess={() => {}} onClose={() => setView('ARCADE')} />}
-        {view === 'WHACK' && <WhackAMole groups={activeGroups} onFinish={() => setView('ARCADE')} onMistake={() => {}} onSuccess={() => {}} onClose={() => setView('ARCADE')} />}
-        {view === 'DUBBING' && <VoiceDubbing groups={activeGroups} onFinish={() => setView('ARCADE')} onClose={() => setView('ARCADE')} />}
+        {view === 'CHALLENGE' && <WordChallenge groups={activeGroups} isReviewMode={isReviewChallenge} onFinish={handleGameFinish} onMistake={() => {}} onSuccess={handleGameSuccess} onClose={() => setView('ARCADE')} />}
+        {view === 'SCRAMBLE' && <LetterScramble groups={activeGroups} onFinish={handleGameFinish} onClose={() => setView('ARCADE')} />}
+        {view === 'SHEEP' && <SheepMatch groups={activeGroups} onFinish={handleGameFinish} onClose={() => setView('ARCADE')} />}
+        {view === 'BALLOON' && <FlyingDagger groups={activeGroups} onFinish={handleGameFinish} onMistake={() => {}} onSuccess={handleGameSuccess} onClose={() => setView('ARCADE')} />}
+        {view === 'WHACK' && <WhackAMole groups={activeGroups} onFinish={handleGameFinish} onMistake={() => {}} onSuccess={handleGameSuccess} onClose={() => setView('ARCADE')} />}
+        {view === 'DUBBING' && <VoiceDubbing groups={activeGroups} onFinish={handleGameFinish} onClose={() => setView('ARCADE')} />}
         {view === 'RANKING' && <Leaderboard stats={stats} />}
         {view === 'UPLOAD' && <UploadContent onAddWord={handleAddWord} onAddVideo={() => {}} />}
       </main>
@@ -193,7 +220,7 @@ const App: React.FC = () => {
         <NavButton icon={<Home />} label="主页" active={view === 'HOME'} onClick={() => setView('HOME')} color="text-indigo-600" />
         <NavButton icon={<BookOpen />} label="冒险" active={view === 'ADVENTURE'} onClick={() => setView('ADVENTURE')} color="text-rose-500" />
         <NavButton icon={<Award />} label="图鉴" active={view === 'COLLECTION'} onClick={() => setView('COLLECTION')} color="text-amber-500" />
-        <NavButton icon={<Gamepad2 />} label="游玩" active={view === 'ARCADE' || ['CHALLENGE', 'SCRAMBLE', 'MEMORY', 'SHEEP', 'BALLOON', 'WHACK', 'DUBBING'].includes(view)} onClick={() => setView('ARCADE')} color="text-sky-500" />
+        <NavButton icon={<Gamepad2 />} label="游玩" active={view === 'ARCADE' || ['CHALLENGE', 'SCRAMBLE', 'SHEEP', 'BALLOON', 'WHACK', 'DUBBING'].includes(view)} onClick={() => setView('ARCADE')} color="text-sky-500" />
         <NavButton icon={<BarChart3 />} label="排行" active={view === 'RANKING'} onClick={() => setView('RANKING')} color="text-amber-500" />
       </nav>
     </div>

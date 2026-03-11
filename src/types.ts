@@ -45,6 +45,8 @@ export interface UserStats {
   streak: number;
   starCoins: number;
   totalWordsLearned: number;
+  masteredWords: string[]; 
+  wordMastery: Record<string, number>; // word text -> count of correct answers
   bestChallengeScore: number;
   rank: number;
   hearts: number;
