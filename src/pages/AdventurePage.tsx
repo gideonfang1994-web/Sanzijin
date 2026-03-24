@@ -79,6 +79,9 @@ const AdventurePage: React.FC<AdventureForestProps> = ({ onClose, onCompleteLeve
   const [testQuestions, setTestQuestions] = useState<{ word: WordItem, options?: string[], correct: string, type: 'CHOICE' | 'SPELLING' }[]>([]);
   const [testAnswers, setTestAnswers] = useState<boolean[]>([]);
   const [testResult, setTestResult] = useState<{ score: number, passed: boolean } | null>(null);
+  const [wrongOptions, setWrongOptions] = useState<string[]>([]);
+  const [shuffledLetters, setShuffledLetters] = useState<string[]>([]);
+  const [selectedLetters, setSelectedLetters] = useState<string[]>([]);
   const [spellingInput, setSpellingInput] = useState('');
 
   // Load progress
@@ -211,9 +214,110 @@ const AdventurePage: React.FC<AdventureForestProps> = ({ onClose, onCompleteLeve
     setTestAnswers([]);
     setCardIndex(0);
     setSpellingInput('');
+    setWrongOptions([]);
     setStep('TEST');
     setTestResult(null);
     setShowMasteryPrompt(false);
+  };
+
+  useEffect(() => {
+    if (step === 'TEST' && testQuestions[cardIndex]) {
+      const currentQuestion = testQuestions[cardIndex];
+      // Auto-pronounce English word in Choice stage
+      if (currentQuestion.type === 'CHOICE') {
+        audio.speak(currentQuestion.word.text);
+      }
+      
+      // Prepare spelling letters
+      if (currentQuestion.type === 'SPELLING') {
+        const letters = currentQuestion.word.text.split('').sort(() => Math.random() - 0.5);
+        setShuffledLetters(letters);
+        setSelectedLetters([]);
+      }
+      
+      setWrongOptions([]);
+    }
+  }, [step, cardIndex, testQuestions]);
+
+  const handleTestAnswer = (answer: string) => {
+    const currentQuestion = testQuestions[cardIndex];
+    const isCorrect = answer.toLowerCase().trim() === currentQuestion.correct.toLowerCase().trim();
+    
+    if (isCorrect) {
+      audio.playSuccess();
+      confetti({
+        particleCount: 30,
+        spread: 40,
+        origin: { y: 0.7 },
+        colors: ['#10b981', '#34d399']
+      });
+      
+      const newAnswers = [...testAnswers, true];
+      setTestAnswers(newAnswers);
+      
+      if (cardIndex < testQuestions.length - 1) {
+        setCardIndex(prev => prev + 1);
+      } else {
+        const correctCount = newAnswers.filter(a => a).length;
+        const score = Math.round((correctCount / testQuestions.length) * 100);
+        const passed = score >= 60;
+        
+        setTestResult({ score, passed });
+        
+        if (passed) {
+          const newMastered = [...new Set([...masteredLevels, activeLevel!.id])];
+          const newCompleted = [...new Set([...completedLevels, activeLevel!.id])];
+          setMasteredLevels(newMastered);
+          setCompletedLevels(newCompleted);
+          saveProgress(newCompleted, newMastered);
+          audio.playCheer();
+          confetti({ particleCount: 100, spread: 70, origin: { y: 0.6 } });
+        }
+      }
+    } else {
+      audio.playError();
+      if (currentQuestion.type === 'CHOICE') {
+        setWrongOptions(prev => [...prev, answer]);
+      } else {
+        // Spelling: clear and let them try again
+        setSelectedLetters([]);
+        const letters = currentQuestion.word.text.split('').sort(() => Math.random() - 0.5);
+        setShuffledLetters(letters);
+      }
+    }
+  };
+
+  const handleLetterClick = (letter: string, index: number) => {
+    const newSelected = [...selectedLetters, letter];
+    setSelectedLetters(newSelected);
+    
+    // Remove one instance of the letter from shuffled
+    const newShuffled = [...shuffledLetters];
+    newShuffled.splice(index, 1);
+    setShuffledLetters(newShuffled);
+    
+    const currentQuestion = testQuestions[cardIndex];
+    if (newSelected.length === currentQuestion.word.text.length) {
+      handleTestAnswer(newSelected.join(''));
+    }
+  };
+
+  const handleRemoveLetter = (index: number) => {
+    const letter = selectedLetters[index];
+    const newSelected = [...selectedLetters];
+    newSelected.splice(index, 1);
+    setSelectedLetters(newSelected);
+    
+    setShuffledLetters(prev => [...prev, letter]);
+  };
+
+  const startNextLevel = () => {
+    const nextLevel = levels.find(l => l.id === activeLevel!.id + 1);
+    if (nextLevel) {
+      startChallenge(nextLevel);
+    } else {
+      setStep('MAP');
+    }
   };
 
   const startReview = () => {
@@ -221,77 +325,13 @@ const AdventurePage: React.FC<AdventureForestProps> = ({ onClose, onCompleteLeve
     if (prevLevel) {
       startChallenge(prevLevel);
     } else {
-      // If no previous level, maybe they mean the current one?
       const currentLevel = levels.find(l => l.id === currentLevelId);
       if (currentLevel) startChallenge(currentLevel);
     }
   };
 
   const startTest = () => {
-    if (!activeLevel) return;
-    const words = activeLevel.cards.flatMap(c => c.words);
-    const allWords = ALL_CARDS.flatMap(c => c.words);
-    
-    // Phase 1: Choice
-    const choiceQuestions = words.map(word => {
-      const options = [word.translation];
-      while (options.length < 4) {
-        const randomWord = allWords[Math.floor(Math.random() * allWords.length)];
-        if (!options.includes(randomWord.translation)) {
-          options.push(randomWord.translation);
-        }
-      }
-      return {
-        word,
-        options: options.sort(() => Math.random() - 0.5),
-        correct: word.translation,
-        type: 'CHOICE' as const
-      };
-    }).sort(() => Math.random() - 0.5);
-
-    // Phase 2: Spelling
-    const spellingQuestions = words.map(word => ({
-      word,
-      correct: word.text,
-      type: 'SPELLING' as const
-    })).sort(() => Math.random() - 0.5);
-    
-    setTestQuestions([...choiceQuestions, ...spellingQuestions]);
-    setTestAnswers([]);
-    setCardIndex(0);
-    setSpellingInput('');
-    setStep('TEST');
-    setTestResult(null);
-  };
-
-  const handleTestAnswer = (answer: string) => {
-    const currentQuestion = testQuestions[cardIndex];
-    const isCorrect = answer.toLowerCase().trim() === currentQuestion.correct.toLowerCase().trim();
-    
-    if (isCorrect) audio.playSuccess();
-    else audio.playError();
-    
-    const newAnswers = [...testAnswers, isCorrect];
-    setTestAnswers(newAnswers);
-    setSpellingInput('');
-    
-    if (cardIndex < testQuestions.length - 1) {
-      setCardIndex(prev => prev + 1);
-    } else {
-      const correctCount = newAnswers.filter(a => a).length;
-      const score = Math.round((correctCount / testQuestions.length) * 100);
-      const passed = score >= 60;
-      
-      setTestResult({ score, passed });
-      
-      if (passed) {
-        const newMastered = [...new Set([...masteredLevels, activeLevel!.id])];
-        setMasteredLevels(newMastered);
-        saveProgress(completedLevels, newMastered);
-        audio.playCheer();
-        confetti({ particleCount: 100, spread: 70, origin: { y: 0.6 } });
-      }
-    }
+    if (activeLevel) startChallenge(activeLevel);
   };
 
   const nextLearn = () => {
@@ -685,18 +725,6 @@ const AdventurePage: React.FC<AdventureForestProps> = ({ onClose, onCompleteLeve
               {!testResult ? (
                 <div className="space-y-8">
                   <div className="bg-white rounded-[48px] p-10 shadow-2xl border-4 border-white text-center space-y-6">
-                    <div className="w-32 h-32 bg-slate-50 rounded-[40px] mx-auto flex items-center justify-center p-4 shadow-inner">
-                      <img 
-                        src={syncedImages[testQuestions[cardIndex].word.text] || testQuestions[cardIndex].word.imageUrl} 
-                        alt="test" 
-                        className="w-full h-full object-contain"
-                        referrerPolicy="no-referrer"
-                        onError={(e) => {
-                          const target = e.target as HTMLImageElement;
-                          target.src = `https://placehold.co/200x200/rose/white?text=${testQuestions[cardIndex].word.text}`;
-                        }}
-                      />
-                    </div>
                     <div className="space-y-2">
                       <p className="text-rose-400 font-black uppercase tracking-widest text-xs">
                         {testQuestions[cardIndex].type === 'CHOICE' ? '选择正确含义' : '拼写单词'}
@@ -709,43 +737,58 @@ const AdventurePage: React.FC<AdventureForestProps> = ({ onClose, onCompleteLeve
 
                   {testQuestions[cardIndex].type === 'CHOICE' ? (
                     <div className="grid grid-cols-1 gap-4">
-                      {testQuestions[cardIndex].options?.map((option, i) => (
-                        <motion.button
-                          key={i}
-                          whileHover={{ scale: 1.02, x: 5 }}
-                          whileTap={{ scale: 0.98 }}
-                          onClick={() => handleTestAnswer(option)}
-                          className="bg-white p-6 rounded-[32px] border-2 border-slate-100 hover:border-emerald-500 hover:bg-emerald-50 transition-all text-left font-black text-xl text-slate-700 shadow-sm"
-                        >
-                          {option}
-                        </motion.button>
-                      ))}
+                      {testQuestions[cardIndex].options?.map((option, i) => {
+                        const isWrong = wrongOptions.includes(option);
+                        return (
+                          <motion.button
+                            key={i}
+                            whileHover={isWrong ? {} : { scale: 1.02, x: 5 }}
+                            whileTap={isWrong ? {} : { scale: 0.98 }}
+                            onClick={() => !isWrong && handleTestAnswer(option)}
+                            className={`p-6 rounded-[32px] border-2 transition-all text-left font-black text-xl shadow-sm ${
+                              isWrong 
+                                ? 'bg-rose-50 border-rose-200 text-rose-300 cursor-not-allowed' 
+                                : 'bg-white border-slate-100 hover:border-emerald-500 hover:bg-emerald-50 text-slate-700'
+                            }`}
+                          >
+                            {option}
+                          </motion.button>
+                        );
+                      })}
                     </div>
                   ) : (
-                    <div className="space-y-6">
-                      <div className="flex flex-wrap justify-center gap-2">
-                        {testQuestions[cardIndex].word.text.split('').map((char, i) => {
-                          const isFilled = i < spellingInput.length;
-                          return (
-                            <div key={i} className={`w-12 h-14 bg-white rounded-2xl border-b-4 flex items-center justify-center text-2xl font-black shadow-sm transition-all ${isFilled ? 'border-emerald-500 text-emerald-600' : 'border-slate-200 text-slate-300'}`}>
-                              {isFilled ? spellingInput[i] : ''}
-                            </div>
-                          );
-                        })}
+                    <div className="space-y-10">
+                      {/* Selected Letters Slots */}
+                      <div className="flex flex-wrap justify-center gap-3">
+                        {testQuestions[cardIndex].word.text.split('').map((_, i) => (
+                          <motion.button
+                            key={i}
+                            onClick={() => i < selectedLetters.length && handleRemoveLetter(i)}
+                            className={`w-14 h-16 rounded-2xl border-b-4 flex items-center justify-center text-3xl font-black shadow-md transition-all ${
+                              i < selectedLetters.length 
+                                ? 'bg-emerald-500 border-emerald-700 text-white' 
+                                : 'bg-white border-slate-200 text-transparent'
+                            }`}
+                          >
+                            {selectedLetters[i]}
+                          </motion.button>
+                        ))}
                       </div>
-                      <input 
-                        autoFocus
-                        type="text"
-                        value={spellingInput}
-                        onChange={(e) => setSpellingInput(e.target.value)}
-                        className="w-full bg-white p-6 rounded-[32px] border-4 border-slate-100 text-center text-3xl font-black text-emerald-600 focus:border-emerald-500 outline-none shadow-xl"
-                        placeholder="输入英文单词..."
-                        onKeyDown={(e) => {
-                          if (e.key === 'Enter') {
-                            handleTestAnswer(spellingInput);
-                          }
-                        }}
-                      />
+
+                      {/* Shuffled Letters Options */}
+                      <div className="flex flex-wrap justify-center gap-3 p-6 bg-white/50 rounded-[40px] border-2 border-dashed border-emerald-200">
+                        {shuffledLetters.map((letter, i) => (
+                          <motion.button
+                            key={`${letter}-${i}`}
+                            whileHover={{ scale: 1.1, y: -5 }}
+                            whileTap={{ scale: 0.9 }}
+                            onClick={() => handleLetterClick(letter, i)}
+                            className="w-14 h-16 bg-white rounded-2xl border-b-4 border-emerald-200 flex items-center justify-center text-3xl font-black text-emerald-600 shadow-lg hover:border-emerald-500 transition-all"
+                          >
+                            {letter}
+                          </motion.button>
+                        ))}
+                      </div>
                     </div>
                   )}
                 </div>
@@ -759,7 +802,7 @@ const AdventurePage: React.FC<AdventureForestProps> = ({ onClose, onCompleteLeve
                   
                   {testResult.passed ? (
                     <button 
-                      onClick={() => setStep('MAP')}
+                      onClick={startNextLevel}
                       className="w-full py-5 bg-emerald-500 text-white rounded-[32px] font-black text-xl shadow-lg shadow-emerald-200"
                     >
                       开启下一关

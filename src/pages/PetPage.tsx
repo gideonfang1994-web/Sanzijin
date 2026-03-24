@@ -120,25 +120,70 @@ const PetPage: React.FC<PetPageProps> = ({ stats, onUpdateStats, onClose }) => {
               <div className="absolute top-0 right-0 w-32 h-32 bg-indigo-50 rounded-full -mr-16 -mt-16 opacity-50" />
               
               <div className="relative z-10 text-center space-y-6">
-                <div className="relative inline-block">
+                <div className="relative inline-block perspective-1000">
                   <motion.div
                     animate={activePet.isDead ? {} : {
-                      y: [0, -20, 0],
-                      scale: isFeeding ? [1, 1.2, 1] : [1, 1.05, 1],
-                      rotate: isFeeding ? [0, 10, -10, 0] : [0, 2, -2, 0]
+                      y: [0, -25, 0],
+                      scale: isFeeding ? [1, 1.3, 1] : [1, 1.08, 1],
+                      rotateY: [0, 15, -15, 0],
+                      rotateX: [0, 5, -5, 0],
+                      scaleX: [1, 1.02, 1],
+                      scaleY: [1, 1.05, 1]
                     }}
                     transition={{ 
-                      duration: isFeeding ? 0.5 : 3, 
-                      repeat: isFeeding ? 2 : Infinity,
+                      duration: isFeeding ? 0.4 : 4, 
+                      repeat: isFeeding ? 3 : Infinity,
                       ease: "easeInOut" 
                     }}
-                    className="text-[120px] drop-shadow-2xl filter"
-                    style={{ filter: activePet.isDead ? 'grayscale(100%)' : 'none' }}
+                    className="text-[140px] drop-shadow-[0_35px_35px_rgba(0,0,0,0.25)] relative z-20"
+                    style={{ 
+                      filter: activePet.isDead ? 'grayscale(100%)' : 'none',
+                      transformStyle: 'preserve-3d'
+                    }}
                   >
                     {PET_EMOJIS[activePet.type]}
+                    
+                    {/* Glow Effect */}
+                    {!activePet.isDead && (
+                      <motion.div
+                        animate={{ 
+                          scale: [1, 1.2, 1],
+                          opacity: [0.3, 0.6, 0.3]
+                        }}
+                        transition={{ duration: 3, repeat: Infinity }}
+                        className="absolute inset-0 bg-indigo-400/30 blur-[60px] rounded-full -z-10"
+                      />
+                    )}
                   </motion.div>
+
+                  {/* Floating Stars Effect */}
+                  {!activePet.isDead && (
+                    <div className="absolute inset-0 pointer-events-none">
+                      {[...Array(6)].map((_, i) => (
+                        <motion.div
+                          key={i}
+                          initial={{ opacity: 0, scale: 0 }}
+                          animate={{ 
+                            opacity: [0, 1, 0],
+                            scale: [0, 1, 0],
+                            y: [-20, -100],
+                            x: [Math.random() * 40 - 20, Math.random() * 100 - 50]
+                          }}
+                          transition={{ 
+                            duration: 2 + Math.random() * 2,
+                            repeat: Infinity,
+                            delay: i * 0.5
+                          }}
+                          className="absolute top-1/2 left-1/2 text-2xl"
+                        >
+                          ✨
+                        </motion.div>
+                      ))}
+                    </div>
+                  )}
+
                   {activePet.isDead && (
-                    <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 text-6xl">
+                    <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 text-7xl z-30">
                       👻
                     </div>
                   )}
