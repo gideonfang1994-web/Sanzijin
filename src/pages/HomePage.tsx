@@ -72,19 +72,6 @@ const HomePage: React.FC<HomePageProps> = ({ stats, groups, reviewNeeded, onNavi
         </button>
       </div>
 
-      <div className="bg-white rounded-[40px] p-6 border-2 border-indigo-50 shadow-sm flex items-center justify-between group cursor-pointer hover:border-indigo-200 transition-all" onClick={() => onNavigate('COLLECTION')}>
-        <div className="flex items-center space-x-4">
-          <div className="w-14 h-14 bg-amber-100 rounded-3xl flex items-center justify-center text-3xl shadow-inner group-hover:rotate-12 transition-transform">🏆</div>
-          <div>
-            <h4 className="font-black text-slate-800 text-base">图鉴收集中心</h4>
-            <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Collection Gallery</p>
-          </div>
-        </div>
-        <div className="w-10 h-10 rounded-full bg-slate-50 flex items-center justify-center text-slate-300 group-hover:bg-amber-50 group-hover:text-amber-500 transition-all">
-          <Sparkles size={20} />
-        </div>
-      </div>
-
       <DailyQuestBoard quests={stats.quests} onQuestClick={onQuestClick} />
       
       {/* Achievement Preview */}
@@ -93,7 +80,7 @@ const HomePage: React.FC<HomePageProps> = ({ stats, groups, reviewNeeded, onNavi
           <div className="w-12 h-12 bg-amber-100 rounded-2xl flex items-center justify-center text-2xl">🏆</div>
           <div>
             <h4 className="font-black text-slate-800 text-sm">小小单词家</h4>
-            <p className="text-[10px] font-bold text-slate-400">已解锁 {groups.filter(g => g.learned).length} 个图鉴</p>
+            <p className="text-[10px] font-bold text-slate-400">已掌握 {(stats.masteredWords || []).length} 个单词</p>
           </div>
         </div>
         <Sparkles className="text-amber-400" size={20} />

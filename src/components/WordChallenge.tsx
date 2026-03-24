@@ -140,9 +140,19 @@ const WordChallenge: React.FC<Props> = ({ groups, isReviewMode, onFinish, onMist
       <div className="flex-1 bg-white rounded-[40px] border-2 border-slate-50 shadow-puffy flex flex-col items-center justify-center p-8 text-center">
         <div className="relative mb-6">
           <div className="absolute inset-0 bg-indigo-100 blur-3xl opacity-30 rounded-full scale-150"></div>
-          <img src={currentWord.imageUrl} className="w-48 h-48 object-contain relative z-10" />
+          <img 
+            src={currentWord.imageUrl} 
+            className="w-48 h-48 object-contain relative z-10 cursor-pointer hover:scale-110 transition-transform" 
+            onClick={() => audio.speak(currentWord.text)}
+            referrerPolicy="no-referrer"
+          />
         </div>
-        <h2 className="text-5xl font-black text-slate-800 tracking-tight">{currentWord.text}</h2>
+        <h2 
+          className="text-5xl font-black text-slate-800 tracking-tight cursor-pointer hover:text-indigo-600 transition-colors"
+          onClick={() => audio.speak(currentWord.text)}
+        >
+          {currentWord.text}
+        </h2>
       </div>
       <div className="grid grid-cols-2 gap-4">
         {options.map((opt, i) => (

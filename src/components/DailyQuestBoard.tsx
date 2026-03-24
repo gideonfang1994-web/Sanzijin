@@ -8,7 +8,8 @@ interface Props {
   onQuestClick: (target: ViewState, isReview?: boolean) => void;
 }
 
-const DailyQuestBoard: React.FC<Props> = ({ quests, onQuestClick }) => {
+const DailyQuestBoard: React.FC<Props> = ({ quests = [], onQuestClick }) => {
+  const safeQuests = quests || [];
   return (
     <div className="glass-pill rounded-[36px] p-6 shadow-xl border-indigo-50/50">
       <div className="flex items-center justify-between mb-5">
@@ -16,12 +17,12 @@ const DailyQuestBoard: React.FC<Props> = ({ quests, onQuestClick }) => {
             今日勇者任务 <Sparkles size={10} className="ml-1 text-amber-400" />
         </h3>
         <div className="text-[10px] font-black text-indigo-500 bg-indigo-50 px-2 py-0.5 rounded-full">
-           {quests.filter(q => q.completed).length}/{quests.length} DONE
+           {safeQuests.filter(q => q.completed).length}/{safeQuests.length} DONE
         </div>
       </div>
       
       <div className="space-y-3">
-        {quests.map((quest, index) => {
+        {safeQuests.map((quest, index) => {
           const colors = index === 0 ? 'rose' : index === 1 ? 'indigo' : 'emerald';
           return (
             <button 

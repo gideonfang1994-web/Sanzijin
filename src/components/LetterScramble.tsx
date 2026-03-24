@@ -160,7 +160,7 @@ const LetterScramble: React.FC<Props> = ({ groups, isReviewMode, onFinish, onClo
     return (
       <div className="flex flex-col items-center justify-center h-full p-8 text-center">
         <div className="bg-white p-8 rounded-[48px] shadow-puffy border-4 border-white flex flex-col items-center">
-          <img src="https://img.icons8.com/bubbles/150/empty-box.png" className="w-40 h-40 mb-4" />
+          <img src="https://img.icons8.com/bubbles/150/empty-box.png" className="w-40 h-40 mb-4" referrerPolicy="no-referrer" />
           <h2 className="text-2xl font-black text-slate-700 font-heading">魔法宝箱空空如也</h2>
           <p className="text-slate-400 font-bold mt-2 max-w-[200px] text-sm">看来今天还没有开启新的冒险词汇呢！</p>
           <button onClick={onClose} className="mt-8 puffy-button px-8 py-4 bg-indigo-600 text-white rounded-[24px] font-black text-base">回到森林开启冒险</button>
@@ -214,6 +214,7 @@ const LetterScramble: React.FC<Props> = ({ groups, isReviewMode, onFinish, onClo
             src={currentWord?.imageUrl || `https://api.dicebear.com/7.x/pixel-art/svg?seed=${currentWord?.text}`} 
             className={`w-40 h-40 object-contain relative z-10 transition-transform ${isWrong ? 'grayscale scale-90' : 'group-hover:scale-110 group-active:scale-95'}`} 
             alt="word" 
+            referrerPolicy="no-referrer"
           />
         </div>
 

@@ -1,0 +1,39 @@
+{
+  "entities": {
+    "User": {
+      "title": "User Profile",
+      "description": "Stores user statistics, progress, and inventory.",
+      "type": "object",
+      "properties": {
+        "uid": { "type": "string" },
+        "displayName": { "type": "string" },
+        "photoURL": { "type": "string" },
+        "xp": { "type": "number" },
+        "level": { "type": "number" },
+        "streak": { "type": "number" },
+        "starCoins": { "type": "number" },
+        "magicCoins": { "type": "number" },
+        "totalWordsLearned": { "type": "number" },
+        "masteredWords": { "type": "array", "items": { "type": "string" } },
+        "wordMastery": { "type": "object" },
+        "bestChallengeScore": { "type": "number" },
+        "rank": { "type": "number" },
+        "hearts": { "type": "number" },
+        "maxCombo": { "type": "number" },
+        "selectedCharacterId": { "type": "string" },
+        "equippedItems": { "type": "object" },
+        "unlockedItems": { "type": "array", "items": { "type": "string" } },
+        "completedLevelsCount": { "type": "number" },
+        "characterStats": { "type": "object" },
+        "lastLogin": { "type": "string", "format": "date-time" }
+      },
+      "required": ["uid", "xp", "level", "starCoins", "magicCoins"]
+    }
+  },
+  "firestore": {
+    "/users/{userId}": {
+      "schema": "User",
+      "description": "User profile data."
+    }
+  }
+}

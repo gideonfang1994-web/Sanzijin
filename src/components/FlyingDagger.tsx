@@ -90,8 +90,8 @@ const FlyingDagger: React.FC<Props> = ({ groups, isReviewMode, onFinish, onMista
   const spawnBalloon = () => {
     if (pool.length === 0 || isGameOver) return;
     
-    // Increase frequency of target word: 50% chance to be the target word
-    const isTarget = Math.random() < 0.5;
+    // Increase frequency of target word: 70% chance to be the target word
+    const isTarget = Math.random() < 0.7;
     const word = isTarget && targetWord ? targetWord : pool[Math.floor(Math.random() * pool.length)];
     
     const newBalloon: Balloon = {
@@ -99,7 +99,7 @@ const FlyingDagger: React.FC<Props> = ({ groups, isReviewMode, onFinish, onMista
       word: word,
       x: 15 + Math.random() * 70,
       y: 110,
-      speed: 0.15 + Math.random() * 0.25,
+      speed: 0.2, // Constant speed
       color: colors[Math.floor(Math.random() * colors.length)],
       isPopped: false
     };
@@ -117,12 +117,19 @@ const FlyingDagger: React.FC<Props> = ({ groups, isReviewMode, onFinish, onMista
 
     // Update daggers
     setDaggers(prev => {
-      const nextDaggers = prev.map(d => ({ ...d, progress: d.progress + 0.18 }))
-        .filter(d => d.progress <= 1.18);
+      const nextDaggers = prev.map(d => {
+        const dx = d.targetX - d.startX;
+        const dy = d.targetY - d.startY;
+        const distance = Math.sqrt(dx * dx + dy * dy);
+        // Constant speed: progress increment depends on distance
+        // Base speed: 5 units per frame
+        const progressIncrement = 5 / (distance || 1);
+        return { ...d, progress: d.progress + progressIncrement };
+      }).filter(d => d.progress <= 1.1);
       
       // Check for hits
       nextDaggers.forEach(d => {
-        if (d.progress >= 1 && d.progress < 1.18) {
+        if (d.progress >= 1 && d.progress < 1.1) {
           handleHit(d.balloonId);
         }
       });
@@ -140,6 +147,7 @@ const FlyingDagger: React.FC<Props> = ({ groups, isReviewMode, onFinish, onMista
 
       if (balloon.word.text === targetWord?.text) {
         audio.playPop();
+        audio.playSuccess(); // Added cheer for correct answer
         audio.speak(balloon.word.text);
         
         // Scoring: Base 150 + Combo bonus
@@ -333,7 +341,10 @@ const FlyingDagger: React.FC<Props> = ({ groups, isReviewMode, onFinish, onMista
             className="bg-white px-6 py-3 rounded-[24px] border-[4px] border-rose-400 shadow-[0_8px_0_0_rgba(251,113,133,1)] mb-6 relative"
           >
             <p className="text-[10px] font-black text-rose-400 uppercase tracking-widest text-center mb-1">瞄准目标</p>
-            <p className="text-2xl font-black text-slate-800 whitespace-nowrap">
+            <p 
+              className="text-2xl font-black text-slate-800 whitespace-nowrap cursor-pointer hover:text-rose-500 transition-colors"
+              onClick={() => audio.speak(targetWord?.text || '')}
+            >
               {isWordToMeaning ? targetWord?.text : targetWord?.translation}
             </p>
             <div className="absolute -bottom-2 left-1/2 -translate-x-1/2 w-4 h-4 bg-white border-r-[4px] border-b-[4px] border-rose-400 rotate-45"></div>
@@ -351,7 +362,7 @@ const FlyingDagger: React.FC<Props> = ({ groups, isReviewMode, onFinish, onMista
           <button 
             key={b.id} 
             onClick={() => throwDagger(b)} 
-            className={`absolute w-24 h-28 ${b.color} rounded-[50%_50%_50%_50%_/_40%_40%_60%_60%] shadow-lg border-4 border-white/30 flex flex-col items-center justify-center transition-all hover:scale-110 active:scale-95`} 
+            className={`absolute w-24 h-28 ${b.color} rounded-[50%_50%_50%_50%_/_40%_40%_60%_60%] shadow-lg border-4 border-white/30 flex flex-col items-center justify-center transition-all hover:scale-110 active:scale-95 ${b.word.text === targetWord?.text ? 'scale-125 z-30' : 'z-20'}`} 
             style={{ 
               left: `${b.x}%`, 
               top: `${b.y}%`, 

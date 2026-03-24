@@ -143,7 +143,7 @@ const VoiceDubbing: React.FC<Props> = ({ groups, onFinish, onClose }) => {
         <div className="text-center space-y-4">
           <div className="relative inline-block">
             <div className="absolute inset-0 bg-indigo-100 blur-3xl opacity-30 rounded-full scale-150"></div>
-            <img src={currentWord.imageUrl} className="w-48 h-48 object-contain relative z-10" alt={currentWord.text} />
+            <img src={currentWord.imageUrl} className="w-48 h-48 object-contain relative z-10" alt={currentWord.text} referrerPolicy="no-referrer" />
           </div>
           <h2 className="text-5xl font-black text-slate-800 tracking-tight">{currentWord.text}</h2>
           <p className="text-2xl font-bold text-slate-400">{currentWord.translation}</p>

@@ -31,8 +31,14 @@ const SheepMatch: React.FC<Props> = ({ groups, onFinish, onClose }) => {
 
   const SLOT_CAPACITY = 7;
 
+  const [syncedImages, setSyncedImages] = useState<Record<string, string>>({});
+
   // Initialize game
   useEffect(() => {
+    const saved = localStorage.getItem('adventure_synced_images');
+    if (saved) {
+      setSyncedImages(JSON.parse(saved));
+    }
     initGame();
   }, [groups, level]);
 
@@ -57,7 +63,7 @@ const SheepMatch: React.FC<Props> = ({ groups, onFinish, onClose }) => {
           id: `${item.word.text}-${type}-${Math.random()}`,
           wordId: item.word.text,
           type,
-          content: type === 'text' ? item.word.text : (type === 'translation' ? item.word.translation : item.word.imageUrl || ''),
+          content: type === 'text' ? item.word.text : (type === 'translation' ? item.word.translation : item.word.imageUrl || `https://placehold.co/200x200/indigo/white?text=${item.word.text}`),
           isImage: type === 'image',
           zIndex: 0,
           x: 0,
@@ -109,6 +115,7 @@ const SheepMatch: React.FC<Props> = ({ groups, onFinish, onClose }) => {
     if (tile.isBlocked || gameState !== 'PLAYING' || slots.length >= SLOT_CAPACITY) return;
 
     audio.playClick();
+    audio.speak(tile.wordId);
     
     const newTiles = tiles.filter(t => t.id !== tile.id);
     const newSlots = [...slots, tile];
@@ -176,7 +183,24 @@ const SheepMatch: React.FC<Props> = ({ groups, onFinish, onClose }) => {
               `}
             >
               {tile.isImage ? (
-                <img src={tile.content} alt="tile" className="w-full h-full object-contain rounded-lg" referrerPolicy="no-referrer" />
+                <img 
+                  src={syncedImages[tile.wordId] || tile.content} 
+                  alt="tile" 
+                  className="w-full h-full object-contain rounded-lg" 
+                  referrerPolicy="no-referrer" 
+                  onError={(e) => {
+                    const target = e.target as HTMLImageElement;
+                    if (target.src.includes('fluency')) {
+                      target.src = `https://img.icons8.com/clouds/200/${tile.wordId.toLowerCase()}.png`;
+                    } else if (target.src.includes('clouds')) {
+                      target.src = `https://img.icons8.com/color/200/${tile.wordId.toLowerCase()}.png`;
+                    } else if (target.src.includes('placehold.co')) {
+                      target.src = `https://api.dicebear.com/7.x/bottts/svg?seed=${tile.wordId}`;
+                    } else {
+                      target.src = `https://placehold.co/200x200/indigo/white?text=${tile.wordId}`;
+                    }
+                  }}
+                />
               ) : (
                 <span className={`font-bold text-center leading-tight ${tile.type === 'text' ? 'text-indigo-600 text-sm' : 'text-slate-600 text-[10px]'}`}>
                   {tile.content}
@@ -197,7 +221,16 @@ const SheepMatch: React.FC<Props> = ({ groups, onFinish, onClose }) => {
               {slots[i] && (
                 <div className="w-full h-full bg-white flex items-center justify-center animate-in zoom-in duration-200">
                   {slots[i].isImage ? (
-                    <img src={slots[i].content} alt="slot" className="w-full h-full object-contain p-1" referrerPolicy="no-referrer" />
+                    <img 
+                      src={syncedImages[slots[i].wordId] || slots[i].content} 
+                      alt="slot" 
+                      className="w-full h-full object-contain p-1" 
+                      referrerPolicy="no-referrer" 
+                      onError={(e) => {
+                        const target = e.target as HTMLImageElement;
+                        target.src = `https://placehold.co/200x200/indigo/white?text=${slots[i].wordId}`;
+                      }}
+                    />
                   ) : (
                     <span className="text-[8px] font-bold text-center px-1">{slots[i].content}</span>
                   )}

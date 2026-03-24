@@ -39,11 +39,25 @@ export interface DailyQuest {
   isReviewType?: boolean;
 }
 
+export interface Pet {
+  id: string;
+  name: string;
+  type: 'DRAGON' | 'CAT' | 'OWL' | 'SLIME';
+  health: number;
+  maxHealth: number;
+  happiness: number;
+  level: number;
+  lastFed: number; // timestamp
+  isDead: boolean;
+  birthDate: number;
+}
+
 export interface UserStats {
   xp: number;
   level: number;
   streak: number;
   starCoins: number;
+  magicCoins: number;
   totalWordsLearned: number;
   masteredWords: string[]; 
   wordMastery: Record<string, number>; // word text -> count of correct answers
@@ -52,6 +66,54 @@ export interface UserStats {
   hearts: number;
   maxCombo: number;
   quests: DailyQuest[];
+  selectedCharacterId: string;
+  equippedItems: Record<string, string[]>; // characterId -> itemIds
+  unlockedItems: string[];
+  completedLevelsCount: number;
+  characterStats: Record<string, {
+    level: number;
+    strength: number;
+    magic: number;
+    defense: number;
+    agility: number;
+  }>;
+  pets: Pet[];
+}
+
+export interface ShopItem {
+  id: string;
+  name: string;
+  description: string;
+  price: number;
+  type: 'WEAPON' | 'ARMOR' | 'OUTFIT' | 'OFFHAND' | 'CONSUMABLE' | 'PET' | 'FOOD';
+  characterId: string;
+  slot: 'RIGHT_HAND' | 'LEFT_HAND' | 'BODY' | 'BACK' | 'HEAD' | 'NONE';
+  imageUrl?: string;
+  requiredLevel?: number;
+  stats?: {
+    strength?: number;
+    magic?: number;
+    defense?: number;
+    agility?: number;
+  };
+  petType?: 'DRAGON' | 'CAT' | 'OWL' | 'SLIME';
+  foodValue?: number;
+}
+
+export interface Character {
+  id: string;
+  name: string;
+  title: string;
+  description: string;
+  avatar: string;
+  color: string;
+  portraitUrl: string;
+  baseStats: {
+    strength: number;
+    magic: number;
+    defense: number;
+    agility: number;
+  };
 }
 
 export interface VideoLesson {
@@ -83,4 +145,4 @@ export interface AdventureForestProps {
   onCompleteLevel?: (words: WordItem[]) => void;
 }
 
-export type ViewState = 'HOME' | 'CARDS' | 'VIDEOS' | 'CHALLENGE' | 'SCRAMBLE' | 'MEMORY' | 'BALLOON' | 'WHACK' | 'RANKING' | 'UPLOAD' | 'ARCADE' | 'SHEEP' | 'COLLECTION' | 'ADVENTURE' | 'DUBBING';
+export type ViewState = 'HOME' | 'CARDS' | 'VIDEOS' | 'CHALLENGE' | 'SCRAMBLE' | 'MEMORY' | 'BALLOON' | 'WHACK' | 'RANKING' | 'UPLOAD' | 'ARCADE' | 'SHEEP' | 'COLLECTION' | 'ADVENTURE' | 'DUBBING' | 'SHOP' | 'PETS';

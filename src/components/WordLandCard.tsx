@@ -84,6 +84,10 @@ const WordLandCard: React.FC<Props> = ({ card, onLearned, onNext, isLast, onChal
                     className={`w-20 h-20 object-contain transition-transform duration-500 ${isPlaying === word.text ? 'scale-125 -rotate-6' : 'group-hover:scale-110'}`} 
                     alt={word.text} 
                     referrerPolicy="no-referrer" 
+                    onError={(e) => {
+                      const target = e.target as HTMLImageElement;
+                      target.src = `https://placehold.co/200x200/indigo/white?text=${word.text}`;
+                    }}
                   />
                   {isPlaying === word.text && <Sparkles className="absolute -top-2 -right-2 text-amber-400 animate-spin-slow" size={20} />}
                 </div>

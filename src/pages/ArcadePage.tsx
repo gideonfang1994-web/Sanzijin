@@ -27,7 +27,13 @@ const ArcadePage: React.FC<ArcadePageProps> = ({ groups, lastLearnedWords = [], 
   // Load progress for level selection
   const progress = useMemo(() => {
     const saved = localStorage.getItem('adventure_forest_progress');
-    if (saved) return JSON.parse(saved);
+    if (saved) {
+      const data = JSON.parse(saved);
+      return {
+        cardsPerDay: data.cardsPerDay || 5,
+        completedLevels: data.completedLevels || []
+      };
+    }
     return { cardsPerDay: 5, completedLevels: [] };
   }, []);
 

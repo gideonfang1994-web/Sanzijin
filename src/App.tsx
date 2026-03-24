@@ -13,14 +13,20 @@ import WhackAMole from './components/WhackAMole';
 import VoiceDubbing from './components/VoiceDubbing';
 import Leaderboard from './components/Leaderboard';
 import UploadContent from './components/UploadContent';
-import CollectionCenter from './components/CollectionCenter';
+import MagicShop from './components/MagicShop';
+import PetPage from './pages/PetPage';
 import constants from './constants';
-import { WordGroup, UserStats, ViewState, DailyQuest, Word, WordItem } from './types';
-import { Home, BookOpen, Gamepad2, BarChart3, Award } from 'lucide-react';
+import { WordGroup, UserStats, ViewState, DailyQuest, Word, WordItem, ShopItem, Pet } from './types';
+import { Home, BookOpen, Gamepad2, BarChart3, Award, ShoppingBag, Heart } from 'lucide-react';
 import audio from './utils/AudioUtils';
 import confetti from 'canvas-confetti';
+import { generateCharacterPortrait } from './services/portraitService';
+import { motion, AnimatePresence } from 'framer-motion';
+import { auth, db, doc, getDoc, setDoc, onAuthStateChanged, FirebaseUser, handleFirestoreError, OperationType, signInAnonymously } from './firebase';
 
 const App: React.FC = () => {
+  const [user, setUser] = useState<FirebaseUser | null>(null);
+  const [loading, setLoading] = useState(true);
   const [view, setView] = useState<ViewState>('HOME');
   const [groups, setGroups] = useState<WordGroup[]>([]);
   const [isReviewChallenge, setIsReviewChallenge] = useState(false);
@@ -28,27 +34,207 @@ const App: React.FC = () => {
   const [selectedDayId, setSelectedDayId] = useState<string | null>(null);
   const [lastLearnedWords, setLastLearnedWords] = useState<WordItem[]>([]);
   
+  const [showLevelUp, setShowLevelUp] = useState(false);
+  const [newLevel, setNewLevel] = useState(1);
+  
   const initialQuests: DailyQuest[] = [
     { id: 'q1', label: '解锁一个新魔法', target: 1, current: 0, completed: false, rewardXp: 100, rewardCoins: 10, targetView: 'CARDS' },
     { id: 'q2', label: '游乐园大获全胜', target: 1, current: 0, completed: false, rewardXp: 200, rewardCoins: 25, targetView: 'ARCADE' },
     { id: 'q3', label: '魔法净化行动', target: 1, current: 0, completed: false, rewardXp: 300, rewardCoins: 50, targetView: 'ARCADE', isReviewType: true },
   ];
 
+  const initialCharacterStats = useMemo(() => {
+    const stats: Record<string, any> = {};
+    constants.CHARACTERS.forEach(char => {
+      stats[char.id] = {
+        level: 1,
+        strength: char.baseStats.strength,
+        magic: char.baseStats.magic,
+        defense: char.baseStats.defense,
+        agility: char.baseStats.agility
+      };
+    });
+    return stats;
+  }, []);
+
   const [stats, setStats] = useState<UserStats>({
-    xp: 0, level: 1, streak: 1, starCoins: 50,
+    xp: 0, level: 1, streak: 1, starCoins: 50, magicCoins: 500,
     totalWordsLearned: 0, masteredWords: [], wordMastery: {},
     bestChallengeScore: 0,
-    rank: 12, hearts: 3, maxCombo: 0, quests: initialQuests
+    rank: 12, hearts: 3, maxCombo: 0, quests: initialQuests,
+    selectedCharacterId: 'c1',
+    equippedItems: {},
+    unlockedItems: [],
+    completedLevelsCount: 0,
+    characterStats: initialCharacterStats,
+    pets: []
   });
+
+  // Auth listener
+  useEffect(() => {
+    const unsubscribe = onAuthStateChanged(auth, async (currentUser) => {
+      if (!currentUser) {
+        try {
+          // Try to sign in anonymously, but don't block if it fails
+          await signInAnonymously(auth);
+        } catch (error: any) {
+          console.error("Anonymous login failed (likely disabled in console):", error);
+          // Proceed as guest if Firebase is not configured for anonymous auth
+          setLoading(false);
+        }
+      } else {
+        setUser(currentUser);
+        setLoading(false);
+      }
+    });
+
+    // Safety timeout: if auth takes more than 1.5 seconds, just show the app
+    const timer = setTimeout(() => {
+      setLoading(false);
+    }, 1500);
+
+    return () => {
+      unsubscribe();
+      clearTimeout(timer);
+    };
+  }, []);
+
+  // Fetch/Sync user stats from Firestore
+  useEffect(() => {
+    if (!user) return;
+
+    const fetchStats = async () => {
+      try {
+        const userDocRef = doc(db, 'users', user.uid);
+        const userDoc = await getDoc(userDocRef);
+
+        if (userDoc.exists()) {
+          const data = userDoc.data() as UserStats;
+          setStats(prev => ({
+            ...prev,
+            ...data,
+            quests: data.quests || initialQuests,
+            characterStats: data.characterStats || initialCharacterStats
+          }));
+        } else {
+          // Create initial user doc
+          const initialData = {
+            ...stats,
+            uid: user.uid,
+            displayName: user.displayName,
+            photoURL: user.photoURL,
+            lastLogin: new Date().toISOString()
+          };
+          await setDoc(userDocRef, initialData);
+        }
+      } catch (error) {
+        handleFirestoreError(error, OperationType.GET, `users/${user.uid}`);
+      }
+    };
+
+    fetchStats();
+  }, [user, initialQuests, initialCharacterStats]);
+
+  // Sync stats to Firestore whenever they change
+  useEffect(() => {
+    if (!user) return;
+    
+    const syncStats = async () => {
+      try {
+        const userDocRef = doc(db, 'users', user.uid);
+        await setDoc(userDocRef, {
+          ...stats,
+          uid: user.uid,
+          lastLogin: new Date().toISOString()
+        }, { merge: true });
+      } catch (error) {
+        console.error("Failed to sync stats to Firestore:", error);
+      }
+    };
+
+    // Debounce sync to avoid too many writes
+    const timeout = setTimeout(syncStats, 2000);
+    return () => clearTimeout(timeout);
+  }, [stats, user]);
+
+  // Pet Health Decay Logic
+  useEffect(() => {
+    if (!stats.pets || stats.pets.length === 0) return;
+
+    const now = Date.now();
+    let updated = false;
+    const updatedPets = stats.pets.map(pet => {
+      if (pet.isDead) return pet;
+
+      const hoursSinceFed = (now - pet.lastFed) / (1000 * 60 * 60);
+      // Decay health: 2 points per hour if not fed
+      if (hoursSinceFed > 12) {
+        const decayAmount = Math.floor((hoursSinceFed - 12) * 2);
+        if (decayAmount > 0) {
+          const newHealth = Math.max(0, pet.health - decayAmount);
+          const newHappiness = Math.max(0, pet.happiness - Math.floor(decayAmount / 2));
+          
+          if (newHealth !== pet.health || newHappiness !== pet.happiness) {
+            updated = true;
+            return {
+              ...pet,
+              health: newHealth,
+              happiness: newHappiness,
+              isDead: newHealth <= 0
+            };
+          }
+        }
+      }
+      return pet;
+    });
+
+    if (updated) {
+      setStats(prev => ({ ...prev, pets: updatedPets }));
+    }
+  }, [loading]); // Run once after loading is complete
 
   useEffect(() => {
     audio.init();
+    
     const savedGroups = localStorage.getItem('wordland_groups');
-    const savedStats = localStorage.getItem('wordland_stats');
     if (savedGroups) setGroups(JSON.parse(savedGroups));
     else setGroups(constants.INITIAL_GROUPS);
-    if (savedStats) setStats(JSON.parse(savedStats));
-  }, []);
+    
+    const initializePortraits = async (currentStats: UserStats) => {
+      let updated = false;
+      
+      const savedPortraits = JSON.parse(localStorage.getItem('wordland_portraits') || '{}');
+      
+      for (const char of constants.CHARACTERS) {
+        if (char.portraitUrl && char.portraitUrl.includes('storage.googleapis.com')) {
+          continue;
+        }
+
+        if (savedPortraits[char.id] && (!char.portraitUrl || !char.portraitUrl.startsWith('http'))) {
+          char.portraitUrl = savedPortraits[char.id];
+          continue;
+        }
+
+        if (!char.portraitUrl || !char.portraitUrl.startsWith('http')) {
+          const equipped = currentStats.equippedItems[char.id] || [];
+          const portrait = await generateCharacterPortrait(char.id, equipped);
+          if (portrait) {
+            savedPortraits[char.id] = portrait;
+            char.portraitUrl = portrait;
+            updated = true;
+            await new Promise(resolve => setTimeout(resolve, 1000));
+          }
+        }
+      }
+      
+      if (updated) {
+        localStorage.setItem('wordland_portraits', JSON.stringify(savedPortraits));
+        setStats(prev => ({ ...prev }));
+      }
+    };
+
+    initializePortraits(stats);
+  }, [initialCharacterStats]);
 
   const updateQuest = (questId: string, amount: number = 1) => {
     setStats(prev => {
@@ -72,27 +258,54 @@ const App: React.FC = () => {
     });
   };
 
+  const handleNavigate = (newView: ViewState) => {
+    setView(newView);
+  };
+
   const handleLearned = useCallback((id: string) => {
     audio.playSuccess();
     setGroups(prev => prev.map(g => g.id === id ? { ...g, learned: true, nextReview: Date.now() + 86400000 } : g));
     updateQuest('q1');
-    setStats(prev => ({ 
-        ...prev, 
-        xp: prev.xp + 150, 
-        starCoins: prev.starCoins + 10,
-        level: Math.floor((prev.xp + 150) / 1000) + 1 
-    }));
+    setStats(prev => {
+      const newXp = prev.xp + 100; // Optimized from 200
+      const newLevel = Math.floor(newXp / 1000) + 1;
+      
+      if (newLevel > prev.level) {
+        audio.playLevelUp();
+        setNewLevel(newLevel);
+        setShowLevelUp(true);
+        confetti({
+          particleCount: 150,
+          spread: 100,
+          origin: { y: 0.3 },
+          colors: ['#FFD93D', '#6BCB77', '#4D96FF']
+        });
+      }
+
+      const newRank = Math.max(1, 15 - Math.floor(newXp / 500));
+      
+      const newStats = { 
+          ...prev, 
+          xp: newXp, 
+          starCoins: prev.starCoins + 10, // Optimized from 20
+          magicCoins: prev.magicCoins + 50, // Optimized from 150
+          level: newLevel,
+          rank: newRank,
+          masteredWords: Array.from(new Set([...prev.masteredWords, id]))
+      };
+      return newStats;
+    });
   }, []);
 
   const handleChallenge = (id: string) => {
     setChallengeGroupId(id);
-    setView('ARCADE');
+    handleNavigate('ARCADE');
   };
 
   const handleAddWord = (word: Word) => {
     const newWordItem = { text: word.term, translation: word.translation, imageUrl: word.imageUrl };
     setGroups(prev => [{ id: `user-${Date.now()}`, title: '自定义魔法', words: [newWordItem], learned: false, suffix: '', rhyme: '我亲手创造的魔法！', srsLevel: 0, nextReview: 0 }, ...prev]);
-    setView('CARDS');
+    handleNavigate('CARDS');
   };
 
   const reviewNeeded = useMemo(() => groups.filter(g => g.learned && g.nextReview < Date.now()), [groups]);
@@ -133,23 +346,188 @@ const App: React.FC = () => {
 
   const handleGameFinish = (score: number, coins: number) => {
     setStats(prev => {
-      const newXp = prev.xp + score;
+      const newXp = prev.xp + score; // Optimized from score * 2
       const newCoins = prev.starCoins + coins;
+      const newMagicCoins = prev.magicCoins + Math.floor(score / 10); // Optimized from score / 5
       const newLevel = Math.floor(newXp / 1000) + 1;
+      
+      if (newLevel > prev.level) {
+        audio.playLevelUp();
+        setNewLevel(newLevel);
+        setShowLevelUp(true);
+        confetti({
+          particleCount: 150,
+          spread: 100,
+          origin: { y: 0.3 }
+        });
+      }
+
+      const newRank = Math.max(1, 15 - Math.floor(newXp / 500));
+      
       const newStats = { 
         ...prev, 
         xp: newXp, 
         starCoins: newCoins, 
+        magicCoins: newMagicCoins,
         level: newLevel,
+        rank: newRank,
         bestChallengeScore: Math.max(prev.bestChallengeScore, score)
+      };
+      return newStats;
+    });
+    handleNavigate('ARCADE');
+    updateQuest('q2');
+    audio.playCheer();
+  };
+
+  const handlePurchase = (item: ShopItem) => {
+    setStats(prev => {
+      if (prev.magicCoins < item.price) {
+        audio.playError();
+        return prev;
+      }
+      
+      let newStats = { ...prev };
+      
+      if (item.type === 'PET') {
+        audio.playUnlock();
+        const newPet: Pet = {
+          id: `pet-${Date.now()}`,
+          name: item.name,
+          type: item.petType || 'SLIME',
+          health: 100,
+          maxHealth: 100,
+          happiness: 100,
+          level: 1,
+          lastFed: Date.now(),
+          isDead: false,
+          birthDate: Date.now()
+        };
+        newStats = {
+          ...prev,
+          magicCoins: prev.magicCoins - item.price,
+          pets: [...(prev.pets || []), newPet],
+          unlockedItems: [...prev.unlockedItems, item.id]
+        };
+      } else if (item.type === 'CONSUMABLE') {
+        audio.playPurchase();
+        // Handle consumables like Level Up Potion
+        if (item.id === 'gen_1') {
+          const charId = prev.selectedCharacterId;
+          const charStats = prev.characterStats[charId];
+          newStats = {
+            ...prev,
+            magicCoins: prev.magicCoins - item.price,
+            characterStats: {
+              ...prev.characterStats,
+              [charId]: {
+                ...charStats,
+                level: charStats.level + 1,
+                strength: charStats.strength + 2,
+                magic: charStats.magic + 2,
+                defense: charStats.defense + 1,
+                agility: charStats.agility + 1
+              }
+            }
+          };
+        } else {
+           newStats = {
+            ...prev,
+            magicCoins: prev.magicCoins - item.price,
+          };
+        }
+      } else {
+        // Handle equipment
+        audio.playUnlock();
+        newStats = {
+          ...prev,
+          magicCoins: prev.magicCoins - item.price,
+          unlockedItems: [...prev.unlockedItems, item.id]
+        };
+      }
+      
+      localStorage.setItem('wordland_stats', JSON.stringify(newStats));
+      return newStats;
+    });
+  };
+
+  const handleEquip = async (characterId: string, itemId: string) => {
+    audio.playEquip();
+    let updatedEquipped: string[] = [];
+    
+    setStats(prev => {
+      const currentEquipped = prev.equippedItems[characterId] || [];
+      const item = constants.SHOP_ITEMS.find(i => i.id === itemId);
+      if (!item) return prev;
+
+      // Toggle logic
+      const isEquipped = currentEquipped.includes(itemId);
+      let newEquipped: string[] = [];
+
+      if (isEquipped) {
+        // Unequip
+        newEquipped = currentEquipped.filter(id => id !== itemId);
+      } else {
+        // Equip: Remove other items in the same slot first
+        const filtered = currentEquipped.filter(id => {
+          const otherItem = constants.SHOP_ITEMS.find(i => i.id === id);
+          // If slot is NONE, it doesn't conflict with others (except itself)
+          if (item.slot === 'NONE') return id !== itemId;
+          return otherItem?.slot !== item.slot;
+        });
+        newEquipped = [...filtered, itemId];
+      }
+
+      updatedEquipped = newEquipped;
+
+      const newStats = {
+        ...prev,
+        equippedItems: {
+          ...prev.equippedItems,
+          [characterId]: newEquipped
+        }
       };
       localStorage.setItem('wordland_stats', JSON.stringify(newStats));
       return newStats;
     });
-    setView('ARCADE');
-    updateQuest('q2');
-    audio.playCheer();
+
+    // Re-generate portrait to reflect equipment changes
+    try {
+      const portrait = await generateCharacterPortrait(characterId, updatedEquipped);
+      if (portrait) {
+        const char = constants.CHARACTERS.find(c => c.id === characterId);
+        if (char) {
+          char.portraitUrl = portrait;
+          // Save to local storage for persistence
+          const saved = JSON.parse(localStorage.getItem('wordland_portraits') || '{}');
+          saved[characterId] = portrait;
+          localStorage.setItem('wordland_portraits', JSON.stringify(saved));
+          
+          // Force a re-render
+          setStats(prev => ({ ...prev }));
+        }
+      }
+    } catch (error) {
+      console.error("Failed to update portrait with equipment:", error);
+    }
   };
+
+  const handleSelectCharacter = (characterId: string) => {
+    setStats(prev => {
+      const newStats = { ...prev, selectedCharacterId: characterId };
+      localStorage.setItem('wordland_stats', JSON.stringify(newStats));
+      return newStats;
+    });
+  };
+
+  if (loading) {
+    return (
+      <div className="min-h-screen flex flex-col items-center justify-center bg-indigo-50">
+        <div className="w-16 h-16 border-4 border-indigo-500 border-t-transparent rounded-full animate-spin mb-4" />
+        <p className="text-indigo-600 font-bold animate-pulse">正在开启魔法冒险...</p>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen pt-10 pb-32 px-5 flex flex-col items-center max-w-lg mx-auto overflow-x-hidden relative bg-gradient-to-b from-indigo-50/50 to-white">
@@ -159,17 +537,28 @@ const App: React.FC = () => {
             stats={stats} 
             groups={groups} 
             reviewNeeded={reviewNeeded} 
-            onNavigate={setView} 
-            onQuestClick={(v, r) => { setIsReviewChallenge(!!r); setView(v); }} 
+            onNavigate={handleNavigate} 
+            onQuestClick={(v, r) => { setIsReviewChallenge(!!r); handleNavigate(v); }} 
           />
         )}
 
         {view === 'ADVENTURE' && (
           <AdventurePage 
-            onClose={() => setView('HOME')} 
+            onClose={() => handleNavigate('HOME')} 
             onCompleteLevel={(words) => {
               setLastLearnedWords(words);
-              setView('ARCADE');
+              setStats(prev => {
+                const newMastered = [...new Set([...prev.masteredWords, ...words.map(w => w.text)])];
+                const newStats = {
+                  ...prev,
+                  totalWordsLearned: prev.totalWordsLearned + words.length,
+                  masteredWords: newMastered,
+                  completedLevelsCount: prev.completedLevelsCount + 1
+                };
+                localStorage.setItem('wordland_stats', JSON.stringify(newStats));
+                return newStats;
+              });
+              handleNavigate('ARCADE');
             }}
           />
         )}
@@ -199,29 +588,82 @@ const App: React.FC = () => {
             lastLearnedWords={lastLearnedWords}
             onSelectGame={(id, words) => {
               if (words) setLastLearnedWords(words);
-              setView(id);
+              handleNavigate(id as ViewState);
             }} 
-            onClose={() => { setView('HOME'); setChallengeGroupId(null); setLastLearnedWords([]); }} 
+            onClose={() => { handleNavigate('HOME'); setChallengeGroupId(null); setLastLearnedWords([]); }} 
           />
         )}
 
-        {view === 'COLLECTION' && <CollectionCenter groups={groups} stats={stats} onClose={() => setView('HOME')} />}
-        {view === 'CHALLENGE' && <WordChallenge groups={activeGroups} isReviewMode={isReviewChallenge} onFinish={handleGameFinish} onMistake={() => {}} onSuccess={handleGameSuccess} onClose={() => setView('ARCADE')} />}
-        {view === 'SCRAMBLE' && <LetterScramble groups={activeGroups} onFinish={handleGameFinish} onClose={() => setView('ARCADE')} />}
-        {view === 'SHEEP' && <SheepMatch groups={activeGroups} onFinish={handleGameFinish} onClose={() => setView('ARCADE')} />}
-        {view === 'BALLOON' && <FlyingDagger groups={activeGroups} onFinish={handleGameFinish} onMistake={() => {}} onSuccess={handleGameSuccess} onClose={() => setView('ARCADE')} />}
-        {view === 'WHACK' && <WhackAMole groups={activeGroups} onFinish={handleGameFinish} onMistake={() => {}} onSuccess={handleGameSuccess} onClose={() => setView('ARCADE')} />}
-        {view === 'DUBBING' && <VoiceDubbing groups={activeGroups} onFinish={handleGameFinish} onClose={() => setView('ARCADE')} />}
+        {view === 'SHOP' && (
+          <MagicShop 
+            stats={stats} 
+            onPurchase={handlePurchase} 
+            onEquip={handleEquip} 
+            onSelectCharacter={handleSelectCharacter} 
+          />
+        )}
+        {view === 'PETS' && (
+          <PetPage 
+            stats={stats}
+            onUpdateStats={(updater) => setStats(prev => updater(prev))}
+            onClose={() => handleNavigate('HOME')}
+          />
+        )}
+        {view === 'CHALLENGE' && <WordChallenge groups={activeGroups} isReviewMode={isReviewChallenge} onFinish={handleGameFinish} onMistake={() => {}} onSuccess={handleGameSuccess} onClose={() => handleNavigate('ARCADE')} />}
+        {view === 'SCRAMBLE' && <LetterScramble groups={activeGroups} onFinish={handleGameFinish} onClose={() => handleNavigate('ARCADE')} />}
+        {view === 'SHEEP' && <SheepMatch groups={activeGroups} onFinish={handleGameFinish} onClose={() => handleNavigate('ARCADE')} />}
+        {view === 'BALLOON' && <FlyingDagger groups={activeGroups} onFinish={handleGameFinish} onMistake={() => {}} onSuccess={handleGameSuccess} onClose={() => handleNavigate('ARCADE')} />}
+        {view === 'WHACK' && <WhackAMole groups={activeGroups} onFinish={handleGameFinish} onMistake={() => {}} onSuccess={handleGameSuccess} onClose={() => handleNavigate('ARCADE')} />}
+        {view === 'DUBBING' && <VoiceDubbing groups={activeGroups} onFinish={handleGameFinish} onClose={() => handleNavigate('ARCADE')} />}
         {view === 'RANKING' && <Leaderboard stats={stats} />}
         {view === 'UPLOAD' && <UploadContent onAddWord={handleAddWord} onAddVideo={() => {}} />}
       </main>
 
-      <nav className="fixed bottom-8 left-1/2 -translate-x-1/2 w-[90%] glass-pill h-20 rounded-[32px] flex items-center justify-around px-8 z-50 border-white/80 shadow-2xl">
-        <NavButton icon={<Home />} label="主页" active={view === 'HOME'} onClick={() => setView('HOME')} color="text-indigo-600" />
-        <NavButton icon={<BookOpen />} label="冒险" active={view === 'ADVENTURE'} onClick={() => setView('ADVENTURE')} color="text-rose-500" />
-        <NavButton icon={<Award />} label="图鉴" active={view === 'COLLECTION'} onClick={() => setView('COLLECTION')} color="text-amber-500" />
-        <NavButton icon={<Gamepad2 />} label="游玩" active={view === 'ARCADE' || ['CHALLENGE', 'SCRAMBLE', 'SHEEP', 'BALLOON', 'WHACK', 'DUBBING'].includes(view)} onClick={() => setView('ARCADE')} color="text-sky-500" />
-        <NavButton icon={<BarChart3 />} label="排行" active={view === 'RANKING'} onClick={() => setView('RANKING')} color="text-amber-500" />
+      <AnimatePresence>
+        {showLevelUp && (
+          <motion.div 
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 z-[100] flex items-center justify-center p-6 bg-slate-900/80 backdrop-blur-sm"
+          >
+            <motion.div 
+              initial={{ scale: 0.5, y: 100 }}
+              animate={{ scale: 1, y: 0 }}
+              exit={{ scale: 0.5, y: 100 }}
+              className="bg-white rounded-[48px] p-10 shadow-2xl border-4 border-indigo-500 max-w-sm w-full text-center relative overflow-hidden"
+            >
+              <div className="absolute top-0 left-0 w-full h-2 bg-gradient-to-r from-indigo-500 via-purple-500 to-pink-500" />
+              
+              <div className="w-24 h-24 bg-indigo-100 rounded-[32px] flex items-center justify-center mx-auto mb-6 shadow-xl shadow-indigo-100">
+                <Award size={48} className="text-indigo-600" />
+              </div>
+              
+              <h2 className="text-4xl font-black text-slate-800 mb-2">等级提升！</h2>
+              <p className="text-slate-500 font-bold mb-8">恭喜你达到了等级 {newLevel}</p>
+              
+              <div className="bg-indigo-50 rounded-3xl p-6 mb-8 border border-indigo-100">
+                <p className="text-indigo-700 font-black text-sm">解锁了新的魔法商店道具！</p>
+              </div>
+              
+              <button 
+                onClick={() => setShowLevelUp(false)}
+                className="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-black py-5 rounded-[24px] shadow-xl shadow-indigo-200 transition-all active:scale-95"
+              >
+                继续冒险
+              </button>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      <nav className="fixed bottom-8 left-1/2 -translate-x-1/2 w-[95%] glass-pill h-20 rounded-[32px] flex items-center justify-around px-4 z-50 border-white/80 shadow-2xl">
+        <NavButton icon={<Home />} label="主页" active={view === 'HOME'} onClick={() => handleNavigate('HOME')} color="text-indigo-600" />
+        <NavButton icon={<BookOpen />} label="冒险" active={view === 'ADVENTURE'} onClick={() => handleNavigate('ADVENTURE')} color="text-rose-500" />
+        <NavButton icon={<Gamepad2 />} label="游玩" active={view === 'ARCADE' || ['CHALLENGE', 'SCRAMBLE', 'SHEEP', 'BALLOON', 'WHACK', 'DUBBING'].includes(view)} onClick={() => handleNavigate('ARCADE')} color="text-sky-500" />
+        <NavButton icon={<Heart />} label="宠兽" active={view === 'PETS'} onClick={() => handleNavigate('PETS')} color="text-rose-400" />
+        <NavButton icon={<ShoppingBag />} label="商店" active={view === 'SHOP'} onClick={() => handleNavigate('SHOP')} color="text-purple-500" />
+        <NavButton icon={<BarChart3 />} label="排行" active={view === 'RANKING'} onClick={() => handleNavigate('RANKING')} color="text-amber-500" />
       </nav>
     </div>
   );

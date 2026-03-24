@@ -164,7 +164,12 @@ export const WhackAMole: React.FC<Props> = ({ groups, isReviewMode, onFinish, on
           </div>
         )}
         <p className="text-xs font-black text-slate-400 uppercase mb-2">击中该地鼠：</p>
-        <h2 className="text-5xl font-black text-indigo-600 tracking-tight lowercase">{targetWord?.text}</h2>
+        <h2 
+          className="text-5xl font-black text-indigo-600 tracking-tight lowercase cursor-pointer hover:text-indigo-400 transition-colors"
+          onClick={() => speak(targetWord?.text || '')}
+        >
+          {targetWord?.text}
+        </h2>
       </div>
       <div className="grid grid-cols-3 gap-6 flex-1 items-center justify-center p-4">
         {[...Array(9)].map((_, i) => {

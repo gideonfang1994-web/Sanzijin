@@ -1,19 +1,72 @@
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { UserStats } from '../types';
 import { Trophy, Medal, Crown, Star, Info, ChevronRight, Award, Sparkles, Zap } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
+import { db, collection, query, orderBy, limit, getDocs } from '../firebase';
 
-const MOCK_RANKING = [
-  { name: '超人小明', xp: 12500, level: 13, avatar: '🐰' },
-  { name: '英语学霸', xp: 9800, level: 10, avatar: '🦁' },
-  { name: '单词王者', xp: 8200, level: 9, avatar: '🐼' },
-  { name: '开心果', xp: 5100, level: 6, avatar: '🐱' },
-  { name: '练习生', xp: 3200, level: 4, avatar: '🐶' },
-];
+interface RankingUser {
+  name: string;
+  xp: number;
+  level: number;
+  avatar: string;
+  isUser: boolean;
+  photoURL?: string;
+}
 
 const Leaderboard: React.FC<{ stats: UserStats }> = ({ stats }) => {
   const [showRules, setShowRules] = useState(false);
+  const [rankings, setRankings] = useState<RankingUser[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const fetchRankings = async () => {
+      try {
+        const q = query(collection(db, 'users'), orderBy('xp', 'desc'), limit(10));
+        const querySnapshot = await getDocs(q);
+        const fetchedRankings: RankingUser[] = [];
+        
+        querySnapshot.forEach((doc) => {
+          const data = doc.data();
+          fetchedRankings.push({
+            name: data.displayName || '神秘魔法师',
+            xp: data.xp || 0,
+            level: data.level || 1,
+            avatar: data.avatar || '🧙‍♂️',
+            photoURL: data.photoURL,
+            isUser: doc.id === (stats as any).uid // Assuming uid is passed or available
+          });
+        });
+
+        // If user is not in top 10, add them at the end for display
+        const isUserInTop10 = fetchedRankings.some(r => r.isUser);
+        if (!isUserInTop10) {
+          fetchedRankings.push({
+            name: '你自己 (You)',
+            xp: stats.xp,
+            level: stats.level,
+            avatar: '🐯',
+            isUser: true
+          });
+        }
+
+        setRankings(fetchedRankings);
+      } catch (error) {
+        console.error("Error fetching rankings:", error);
+        // Fallback to mock data if firestore fails
+        setRankings([
+          { name: '超人小明', xp: 12500, level: 13, avatar: '🐰', isUser: false },
+          { name: '英语学霸', xp: 9800, level: 10, avatar: '🦁', isUser: false },
+          { name: '单词王者', xp: 8200, level: 9, avatar: '🐼', isUser: false },
+          { name: '你自己 (You)', xp: stats.xp, level: stats.level, avatar: '🐯', isUser: true }
+        ].sort((a, b) => b.xp - a.xp));
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchRankings();
+  }, [stats.xp, stats.level]);
 
   const levelTitles = [
     { range: [1, 3], title: '魔法学徒', icon: '🌱' },
@@ -26,6 +79,8 @@ const Leaderboard: React.FC<{ stats: UserStats }> = ({ stats }) => {
 
   const currentTitle = levelTitles.find(t => stats.level >= t.range[0] && stats.level <= t.range[1]) || levelTitles[0];
 
+  const userRank = rankings.findIndex(r => r.isUser) + 1;
+
   return (
     <div className="space-y-6 animate-in fade-in slide-in-from-bottom-8 duration-500 pb-24">
       {/* Header Card */}
@@ -35,7 +90,9 @@ const Leaderboard: React.FC<{ stats: UserStats }> = ({ stats }) => {
           <div className="flex justify-between items-start mb-4">
             <div>
               <h2 className="text-3xl font-black mb-1">荣誉殿堂</h2>
-              <p className="text-amber-50 font-bold opacity-80">你是班里的第 {stats.rank} 名哦！</p>
+              <p className="text-amber-50 font-bold opacity-80">
+                {loading ? '正在计算排名...' : `你是班里的第 ${userRank || '...'} 名哦！`}
+              </p>
             </div>
             <button 
               onClick={() => setShowRules(true)}
@@ -45,63 +102,71 @@ const Leaderboard: React.FC<{ stats: UserStats }> = ({ stats }) => {
             </button>
           </div>
           
-          <div className="bg-white/20 backdrop-blur-md rounded-3xl p-4 flex items-center justify-between border border-white/10">
-            <div className="flex items-center space-x-3">
-              <div className="text-2xl">{currentTitle.icon}</div>
-              <div>
-                <p className="text-[10px] font-bold text-white/60 uppercase">当前头衔</p>
-                <h3 className="text-lg font-black">{currentTitle.title}</h3>
+          <div className="bg-white/20 backdrop-blur-md rounded-3xl p-4 flex flex-col space-y-3 border border-white/10">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center space-x-3">
+                <div className="text-2xl">{currentTitle.icon}</div>
+                <div>
+                  <p className="text-[10px] font-bold text-white/60 uppercase">当前头衔</p>
+                  <h3 className="text-lg font-black">{currentTitle.title}</h3>
+                </div>
+              </div>
+              <div className="text-right">
+                <p className="text-[10px] font-bold text-white/60 uppercase">经验值</p>
+                <h3 className="text-lg font-black">{stats.xp}</h3>
               </div>
             </div>
-            <div className="text-right">
-              <p className="text-[10px] font-bold text-white/60 uppercase">经验值</p>
-              <h3 className="text-lg font-black">{stats.xp}</h3>
+            <div className="h-px bg-white/10 w-full" />
+            <div className="flex justify-between items-center px-1">
+              <div className="flex flex-col">
+                <span className="text-[9px] font-bold text-white/60 uppercase">已开启关卡</span>
+                <span className="text-sm font-black">{stats.completedLevelsCount || 0} 关</span>
+              </div>
+              <div className="flex flex-col text-right">
+                <span className="text-[9px] font-bold text-white/60 uppercase">学会单词总数</span>
+                <span className="text-sm font-black">{(stats.masteredWords || []).length} 个</span>
+              </div>
             </div>
           </div>
         </div>
       </div>
 
       {/* Ranking List */}
-      <div className="bg-white rounded-[44px] shadow-puffy border-2 border-slate-100 p-4 space-y-2">
+      <div className="bg-white rounded-[44px] shadow-puffy border-2 border-slate-100 p-4 space-y-2 min-h-[400px]">
         <div className="px-4 py-2 flex justify-between items-center text-[10px] font-black text-slate-400 uppercase tracking-widest">
           <span>排名 & 魔法师</span>
           <span>魔法能量 (XP)</span>
         </div>
         
-        {MOCK_RANKING.map((user, i) => (
-          <div key={i} className={`flex items-center p-4 rounded-3xl transition-all ${i === 0 ? 'bg-amber-50 border-amber-100' : 'hover:bg-slate-50'}`}>
-            <div className="w-10 font-black text-xl text-slate-400">
-              {i === 0 ? <Medal className="text-amber-500 w-8 h-8" /> : i + 1}
-            </div>
-            <div className="w-12 h-12 bg-white rounded-2xl flex items-center justify-center text-2xl shadow-sm border-2 border-slate-50 mr-4">
-              {user.avatar}
-            </div>
-            <div className="flex-1">
-              <h4 className="font-black text-slate-700">{user.name}</h4>
-              <p className="text-xs font-bold text-slate-400">LV.{user.level}</p>
-            </div>
-            <div className="flex items-center text-amber-500 font-black">
-              <Star className="w-4 h-4 mr-1 fill-amber-500" />
-              {user.xp}
-            </div>
+        {loading ? (
+          <div className="flex flex-col items-center justify-center py-20 space-y-4">
+            <div className="w-10 h-10 border-4 border-amber-400 border-t-transparent rounded-full animate-spin" />
+            <p className="text-xs font-bold text-slate-400">正在召唤排行榜...</p>
           </div>
-        ))}
-
-        {/* User's own entry */}
-        <div className="mt-6 pt-6 border-t-4 border-dashed border-slate-50">
-          <div className="flex items-center p-5 rounded-3xl bg-indigo-600 text-white shadow-lg shadow-indigo-200">
-            <div className="w-10 font-black text-xl">{stats.rank}</div>
-            <div className="w-12 h-12 bg-white/20 rounded-2xl flex items-center justify-center text-2xl mr-4">🐯</div>
-            <div className="flex-1">
-              <h4 className="font-black">你自己 (You)</h4>
-              <p className="text-xs font-bold opacity-70">LV.{stats.level} · {currentTitle.title}</p>
+        ) : (
+          rankings.map((user, i) => (
+            <div key={i} className={`flex items-center p-4 rounded-3xl transition-all ${user.isUser ? 'bg-indigo-600 text-white shadow-lg shadow-indigo-200' : (i === 0 ? 'bg-amber-50 border-amber-100' : 'hover:bg-slate-50')}`}>
+              <div className={`w-10 font-black text-xl ${user.isUser ? 'text-white' : 'text-slate-400'}`}>
+                {i === 0 ? <Medal className={`${user.isUser ? 'text-white' : 'text-amber-500'} w-8 h-8`} /> : i + 1}
+              </div>
+              <div className={`w-12 h-12 rounded-2xl flex items-center justify-center text-2xl shadow-sm border-2 mr-4 overflow-hidden ${user.isUser ? 'bg-white/20 border-white/10' : 'bg-white border-slate-50'}`}>
+                {user.photoURL ? (
+                  <img src={user.photoURL} alt={user.name} className="w-full h-full object-cover" referrerPolicy="no-referrer" />
+                ) : (
+                  user.avatar
+                )}
+              </div>
+              <div className="flex-1">
+                <h4 className={`font-black ${user.isUser ? 'text-white' : 'text-slate-700'}`}>{user.name}</h4>
+                <p className={`text-xs font-bold ${user.isUser ? 'text-white/70' : 'text-slate-400'}`}>LV.{user.level}</p>
+              </div>
+              <div className={`flex items-center font-black ${user.isUser ? 'text-white' : 'text-amber-500'}`}>
+                <Star className={`w-4 h-4 mr-1 ${user.isUser ? 'fill-white' : 'fill-amber-500'}`} />
+                {user.xp}
+              </div>
             </div>
-            <div className="flex items-center font-black">
-              <Star className="w-4 h-4 mr-1 fill-white" />
-              {stats.xp}
-            </div>
-          </div>
-        </div>
+          ))
+        )}
       </div>
 
       {/* Rules Modal */}
@@ -132,13 +197,12 @@ const Leaderboard: React.FC<{ stats: UserStats }> = ({ stats }) => {
                 <section className="space-y-3">
                   <div className="flex items-center space-x-2 text-indigo-600">
                     <Zap size={18} fill="currentColor" />
-                    <h4 className="font-black">如何获得经验 (XP)</h4>
+                    <h4 className="font-black">如何获得经验 (XP) & 魔法币</h4>
                   </div>
                   <ul className="space-y-2">
                     {[
-                      { label: '解锁新魔法', value: '+150 XP' },
-                      { label: '击中正确气球', value: '+150 XP' },
-                      { label: '完成连击 (Combo)', value: '+20 XP/次' },
+                      { label: '学完关卡卡片', value: '+200 XP / +20 币' },
+                      { label: '完成游乐园游戏', value: '双倍得分获得 XP' },
                       { label: '每日签到', value: '+100 XP' },
                     ].map((item, i) => (
                       <li key={i} className="flex justify-between items-center bg-slate-50 p-3 rounded-2xl border border-slate-100">
@@ -164,10 +228,10 @@ const Leaderboard: React.FC<{ stats: UserStats }> = ({ stats }) => {
                 <section className="space-y-3">
                   <div className="flex items-center space-x-2 text-rose-500">
                     <Sparkles size={18} fill="currentColor" />
-                    <h4 className="font-black">星币奖励</h4>
+                    <h4 className="font-black">魔法商店</h4>
                   </div>
                   <p className="text-xs font-bold text-slate-500">
-                    星币可用于在魔法商店兑换稀有装扮和道具（即将开启）。
+                    魔法币可用于在魔法商店兑换稀有装扮和道具。你可以为自己选择的英雄（无畏剑士、奇幻女巫、灵动狐仙、潜行暗影）穿戴这些装备！
                   </p>
                 </section>
               </div>
