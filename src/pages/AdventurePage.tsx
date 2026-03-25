@@ -245,6 +245,7 @@ const AdventurePage: React.FC<AdventureForestProps> = ({ onClose, onCompleteLeve
           const newMastered = [...new Set([...masteredLevels, masteredId])];
           
           // 2. Explicitly unlock current and next level by adding them to completedLevels
+          // This ensures that the current level is unlocked and accessible immediately
           const currentId = activeLevel!.id;
           const nextId = activeLevel!.id + 1;
           const newCompleted = [...new Set([...completedLevels, masteredId, currentId, nextId])];

@@ -1,7 +1,15 @@
 import { GoogleGenAI } from "@google/genai";
 import { SHOP_ITEMS } from "../constants";
 
-const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
+let aiInstance: GoogleGenAI | null = null;
+
+const getAi = () => {
+  if (!aiInstance) {
+    const apiKey = process.env.GEMINI_API_KEY || "";
+    aiInstance = new GoogleGenAI({ apiKey });
+  }
+  return aiInstance;
+};
 
 export const PORTRAIT_PROMPTS: Record<string, string> = {
   c1: "High-end 2D Cel-shaded digital painting of a brave young male knight named Aethelred. He has spiky blue-tinted hair, silver-blue plate armor with gold lion emblems. Chibi-proportioned, vibrant colors, clean line art, white background.",
@@ -18,6 +26,7 @@ export const PORTRAIT_FALLBACKS: Record<string, string> = {
 };
 
 export async function generateCharacterPortrait(characterId: string, equippedItems: string[] = []): Promise<string | null> {
+  const ai = getAi();
   let basePrompt = PORTRAIT_PROMPTS[characterId];
   if (!basePrompt) return null;
 
