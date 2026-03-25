@@ -70,6 +70,9 @@ export interface UserStats {
   equippedItems: Record<string, string[]>; // characterId -> itemIds
   unlockedItems: string[];
   completedLevelsCount: number;
+  completedLevelIds: number[];
+  masteredLevelIds: number[];
+  cardsPerDay?: number;
   characterStats: Record<string, {
     level: number;
     strength: number;
@@ -143,6 +146,9 @@ export type AdventureMode = 'RELAXED' | 'SPEED';
 export interface AdventureForestProps {
   onClose: () => void;
   onCompleteLevel?: (words: WordItem[]) => void;
+  onReward?: (xp: number, coins: number) => void;
+  stats: UserStats;
+  onUpdateStats: (stats: Partial<UserStats>) => void;
 }
 
 export type ViewState = 'HOME' | 'CARDS' | 'VIDEOS' | 'CHALLENGE' | 'SCRAMBLE' | 'MEMORY' | 'BALLOON' | 'WHACK' | 'RANKING' | 'UPLOAD' | 'ARCADE' | 'SHEEP' | 'COLLECTION' | 'ADVENTURE' | 'DUBBING' | 'SHOP' | 'PETS';

@@ -8,6 +8,7 @@ import {
 import { Pet, UserStats, ShopItem } from '../types';
 import audio from '../utils/AudioUtils';
 import confetti from 'canvas-confetti';
+import { getShopImageUrl } from '../constants';
 
 interface PetPageProps {
   stats: UserStats;
@@ -23,9 +24,9 @@ const PET_EMOJIS: Record<string, string> = {
 };
 
 const FOOD_ITEMS: ShopItem[] = [
-  { id: 'food_apple', name: '魔法苹果', description: '恢复 10 点生命值', price: 50, type: 'FOOD', characterId: 'all', slot: 'NONE', foodValue: 10 },
-  { id: 'food_meat', name: '优质肉块', description: '恢复 25 点生命值', price: 100, type: 'FOOD', characterId: 'all', slot: 'NONE', foodValue: 25 },
-  { id: 'food_elixir', name: '生命灵药', description: '恢复 50 点生命值', price: 200, type: 'FOOD', characterId: 'all', slot: 'NONE', foodValue: 50 },
+  { id: 'food_apple', name: '魔法苹果', description: '恢复 10 点生命值', price: 50, type: 'FOOD', characterId: 'all', slot: 'NONE', foodValue: 10, imageUrl: getShopImageUrl('魔法苹果') },
+  { id: 'food_meat', name: '优质肉块', description: '恢复 25 点生命值', price: 100, type: 'FOOD', characterId: 'all', slot: 'NONE', foodValue: 25, imageUrl: getShopImageUrl('优质肉块') },
+  { id: 'food_elixir', name: '生命灵药', description: '恢复 50 点生命值', price: 200, type: 'FOOD', characterId: 'all', slot: 'NONE', foodValue: 50, imageUrl: getShopImageUrl('生命灵药') },
 ];
 
 const PetPage: React.FC<PetPageProps> = ({ stats, onUpdateStats, onClose }) => {
@@ -123,35 +124,43 @@ const PetPage: React.FC<PetPageProps> = ({ stats, onUpdateStats, onClose }) => {
                 <div className="relative inline-block perspective-1000">
                   <motion.div
                     animate={activePet.isDead ? {} : {
-                      y: [0, -25, 0],
-                      scale: isFeeding ? [1, 1.3, 1] : [1, 1.08, 1],
-                      rotateY: [0, 15, -15, 0],
+                      y: [0, -15, 0],
+                      scale: isFeeding ? [1, 1.2, 1] : [1, 1.05, 1],
+                      rotateY: [0, 10, -10, 0],
                       rotateX: [0, 5, -5, 0],
-                      scaleX: [1, 1.02, 1],
-                      scaleY: [1, 1.05, 1]
+                      skewX: [0, 2, -2, 0]
                     }}
                     transition={{ 
-                      duration: isFeeding ? 0.4 : 4, 
-                      repeat: isFeeding ? 3 : Infinity,
+                      duration: isFeeding ? 0.3 : 3, 
+                      repeat: isFeeding ? 2 : Infinity,
                       ease: "easeInOut" 
                     }}
-                    className="text-[140px] drop-shadow-[0_35px_35px_rgba(0,0,0,0.25)] relative z-20"
+                    className="w-48 h-48 flex items-center justify-center drop-shadow-[0_25px_25px_rgba(0,0,0,0.15)] relative z-20"
                     style={{ 
                       filter: activePet.isDead ? 'grayscale(100%)' : 'none',
                       transformStyle: 'preserve-3d'
                     }}
                   >
-                    {PET_EMOJIS[activePet.type]}
+                    {activePet.imageUrl ? (
+                      <img 
+                        src={activePet.imageUrl} 
+                        alt={activePet.name}
+                        className="w-full h-full object-contain"
+                        referrerPolicy="no-referrer"
+                      />
+                    ) : (
+                      <span className="text-[140px]">{PET_EMOJIS[activePet.type]}</span>
+                    )}
                     
                     {/* Glow Effect */}
                     {!activePet.isDead && (
                       <motion.div
                         animate={{ 
-                          scale: [1, 1.2, 1],
-                          opacity: [0.3, 0.6, 0.3]
+                          scale: [1, 1.3, 1],
+                          opacity: [0.2, 0.4, 0.2]
                         }}
-                        transition={{ duration: 3, repeat: Infinity }}
-                        className="absolute inset-0 bg-indigo-400/30 blur-[60px] rounded-full -z-10"
+                        transition={{ duration: 4, repeat: Infinity }}
+                        className="absolute inset-0 bg-indigo-400/20 blur-[50px] rounded-full -z-10"
                       />
                     )}
                   </motion.div>
@@ -263,8 +272,12 @@ const PetPage: React.FC<PetPageProps> = ({ stats, onUpdateStats, onClose }) => {
                       className="bg-white p-4 rounded-3xl border-2 border-indigo-50 hover:border-indigo-500 transition-all flex items-center justify-between group disabled:opacity-50"
                     >
                       <div className="flex items-center space-x-4">
-                        <div className="w-12 h-12 bg-indigo-50 rounded-2xl flex items-center justify-center text-2xl group-hover:scale-110 transition-transform">
-                          {food.id === 'food_apple' ? '🍎' : food.id === 'food_meat' ? '🍖' : '🧪'}
+                        <div className="w-12 h-12 bg-indigo-50 rounded-2xl flex items-center justify-center text-2xl group-hover:scale-110 transition-transform overflow-hidden p-1">
+                          {food.imageUrl ? (
+                            <img src={food.imageUrl} alt={food.name} className="w-full h-full object-contain" referrerPolicy="no-referrer" />
+                          ) : (
+                            <span>{food.id === 'food_apple' ? '🍎' : food.id === 'food_meat' ? '🍖' : '🧪'}</span>
+                          )}
                         </div>
                         <div className="text-left">
                           <p className="font-black text-indigo-900">{food.name}</p>

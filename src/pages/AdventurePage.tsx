@@ -12,7 +12,14 @@ import audio from '../utils/AudioUtils';
 import { GoogleGenAI } from "@google/genai";
 import { auth, db, doc, getDoc, setDoc, handleFirestoreError, OperationType } from '../firebase';
 
-const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
+const getAi = () => {
+  const apiKey = process.env.GEMINI_API_KEY || process.env.API_KEY;
+  if (!apiKey) {
+    console.warn("GEMINI_API_KEY is missing. AI features will be disabled.");
+    return null;
+  }
+  return new GoogleGenAI({ apiKey });
+};
 
 type AdventureStep = 'SETUP' | 'MAP' | 'LEARN' | 'REVIEW' | 'TEST' | 'COMPLETE';
 
@@ -25,12 +32,11 @@ interface Level {
   isMastered: boolean;
 }
 
-const AdventurePage: React.FC<AdventureForestProps> = ({ onClose, onCompleteLevel }) => {
+const AdventurePage: React.FC<AdventureForestProps> = ({ onClose, onCompleteLevel, onReward, stats, onUpdateStats }) => {
   const [step, setStep] = useState<AdventureStep>('SETUP');
   const [cardsPerDay, setCardsPerDay] = useState<5 | 10>(5);
-  const [currentLevelId, setCurrentLevelId] = useState<number>(1);
-  const [completedLevels, setCompletedLevels] = useState<number[]>([]);
-  const [masteredLevels, setMasteredLevels] = useState<number[]>([]);
+  const completedLevels = useMemo(() => (stats.completedLevelIds || []).map(Number), [stats.completedLevelIds]);
+  const masteredLevels = useMemo(() => (stats.masteredLevelIds || []).map(Number), [stats.masteredLevelIds]);
   const [activeLevel, setActiveLevel] = useState<Level | null>(null);
   const [isSyncing, setIsSyncing] = useState(false);
   const [syncedImages, setSyncedImages] = useState<Record<string, string>>({});
@@ -45,6 +51,11 @@ const AdventurePage: React.FC<AdventureForestProps> = ({ onClose, onCompleteLeve
 
   const syncImage = async (wordText: string) => {
     if (isSyncing) return;
+    const ai = getAi();
+    if (!ai) {
+      console.warn("AI service not available. Please check your API key.");
+      return;
+    }
     setIsSyncing(true);
     try {
       const prompt = `High-end 2D Cel-shaded digital painting of "${wordText}". Chibi style, vibrant colors, clean line art, white background, magical fantasy theme.`;
@@ -86,63 +97,19 @@ const AdventurePage: React.FC<AdventureForestProps> = ({ onClose, onCompleteLeve
 
   // Load progress
   useEffect(() => {
-    const fetchProgress = async () => {
-      if (!auth.currentUser) return;
-      try {
-        const userDocRef = doc(db, 'users', auth.currentUser.uid);
-        const userDoc = await getDoc(userDocRef);
-        
-        if (userDoc.exists()) {
-          const data = userDoc.data();
-          // We'll store adventure progress in the user document or a subcollection
-          // For simplicity, let's assume it's in the user document
-          setCompletedLevels(data.completedLevels || []);
-          setMasteredLevels(data.masteredLevels || []);
-          if (data.cardsPerDay) {
-            setCardsPerDay(data.cardsPerDay);
-            setStep('MAP');
-          }
-        } else {
-          // Fallback to local storage if firestore fails or is empty
-          const saved = localStorage.getItem('adventure_forest_progress');
-          if (saved) {
-            const data = JSON.parse(saved);
-            setCardsPerDay(data.cardsPerDay || 5);
-            setCompletedLevels(data.completedLevels || []);
-            setMasteredLevels(data.masteredLevels || []);
-            setStep('MAP');
-          }
-        }
-      } catch (e) {
-        console.error('Failed to load adventure progress:', e);
-      }
-    };
-    
-    fetchProgress();
-  }, []);
+    if (stats.cardsPerDay) {
+      setCardsPerDay(stats.cardsPerDay as 5 | 10);
+      setStep('MAP');
+    }
+  }, [stats.cardsPerDay]);
 
   // Save progress
-  const saveProgress = async (newCompleted: number[], newMastered: number[], perDay: number = cardsPerDay) => {
-    if (!auth.currentUser) return;
-    
-    // Save to local storage as backup
-    localStorage.setItem('adventure_forest_progress', JSON.stringify({
-      cardsPerDay: perDay,
-      completedLevels: newCompleted,
-      masteredLevels: newMastered
-    }));
-
-    // Save to Firestore
-    try {
-      const userDocRef = doc(db, 'users', auth.currentUser.uid);
-      await setDoc(userDocRef, {
-        completedLevels: newCompleted,
-        masteredLevels: newMastered,
-        cardsPerDay: perDay
-      }, { merge: true });
-    } catch (error) {
-      console.error("Failed to save progress to Firestore:", error);
-    }
+  const saveProgress = (newCompleted: number[], newMastered: number[], perDay: number = cardsPerDay) => {
+    onUpdateStats({
+      completedLevelIds: newCompleted,
+      masteredLevelIds: newMastered,
+      cardsPerDay: perDay
+    } as any);
   };
 
   // Generate levels
@@ -155,7 +122,10 @@ const AdventurePage: React.FC<AdventureForestProps> = ({ onClose, onCompleteLeve
         id: levelId,
         name: levelCards[0]?.levelName || `神秘关卡 ${levelId}`,
         cards: levelCards,
-        isUnlocked: levelId === 1 || completedLevels.includes(levelId - 1),
+        isUnlocked: levelId === 1 || 
+                    completedLevels.includes(levelId) || 
+                    masteredLevels.includes(levelId) ||
+                    masteredLevels.some(id => id >= levelId - 1),
         isCompleted: completedLevels.includes(levelId),
         isMastered: masteredLevels.includes(levelId)
       });
@@ -164,9 +134,10 @@ const AdventurePage: React.FC<AdventureForestProps> = ({ onClose, onCompleteLeve
   }, [cardsPerDay, completedLevels, masteredLevels]);
 
   const startLevel = (level: Level) => {
-    console.log('Starting level:', level.id);
-    setCurrentLevelId(level.id);
+    setActiveLevel(level);
+    console.log('Starting level:', level.id, 'isUnlocked:', level.isUnlocked);
     if (!level.isUnlocked) {
+      console.log('Level is locked. Completed:', completedLevels, 'Mastered:', masteredLevels);
       setShowMasteryPrompt(true);
       return;
     }
@@ -174,16 +145,18 @@ const AdventurePage: React.FC<AdventureForestProps> = ({ onClose, onCompleteLeve
       console.error('Invalid level data:', level);
       return;
     }
-    setActiveLevel(level);
-    setCurrentLevelId(level.id);
     setCardIndex(0);
     setStep('LEARN');
   };
 
   const startChallenge = (level: Level) => {
     setActiveLevel(level);
-    setCurrentLevelId(level.id);
-    const words = level.cards.flatMap(c => c.words);
+    
+    // Use the previous level's words for the test content, except for Level 1
+    const prevLevel = levels.find(l => l.id === level.id - 1);
+    const testLevel = prevLevel || level;
+    
+    const words = testLevel.cards.flatMap(c => c.words);
     const allWords = ALL_CARDS.flatMap(c => c.words);
     
     // Phase 1: Choice (English -> Chinese)
@@ -265,11 +238,19 @@ const AdventurePage: React.FC<AdventureForestProps> = ({ onClose, onCompleteLeve
         setTestResult({ score, passed });
         
         if (passed) {
-          const newMastered = [...new Set([...masteredLevels, activeLevel!.id])];
-          const newCompleted = [...new Set([...completedLevels, activeLevel!.id])];
-          setMasteredLevels(newMastered);
-          setCompletedLevels(newCompleted);
+          const prevLevelId = activeLevel!.id - 1;
+          const masteredId = prevLevelId > 0 ? prevLevelId : activeLevel!.id;
+          
+          // 1. Mark the tested level as mastered
+          const newMastered = [...new Set([...masteredLevels, masteredId])];
+          
+          // 2. Explicitly unlock current and next level by adding them to completedLevels
+          const currentId = activeLevel!.id;
+          const nextId = activeLevel!.id + 1;
+          const newCompleted = [...new Set([...completedLevels, masteredId, currentId, nextId])];
+          
           saveProgress(newCompleted, newMastered);
+          onReward?.(100, 500);
           audio.playCheer();
           confetti({ particleCount: 100, spread: 70, origin: { y: 0.6 } });
         }
@@ -311,22 +292,11 @@ const AdventurePage: React.FC<AdventureForestProps> = ({ onClose, onCompleteLeve
     setShuffledLetters(prev => [...prev, letter]);
   };
 
-  const startNextLevel = () => {
-    const nextLevel = levels.find(l => l.id === activeLevel!.id + 1);
-    if (nextLevel) {
-      startChallenge(nextLevel);
+  const startReview = () => {
+    if (activeLevel) {
+      startChallenge(activeLevel);
     } else {
       setStep('MAP');
-    }
-  };
-
-  const startReview = () => {
-    const prevLevel = levels.find(l => l.id === currentLevelId - 1);
-    if (prevLevel) {
-      startChallenge(prevLevel);
-    } else {
-      const currentLevel = levels.find(l => l.id === currentLevelId);
-      if (currentLevel) startChallenge(currentLevel);
     }
   };
 
@@ -342,9 +312,9 @@ const AdventurePage: React.FC<AdventureForestProps> = ({ onClose, onCompleteLeve
       if (step === 'REVIEW') {
         startTest();
       } else {
-        const newCompleted = [...new Set([...completedLevels, currentLevelId])];
-        setCompletedLevels(newCompleted);
+        const newCompleted = [...new Set([...completedLevels, activeLevel.id])];
         saveProgress(newCompleted, masteredLevels);
+        onReward?.(50, 20);
         setStep('COMPLETE');
         confetti({ particleCount: 150, spread: 70, origin: { y: 0.6 } });
       }
@@ -374,11 +344,19 @@ const AdventurePage: React.FC<AdventureForestProps> = ({ onClose, onCompleteLeve
     return 'text-3xl';
   };
 
+  const handleBack = () => {
+    if (step === 'MAP' || step === 'SETUP') {
+      onClose();
+    } else {
+      setStep('MAP');
+    }
+  };
+
   return (
     <div className="fixed inset-0 bg-emerald-50 z-[60] overflow-y-auto pb-20">
       {/* Header */}
       <div className="sticky top-0 bg-white/80 backdrop-blur-md p-4 flex items-center justify-between border-b border-emerald-100 z-10">
-        <button onClick={onClose} className="p-2 hover:bg-emerald-100 rounded-full transition-colors">
+        <button onClick={handleBack} className="p-2 hover:bg-emerald-100 rounded-full transition-colors">
           <ChevronLeft size={24} className="text-emerald-700" />
         </button>
         <h2 className="text-xl font-black text-emerald-800 tracking-tight">冒险森林</h2>
@@ -410,7 +388,7 @@ const AdventurePage: React.FC<AdventureForestProps> = ({ onClose, onCompleteLeve
                   onClick={() => { 
                     setCardsPerDay(5); 
                     setStep('MAP'); 
-                    saveProgress([], [], 5); 
+                    saveProgress(completedLevels, masteredLevels, 5); 
                   }} 
                   className="bg-white p-8 rounded-[40px] border-4 border-emerald-100 hover:border-emerald-500 transition-all text-left shadow-xl shadow-emerald-100/50 relative overflow-hidden group"
                 >
@@ -431,7 +409,7 @@ const AdventurePage: React.FC<AdventureForestProps> = ({ onClose, onCompleteLeve
                   onClick={() => { 
                     setCardsPerDay(10); 
                     setStep('MAP'); 
-                    saveProgress([], [], 10); 
+                    saveProgress(completedLevels, masteredLevels, 10); 
                   }} 
                   className="bg-white p-8 rounded-[40px] border-4 border-emerald-100 hover:border-emerald-500 transition-all text-left shadow-xl shadow-emerald-100/50 relative overflow-hidden group"
                 >
@@ -470,8 +448,7 @@ const AdventurePage: React.FC<AdventureForestProps> = ({ onClose, onCompleteLeve
                     onClick={() => {
                       if (window.confirm('确定要重置所有冒险进度吗？')) {
                         localStorage.removeItem('adventure_forest_progress');
-                        setCompletedLevels([]);
-                        setMasteredLevels([]);
+                        onUpdateStats({ completedLevelIds: [], masteredLevelIds: [] });
                         setStep('SETUP');
                       }
                     }} 
@@ -611,7 +588,7 @@ const AdventurePage: React.FC<AdventureForestProps> = ({ onClose, onCompleteLeve
                     {step === 'REVIEW' ? '复习模式' : activeLevel.name}
                   </span>
                   <h3 className="text-2xl font-black text-emerald-900 leading-none">
-                    {step === 'REVIEW' ? `第 ${activeLevel.id} 关复习` : `第 ${currentLevelId} 关`}
+                    {step === 'REVIEW' ? `第 ${activeLevel.id} 关复习` : `第 ${activeLevel.id} 关`}
                   </h3>
                 </div>
                 <div className="bg-white px-4 py-2 rounded-2xl border-2 border-emerald-100 font-black text-emerald-700 text-sm">
@@ -690,7 +667,7 @@ const AdventurePage: React.FC<AdventureForestProps> = ({ onClose, onCompleteLeve
                   </motion.div>
                 </div>
 
-                <div className="grid grid-cols-2 gap-4">
+                <div className={`grid ${activeLevel.isMastered ? 'grid-cols-1' : 'grid-cols-2'} gap-4`}>
                   <button 
                     onClick={nextLearn} 
                     className="flex-1 py-6 bg-emerald-100 text-emerald-700 rounded-[32px] font-black text-xl flex items-center justify-center space-x-3 hover:bg-emerald-500 hover:text-white transition-all shadow-lg shadow-emerald-50 group"
@@ -698,13 +675,15 @@ const AdventurePage: React.FC<AdventureForestProps> = ({ onClose, onCompleteLeve
                     <span>{cardIndex === activeLevel.cards.length - 1 ? (step === 'REVIEW' ? '开始测试' : '完成学习') : '下一张'}</span>
                     <ArrowRight size={24} className="group-hover:translate-x-1 transition-transform" />
                   </button>
-                  <button 
-                    onClick={() => startChallenge(activeLevel)} 
-                    className="flex-1 py-6 bg-amber-100 text-amber-700 rounded-[32px] font-black text-xl flex items-center justify-center space-x-3 hover:bg-amber-500 hover:text-white transition-all shadow-lg shadow-amber-50 group"
-                  >
-                    <Zap size={24} />
-                    <span>直接闯关</span>
-                  </button>
+                  {!activeLevel.isMastered && (
+                    <button 
+                      onClick={() => startChallenge(activeLevel)} 
+                      className="flex-1 py-6 bg-amber-100 text-amber-700 rounded-[32px] font-black text-xl flex items-center justify-center space-x-3 hover:bg-amber-500 hover:text-white transition-all shadow-lg shadow-amber-50 group"
+                    >
+                      <Zap size={24} />
+                      <span>直接闯关</span>
+                    </button>
+                  )}
                 </div>
               </div>
             </motion.div>
@@ -802,10 +781,15 @@ const AdventurePage: React.FC<AdventureForestProps> = ({ onClose, onCompleteLeve
                   
                   {testResult.passed ? (
                     <button 
-                      onClick={startNextLevel}
+                      onClick={() => {
+                        if (activeLevel) {
+                          setCardIndex(0);
+                          setStep('LEARN');
+                        }
+                      }}
                       className="w-full py-5 bg-emerald-500 text-white rounded-[32px] font-black text-xl shadow-lg shadow-emerald-200"
                     >
-                      开启下一关
+                      进入学习
                     </button>
                   ) : (
                     <div className="grid gap-3">

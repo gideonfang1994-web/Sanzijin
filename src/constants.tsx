@@ -443,7 +443,7 @@ const getImageUrl = (name: string) => {
   return `https://img.icons8.com/fluency/200/${keyword}.png`;
 };
 
-const getShopImageUrl = (name: string) => {
+export const getShopImageUrl = (name: string) => {
   // Map Chinese names to English keywords for more reliable image fetching
   const nameMap: Record<string, string> = {
     '无畏剑士': 'warrior',

@@ -22,7 +22,7 @@ import audio from './utils/AudioUtils';
 import confetti from 'canvas-confetti';
 import { generateCharacterPortrait } from './services/portraitService';
 import { motion, AnimatePresence } from 'framer-motion';
-import { auth, db, doc, getDoc, setDoc, onAuthStateChanged, FirebaseUser, handleFirestoreError, OperationType, signInAnonymously } from './firebase';
+import { auth, db, doc, getDoc, setDoc, onAuthStateChanged, FirebaseUser, handleFirestoreError, OperationType, signInWithPopup, googleProvider, signOut } from './firebase';
 
 const App: React.FC = () => {
   const [user, setUser] = useState<FirebaseUser | null>(null);
@@ -66,26 +66,17 @@ const App: React.FC = () => {
     equippedItems: {},
     unlockedItems: [],
     completedLevelsCount: 0,
+    completedLevelIds: [],
+    masteredLevelIds: [],
     characterStats: initialCharacterStats,
     pets: []
   });
 
   // Auth listener
   useEffect(() => {
-    const unsubscribe = onAuthStateChanged(auth, async (currentUser) => {
-      if (!currentUser) {
-        try {
-          // Try to sign in anonymously, but don't block if it fails
-          await signInAnonymously(auth);
-        } catch (error: any) {
-          console.error("Anonymous login failed (likely disabled in console):", error);
-          // Proceed as guest if Firebase is not configured for anonymous auth
-          setLoading(false);
-        }
-      } else {
-        setUser(currentUser);
-        setLoading(false);
-      }
+    const unsubscribe = onAuthStateChanged(auth, (currentUser) => {
+      setUser(currentUser);
+      setLoading(false);
     });
 
     // Safety timeout: if auth takes more than 1.5 seconds, just show the app
@@ -98,6 +89,23 @@ const App: React.FC = () => {
       clearTimeout(timer);
     };
   }, []);
+
+  const handleLogin = async () => {
+    try {
+      await signInWithPopup(auth, googleProvider);
+    } catch (error) {
+      console.error("Login failed:", error);
+    }
+  };
+
+  const handleLogout = async () => {
+    try {
+      await signOut(auth);
+      setUser(null);
+    } catch (error) {
+      console.error("Logout failed:", error);
+    }
+  };
 
   // Fetch/Sync user stats from Firestore
   useEffect(() => {
@@ -137,6 +145,9 @@ const App: React.FC = () => {
 
   // Sync stats to Firestore whenever they change
   useEffect(() => {
+    // Also save to local storage for guest users or as backup
+    localStorage.setItem('wordland_stats', JSON.stringify(stats));
+
     if (!user) return;
     
     const syncStats = async () => {
@@ -199,6 +210,21 @@ const App: React.FC = () => {
     const savedGroups = localStorage.getItem('wordland_groups');
     if (savedGroups) setGroups(JSON.parse(savedGroups));
     else setGroups(constants.INITIAL_GROUPS);
+    
+    const savedStats = localStorage.getItem('wordland_stats');
+    if (savedStats) {
+      try {
+        const parsedStats = JSON.parse(savedStats);
+        setStats(prev => ({
+          ...prev,
+          ...parsedStats,
+          quests: parsedStats.quests || prev.quests,
+          characterStats: parsedStats.characterStats || prev.characterStats
+        }));
+      } catch (e) {
+        console.error("Failed to parse saved stats:", e);
+      }
+    }
     
     const initializePortraits = async (currentStats: UserStats) => {
       let updated = false;
@@ -339,7 +365,6 @@ const App: React.FC = () => {
       }
       
       const newStats = { ...prev, wordMastery: newMastery, masteredWords: newMasteredWords };
-      localStorage.setItem('wordland_stats', JSON.stringify(newStats));
       return newStats;
     });
   };
@@ -446,7 +471,6 @@ const App: React.FC = () => {
         };
       }
       
-      localStorage.setItem('wordland_stats', JSON.stringify(newStats));
       return newStats;
     });
   };
@@ -487,7 +511,6 @@ const App: React.FC = () => {
           [characterId]: newEquipped
         }
       };
-      localStorage.setItem('wordland_stats', JSON.stringify(newStats));
       return newStats;
     });
 
@@ -515,10 +538,42 @@ const App: React.FC = () => {
   const handleSelectCharacter = (characterId: string) => {
     setStats(prev => {
       const newStats = { ...prev, selectedCharacterId: characterId };
-      localStorage.setItem('wordland_stats', JSON.stringify(newStats));
       return newStats;
     });
   };
+
+  const handleReward = useCallback((xp: number, coins: number) => {
+    setStats(prev => {
+      const newXp = prev.xp + xp;
+      const newLevel = Math.floor(newXp / 1000) + 1;
+      const newMagicCoins = prev.magicCoins + coins;
+      
+      if (newLevel > prev.level) {
+        audio.playLevelUp();
+        setNewLevel(newLevel);
+        setShowLevelUp(true);
+        confetti({
+          particleCount: 150,
+          spread: 100,
+          origin: { y: 0.3 }
+        });
+      }
+
+      const newRank = Math.max(1, 15 - Math.floor(newXp / 500));
+      
+      return { 
+        ...prev, 
+        xp: newXp, 
+        magicCoins: newMagicCoins,
+        level: newLevel,
+        rank: newRank
+      };
+    });
+  }, []);
+
+  const handleUpdateStats = useCallback((newStats: Partial<UserStats>) => {
+    setStats(prev => ({ ...prev, ...newStats }));
+  }, []);
 
   if (loading) {
     return (
@@ -531,6 +586,33 @@ const App: React.FC = () => {
 
   return (
     <div className="min-h-screen pt-10 pb-32 px-5 flex flex-col items-center max-w-lg mx-auto overflow-x-hidden relative bg-gradient-to-b from-indigo-50/50 to-white">
+      {/* User Auth Header */}
+      <div className="absolute top-4 right-4 z-[70]">
+        {user ? (
+          <button 
+            onClick={handleLogout}
+            className="flex items-center space-x-2 bg-white/80 backdrop-blur-sm p-1.5 pr-3 rounded-full border border-indigo-100 shadow-sm hover:bg-white transition-all"
+          >
+            {user.photoURL ? (
+              <img src={user.photoURL} alt="" className="w-7 h-7 rounded-full border border-indigo-200" referrerPolicy="no-referrer" />
+            ) : (
+              <div className="w-7 h-7 rounded-full bg-indigo-500 flex items-center justify-center text-white text-[10px] font-black">
+                {user.displayName?.charAt(0) || 'U'}
+              </div>
+            )}
+            <span className="text-[10px] font-black text-slate-600 truncate max-w-[60px]">退出</span>
+          </button>
+        ) : (
+          <button 
+            onClick={handleLogin}
+            className="flex items-center space-x-2 bg-indigo-600 text-white px-4 py-2 rounded-full shadow-lg shadow-indigo-200 hover:bg-indigo-700 transition-all text-xs font-black"
+          >
+            <Award size={14} />
+            <span>登录同步</span>
+          </button>
+        )}
+      </div>
+
       <main className="w-full flex-1 flex flex-col">
         {view === 'HOME' && (
           <HomePage 
@@ -545,6 +627,9 @@ const App: React.FC = () => {
         {view === 'ADVENTURE' && (
           <AdventurePage 
             onClose={() => handleNavigate('HOME')} 
+            onReward={handleReward}
+            stats={stats}
+            onUpdateStats={handleUpdateStats}
             onCompleteLevel={(words) => {
               setLastLearnedWords(words);
               setStats(prev => {
@@ -555,7 +640,6 @@ const App: React.FC = () => {
                   masteredWords: newMastered,
                   completedLevelsCount: prev.completedLevelsCount + 1
                 };
-                localStorage.setItem('wordland_stats', JSON.stringify(newStats));
                 return newStats;
               });
               handleNavigate('ARCADE');
