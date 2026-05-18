@@ -1,6 +1,7 @@
 {
-  "name": "Adventure Forest Word Quest",
-  "description": "A gamified word learning adventure in a magical forest. Choose your pace, unlock levels, and master vocabulary through challenges, games, and voice dubbing magic.",
+  "name": "单词奇旅",
+  "description": "一场充满魔法的单词森林大冒险。在这里，你将穿越翠绿森林，解开单词谜题，与皮皮导师一起学习发音，开启一段奇幻的拼读旅程。",
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"],
   "requestFramePermissions": [
     "camera",
     "microphone"

@@ -18,7 +18,7 @@ import MagicShop from './components/MagicShop';
 import PetPage from './pages/PetPage';
 import constants from './constants';
 import { WordGroup, UserStats, ViewState, DailyQuest, Word, WordItem, ShopItem, Pet } from './types';
-import { Home, BookOpen, Gamepad2, BarChart3, Award, ShoppingBag, Heart } from 'lucide-react';
+import { Home, BookOpen, Gamepad2, BarChart3, Award, ShoppingBag, Heart, Compass } from 'lucide-react';
 import audio from './utils/AudioUtils';
 import confetti from 'canvas-confetti';
 import { generateCharacterPortrait } from './services/portraitService';
@@ -75,6 +75,8 @@ const App: React.FC = () => {
     characterStats: initialCharacterStats,
     pets: []
   });
+
+  const [showWelcome, setShowWelcome] = useState(true);
 
   // Auth listener
   useEffect(() => {
@@ -650,6 +652,167 @@ const App: React.FC = () => {
         <div className="w-16 h-16 border-4 border-indigo-500 border-t-transparent rounded-full animate-spin mb-4" />
         <p className="text-indigo-600 font-bold animate-pulse">正在开启魔法冒险...</p>
       </div>
+    );
+  }
+
+  if (showWelcome) {
+    return (
+      <motion.div 
+        className="fixed inset-0 z-[200] bg-gradient-to-br from-emerald-600 via-green-500 to-emerald-800 flex flex-col items-center justify-center overflow-hidden"
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        exit={{ opacity: 0 }}
+      >
+        {/* Animated Forest Background Elements */}
+        <div className="absolute inset-0 overflow-hidden pointer-events-none">
+          {/* Floating Sparkles/Fireflies */}
+          {[...Array(20)].map((_, i) => (
+            <motion.div
+              key={i}
+              className="absolute w-1.5 h-1.5 bg-yellow-200 rounded-full blur-[1px]"
+              initial={{ 
+                x: Math.random() * 100 + "%", 
+                y: Math.random() * 100 + "%",
+                opacity: Math.random() * 0.5 + 0.2
+              }}
+              animate={{ 
+                y: [null, "-20%", "20%"],
+                x: [null, "10%", "-10%"],
+                opacity: [0.2, 0.8, 0.2],
+                scale: [1, 1.5, 1]
+              }}
+              transition={{ 
+                duration: 5 + Math.random() * 5, 
+                repeat: Infinity, 
+                ease: "easeInOut",
+                delay: Math.random() * 5
+              }}
+            />
+          ))}
+          
+          {/* Falling Leaves */}
+          {[...Array(12)].map((_, i) => (
+            <motion.div
+              key={`leaf-${i}`}
+              className="absolute text-4xl"
+              initial={{ 
+                x: Math.random() * 100 + "%", 
+                y: -100,
+                rotate: 0 
+              }}
+              animate={{ 
+                y: window.innerHeight + 100,
+                x: [null, (Math.random() - 0.5) * 200 + "px"],
+                rotate: 360
+              }}
+              transition={{ 
+                duration: 10 + Math.random() * 15, 
+                repeat: Infinity, 
+                ease: "linear",
+                delay: Math.random() * 10
+              }}
+            >
+              {['🍃', '🌿', '🍂', '🍁'][Math.floor(Math.random() * 4)]}
+            </motion.div>
+          ))}
+        </div>
+
+        <motion.div
+           initial={{ scale: 0.5, opacity: 0, y: 50 }}
+           animate={{ scale: 1, opacity: 1, y: 0 }}
+           transition={{ type: "spring", damping: 15, stiffness: 100 }}
+           className="relative z-10 flex flex-col items-center"
+        >
+          {/* Main Visual Container */}
+          <div className="relative mb-12">
+            <motion.div
+              animate={{ 
+                scale: [1, 1.05, 1],
+                rotate: [0, 2, -2, 0]
+              }}
+              transition={{ duration: 6, repeat: Infinity, ease: "easeInOut" }}
+              className="w-48 h-48 bg-white/20 backdrop-blur-2xl rounded-[56px] border-4 border-white/40 flex items-center justify-center shadow-[0_20px_50px_rgba(0,0,0,0.2)] relative"
+            >
+              <motion.div
+                animate={{ rotate: 360 }}
+                transition={{ duration: 25, repeat: Infinity, ease: "linear" }}
+                className="absolute inset-0 border-2 border-white/30 rounded-[56px] border-dashed scale-110"
+              />
+              <span className="text-9xl relative z-10">🌳</span>
+              
+              {/* Character Pipi/Tiger popping up */}
+              <motion.div
+                initial={{ y: 20, opacity: 0 }}
+                animate={{ y: 0, opacity: 1 }}
+                transition={{ delay: 0.8, type: "spring" }}
+                className="absolute -bottom-6 -right-6 w-20 h-20 bg-emerald-100 rounded-3xl border-4 border-white shadow-xl flex items-center justify-center text-4xl"
+              >
+                🐯
+              </motion.div>
+            </motion.div>
+            
+            {/* Pulsing light behind */}
+            <div className="absolute inset-0 bg-white/30 blur-[60px] rounded-full -z-10 animate-pulse" />
+          </div>
+          
+          <div className="text-center space-y-2">
+            <motion.h1 
+              className="text-7xl font-black text-white text-stroke-2 drop-shadow-[0_10px_10px_rgba(0,0,0,0.3)] tracking-tighter"
+              animate={{ y: [0, -5, 0] }}
+              transition={{ duration: 4, repeat: Infinity, ease: "easeInOut" }}
+            >
+              单词奇旅
+            </motion.h1>
+            <motion.div 
+              className="flex items-center justify-center space-x-3 text-emerald-100/80"
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              transition={{ delay: 0.5 }}
+            >
+              <div className="h-[2px] w-8 bg-current" />
+              <p className="text-lg font-bold uppercase tracking-[0.4em]">
+                森林魔法乐园
+              </p>
+              <div className="h-[2px] w-8 bg-current" />
+            </motion.div>
+          </div>
+          
+          <div className="mt-16 relative">
+            {/* Button Glint/Magical Shadow */}
+            <div className="absolute inset-0 bg-emerald-400 blur-2xl opacity-40 scale-110 animate-pulse" />
+            
+            <motion.button
+              whileHover={{ scale: 1.08, y: -4 }}
+              whileTap={{ scale: 0.92 }}
+              onClick={() => { audio.playClick(); setShowWelcome(false); }}
+              className="group relative px-16 py-6 bg-white rounded-[40px] font-black text-3xl text-emerald-600 shadow-[0_15px_30px_rgba(0,0,0,0.2),inset_0_-8px_0_#D1FAE5] hover:bg-emerald-50 transition-all flex items-center space-x-4 overflow-hidden"
+            >
+              <span className="relative z-10">开启探险</span>
+              <motion.div
+                animate={{ x: [0, 6, 0], rotate: [0, 10, -10, 0] }}
+                transition={{ repeat: Infinity, duration: 2 }}
+                className="relative z-10"
+              >
+                <Compass className="w-10 h-10" />
+              </motion.div>
+              
+              {/* Shine effect on button */}
+              <motion.div 
+                className="absolute inset-0 bg-gradient-to-r from-transparent via-white/40 to-transparent -translate-x-full group-hover:animate-shine"
+                style={{ skewX: '-20deg' }}
+              />
+            </motion.button>
+          </div>
+        </motion.div>
+        
+        {/* Decorative elements in corners */}
+        <div className="absolute top-10 left-10 text-6xl opacity-30 animate-bounce-gentle">🍄</div>
+        <div className="absolute bottom-10 right-10 text-6xl opacity-30 animate-bounce-gentle" style={{ animationDelay: '1s' }}>🌺</div>
+        <div className="absolute top-1/3 right-10 text-5xl opacity-20 rotate-12">🦋</div>
+        <div className="absolute bottom-1/4 left-10 text-5xl opacity-20 -rotate-12">🦉</div>
+        
+
+      </motion.div>
     );
   }
 

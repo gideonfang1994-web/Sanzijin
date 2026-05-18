@@ -55,10 +55,10 @@ const WordLandCard: React.FC<Props> = ({ card, onLearned, onNext, isLast, onChal
         onClick={() => setIsFlipped(!isFlipped)}
       >
         {/* Front Side: Words */}
-        <div className="absolute inset-0 backface-hidden bg-white rounded-[60px] shadow-2xl border-[6px] border-indigo-50 p-10 flex flex-col justify-between">
+        <div className="absolute inset-0 backface-hidden bg-white rounded-[60px] shadow-2xl border-[6px] border-emerald-50 p-10 flex flex-col justify-between">
           <div className="flex justify-between items-start">
-            <h2 className="text-4xl font-black text-slate-800 tracking-tight">{card.suffix} 魔法</h2>
-            <div className="p-3 bg-indigo-50 rounded-2xl text-indigo-600">
+            <h2 className="text-4xl font-black text-emerald-800 tracking-tight">{card.suffix} 魔法</h2>
+            <div className="p-3 bg-emerald-50 rounded-2xl text-emerald-600">
               <RotateCw size={24} />
             </div>
           </div>
@@ -99,7 +99,7 @@ const WordLandCard: React.FC<Props> = ({ card, onLearned, onNext, isLast, onChal
         </div>
 
         {/* Back Side: Rhyme */}
-        <div className="absolute inset-0 backface-hidden bg-indigo-600 rounded-[60px] shadow-2xl border-[6px] border-white/20 p-10 flex flex-col justify-between rotate-y-180">
+        <div className="absolute inset-0 backface-hidden bg-emerald-600 rounded-[60px] shadow-2xl border-[6px] border-white/20 p-10 flex flex-col justify-between rotate-y-180">
           <div className="flex justify-between items-start">
             <h2 className="text-4xl font-black text-white/50 tracking-tight">三字经</h2>
             <div className="p-3 bg-white/10 rounded-2xl text-white">
@@ -138,7 +138,7 @@ const WordLandCard: React.FC<Props> = ({ card, onLearned, onNext, isLast, onChal
         {!isLast ? (
           <button 
             onClick={() => { handleFinishCard(); onNext(); }}
-            className="w-full py-6 rounded-[32px] font-black text-xl bg-indigo-600 text-white shadow-[0_8px_0_#312E81] flex items-center justify-center transition-all puffy-button"
+            className="w-full py-6 rounded-[32px] font-black text-xl bg-emerald-600 text-white shadow-[0_8px_0_#064E3B] flex items-center justify-center transition-all puffy-button"
           >
             下一张 <ChevronRight className="ml-2" />
           </button>

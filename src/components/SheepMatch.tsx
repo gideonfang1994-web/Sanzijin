@@ -31,6 +31,51 @@ const SheepMatch: React.FC<Props> = ({ groups, onFinish, onClose }) => {
   const [gameState, setGameState] = useState<'PLAYING' | 'WON' | 'LOST'>('PLAYING');
   const [level, setLevel] = useState(1);
   const [score, setScore] = useState(0);
+  const [lastMatchTime, setLastMatchTime] = useState(0);
+  const [combo, setCombo] = useState(0);
+  const [feedback, setFeedback] = useState<{ text: string, subtext: string, color: string, bgColor: string, borderColor: string } | null>(null);
+
+  const feedbackLevels = [
+    { 
+      threshold: 2, 
+      slogans: ['连消!', '精准捕捉!', '双重魔力!', '眼疾手快!', '森林律动!'],
+      subtext: 'COMBO MATCH',
+      color: 'text-emerald-600',
+      bgColor: 'bg-emerald-50',
+      borderColor: 'border-emerald-200'
+    },
+    { 
+      threshold: 3, 
+      slogans: ['三连奇迹!', '自然赐福!', '三阳开泰!', '森林守护!', '绝妙共响!'],
+      subtext: 'NATURE BLESSED',
+      color: 'text-amber-600',
+      bgColor: 'bg-amber-50',
+      borderColor: 'border-amber-300'
+    },
+    { 
+      threshold: 4, 
+      slogans: ['魔法风暴!', '森林之王!', '瞬息万变!', '绝对掌控!', '神迹重现!'],
+      subtext: 'LEGENDARY MATCH',
+      color: 'text-indigo-600',
+      bgColor: 'bg-indigo-50',
+      borderColor: 'border-indigo-300'
+    },
+  ];
+
+  const triggerFeedback = (count: number) => {
+    const level = [...feedbackLevels].reverse().find(l => count >= l.threshold);
+    if (level) {
+      const randomSlogan = level.slogans[Math.floor(Math.random() * level.slogans.length)];
+      setFeedback({ 
+        text: randomSlogan, 
+        subtext: level.subtext,
+        color: level.color,
+        bgColor: level.bgColor,
+        borderColor: level.borderColor
+      });
+      setTimeout(() => setFeedback(null), 1200);
+    }
+  };
 
   const SLOT_CAPACITY = 7;
   const [syncedImages, setSyncedImages] = useState<Record<string, string>>({});
@@ -148,13 +193,24 @@ const SheepMatch: React.FC<Props> = ({ groups, onFinish, onClose }) => {
         
         const finalSlots = sortedSlots.filter(s => s.wordId !== tile.wordId);
         setSlots(finalSlots);
-        setScore(prev => prev + 100);
+
+        const now = Date.now();
+        let newCombo = 1;
+        if (now - lastMatchTime < 3000) {
+          newCombo = combo + 1;
+        }
+        setCombo(newCombo);
+        setLastMatchTime(now);
+        triggerFeedback(newCombo);
+        
+        const comboBonus = (newCombo - 1) * 50;
+        setScore(prev => prev + 100 + comboBonus);
         
         confetti({
-          particleCount: 20,
-          spread: 30,
+          particleCount: 20 + newCombo * 10,
+          spread: 30 + newCombo * 5,
           origin: { y: 0.8 },
-          colors: ['#10b981', '#34d399']
+          colors: ['#10b981', '#34d399', '#fbbf24']
         });
 
         if (remainingTiles.length === 0 && finalSlots.length === 0) {
@@ -211,6 +267,42 @@ const SheepMatch: React.FC<Props> = ({ groups, onFinish, onClose }) => {
       </div>
 
       <nav className="p-6 flex items-center justify-between bg-white/80 backdrop-blur-xl border-b-2 border-emerald-100 relative z-20">
+        <AnimatePresence>
+          {feedback && (
+            <motion.div 
+              initial={{ scale: 0.6, opacity: 0, y: 60, rotate: -5 }}
+              animate={{ scale: 1, opacity: 1, y: 100, rotate: 0 }}
+              exit={{ scale: 1.2, opacity: 0, y: 140 }}
+              className="absolute inset-0 flex items-center justify-center z-30 pointer-events-none"
+            >
+              <div className={`flex flex-col items-center justify-center ${feedback.bgColor} ${feedback.borderColor} border-2 px-8 py-3.5 rounded-[32px] shadow-[0_20px_40px_rgba(0,0,0,0.12)] backdrop-blur-md`}>
+                <div className="flex items-center space-x-2 mb-0.5">
+                  <Star className={feedback.color} size={15} fill="currentColor" />
+                  <span className={`text-[9px] font-black uppercase tracking-[0.3em] ${feedback.color} opacity-70`}>
+                    {feedback.subtext}
+                  </span>
+                  <Star className={feedback.color} size={15} fill="currentColor" />
+                </div>
+                <div className={`${feedback.color} font-black text-3xl tracking-tight italic`}>
+                  {feedback.text}
+                </div>
+              </div>
+            </motion.div>
+          )}
+          
+          {combo >= 2 && (
+             <motion.div
+               key="combo-badge"
+               initial={{ y: -50, opacity: 0, scale: 0.5 }}
+               animate={{ y: 0, opacity: 1, scale: 1 }}
+               className="absolute top-2 left-1/2 -translate-x-1/2 bg-gradient-to-r from-emerald-400 to-teal-500 text-white px-5 py-1.5 rounded-full font-black text-xs italic shadow-lg border-b-4 border-emerald-700 flex items-center space-x-1.5 z-40"
+             >
+               <Zap size={14} className="animate-pulse" />
+               <span>{combo} COMBO!</span>
+             </motion.div>
+          )}
+        </AnimatePresence>
+        
         <div className="flex items-center space-x-3">
           <div className="bg-emerald-600 p-3 rounded-2xl text-white shadow-xl shadow-emerald-100 relative overflow-hidden group">
             <Layers size={24} className="relative z-10" />

@@ -1,8 +1,8 @@
 
 import React, { useState, useEffect, useMemo } from 'react';
 import { WordGroup, WordItem } from '../types';
-import { Timer, Star, Zap, Headphones, Trophy, X } from 'lucide-react';
-import { motion } from 'motion/react';
+import { Timer, Star, Zap, Headphones, Trophy, X, Sparkles } from 'lucide-react';
+import { motion, AnimatePresence } from 'framer-motion';
 import audio from '../utils/AudioUtils';
 import confetti from 'canvas-confetti';
 import SafeImage from './SafeImage';
@@ -23,6 +23,49 @@ const LetterScramble: React.FC<Props> = ({ groups, isReviewMode, onFinish, onClo
   const [timeLeft, setTimeLeft] = useState(30);
   const [combo, setCombo] = useState(0);
   const [isWrong, setIsWrong] = useState(false);
+  const [feedback, setFeedback] = useState<{ text: string, subtext: string, color: string, bgColor: string, borderColor: string } | null>(null);
+
+  const feedbackLevels = [
+    { 
+      threshold: 2, 
+      slogans: ['林间疾风!', '灵感火花!', '初露锋芒!', '草木共鸣!', '星火燎原!'],
+      subtext: 'LEVEL UP',
+      color: 'text-amber-600',
+      bgColor: 'bg-amber-50',
+      borderColor: 'border-amber-200'
+    },
+    { 
+      threshold: 5, 
+      slogans: ['丛林智者!', '词海弄潮!', '秘境探险!', '博雅之才!', '灵犀一指!'],
+      subtext: 'EXPERT',
+      color: 'text-emerald-600',
+      bgColor: 'bg-emerald-50',
+      borderColor: 'border-emerald-200'
+    },
+    { 
+      threshold: 10, 
+      slogans: ['森罗万象!', '神迹降临!', '星辰指引!', '绝对掌控!', '词灵合一!'],
+      subtext: 'LEGEND',
+      color: 'text-indigo-600',
+      bgColor: 'bg-indigo-50',
+      borderColor: 'border-indigo-200'
+    },
+  ];
+
+  const triggerFeedback = (count: number) => {
+    const level = [...feedbackLevels].reverse().find(l => count >= l.threshold);
+    if (level) {
+      const randomSlogan = level.slogans[Math.floor(Math.random() * level.slogans.length)];
+      setFeedback({ 
+        text: randomSlogan, 
+        subtext: level.subtext,
+        color: level.color,
+        bgColor: level.bgColor,
+        borderColor: level.borderColor
+      });
+      setTimeout(() => setFeedback(null), 1200);
+    }
+  };
 
   const pool = useMemo(() => {
     return groups.flatMap(g => g.words);
@@ -118,7 +161,9 @@ const LetterScramble: React.FC<Props> = ({ groups, isReviewMode, onFinish, onClo
     audio.playSuccess();
     const earned = 200 + timeLeft * 10 + (combo * 50);
     setScore(prev => prev + earned);
-    setCombo(prev => prev + 1);
+    const newCombo = combo + 1;
+    setCombo(newCombo);
+    triggerFeedback(newCombo);
     
     confetti({
       particleCount: 40,
@@ -172,7 +217,54 @@ const LetterScramble: React.FC<Props> = ({ groups, isReviewMode, onFinish, onClo
   }
 
   return (
-    <div className="flex flex-col h-full space-y-4 font-sans">
+    <div className="flex flex-col h-full space-y-4 font-sans relative overflow-hidden">
+      {/* Combo feedback overlay */}
+      <AnimatePresence>
+        {feedback && (
+          <motion.div 
+            initial={{ scale: 0.6, opacity: 0, y: 100, rotate: -5 }}
+            animate={{ scale: 1, opacity: 1, y: -100, rotate: 0 }}
+            exit={{ scale: 1.2, opacity: 0, y: -140 }}
+            className="absolute inset-0 flex items-center justify-center z-50 pointer-events-none"
+          >
+            <div className={`flex flex-col items-center justify-center ${feedback.bgColor} ${feedback.borderColor} border-2 px-8 py-3.5 rounded-[32px] shadow-[0_20px_40px_rgba(0,0,0,0.12)] backdrop-blur-md`}>
+              <div className="flex items-center space-x-2 mb-0.5">
+                <Sparkles className={feedback.color} size={16} />
+                <span className={`text-[9px] font-black uppercase tracking-[0.3em] ${feedback.color} opacity-70`}>
+                  {feedback.subtext}
+                </span>
+                <Sparkles className={feedback.color} size={16} />
+              </div>
+              <div className={`${feedback.color} font-black text-3xl tracking-tight italic`}>
+                {feedback.text}
+              </div>
+              <div className="mt-2 flex space-x-1">
+                 {[...Array(3)].map((_, i) => (
+                   <motion.div
+                     key={i}
+                     animate={{ scale: [1, 1.4, 1], opacity: [0.3, 0.8, 0.3] }}
+                     transition={{ duration: 0.8, repeat: Infinity, delay: i * 0.15 }}
+                     className={`w-1 h-1 rounded-full ${feedback.color} bg-current`}
+                   />
+                 ))}
+              </div>
+            </div>
+          </motion.div>
+        )}
+        
+        {combo >= 2 && (
+           <motion.div
+             key="combo-badge"
+             initial={{ x: 50, opacity: 0, scale: 0.5 }}
+             animate={{ x: 0, opacity: 1, scale: 1 }}
+             className="absolute top-24 right-6 bg-gradient-to-r from-amber-400 to-orange-500 text-white px-5 py-2 rounded-2xl font-black text-sm italic shadow-xl z-40 border-b-4 border-orange-700 flex items-center space-x-2"
+           >
+             <Zap size={16} className="animate-pulse" />
+             <span>{combo} COMBO!</span>
+           </motion.div>
+        )}
+      </AnimatePresence>
+
       {/* Dynamic Header */}
       <div className="flex items-center justify-between bg-white/80 backdrop-blur-md rounded-[32px] p-4 shadow-sm border-2 border-indigo-50 relative z-20">
         <button onClick={onClose} className="p-2 hover:bg-rose-50 rounded-xl transition-all group">
@@ -255,9 +347,6 @@ const LetterScramble: React.FC<Props> = ({ groups, isReviewMode, onFinish, onClo
         </div>
 
         <div className="w-full bg-indigo-50/50 p-6 rounded-[48px] border-4 border-white flex flex-wrap justify-center gap-3 card-inner-shadow relative z-10">
-          <div className="absolute -top-4 left-1/2 -translate-x-1/2 bg-white px-4 py-1 rounded-full border border-indigo-100 shadow-sm">
-             <span className="text-[10px] font-black text-indigo-400 tracking-[0.3em] uppercase">Rune Fragments</span>
-          </div>
           {scrambled.map((item, i) => (
             <motion.button
               key={item.id}

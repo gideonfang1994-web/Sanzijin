@@ -67,9 +67,9 @@ const ArcadePage: React.FC<ArcadePageProps> = ({ groups, stats, lastLearnedWords
     { id: 'SPELLING', title: '单词拼写蜂', icon: <Sparkles />, color: 'bg-amber-500', xp: '+350', description: '听音辨词，像勤劳的蜜蜂一样拼写。', category: 'CHALLENGE' },
     { id: 'SCRAMBLE', title: '拼词大师', icon: <Zap />, color: 'bg-rose-500', xp: '+250', description: '释放字母能量，拼出正确的咒语。', category: 'CHALLENGE' },
     { id: 'WHACK', title: '地鼠行动', icon: <Hammer />, color: 'bg-orange-500', xp: '+180', description: '快！打掉那些淘气的魔法地鼠。', category: 'ARCADE' },
-    { id: 'BALLOON', title: '飞飞飞刀', icon: <Music />, color: 'bg-sky-500', xp: '+150', description: '精准投掷魔力飞刀，刺破单词气球。', category: 'ARCADE' },
-    { id: 'DUBBING', title: '魔法配音', icon: <Mic />, color: 'bg-indigo-500', xp: '+300', description: '用魔法声音重复你的单词咒语。', category: 'CHALLENGE' },
-    { id: 'CHALLENGE', title: '勇者决斗', icon: <Zap />, color: 'bg-purple-500', xp: '+200', description: '最极致的单词对决，测试你的反应。', category: 'CHALLENGE' },
+    { id: 'BALLOON', title: '飞飞飞刀', icon: <Music />, color: 'bg-teal-500', xp: '+150', description: '精准投掷魔力飞刀，刺破单词气球。', category: 'ARCADE' },
+    { id: 'DUBBING', title: '魔法配音', icon: <Mic />, color: 'bg-emerald-600', xp: '+300', description: '用魔法声音重复你的单词咒语。', category: 'CHALLENGE' },
+    { id: 'CHALLENGE', title: '森林对决', icon: <Zap />, color: 'bg-green-700', xp: '+200', description: '最极致的单词对决，测试你的反应。', category: 'CHALLENGE' },
   ];
 
   const dueLevels = useMemo(() => levels.filter(l => l.isDue), [levels]);
@@ -97,16 +97,16 @@ const ArcadePage: React.FC<ArcadePageProps> = ({ groups, stats, lastLearnedWords
       <header className="text-center space-y-3 relative pt-4">
         <button 
           onClick={onClose}
-          className="absolute left-0 top-4 p-3 bg-white hover:bg-slate-50 rounded-2xl shadow-xl shadow-slate-200/50 border-2 border-slate-100 transition-all text-slate-700 active:scale-90"
+          className="absolute left-0 top-4 p-3 bg-white hover:bg-emerald-50 rounded-2xl shadow-xl shadow-emerald-200/50 border-2 border-emerald-100 transition-all text-emerald-700 active:scale-90"
         >
           <ChevronLeft size={20} />
         </button>
-        <div className="inline-flex items-center px-4 py-1.5 bg-indigo-500 text-white rounded-full text-[10px] font-black uppercase tracking-[0.2em] mb-2 shadow-lg shadow-indigo-100">
+        <div className="inline-flex items-center px-4 py-1.5 bg-emerald-500 text-white rounded-full text-[10px] font-black uppercase tracking-[0.2em] mb-2 shadow-lg shadow-emerald-100">
           <Gamepad2 size={12} className="mr-2" />
-          Magic Arcade
+          Forest Arcade
         </div>
-        <h2 className="text-5xl font-black text-slate-900 tracking-tighter">魔法游乐园</h2>
-        <p className="text-[11px] font-bold text-slate-400 uppercase tracking-widest leading-loose">Choose your magical challenge</p>
+        <h2 className="text-5xl font-black text-emerald-950 tracking-tighter">森林奇乐园</h2>
+        <p className="text-[11px] font-bold text-emerald-600 uppercase tracking-widest leading-loose">Choose your forest challenge</p>
       </header>
 
       {/* Level Selector Toggle */}

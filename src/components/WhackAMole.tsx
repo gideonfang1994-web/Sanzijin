@@ -25,6 +25,50 @@ export const WhackAMole: React.FC<Props> = ({ groups, isReviewMode, onFinish, on
   const [clearedWords, setClearedWords] = useState<Set<string>>(new Set());
   const [showCelebration, setShowCelebration] = useState(false);
   const [isGameStarted, setIsGameStarted] = useState(false);
+  const [combo, setCombo] = useState(0);
+  const [feedback, setFeedback] = useState<{ text: string, subtext: string, color: string, bgColor: string, borderColor: string } | null>(null);
+
+  const feedbackLevels = [
+    { 
+      threshold: 2, 
+      slogans: ['连连净化!', '精准打击!', '林间卫士!', '草丛之灵!', '守护微光!'],
+      subtext: 'COMBO BURST',
+      color: 'text-sky-600',
+      bgColor: 'bg-sky-50',
+      borderColor: 'border-sky-200'
+    },
+    { 
+      threshold: 5, 
+      slogans: ['净化之光!', '森之英雄!', '灵能爆发!', '圣洁之力!', '破晓而生!'],
+      subtext: 'PURE SPIRIT',
+      color: 'text-amber-600',
+      bgColor: 'bg-amber-50',
+      borderColor: 'border-amber-200'
+    },
+    { 
+      threshold: 10, 
+      slogans: ['魔力禁域!', '万物归元!', '森林主宰!', '自然之怒!', '神迹降临!'],
+      subtext: 'ULTIMATE',
+      color: 'text-indigo-600',
+      bgColor: 'bg-indigo-50',
+      borderColor: 'border-indigo-200'
+    },
+  ];
+
+  const triggerFeedback = (count: number) => {
+    const level = [...feedbackLevels].reverse().find(l => count >= l.threshold);
+    if (level) {
+      const randomSlogan = level.slogans[Math.floor(Math.random() * level.slogans.length)];
+      setFeedback({ 
+        text: randomSlogan, 
+        subtext: level.subtext,
+        color: level.color,
+        bgColor: level.bgColor,
+        borderColor: level.borderColor
+      });
+      setTimeout(() => setFeedback(null), 1200);
+    }
+  };
 
   const pool = useMemo(() => {
     if (isReviewMode) {
@@ -91,18 +135,23 @@ export const WhackAMole: React.FC<Props> = ({ groups, isReviewMode, onFinish, on
     
     if (holeContent.isTarget) {
       audio.playSuccess();
-      const bonus = timeLeft > 30 ? 50 : 0;
-      setScore(prev => prev + 250 + bonus);
+      const newCombo = combo + 1;
+      setCombo(newCombo);
+      triggerFeedback(newCombo);
+      
+      const comboBonus = Math.floor(newCombo / 2) * 20;
+      const timeLeftBonus = timeLeft > 30 ? 50 : 0;
+      setScore(prev => prev + 250 + timeLeftBonus + comboBonus);
       onSuccess(targetWord.text);
       
       setShowCelebration(true);
       setActiveHole(null);
       
       confetti({
-        particleCount: 40,
-        spread: 60,
+        particleCount: 20 + newCombo * 5,
+        spread: 60 + newCombo * 2,
         origin: { y: 0.7 },
-        colors: ['#10b981', '#fbbf24']
+        colors: ['#10b981', '#fbbf24', '#6366f1']
       });
 
       setTimeout(() => {
@@ -117,6 +166,7 @@ export const WhackAMole: React.FC<Props> = ({ groups, isReviewMode, onFinish, on
       }, 1000);
     } else {
       audio.playError();
+      setCombo(0);
       setHearts(prev => {
         if (prev <= 1) {
           endGame();
@@ -206,6 +256,42 @@ export const WhackAMole: React.FC<Props> = ({ groups, isReviewMode, onFinish, on
           layout
           className="bg-white/5 backdrop-blur-2xl rounded-[48px] p-8 border border-white/10 shadow-2xl relative overflow-hidden text-center magic-glow-pulse"
         >
+          <AnimatePresence>
+            {feedback && (
+              <motion.div 
+                initial={{ scale: 0.6, opacity: 0, y: 50, rotate: 5 }}
+                animate={{ scale: 1, opacity: 1, y: -100, rotate: 0 }}
+                exit={{ scale: 1.2, opacity: 0, y: -140 }}
+                className="absolute inset-0 flex items-center justify-center z-30 pointer-events-none"
+              >
+                <div className={`flex flex-col items-center justify-center ${feedback.bgColor} ${feedback.borderColor} border-2 px-8 py-3.5 rounded-[32px] shadow-[0_20px_40px_rgba(0,0,0,0.12)] backdrop-blur-md`}>
+                  <div className="flex items-center space-x-2 mb-0.5">
+                    <Zap className={feedback.color} size={15} fill="currentColor" />
+                    <span className={`text-[9px] font-black uppercase tracking-[0.3em] ${feedback.color} opacity-70`}>
+                      {feedback.subtext}
+                    </span>
+                    <Zap className={feedback.color} size={15} fill="currentColor" />
+                  </div>
+                  <div className={`${feedback.color} font-black text-3xl tracking-tight italic`}>
+                    {feedback.text}
+                  </div>
+                </div>
+              </motion.div>
+            )}
+            
+            {combo >= 2 && (
+               <motion.div
+                 key="combo-puck"
+                 initial={{ x: -50, opacity: 0, scale: 0.5 }}
+                 animate={{ x: 0, opacity: 1, scale: 1 }}
+                 className="absolute top-4 left-6 bg-gradient-to-r from-amber-400 to-orange-500 text-white px-5 py-2 rounded-2xl font-black text-sm italic shadow-xl z-40 border-b-4 border-orange-700 flex items-center space-x-2"
+               >
+                 <Zap size={16} className="animate-pulse" />
+                 <span>{combo} COMBO!</span>
+               </motion.div>
+            )}
+          </AnimatePresence>
+
           <AnimatePresence mode="wait">
             {showCelebration ? (
               <motion.div 
