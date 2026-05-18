@@ -11,6 +11,7 @@ import SheepMatch from './components/SheepMatch';
 import FlyingDagger from './components/FlyingDagger';
 import WhackAMole from './components/WhackAMole';
 import VoiceDubbing from './components/VoiceDubbing';
+import SpellingBee from './components/SpellingBee';
 import Leaderboard from './components/Leaderboard';
 import UploadContent from './components/UploadContent';
 import MagicShop from './components/MagicShop';
@@ -23,19 +24,22 @@ import confetti from 'canvas-confetti';
 import { generateCharacterPortrait } from './services/portraitService';
 import { motion, AnimatePresence } from 'framer-motion';
 import { auth, db, doc, getDoc, setDoc, onAuthStateChanged, FirebaseUser, handleFirestoreError, OperationType, signInWithPopup, googleProvider, signOut } from './firebase';
+import SafeImage from './components/SafeImage';
 
 const App: React.FC = () => {
   const [user, setUser] = useState<FirebaseUser | null>(null);
   const [loading, setLoading] = useState(true);
   const [view, setView] = useState<ViewState>('HOME');
-  const [groups, setGroups] = useState<WordGroup[]>([]);
+  const [groups, setGroups] = useState<WordGroup[]>(constants.INITIAL_GROUPS);
   const [isReviewChallenge, setIsReviewChallenge] = useState(false);
   const [challengeGroupId, setChallengeGroupId] = useState<string | null>(null);
   const [selectedDayId, setSelectedDayId] = useState<string | null>(null);
   const [lastLearnedWords, setLastLearnedWords] = useState<WordItem[]>([]);
+  const [pendingLevelId, setPendingLevelId] = useState<number | undefined>(undefined);
   
   const [showLevelUp, setShowLevelUp] = useState(false);
   const [newLevel, setNewLevel] = useState(1);
+  const navigateTimestamp = React.useRef<number>(0);
   
   const initialQuests: DailyQuest[] = [
     { id: 'q1', label: '解锁一个新魔法', target: 1, current: 0, completed: false, rewardXp: 100, rewardCoins: 10, targetView: 'CARDS' },
@@ -159,7 +163,7 @@ const App: React.FC = () => {
           lastLogin: new Date().toISOString()
         }, { merge: true });
       } catch (error) {
-        console.error("Failed to sync stats to Firestore:", error);
+        handleFirestoreError(error, OperationType.WRITE, `users/${user.uid}`);
       }
     };
 
@@ -208,8 +212,16 @@ const App: React.FC = () => {
     audio.init();
     
     const savedGroups = localStorage.getItem('wordland_groups');
-    if (savedGroups) setGroups(JSON.parse(savedGroups));
-    else setGroups(constants.INITIAL_GROUPS);
+    if (savedGroups) {
+      try {
+        setGroups(JSON.parse(savedGroups));
+      } catch (e) {
+        console.error("Failed to parse saved groups:", e);
+        setGroups(constants.INITIAL_GROUPS);
+      }
+    } else {
+      setGroups(constants.INITIAL_GROUPS);
+    }
     
     const savedStats = localStorage.getItem('wordland_stats');
     if (savedStats) {
@@ -284,9 +296,30 @@ const App: React.FC = () => {
     });
   };
 
-  const handleNavigate = (newView: ViewState) => {
-    setView(newView);
-  };
+  const handleNavigate = useCallback((newView: ViewState, levelId?: number) => {
+    try {
+      // Fault tolerance: prevent rapid double-clicks using a stable ref
+      const now = Date.now();
+      if (now - navigateTimestamp.current < 300) return;
+      navigateTimestamp.current = now;
+
+      console.log(`[Navigation] Navigating to ${newView}`, levelId ? `with level ${levelId}` : '');
+      
+      // Clear level ID if we're not going to adventure explicitly with a level
+      if (newView !== 'ADVENTURE') {
+        setPendingLevelId(undefined);
+      } else if (levelId !== undefined) {
+        setPendingLevelId(levelId);
+      }
+      
+      setView(newView);
+      audio.playClick();
+    } catch (error) {
+      console.error("[Navigation Error]", error);
+      // Fallback to home if navigation fails
+      setView('HOME');
+    }
+  }, []);
 
   const handleLearned = useCallback((id: string) => {
     audio.playSuccess();
@@ -334,7 +367,42 @@ const App: React.FC = () => {
     handleNavigate('CARDS');
   };
 
-  const reviewNeeded = useMemo(() => groups.filter(g => g.learned && g.nextReview < Date.now()), [groups]);
+  const dueReviews = useMemo(() => {
+    const now = Date.now();
+    const schedules = stats.reviewSchedules || {};
+    const srsDue = Object.entries(schedules)
+      .filter(([_, s]: [string, any]) => now >= s.nextReviewAt)
+      .map(([id, _]) => Number(id));
+    
+    return srsDue.sort((a, b) => a - b); // Earliest levels first
+  }, [stats.reviewSchedules]);
+
+  const reviewNeeded = useMemo(() => {
+    const groupDueCount = groups.filter(g => g.learned && g.nextReview < Date.now()).length;
+    const srsDueCount = dueReviews.length;
+    // Return a dummy array with the right length so the UI shows the badge
+    return Array(groupDueCount + srsDueCount).fill({});
+  }, [groups, dueReviews]);
+
+  const dynamicQuests = useMemo(() => {
+    const baseQuests = [...stats.quests];
+    if (dueReviews.length > 0) {
+      // Find the review quest or add it
+      const reviewQuestIdx = baseQuests.findIndex(q => q.id === 'q3');
+      if (reviewQuestIdx !== -1) {
+        const targetLevelId = dueReviews[0];
+        baseQuests[reviewQuestIdx] = {
+          ...baseQuests[reviewQuestIdx],
+          label: `复习魔法 (关卡 ${targetLevelId})`,
+          isReviewType: true,
+          targetView: 'ADVENTURE',
+          levelId: targetLevelId,
+          completed: false, // Force active if due
+        };
+      }
+    }
+    return baseQuests;
+  }, [stats.quests, dueReviews]);
 
   const activeGroups = useMemo(() => {
     if (lastLearnedWords.length > 0) {
@@ -369,11 +437,11 @@ const App: React.FC = () => {
     });
   };
 
-  const handleGameFinish = (score: number, coins: number) => {
+  const handleGameFinish = useCallback((score: number, coins: number) => {
     setStats(prev => {
-      const newXp = prev.xp + score; // Optimized from score * 2
-      const newCoins = prev.starCoins + coins;
-      const newMagicCoins = prev.magicCoins + Math.floor(score / 10); // Optimized from score / 5
+      const newXp = prev.xp + score;
+      const newCoins = (prev.starCoins || 0) + coins;
+      const newMagicCoins = (prev.magicCoins || 0) + Math.floor(score / 10);
       const newLevel = Math.floor(newXp / 1000) + 1;
       
       if (newLevel > prev.level) {
@@ -389,7 +457,7 @@ const App: React.FC = () => {
 
       const newRank = Math.max(1, 15 - Math.floor(newXp / 500));
       
-      const newStats = { 
+      return { 
         ...prev, 
         xp: newXp, 
         starCoins: newCoins, 
@@ -398,12 +466,11 @@ const App: React.FC = () => {
         rank: newRank,
         bestChallengeScore: Math.max(prev.bestChallengeScore, score)
       };
-      return newStats;
     });
     handleNavigate('ARCADE');
     updateQuest('q2');
     audio.playCheer();
-  };
+  }, [handleNavigate]);
 
   const handlePurchase = (item: ShopItem) => {
     setStats(prev => {
@@ -535,18 +602,19 @@ const App: React.FC = () => {
     }
   };
 
-  const handleSelectCharacter = (characterId: string) => {
+  const handleSelectCharacter = useMemo(() => (characterId: string) => {
     setStats(prev => {
       const newStats = { ...prev, selectedCharacterId: characterId };
       return newStats;
     });
-  };
+  }, []);
 
   const handleReward = useCallback((xp: number, coins: number) => {
     setStats(prev => {
       const newXp = prev.xp + xp;
       const newLevel = Math.floor(newXp / 1000) + 1;
-      const newMagicCoins = prev.magicCoins + coins;
+      const newMagicCoins = (prev.magicCoins || 0) + coins;
+      const newStarCoins = (prev.starCoins || 0) + coins;
       
       if (newLevel > prev.level) {
         audio.playLevelUp();
@@ -565,6 +633,7 @@ const App: React.FC = () => {
         ...prev, 
         xp: newXp, 
         magicCoins: newMagicCoins,
+        starCoins: newStarCoins,
         level: newLevel,
         rank: newRank
       };
@@ -585,7 +654,7 @@ const App: React.FC = () => {
   }
 
   return (
-    <div className="min-h-screen pt-10 pb-32 px-5 flex flex-col items-center max-w-lg mx-auto overflow-x-hidden relative bg-gradient-to-b from-indigo-50/50 to-white">
+    <div className="min-h-screen pt-10 pb-32 px-5 flex flex-col items-center max-w-lg mx-auto overflow-x-hidden relative">
       {/* User Auth Header */}
       <div className="absolute top-4 right-4 z-[70]">
         {user ? (
@@ -594,7 +663,7 @@ const App: React.FC = () => {
             className="flex items-center space-x-2 bg-white/80 backdrop-blur-sm p-1.5 pr-3 rounded-full border border-indigo-100 shadow-sm hover:bg-white transition-all"
           >
             {user.photoURL ? (
-              <img src={user.photoURL} alt="" className="w-7 h-7 rounded-full border border-indigo-200" referrerPolicy="no-referrer" />
+              <SafeImage src={user.photoURL} alt="" className="w-7 h-7 rounded-full border border-indigo-200" width="28" height="28" />
             ) : (
               <div className="w-7 h-7 rounded-full bg-indigo-500 flex items-center justify-center text-white text-[10px] font-black">
                 {user.displayName?.charAt(0) || 'U'}
@@ -613,94 +682,126 @@ const App: React.FC = () => {
         )}
       </div>
 
-      <main className="w-full flex-1 flex flex-col">
-        {view === 'HOME' && (
-          <HomePage 
-            stats={stats} 
-            groups={groups} 
-            reviewNeeded={reviewNeeded} 
-            onNavigate={handleNavigate} 
-            onQuestClick={(v, r) => { setIsReviewChallenge(!!r); handleNavigate(v); }} 
-          />
-        )}
-
-        {view === 'ADVENTURE' && (
-          <AdventurePage 
-            onClose={() => handleNavigate('HOME')} 
-            onReward={handleReward}
-            stats={stats}
-            onUpdateStats={handleUpdateStats}
-            onCompleteLevel={(words) => {
-              setLastLearnedWords(words);
-              setStats(prev => {
-                const newMastered = [...new Set([...prev.masteredWords, ...words.map(w => w.text)])];
-                const newStats = {
-                  ...prev,
-                  totalWordsLearned: prev.totalWordsLearned + words.length,
-                  masteredWords: newMastered,
-                  completedLevelsCount: prev.completedLevelsCount + 1
-                };
-                return newStats;
-              });
-              handleNavigate('ARCADE');
-            }}
-          />
-        )}
-
-        {view === 'CARDS' && (
-          <div className="space-y-6 animate-in slide-in-from-right-20 duration-500">
-            <div className="text-center mb-4">
-               <h2 className="text-2xl font-black text-slate-800 tracking-tight">今日任务词库</h2>
-               <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Daily Magic Words</p>
-            </div>
-            {activeGroups.map(g => (
-              <WordLandCard 
-                key={g.id} 
-                card={g} 
-                onLearned={() => handleLearned(g.id)} 
-                onNext={() => {}} 
-                isLast={true} 
-                onChallenge={() => handleChallenge(g.id)} 
+      <main className="w-full flex-1 flex flex-col pt-4">
+        <AnimatePresence mode="wait">
+          {view === 'HOME' && (
+            <motion.div key="home" initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -10 }} transition={{ duration: 0.3 }}>
+              <HomePage 
+                stats={{ ...stats, quests: dynamicQuests }} 
+                groups={groups} 
+                reviewNeeded={reviewNeeded} 
+                onNavigate={handleNavigate} 
+                onQuestClick={(v, r, l) => { setIsReviewChallenge(!!r); handleNavigate(v, l); }} 
               />
-            ))}
-          </div>
-        )}
+            </motion.div>
+          )}
 
-        {view === 'ARCADE' && (
-          <ArcadePage 
-            groups={groups} 
-            lastLearnedWords={lastLearnedWords}
-            onSelectGame={(id, words) => {
-              if (words) setLastLearnedWords(words);
-              handleNavigate(id as ViewState);
-            }} 
-            onClose={() => { handleNavigate('HOME'); setChallengeGroupId(null); setLastLearnedWords([]); }} 
-          />
-        )}
+          {view === 'ADVENTURE' && (
+            <motion.div key="adventure" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}>
+              <AdventurePage 
+                onClose={() => handleNavigate('HOME')} 
+                onReward={handleReward}
+                stats={stats}
+                onUpdateStats={handleUpdateStats}
+                initialLevelId={pendingLevelId}
+                onConsumedLevelId={() => setPendingLevelId(undefined)}
+                onCompleteLevel={(words, levelId) => {
+                  setLastLearnedWords(words);
+                  setStats(prev => ({
+                    ...prev,
+                    totalWordsLearned: prev.totalWordsLearned + words.length,
+                    masteredWords: [...new Set([...prev.masteredWords, ...words.map(w => w.text)])],
+                    completedLevelsCount: prev.completedLevelsCount + 1,
+                    completedLevelIds: [...new Set([...prev.completedLevelIds, levelId])]
+                  }));
+                  handleNavigate('ARCADE');
+                }}
+              />
+            </motion.div>
+          )}
 
-        {view === 'SHOP' && (
-          <MagicShop 
-            stats={stats} 
-            onPurchase={handlePurchase} 
-            onEquip={handleEquip} 
-            onSelectCharacter={handleSelectCharacter} 
-          />
-        )}
-        {view === 'PETS' && (
-          <PetPage 
-            stats={stats}
-            onUpdateStats={(updater) => setStats(prev => updater(prev))}
-            onClose={() => handleNavigate('HOME')}
-          />
-        )}
-        {view === 'CHALLENGE' && <WordChallenge groups={activeGroups} isReviewMode={isReviewChallenge} onFinish={handleGameFinish} onMistake={() => {}} onSuccess={handleGameSuccess} onClose={() => handleNavigate('ARCADE')} />}
-        {view === 'SCRAMBLE' && <LetterScramble groups={activeGroups} onFinish={handleGameFinish} onClose={() => handleNavigate('ARCADE')} />}
-        {view === 'SHEEP' && <SheepMatch groups={activeGroups} onFinish={handleGameFinish} onClose={() => handleNavigate('ARCADE')} />}
-        {view === 'BALLOON' && <FlyingDagger groups={activeGroups} onFinish={handleGameFinish} onMistake={() => {}} onSuccess={handleGameSuccess} onClose={() => handleNavigate('ARCADE')} />}
-        {view === 'WHACK' && <WhackAMole groups={activeGroups} onFinish={handleGameFinish} onMistake={() => {}} onSuccess={handleGameSuccess} onClose={() => handleNavigate('ARCADE')} />}
-        {view === 'DUBBING' && <VoiceDubbing groups={activeGroups} onFinish={handleGameFinish} onClose={() => handleNavigate('ARCADE')} />}
-        {view === 'RANKING' && <Leaderboard stats={stats} />}
-        {view === 'UPLOAD' && <UploadContent onAddWord={handleAddWord} onAddVideo={() => {}} />}
+          {view === 'CARDS' && (
+            <motion.div key="cards" initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -20 }} className="space-y-6">
+              <div className="text-center mb-4">
+                 <h2 className="text-2xl font-black text-slate-800 tracking-tight">今日任务词库</h2>
+                 <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Daily Magic Words</p>
+              </div>
+              {activeGroups.map(g => (
+                <WordLandCard 
+                  key={g.id} 
+                  card={g} 
+                  onLearned={() => handleLearned(g.id)} 
+                  onNext={() => {}} 
+                  isLast={true} 
+                  onChallenge={() => handleChallenge(g.id)} 
+                />
+              ))}
+            </motion.div>
+          )}
+
+          {view === 'ARCADE' && (
+            <motion.div key="arcade" initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -20 }}>
+              <ArcadePage 
+                groups={groups} 
+                stats={stats}
+                lastLearnedWords={lastLearnedWords}
+                onSelectGame={(id, words) => {
+                  if (words) setLastLearnedWords(words);
+                  handleNavigate(id as ViewState);
+                }} 
+                onClose={() => { handleNavigate('HOME'); setChallengeGroupId(null); setLastLearnedWords([]); }} 
+              />
+            </motion.div>
+          )}
+
+          {view === 'SHOP' && (
+            <motion.div key="shop" initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} exit={{ opacity: 0, scale: 1.05 }}>
+              <MagicShop 
+                stats={stats} 
+                onPurchase={handlePurchase} 
+                onEquip={handleEquip} 
+                onSelectCharacter={handleSelectCharacter} 
+                onClose={() => handleNavigate('HOME')}
+              />
+            </motion.div>
+          )}
+          
+          {view === 'PETS' && (
+            <motion.div key="pets" initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -20 }}>
+              <PetPage 
+                stats={stats}
+                onUpdateStats={(updater) => setStats(prev => updater(prev))}
+                onNavigate={handleNavigate}
+                onClose={() => handleNavigate('HOME')}
+              />
+            </motion.div>
+          )}
+          
+          {/* Game Views - Smooth Scale Entrance */}
+          {['CHALLENGE', 'SCRAMBLE', 'SHEEP', 'BALLOON', 'WHACK', 'DUBBING', 'SPELLING'].includes(view) && (
+            <motion.div key="game" initial={{ scale: 0.9, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} exit={{ scale: 1.1, opacity: 0 }} transition={{ type: "spring", damping: 20 }}>
+              {view === 'CHALLENGE' && <WordChallenge groups={activeGroups} isReviewMode={isReviewChallenge} onFinish={handleGameFinish} onMistake={() => {}} onSuccess={handleGameSuccess} onClose={() => handleNavigate('ARCADE')} />}
+              {view === 'SCRAMBLE' && <LetterScramble groups={activeGroups} onFinish={handleGameFinish} onClose={() => handleNavigate('ARCADE')} />}
+              {view === 'SHEEP' && <SheepMatch groups={activeGroups} onFinish={handleGameFinish} onClose={() => handleNavigate('ARCADE')} />}
+              {view === 'BALLOON' && <FlyingDagger groups={activeGroups} onFinish={handleGameFinish} onMistake={() => {}} onSuccess={handleGameSuccess} onClose={() => handleNavigate('ARCADE')} />}
+              {view === 'WHACK' && <WhackAMole groups={activeGroups} onFinish={handleGameFinish} onMistake={() => {}} onSuccess={handleGameSuccess} onClose={() => handleNavigate('ARCADE')} />}
+              {view === 'DUBBING' && <VoiceDubbing items={activeGroups.flatMap(g => g.words.map((w, idx) => ({ id: `${g.id}-${idx}`, ...w })))} onFinish={handleGameFinish} onClose={() => handleNavigate('ARCADE')} />}
+              {view === 'SPELLING' && <SpellingBee groups={activeGroups} onFinish={handleGameFinish} onClose={() => handleNavigate('ARCADE')} />}
+            </motion.div>
+          )}
+
+          {view === 'RANKING' && (
+            <motion.div key="ranking" initial={{ opacity: 0, x: -20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: 20 }}>
+              <Leaderboard stats={stats} />
+            </motion.div>
+          )}
+          
+          {view === 'UPLOAD' && (
+            <motion.div key="upload" initial={{ opacity: 0, y: 50 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: 50 }}>
+              <UploadContent onAddWord={handleAddWord} onAddVideo={() => {}} />
+            </motion.div>
+          )}
+        </AnimatePresence>
       </main>
 
       <AnimatePresence>
@@ -744,7 +845,7 @@ const App: React.FC = () => {
       <nav className="fixed bottom-8 left-1/2 -translate-x-1/2 w-[95%] glass-pill h-20 rounded-[32px] flex items-center justify-around px-4 z-50 border-white/80 shadow-2xl">
         <NavButton icon={<Home />} label="主页" active={view === 'HOME'} onClick={() => handleNavigate('HOME')} color="text-indigo-600" />
         <NavButton icon={<BookOpen />} label="冒险" active={view === 'ADVENTURE'} onClick={() => handleNavigate('ADVENTURE')} color="text-rose-500" />
-        <NavButton icon={<Gamepad2 />} label="游玩" active={view === 'ARCADE' || ['CHALLENGE', 'SCRAMBLE', 'SHEEP', 'BALLOON', 'WHACK', 'DUBBING'].includes(view)} onClick={() => handleNavigate('ARCADE')} color="text-sky-500" />
+        <NavButton icon={<Gamepad2 />} label="游玩" active={view === 'ARCADE' || ['CHALLENGE', 'SCRAMBLE', 'SHEEP', 'BALLOON', 'WHACK', 'DUBBING', 'SPELLING'].includes(view)} onClick={() => handleNavigate('ARCADE')} color="text-sky-500" />
         <NavButton icon={<Heart />} label="宠兽" active={view === 'PETS'} onClick={() => handleNavigate('PETS')} color="text-rose-400" />
         <NavButton icon={<ShoppingBag />} label="商店" active={view === 'SHOP'} onClick={() => handleNavigate('SHOP')} color="text-purple-500" />
         <NavButton icon={<BarChart3 />} label="排行" active={view === 'RANKING'} onClick={() => handleNavigate('RANKING')} color="text-amber-500" />

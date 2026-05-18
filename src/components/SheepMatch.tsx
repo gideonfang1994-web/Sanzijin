@@ -1,9 +1,11 @@
 
 import React, { useState, useEffect, useMemo } from 'react';
+import { motion, AnimatePresence } from 'framer-motion';
 import { WordGroup, WordItem } from '../types';
-import { X, Trophy, AlertCircle, RefreshCw } from 'lucide-react';
+import { X, Trophy, AlertCircle, RefreshCw, Zap, Star, Layers } from 'lucide-react';
 import audio from '../utils/AudioUtils';
 import confetti from 'canvas-confetti';
+import SafeImage from './SafeImage';
 
 interface Tile {
   id: string;
@@ -19,7 +21,7 @@ interface Tile {
 
 interface Props {
   groups: WordGroup[];
-  onFinish: (score: number) => void;
+  onFinish: (score: number, coins: number) => void;
   onClose: () => void;
 }
 
@@ -28,12 +30,11 @@ const SheepMatch: React.FC<Props> = ({ groups, onFinish, onClose }) => {
   const [slots, setSlots] = useState<Tile[]>([]);
   const [gameState, setGameState] = useState<'PLAYING' | 'WON' | 'LOST'>('PLAYING');
   const [level, setLevel] = useState(1);
+  const [score, setScore] = useState(0);
 
   const SLOT_CAPACITY = 7;
-
   const [syncedImages, setSyncedImages] = useState<Record<string, string>>({});
 
-  // Initialize game
   useEffect(() => {
     const saved = localStorage.getItem('adventure_synced_images');
     if (saved) {
@@ -50,13 +51,24 @@ const SheepMatch: React.FC<Props> = ({ groups, onFinish, onClose }) => {
       });
     });
 
+    if (learnedWords.length === 0) {
+      setGameState('LOST');
+      return;
+    }
+
     // Pick words for the level - more words for higher levels
     const wordCount = Math.min(learnedWords.length, 3 + level * 2);
     const selected = [...learnedWords].sort(() => Math.random() - 0.5).slice(0, wordCount);
     
+    // For "Sheep-a-sheep" we want sets of 3.
+    const setsOfThree = 3 + level; 
+    const gameWords = [];
+    for(let i=0; i<setsOfThree; i++) {
+       gameWords.push(selected[i % selected.length]);
+    }
+
     const newTiles: Tile[] = [];
-    selected.forEach((item) => {
-      // Create 3 tiles for each word: Text, Translation, Image
+    gameWords.forEach((item) => {
       const types: ('text' | 'translation' | 'image')[] = ['text', 'translation', 'image'];
       types.forEach(type => {
         newTiles.push({
@@ -73,24 +85,20 @@ const SheepMatch: React.FC<Props> = ({ groups, onFinish, onClose }) => {
       });
     });
 
-    // Randomize positions and layers for "Sheep a Sheep" feel
-    const shuffled = newTiles.sort(() => Math.random() - 0.5);
-    const layeredTiles = shuffled.map((tile, i) => {
-      // Create multiple layers
-      const layer = Math.floor(i / 9);
-      const posInLayer = i % 9;
+    const layeredTiles = newTiles.sort(() => Math.random() - 0.5).map((tile, i) => {
+      const layer = Math.floor(i / 12);
+      const posInLayer = i % 12;
       const row = Math.floor(posInLayer / 3);
       const col = posInLayer % 3;
       
-      // Offset layers slightly for overlapping effect
-      const offsetX = (layer % 2) * 20;
-      const offsetY = (layer % 3) * 20;
+      const offsetX = (layer % 2) * 10 + (Math.random() * 8 - 4);
+      const offsetY = (layer % 3) * 10 + (Math.random() * 8 - 4);
       
       return {
         ...tile,
         zIndex: layer,
-        x: col * 75 + offsetX + 20 + Math.random() * 10,
-        y: row * 75 + offsetY + 20 + Math.random() * 10,
+        x: col * 85 + offsetX + 20,
+        y: row * 85 + offsetY + 40,
       };
     });
 
@@ -101,11 +109,10 @@ const SheepMatch: React.FC<Props> = ({ groups, onFinish, onClose }) => {
 
   const checkBlocking = (currentTiles: Tile[]) => {
     return currentTiles.map(tile => {
-      // A tile is blocked if there's any tile in a higher layer that overlaps it
       const isBlocked = currentTiles.some(other => 
         other.zIndex > tile.zIndex && 
-        Math.abs(other.x - tile.x) < 55 && 
-        Math.abs(other.y - tile.y) < 55
+        Math.abs(other.x - tile.x) < 60 && 
+        Math.abs(other.y - tile.y) < 60
       );
       return { ...tile, isBlocked };
     });
@@ -115,153 +122,262 @@ const SheepMatch: React.FC<Props> = ({ groups, onFinish, onClose }) => {
     if (tile.isBlocked || gameState !== 'PLAYING' || slots.length >= SLOT_CAPACITY) return;
 
     audio.playClick();
-    audio.speak(tile.wordId);
     
-    const newTiles = tiles.filter(t => t.id !== tile.id);
+    const remainingTiles = tiles.filter(t => t.id !== tile.id);
     const newSlots = [...slots, tile];
     
-    // Check for 3-match (same wordId)
-    const wordCounts: Record<string, number> = {};
+    // Re-order slots
+    const sortedSlots: Tile[] = [];
+    const grouped: Record<string, Tile[]> = {};
     newSlots.forEach(s => {
-      wordCounts[s.wordId] = (wordCounts[s.wordId] || 0) + 1;
+      if (!grouped[s.wordId]) grouped[s.wordId] = [];
+      grouped[s.wordId].push(s);
+    });
+    
+    Object.keys(grouped).forEach(id => {
+      sortedSlots.push(...grouped[id]);
     });
 
-    const matchedWordId = Object.keys(wordCounts).find(id => wordCounts[id] === 3);
-    
-    if (matchedWordId) {
-      // Delay to show the tile entering the slot before clearing
-      setSlots(newSlots);
+    setSlots(sortedSlots);
+    setTiles(checkBlocking(remainingTiles));
+
+    if (grouped[tile.wordId]?.length === 3) {
       setTimeout(() => {
         audio.playSuccess();
-        const filteredSlots = newSlots.filter(s => s.wordId !== matchedWordId);
-        setSlots(filteredSlots);
+        audio.speak(tile.wordId);
         
-        if (newTiles.length === 0 && filteredSlots.length === 0) {
+        const finalSlots = sortedSlots.filter(s => s.wordId !== tile.wordId);
+        setSlots(finalSlots);
+        setScore(prev => prev + 100);
+        
+        confetti({
+          particleCount: 20,
+          spread: 30,
+          origin: { y: 0.8 },
+          colors: ['#10b981', '#34d399']
+        });
+
+        if (remainingTiles.length === 0 && finalSlots.length === 0) {
           setGameState('WON');
           audio.playCheer();
           confetti({ particleCount: 150, spread: 70, origin: { y: 0.6 } });
         }
-      }, 400);
-    } else {
-      setSlots(newSlots);
-      if (newSlots.length >= SLOT_CAPACITY) {
-        setGameState('LOST');
-      }
+      }, 300);
+    } else if (newSlots.length >= SLOT_CAPACITY) {
+      setGameState('LOST');
+      audio.playError();
     }
-
-    setTiles(checkBlocking(newTiles));
   };
 
   return (
-    <div className="fixed inset-0 bg-indigo-50 z-[100] flex flex-col overflow-hidden">
-      {/* Header */}
-      <div className="p-6 flex items-center justify-between bg-white shadow-sm">
-        <div>
-          <h2 className="text-2xl font-black text-indigo-600">羊羊消消乐</h2>
-          <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Level {level} • Match 3 Magic Tiles</p>
+    <div className="fixed inset-0 bg-emerald-50 z-[100] flex flex-col overflow-hidden font-sans">
+      {/* Background Magical Patterns */}
+      <div className="absolute inset-0 opacity-[0.03] pointer-events-none overflow-hidden">
+        {[...Array(6)].map((_, i) => (
+          <div 
+            key={i} 
+            className="absolute w-96 h-96 border-[30px] border-emerald-900 rounded-full"
+            style={{ 
+              left: `${(i % 2) * 60 - 10}%`, 
+              top: `${Math.floor(i / 2) * 40 - 10}%`,
+              transform: `rotate(${i * 25}deg)` 
+            }}
+          />
+        ))}
+      </div>
+      
+      {/* Floating Sparkles */}
+      <div className="absolute inset-0 pointer-events-none overflow-hidden">
+        {[...Array(12)].map((_, i) => (
+          <motion.div
+            key={i}
+            animate={{
+              y: [0, -30, 0],
+              opacity: [0.1, 0.3, 0.1],
+              scale: [1, 1.2, 1]
+            }}
+            transition={{
+              duration: 3 + Math.random() * 2,
+              repeat: Infinity,
+              delay: i * 0.2
+            }}
+            className="absolute w-2 h-2 bg-emerald-300 rounded-full"
+            style={{
+              left: `${Math.random() * 100}%`,
+              top: `${Math.random() * 100}%`
+            }}
+          />
+        ))}
+      </div>
+
+      <nav className="p-6 flex items-center justify-between bg-white/80 backdrop-blur-xl border-b-2 border-emerald-100 relative z-20">
+        <div className="flex items-center space-x-3">
+          <div className="bg-emerald-600 p-3 rounded-2xl text-white shadow-xl shadow-emerald-100 relative overflow-hidden group">
+            <Layers size={24} className="relative z-10" />
+            <div className="absolute inset-0 bg-white/20 translate-x-[-100%] group-hover:translate-x-[100%] transition-transform duration-700" />
+          </div>
+          <div>
+            <h2 className="text-2xl font-black text-emerald-950 tracking-tight leading-tight">遗迹残篇</h2>
+            <div className="flex items-center space-x-2">
+              <span className="text-[10px] font-black text-emerald-500 uppercase tracking-widest bg-emerald-50 px-2 py-0.5 rounded-lg border border-emerald-100">Floor {level}</span>
+              <div className="w-1 h-1 bg-emerald-200 rounded-full" />
+              <div className="flex items-center text-amber-500 space-x-1">
+                <Star size={12} className="fill-amber-500" />
+                <span className="text-xs font-black tabular-nums">{score}</span>
+              </div>
+            </div>
+          </div>
         </div>
-        <button onClick={onClose} className="w-10 h-10 bg-slate-100 rounded-full flex items-center justify-center text-slate-400">
+        <button onClick={onClose} className="w-12 h-12 bg-white border-2 border-emerald-50 rounded-2xl flex items-center justify-center text-emerald-400 hover:bg-emerald-50 hover:text-rose-500 transition-all shadow-sm">
           <X size={24} />
         </button>
-      </div>
+      </nav>
 
-      {/* Game Area */}
-      <div className="flex-1 relative p-4 overflow-hidden flex items-center justify-center">
-        <div className="relative w-full max-w-sm h-[400px]">
-          {tiles.map(tile => (
-            <button
-              key={tile.id}
-              onClick={() => handleTileClick(tile)}
-              disabled={tile.isBlocked}
-              style={{
-                left: `${tile.x}px`,
-                top: `${tile.y}px`,
-                zIndex: tile.zIndex,
-              }}
-              className={`absolute w-16 h-16 rounded-2xl border-2 transition-all duration-300 flex items-center justify-center p-1
-                ${tile.isBlocked ? 'bg-slate-200 border-slate-300 grayscale opacity-80' : 'bg-white border-indigo-100 shadow-md active:scale-90'}
-              `}
-            >
-              {tile.isImage ? (
-                <img 
-                  src={syncedImages[tile.wordId] || tile.content} 
-                  alt="tile" 
-                  className="w-full h-full object-contain rounded-lg" 
-                  referrerPolicy="no-referrer" 
-                  onError={(e) => {
-                    const target = e.target as HTMLImageElement;
-                    if (target.src.includes('fluency')) {
-                      target.src = `https://img.icons8.com/clouds/200/${tile.wordId.toLowerCase()}.png`;
-                    } else if (target.src.includes('clouds')) {
-                      target.src = `https://img.icons8.com/color/200/${tile.wordId.toLowerCase()}.png`;
-                    } else if (target.src.includes('placehold.co')) {
-                      target.src = `https://api.dicebear.com/7.x/bottts/svg?seed=${tile.wordId}`;
-                    } else {
-                      target.src = `https://placehold.co/200x200/indigo/white?text=${tile.wordId}`;
-                    }
-                  }}
-                />
-              ) : (
-                <span className={`font-bold text-center leading-tight ${tile.type === 'text' ? 'text-indigo-600 text-sm' : 'text-slate-600 text-[10px]'}`}>
-                  {tile.content}
-                </span>
-              )}
-              {/* Layer shadow effect */}
-              <div className="absolute -bottom-1 -right-1 w-full h-full bg-slate-200 -z-10 rounded-2xl opacity-50"></div>
-            </button>
-          ))}
-        </div>
-      </div>
-
-      {/* Slots Area */}
-      <div className="bg-white p-6 pb-12 shadow-2xl rounded-t-[40px] border-t-4 border-indigo-100">
-        <div className="flex justify-center space-x-2 h-16 mb-4">
-          {Array.from({ length: SLOT_CAPACITY }).map((_, i) => (
-            <div key={i} className="w-12 h-12 rounded-xl bg-slate-50 border-2 border-dashed border-slate-200 flex items-center justify-center overflow-hidden">
-              {slots[i] && (
-                <div className="w-full h-full bg-white flex items-center justify-center animate-in zoom-in duration-200">
-                  {slots[i].isImage ? (
-                    <img 
-                      src={syncedImages[slots[i].wordId] || slots[i].content} 
-                      alt="slot" 
-                      className="w-full h-full object-contain p-1" 
-                      referrerPolicy="no-referrer" 
-                      onError={(e) => {
-                        const target = e.target as HTMLImageElement;
-                        target.src = `https://placehold.co/200x200/indigo/white?text=${slots[i].wordId}`;
-                      }}
+      <div className="flex-1 relative overflow-hidden flex items-center justify-center p-4">
+        <div className="relative w-full max-w-[340px] h-[480px]">
+          <AnimatePresence>
+            {tiles.map((tile) => (
+              <motion.button
+                key={tile.id}
+                layoutId={tile.id}
+                initial={{ opacity: 0, scale: 0.5 }}
+                animate={{ 
+                  opacity: 1, 
+                  scale: 1,
+                  left: tile.x,
+                  top: tile.y,
+                  zIndex: tile.zIndex,
+                }}
+                exit={{ scale: 1.2, opacity: 0 }}
+                onClick={() => handleTileClick(tile)}
+                disabled={tile.isBlocked}
+                className={`absolute w-20 h-20 sm:w-24 sm:h-24 rounded-[28px] border-b-6 transition-all duration-500 flex items-center justify-center p-2 shadow-xl
+                  ${tile.isBlocked 
+                    ? 'bg-slate-100 border-slate-300 grayscale-[0.9] opacity-70 translate-y-2' 
+                    : 'bg-white border-emerald-200 ring-4 ring-emerald-50/50 hover:border-emerald-500 hover:shadow-2xl hover:shadow-emerald-200 active:translate-y-1 active:border-b-0'}
+                  group 
+                `}
+              >
+                {!tile.isBlocked && (
+                  <div className="absolute inset-0 bg-gradient-to-tr from-white/0 via-white/40 to-white/0 opacity-0 group-hover:opacity-100 transition-opacity rounded-[28px]" />
+                )}
+                <div className={`w-full h-full rounded-2xl flex items-center justify-center p-1 overflow-hidden ${tile.isBlocked ? 'bg-slate-50' : 'bg-emerald-50/30'}`}>
+                  {tile.isImage ? (
+                    <SafeImage 
+                      src={syncedImages[tile.wordId] || tile.content} 
+                      alt="" 
+                      className="w-full h-full object-contain filter drop-shadow-sm"
+                      fallbackText={tile.wordId}
+                      width="96"
+                      height="96"
                     />
                   ) : (
-                    <span className="text-[8px] font-bold text-center px-1">{slots[i].content}</span>
+                    <div className="flex flex-col items-center justify-center leading-none p-1">
+                      <span className={`font-black text-center break-words ${tile.type === 'text' ? 'text-emerald-800 text-xs sm:text-sm' : 'text-emerald-500 text-[9px] sm:text-[11px]'}`}>
+                        {tile.content}
+                      </span>
+                    </div>
                   )}
                 </div>
-              )}
-            </div>
-          ))}
+                {/* Decorative dot */}
+                <div className={`absolute top-2 right-2 w-1.5 h-1.5 rounded-full ${tile.isBlocked ? 'bg-slate-300' : 'bg-emerald-400 animate-pulse'}`} />
+              </motion.button>
+            ))}
+          </AnimatePresence>
+        </div>
+      </div>
+
+      <footer className="bg-white/90 backdrop-blur-2xl p-8 pb-12 shadow-[0_-20px_60px_-15px_rgba(0,0,0,0.15)] rounded-t-[56px] border-t-4 border-emerald-50 relative z-30">
+        <div className="text-center mb-6">
+           <div className="inline-flex items-center space-x-2 bg-emerald-50 px-4 py-1.5 rounded-2xl border-2 border-emerald-100/50">
+              <Zap size={14} className="text-emerald-500 animate-pulse" />
+              <span className="text-[10px] font-black text-emerald-700 uppercase tracking-[0.3em]">Summoning Altar</span>
+           </div>
         </div>
         
-        {gameState === 'LOST' && (
-          <div className="text-center space-y-3 animate-in fade-in slide-in-from-bottom-2">
-            <div className="flex items-center justify-center text-rose-500 font-black">
-              <AlertCircle className="mr-2" /> 槽位已满！
-            </div>
-            <button onClick={initGame} className="w-full py-4 bg-indigo-600 text-white rounded-2xl font-black shadow-lg flex items-center justify-center">
-              <RefreshCw className="mr-2" size={20} /> 再试一次
-            </button>
-          </div>
-        )}
+        <div className="flex justify-center space-x-2.5 h-20 sm:h-24 mb-8 bg-gradient-to-b from-emerald-50/80 to-transparent rounded-[40px] p-3 items-center border-[3px] border-dashed border-emerald-200/50 relative">
+          <AnimatePresence>
+            {Array.from({ length: SLOT_CAPACITY }).map((_, i) => (
+              <div key={i} className="w-14 h-14 sm:w-16 sm:h-16 rounded-[20px] bg-white border-2 border-dashed border-emerald-100 flex items-center justify-center overflow-hidden relative shadow-inner">
+                {slots[i] && (
+                  <motion.div 
+                    layoutId={slots[i].id}
+                    className="absolute inset-0 bg-white flex items-center justify-center p-1.5 shadow-lg z-10 border border-emerald-100"
+                  >
+                    {slots[i].isImage ? (
+                      <SafeImage 
+                        src={syncedImages[slots[i].wordId] || slots[i].content} 
+                        alt="" 
+                        className="w-full h-full object-contain"
+                        fallbackText={slots[i].wordId}
+                        width="64"
+                        height="64"
+                      />
+                    ) : (
+                      <span className="text-[10px] sm:text-xs font-black text-emerald-800 text-center leading-tight break-words">{slots[i].content}</span>
+                    )}
+                  </motion.div>
+                )}
+                {/* Slot index number subtle */}
+                {!slots[i] && <span className="text-[10px] font-black text-emerald-100">{i + 1}</span>}
+              </div>
+            ))}
+          </AnimatePresence>
+          
+          {/* Over-capacity warning danger glow */}
+          {slots.length >= SLOT_CAPACITY - 1 && (
+             <div className="absolute inset-0 ring-4 ring-rose-500/20 rounded-[40px] animate-pulse pointer-events-none" />
+          )}
+        </div>
+        
+        <AnimatePresence>
+          {gameState === 'LOST' && (
+            <motion.div 
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              className="text-center space-y-4"
+            >
+              <div className="flex items-center justify-center text-rose-500 font-black text-lg">
+                <AlertCircle className="mr-2" /> 槽位已满，法阵失效！
+              </div>
+              <div className="grid grid-cols-2 gap-4">
+                <button onClick={initGame} className="py-4 bg-emerald-500 text-white rounded-2xl font-black shadow-lg flex items-center justify-center hover:bg-emerald-600 transition-all">
+                  <RefreshCw className="mr-2" size={20} /> 重试
+                </button>
+                <button onClick={onClose} className="py-4 bg-slate-100 text-slate-500 rounded-2xl font-black hover:bg-slate-200 transition-all">
+                  放弃
+                </button>
+              </div>
+            </motion.div>
+          )}
 
-        {gameState === 'WON' && (
-          <div className="text-center space-y-3 animate-in fade-in slide-in-from-bottom-2">
-            <div className="flex items-center justify-center text-emerald-500 font-black text-xl">
-              <Trophy className="mr-2" /> 魔法大胜利！
-            </div>
-            <button onClick={() => { setLevel(l => l + 1); }} className="w-full py-4 bg-emerald-500 text-white rounded-2xl font-black shadow-lg">
-              进入下一关
-            </button>
-          </div>
-        )}
-      </div>
+          {gameState === 'WON' && (
+            <motion.div 
+              initial={{ opacity: 0, scale: 0.9 }}
+              animate={{ opacity: 1, scale: 1 }}
+              className="text-center space-y-4"
+            >
+              <div className="flex items-center justify-center text-emerald-600 font-black text-2xl">
+                <Trophy className="mr-2 text-amber-500" /> 魔法大胜利！
+              </div>
+              <div className="grid grid-cols-2 gap-4">
+                <button 
+                  onClick={() => { setLevel(l => l + 1); setScore(prev => prev + 500); }} 
+                  className="py-4 bg-gradient-to-r from-emerald-500 to-teal-600 text-white rounded-2xl font-black shadow-lg flex items-center justify-center"
+                >
+                  <Zap className="mr-2" size={20} /> 下一关
+                </button>
+                <button 
+                  onClick={() => onFinish(score, Math.floor(score / 5))} 
+                  className="py-4 bg-white border-2 border-emerald-100 text-emerald-600 rounded-2xl font-black"
+                >
+                  领取奖励
+                </button>
+              </div>
+            </motion.div>
+          )}
+        </AnimatePresence>
+      </footer>
     </div>
   );
 };

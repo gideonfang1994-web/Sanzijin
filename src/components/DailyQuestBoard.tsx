@@ -5,7 +5,7 @@ import { CheckCircle2, Swords, BookOpen, Gamepad2, ChevronRight, Sparkles } from
 
 interface Props {
   quests: DailyQuest[];
-  onQuestClick: (target: ViewState, isReview?: boolean) => void;
+  onQuestClick: (target: ViewState, isReview?: boolean, levelId?: number) => void;
 }
 
 const DailyQuestBoard: React.FC<Props> = ({ quests = [], onQuestClick }) => {
@@ -28,7 +28,7 @@ const DailyQuestBoard: React.FC<Props> = ({ quests = [], onQuestClick }) => {
             <button 
               key={quest.id} 
               disabled={quest.completed}
-              onClick={() => onQuestClick(quest.targetView, quest.isReviewType)}
+              onClick={() => onQuestClick(quest.targetView, quest.isReviewType, quest.levelId)}
               className={`w-full flex items-center p-4 rounded-3xl border-2 transition-all relative overflow-hidden group ${
                 quest.completed 
                 ? 'bg-slate-50 border-slate-100 opacity-60' 

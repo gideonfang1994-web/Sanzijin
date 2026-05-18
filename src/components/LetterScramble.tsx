@@ -2,8 +2,10 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { WordGroup, WordItem } from '../types';
 import { Timer, Star, Zap, Headphones, Trophy, X } from 'lucide-react';
+import { motion } from 'motion/react';
 import audio from '../utils/AudioUtils';
 import confetti from 'canvas-confetti';
+import SafeImage from './SafeImage';
 
 interface Props {
   groups: WordGroup[];
@@ -160,7 +162,7 @@ const LetterScramble: React.FC<Props> = ({ groups, isReviewMode, onFinish, onClo
     return (
       <div className="flex flex-col items-center justify-center h-full p-8 text-center">
         <div className="bg-white p-8 rounded-[48px] shadow-puffy border-4 border-white flex flex-col items-center">
-          <img src="https://img.icons8.com/bubbles/150/empty-box.png" className="w-40 h-40 mb-4" referrerPolicy="no-referrer" />
+          <SafeImage src="https://img.icons8.com/bubbles/150/empty-box.png" className="w-40 h-40 mb-4" width="160" height="160" />
           <h2 className="text-2xl font-black text-slate-700 font-heading">魔法宝箱空空如也</h2>
           <p className="text-slate-400 font-bold mt-2 max-w-[200px] text-sm">看来今天还没有开启新的冒险词汇呢！</p>
           <button onClick={onClose} className="mt-8 puffy-button px-8 py-4 bg-indigo-600 text-white rounded-[24px] font-black text-base">回到森林开启冒险</button>
@@ -170,78 +172,102 @@ const LetterScramble: React.FC<Props> = ({ groups, isReviewMode, onFinish, onClo
   }
 
   return (
-    <div className="flex flex-col h-full space-y-4">
+    <div className="flex flex-col h-full space-y-4 font-sans">
       {/* Dynamic Header */}
-      <div className="flex items-center justify-between glass-card rounded-[32px] p-4 shadow-sm">
-        <button onClick={onClose} className="p-2 hover:bg-slate-100 rounded-xl transition-colors">
-          <X size={20} className="text-slate-400" />
+      <div className="flex items-center justify-between bg-white/80 backdrop-blur-md rounded-[32px] p-4 shadow-sm border-2 border-indigo-50 relative z-20">
+        <button onClick={onClose} className="p-2 hover:bg-rose-50 rounded-xl transition-all group">
+          <X size={20} className="text-slate-400 group-hover:text-rose-500" />
         </button>
-        <div className="flex items-center space-x-2">
-          <div className="w-8 h-8 bg-rose-500 rounded-xl flex items-center justify-center shadow-lg shadow-rose-200">
-            <Star className="w-5 h-5 text-white fill-white" />
+        <div className="flex items-center space-x-3">
+          <div className="w-10 h-10 bg-gradient-to-br from-amber-400 to-orange-500 rounded-xl flex items-center justify-center shadow-lg shadow-amber-100 border-b-4 border-orange-700">
+            <Star className="w-6 h-6 text-white fill-white" />
           </div>
-          <span className="font-black text-xl text-slate-700 tabular-nums">{score}</span>
+          <div className="flex flex-col">
+            <span className="text-[8px] font-black text-amber-500 uppercase tracking-widest leading-none mb-1">Adventure Score</span>
+            <span className="font-black text-xl text-slate-800 tabular-nums leading-none">{score}</span>
+          </div>
         </div>
         <div className="flex items-center space-x-4">
            <div className="flex flex-col items-end">
              <span className="text-[8px] font-black text-slate-300 uppercase tracking-widest">Progress</span>
-             <div className="text-slate-500 font-black text-xs">{currentIdx + 1} / {pool.length}</div>
+             <div className="text-slate-500 font-black text-xs tabular-nums">{currentIdx + 1} / {pool.length}</div>
            </div>
-           <div className={`flex items-center space-x-1 font-black text-xl tabular-nums ${timeLeft < 10 ? 'text-rose-500 animate-pulse' : 'text-slate-300'}`}>
-             <Timer className="w-5 h-5" />
-             <span>{timeLeft}s</span>
+           <div className="w-10 h-10 bg-indigo-50 rounded-xl flex items-center justify-center relative overflow-hidden">
+              <motion.div 
+                animate={{ height: `${(timeLeft / 30) * 100}%` }}
+                className="absolute bottom-0 left-0 right-0 bg-indigo-500/20"
+              />
+              <span className={`font-black text-indigo-600 relative z-10 tabular-nums ${timeLeft < 10 ? 'text-rose-500 animate-pulse' : ''}`}>{timeLeft}</span>
            </div>
         </div>
       </div>
 
-      <div className={`flex-1 glass-card rounded-[48px] shadow-puffy p-6 flex flex-col items-center justify-between relative overflow-hidden transition-all ${isWrong ? 'bg-rose-50 translate-x-1' : ''}`}>
+      <div className={`flex-1 bg-white rounded-[56px] shadow-2xl p-8 flex flex-col items-center justify-between relative overflow-hidden transition-all duration-500 border-4 border-white ${isWrong ? 'bg-rose-50 shake' : 'magic-glow-pulse'}`}>
         
-        {/* Animated Progress Bar */}
-        <div className="absolute top-0 left-0 w-full h-2 bg-slate-100 card-inner-shadow">
-           <div className="h-full bg-gradient-to-r from-rose-400 via-indigo-500 to-indigo-600 transition-all duration-1000 rounded-r-full" style={{ width: `${((currentIdx + 1) / pool.length) * 100}%` }}></div>
+        {/* Magical Background deco */}
+        <div className="absolute inset-x-0 top-0 h-2 bg-slate-50 overflow-hidden">
+           <motion.div 
+             className="h-full bg-gradient-to-r from-amber-400 via-orange-500 to-rose-500"
+             animate={{ width: `${((currentIdx + 1) / pool.length) * 100}%` }}
+           />
         </div>
 
-        <div className="mt-2">
-          <div className="inline-block bg-white border-[4px] border-indigo-100 px-8 py-3 rounded-[32px] shadow-sm relative group cursor-help">
-            <div className="absolute -top-3 -right-3 bg-amber-400 text-white p-1.5 rounded-full shadow-lg group-hover:scale-125 transition-transform"><Headphones size={16} /></div>
-            <span className="text-3xl font-black text-slate-800 tracking-tight font-formal">{currentWord?.translation}</span>
+        <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,rgba(99,102,241,0.05)_0%,transparent_70%)] pointer-events-none" />
+        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[500px] h-[500px] border border-indigo-100 rounded-full opacity-20 pointer-events-none animate-magic-rotate" />
+
+        <div className="w-full flex flex-col items-center space-y-6 relative z-10">
+          <div className="inline-flex items-center px-6 py-2.5 bg-indigo-50 text-indigo-600 rounded-2xl border border-indigo-100 font-black text-sm shadow-sm group cursor-help transition-all hover:bg-white" onClick={() => speak(currentWord?.text || '')}>
+             <Headphones size={18} className="mr-2 group-hover:scale-110" />
+             <span>{currentWord?.translation}</span>
           </div>
+
+          <motion.div 
+            whileHover={{ scale: 1.05 }}
+            whileTap={{ scale: 0.95 }}
+            className="cursor-pointer group relative" 
+            onClick={() => speak(currentWord?.text || '')}
+          >
+            <div className="absolute inset-[-20px] bg-indigo-400 blur-3xl opacity-10 rounded-full animate-pulse" />
+            <SafeImage 
+              src={currentWord?.imageUrl || `https://api.dicebear.com/7.x/pixel-art/svg?seed=${currentWord?.text}`} 
+              className={`w-44 h-44 object-contain relative z-10 drop-shadow-[0_20px_40px_rgba(0,0,0,0.1)] transition-all ${isWrong ? 'grayscale opacity-50 px-4' : ''}`} 
+              alt="word" 
+              fallbackText={currentWord?.text}
+              width="176"
+              height="176"
+            />
+          </motion.div>
         </div>
 
-        <div className="cursor-pointer group relative" onClick={() => speak(currentWord?.text || '')}>
-          <div className="absolute inset-0 bg-indigo-300 blur-[60px] opacity-20 scale-150 rounded-full"></div>
-          <img 
-            src={currentWord?.imageUrl || `https://api.dicebear.com/7.x/pixel-art/svg?seed=${currentWord?.text}`} 
-            className={`w-40 h-40 object-contain relative z-10 transition-transform ${isWrong ? 'grayscale scale-90' : 'group-hover:scale-110 group-active:scale-95'}`} 
-            alt="word" 
-            referrerPolicy="no-referrer"
-          />
-        </div>
-
-        <div className={`flex flex-wrap justify-center gap-2 mt-4 min-h-[80px] transition-all ${isWrong ? 'animate-bounce' : ''}`}>
+        <div className={`flex flex-wrap justify-center gap-3 mt-4 min-h-[90px] relative z-10`}>
           {currentWord?.text.split('').map((_, i) => (
             <div 
               key={i} 
-              className={`w-12 h-16 rounded-[18px] border-b-[6px] border-2 flex items-center justify-center text-2xl font-black transition-all duration-300 ${
-                guess[i] 
-                ? 'bg-indigo-600 border-indigo-800 text-white translate-y-[-4px] shadow-lg' 
-                : isWrong ? 'bg-rose-100 border-rose-200' : 'bg-slate-50 border-slate-100 text-slate-200'
-              }`}
+              className={`w-14 h-18 rounded-[24px] border-b-6 border-2 flex items-center justify-center text-3xl font-black transition-all duration-300 transform
+                ${guess[i] 
+                  ? 'bg-gradient-to-b from-indigo-500 to-indigo-700 border-indigo-900 text-white translate-y-[-4px] shadow-xl' 
+                  : isWrong ? 'bg-rose-100 border-rose-300 border-opacity-50' : 'bg-slate-50 border-slate-100 text-slate-100'
+                }`}
             >
               {guess[i]?.char || ''}
             </div>
           ))}
         </div>
 
-        <div className="w-full bg-slate-100/30 p-4 rounded-[40px] border-[3px] border-white border-dashed flex flex-wrap justify-center gap-2 card-inner-shadow">
+        <div className="w-full bg-indigo-50/50 p-6 rounded-[48px] border-4 border-white flex flex-wrap justify-center gap-3 card-inner-shadow relative z-10">
+          <div className="absolute -top-4 left-1/2 -translate-x-1/2 bg-white px-4 py-1 rounded-full border border-indigo-100 shadow-sm">
+             <span className="text-[10px] font-black text-indigo-400 tracking-[0.3em] uppercase">Rune Fragments</span>
+          </div>
           {scrambled.map((item, i) => (
-            <button
+            <motion.button
               key={item.id}
+              whileHover={{ scale: 1.1, rotate: 3, y: -4 }}
+              whileTap={{ scale: 0.9 }}
               onClick={() => handleLetterClick(item, i)}
-              className="w-14 h-14 bg-white rounded-[20px] shadow-puffy text-2xl font-black text-slate-700 hover:border-indigo-400 hover:text-indigo-600 active:scale-90 transition-all flex items-center justify-center puffy-button border-2 border-slate-50"
+              className="w-16 h-16 bg-white rounded-[24px] shadow-lg text-2xl font-black text-slate-800 border-b-4 border-indigo-50 flex items-center justify-center transition-all hover:border-indigo-400 hover:text-indigo-600 hover:shadow-indigo-100"
             >
               {item.char}
-            </button>
+            </motion.button>
           ))}
         </div>
       </div>

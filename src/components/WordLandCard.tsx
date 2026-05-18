@@ -4,6 +4,7 @@ import { WordCard } from '../types';
 import { Volume2, Music, Sparkles, Star, RotateCw, ChevronRight, PlayCircle, CheckCircle2 } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import audio from '../utils/AudioUtils';
+import SafeImage from './SafeImage';
 
 interface Props {
   card: WordCard;
@@ -38,13 +39,12 @@ const WordLandCard: React.FC<Props> = ({ card, onLearned, onNext, isLast, onChal
   };
 
   const getRhymeFontSize = (rhyme: string) => {
-    const lines = rhyme.split(/[，,。.]/).filter(l => l.trim());
+    const lines = rhyme.split(/[,，.。!！?？]/).filter(l => l.trim());
     const maxLength = Math.max(...lines.map(l => l.length));
-    if (maxLength > 18) return 'text-base';
-    if (maxLength > 15) return 'text-lg';
+    if (maxLength > 20) return 'text-base';
+    if (maxLength > 16) return 'text-lg';
     if (maxLength > 12) return 'text-xl';
-    if (maxLength > 10) return 'text-2xl';
-    return 'text-3xl';
+    return 'text-2xl';
   };
 
   return (
@@ -79,15 +79,13 @@ const WordLandCard: React.FC<Props> = ({ card, onLearned, onNext, isLast, onChal
                   <span className="text-2xl font-bold text-slate-400">（{word.translation}）</span>
                 </div>
                 <div className="relative">
-                  <img 
+                  <SafeImage 
                     src={word.imageUrl} 
                     className={`w-20 h-20 object-contain transition-transform duration-500 ${isPlaying === word.text ? 'scale-125 -rotate-6' : 'group-hover:scale-110'}`} 
                     alt={word.text} 
-                    referrerPolicy="no-referrer" 
-                    onError={(e) => {
-                      const target = e.target as HTMLImageElement;
-                      target.src = `https://placehold.co/200x200/indigo/white?text=${word.text}`;
-                    }}
+                    fallbackText={word.text}
+                    width="80"
+                    height="80"
                   />
                   {isPlaying === word.text && <Sparkles className="absolute -top-2 -right-2 text-amber-400 animate-spin-slow" size={20} />}
                 </div>
@@ -115,7 +113,7 @@ const WordLandCard: React.FC<Props> = ({ card, onLearned, onNext, isLast, onChal
           >
             <div className="relative p-8 rounded-[40px] border-[4px] border-white/30 bg-white/10 backdrop-blur-md shadow-xl w-full">
               <p className={`font-black text-white leading-relaxed whitespace-pre-line ${getRhymeFontSize(card.rhyme)}`}>
-                {card.rhyme.split(/[，,。.]/).map((part, i) => (
+                {card.rhyme.split(/[,，.。!！?？]/).filter(s => s.trim()).map((part, i) => (
                   <span key={i} className="block whitespace-nowrap">
                     {part.split(new RegExp(`(${card.suffix})`, 'gi')).map((tp, j) => (
                       <span key={j} className={tp.toLowerCase() === card.suffix.toLowerCase() ? 'text-amber-300' : ''}>{tp}</span>

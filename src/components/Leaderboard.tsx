@@ -3,7 +3,8 @@ import React, { useState, useEffect } from 'react';
 import { UserStats } from '../types';
 import { Trophy, Medal, Crown, Star, Info, ChevronRight, Award, Sparkles, Zap } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { db, collection, query, orderBy, limit, getDocs } from '../firebase';
+import { auth, db, collection, query, orderBy, limit, getDocs, handleFirestoreError, OperationType } from '../firebase';
+import SafeImage from './SafeImage';
 
 interface RankingUser {
   name: string;
@@ -12,6 +13,7 @@ interface RankingUser {
   avatar: string;
   isUser: boolean;
   photoURL?: string;
+  uid?: string;
 }
 
 const Leaderboard: React.FC<{ stats: UserStats }> = ({ stats }) => {
@@ -21,7 +23,10 @@ const Leaderboard: React.FC<{ stats: UserStats }> = ({ stats }) => {
 
   useEffect(() => {
     const fetchRankings = async () => {
+      setLoading(true);
+      setFetchError(null);
       try {
+        console.log("[Leaderboard] Fetching rankings...");
         const q = query(collection(db, 'users'), orderBy('xp', 'desc'), limit(10));
         const querySnapshot = await getDocs(q);
         const fetchedRankings: RankingUser[] = [];
@@ -34,32 +39,29 @@ const Leaderboard: React.FC<{ stats: UserStats }> = ({ stats }) => {
             level: data.level || 1,
             avatar: data.avatar || '🧙‍♂️',
             photoURL: data.photoURL,
-            isUser: doc.id === (stats as any).uid // Assuming uid is passed or available
+            uid: doc.id,
+            isUser: doc.id === auth.currentUser?.uid
           });
         });
 
         // If user is not in top 10, add them at the end for display
         const isUserInTop10 = fetchedRankings.some(r => r.isUser);
-        if (!isUserInTop10) {
+        if (!isUserInTop10 && auth.currentUser) {
           fetchedRankings.push({
-            name: '你自己 (You)',
+            name: auth.currentUser.displayName || '你自己 (You)',
             xp: stats.xp,
             level: stats.level,
             avatar: '🐯',
-            isUser: true
+            isUser: true,
+            uid: auth.currentUser.uid
           });
         }
 
         setRankings(fetchedRankings);
-      } catch (error) {
-        console.error("Error fetching rankings:", error);
-        // Fallback to mock data if firestore fails
-        setRankings([
-          { name: '超人小明', xp: 12500, level: 13, avatar: '🐰', isUser: false },
-          { name: '英语学霸', xp: 9800, level: 10, avatar: '🦁', isUser: false },
-          { name: '单词王者', xp: 8200, level: 9, avatar: '🐼', isUser: false },
-          { name: '你自己 (You)', xp: stats.xp, level: stats.level, avatar: '🐯', isUser: true }
-        ].sort((a, b) => b.xp - a.xp));
+      } catch (error: any) {
+        setFetchError(error.message || "获取排行榜失败");
+        console.error("[Leaderboard] Fetch error details:", error);
+        handleFirestoreError(error, OperationType.GET, 'users');
       } finally {
         setLoading(false);
       }
@@ -67,6 +69,8 @@ const Leaderboard: React.FC<{ stats: UserStats }> = ({ stats }) => {
 
     fetchRankings();
   }, [stats.xp, stats.level]);
+
+  const [fetchError, setFetchError] = useState<string | null>(null);
 
   const levelTitles = [
     { range: [1, 3], title: '魔法学徒', icon: '🌱' },
@@ -143,6 +147,12 @@ const Leaderboard: React.FC<{ stats: UserStats }> = ({ stats }) => {
             <div className="w-10 h-10 border-4 border-amber-400 border-t-transparent rounded-full animate-spin" />
             <p className="text-xs font-bold text-slate-400">正在召唤排行榜...</p>
           </div>
+        ) : fetchError ? (
+          <div className="flex flex-col items-center justify-center py-20 px-8 text-center space-y-4">
+             <div className="text-5xl mb-2">🔮</div>
+             <p className="text-sm font-bold text-rose-500">{fetchError}</p>
+             <p className="text-[10px] text-slate-400">可能是魔法暂时失灵了，请稍后再试</p>
+          </div>
         ) : (
           rankings.map((user, i) => (
             <div key={i} className={`flex items-center p-4 rounded-3xl transition-all ${user.isUser ? 'bg-indigo-600 text-white shadow-lg shadow-indigo-200' : (i === 0 ? 'bg-amber-50 border-amber-100' : 'hover:bg-slate-50')}`}>
@@ -151,7 +161,7 @@ const Leaderboard: React.FC<{ stats: UserStats }> = ({ stats }) => {
               </div>
               <div className={`w-12 h-12 rounded-2xl flex items-center justify-center text-2xl shadow-sm border-2 mr-4 overflow-hidden ${user.isUser ? 'bg-white/20 border-white/10' : 'bg-white border-slate-50'}`}>
                 {user.photoURL ? (
-                  <img src={user.photoURL} alt={user.name} className="w-full h-full object-cover" referrerPolicy="no-referrer" />
+                  <SafeImage src={user.photoURL} alt={user.name} className="w-full h-full object-cover" width="48" height="48" />
                 ) : (
                   user.avatar
                 )}

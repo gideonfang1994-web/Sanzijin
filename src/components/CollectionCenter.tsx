@@ -5,6 +5,7 @@ import { Trophy, Star, Award, Medal, Sparkles, BookOpen, Search, Filter, Info, X
 import audio from '../utils/AudioUtils';
 import { ALL_CARDS } from '../constants';
 import { motion, AnimatePresence } from 'framer-motion';
+import SafeImage from './SafeImage';
 
 interface Props {
   groups: WordGroup[];
@@ -154,11 +155,13 @@ const CollectionCenter: React.FC<Props> = ({ groups, stats, onClose }) => {
               }`}
             >
               <div className="relative mb-2">
-                <img 
+                <SafeImage 
                   src={word.imageUrl} 
                   alt={word.text} 
                   className={`w-14 h-14 object-contain ${!isLearning && 'grayscale'}`}
-                  referrerPolicy="no-referrer"
+                  fallbackText={word.text}
+                  width="56"
+                  height="56"
                 />
                 {isMastered && (
                   <div className="absolute -top-2 -right-2 bg-amber-400 text-white p-1 rounded-full shadow-sm">
@@ -210,11 +213,13 @@ const CollectionCenter: React.FC<Props> = ({ groups, stats, onClose }) => {
                 >
                   <X size={20} />
                 </button>
-                <img 
+                <SafeImage 
                   src={selectedWord.imageUrl} 
                   alt={selectedWord.text} 
                   className="w-32 h-32 object-contain mx-auto drop-shadow-2xl mb-4"
-                  referrerPolicy="no-referrer"
+                  fallbackText={selectedWord.text}
+                  width="128"
+                  height="128"
                 />
                 <h3 className="text-3xl font-black text-white tracking-tight">{selectedWord.text}</h3>
                 <p className="text-white/80 font-bold text-lg">{selectedWord.translation}</p>

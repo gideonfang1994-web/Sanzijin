@@ -1,97 +1,44 @@
 rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
-    // ===============================================================
-    // Assumed Data Model
-    // ===============================================================
-    //
-    // Collection: users
-    // Document ID: {userId} (Firebase Auth UID)
-    // Fields:
-    //   - uid: string (required)
-    //   - displayName: string (optional)
-    //   - photoURL: string (optional)
-    //   - xp: number (required)
-    //   - level: number (required)
-    //   - streak: number (required)
-    //   - starCoins: number (required)
-    //   - magicCoins: number (required)
-    //   - totalWordsLearned: number (required)
-    //   - masteredWords: list (required)
-    //   - wordMastery: map (required)
-    //   - bestChallengeScore: number (required)
-    //   - rank: number (required)
-    //   - hearts: number (required)
-    //   - maxCombo: number (required)
-    //   - selectedCharacterId: string (required)
-    //   - equippedItems: map (required)
-    //   - unlockedItems: list (required)
-    //   - completedLevelsCount: number (required)
-    //   - characterStats: map (required)
-    //   - lastLogin: string (optional)
-    //
-    // ===============================================================
+    // 0. Global Safety Net
+    match /{document=**} {
+      allow read, write: if false;
+    }
 
-    // ===============================================================
-    // Helper Functions
-    // ===============================================================
-    
-    function isAuthenticated() {
+    // Helpers
+    function isSignedIn() {
       return request.auth != null;
+    }
+    
+    function isEmailVerified() {
+      return isSignedIn() && request.auth.token.email_verified == true;
     }
 
     function isOwner(userId) {
-      return isAuthenticated() && request.auth.uid == userId;
+      return isSignedIn() && request.auth.uid == userId;
     }
-
+    
     function isAdmin() {
-      return isAuthenticated() &&
-        (get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'admin' ||
-          (request.auth.token.email == "gideonfang1994@gmail.com" && request.auth.token.email_verified == true));
+      return isSignedIn() && 
+        (request.auth.token.email == "gideonfang1994@gmail.com" && isEmailVerified());
     }
 
-    function isValidUser(data) {
-      return data.keys().hasAll(['uid', 'xp', 'level', 'starCoins', 'magicCoins']) &&
-             data.uid is string &&
-             data.xp is number && data.xp >= 0 &&
-             data.level is number && data.level >= 1 &&
-             data.starCoins is number && data.starCoins >= 0 &&
-             data.magicCoins is number && data.magicCoins >= 0 &&
-             data.totalWordsLearned is number &&
-             data.masteredWords is list &&
-             data.wordMastery is map &&
-             data.bestChallengeScore is number &&
-             data.hearts is number && data.hearts >= 0 &&
-             data.maxCombo is number &&
-             data.selectedCharacterId is string &&
-             data.equippedItems is map &&
-             data.unlockedItems is list &&
-             data.completedLevelsCount is number &&
-             data.characterStats is map;
+    function incoming() {
+      return request.resource.data;
     }
-
-    // ===============================================================
-    // Rules
-    // ===============================================================
 
     match /users/{userId} {
-      // Users can read their own profile. 
-      // For rankings, we might want to allow reading public fields.
-      // But for now, let's allow reading all if authenticated for simplicity of ranking, 
-      // but in a real app, we'd split public/private.
-      allow read: if isAuthenticated();
+      // Leaderboard requires public reading of user profiles
+      allow read, get, list: if true;
       
-      // Only the owner can create/update their own profile.
-      allow create: if isOwner(userId) && isValidUser(request.resource.data);
-      allow update: if isOwner(userId) && isValidUser(request.resource.data) && 
-                      request.resource.data.uid == resource.data.uid; // UID is immutable
-      
-      allow delete: if isAdmin();
-    }
+      // Users can only manage their own profile
+      allow create, update: if (isOwner(userId) && 
+                      incoming().uid == userId && 
+                      !(incoming().keys().contains('role'))
+                    ) || isAdmin();
 
-    // Default deny
-    match /{path=**} {
-      allow read, write: if false;
+      allow delete: if isAdmin();
     }
   }
 }

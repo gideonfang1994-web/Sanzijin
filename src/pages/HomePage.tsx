@@ -1,6 +1,7 @@
 
 import React from 'react';
-import { BookOpen, Gamepad2, Sparkles, Star, Trophy } from 'lucide-react';
+import { motion } from 'motion/react';
+import { BookOpen, Gamepad2, Sparkles, Star, Trophy, CircleDollarSign, ArrowRight } from 'lucide-react';
 import { UserStats, WordGroup, ViewState } from '../types';
 import DailyQuestBoard from '../components/DailyQuestBoard';
 
@@ -9,81 +10,250 @@ interface HomePageProps {
   groups: WordGroup[];
   reviewNeeded: WordGroup[];
   onNavigate: (view: ViewState) => void;
-  onQuestClick: (view: ViewState, isReview?: boolean) => void;
+  onQuestClick: (view: ViewState, isReview?: boolean, levelId?: number) => void;
 }
 
 const HomePage: React.FC<HomePageProps> = ({ stats, groups, reviewNeeded, onNavigate, onQuestClick }) => {
   return (
-    <div className="space-y-8 animate-in fade-in zoom-in-95 duration-700">
-      {/* Stats Card */}
-      <div className="bg-white rounded-[40px] p-6 shadow-xl border-2 border-indigo-50 flex justify-between items-center">
-        <div className="flex items-center space-x-3">
-          <div className="bg-gradient-to-br from-indigo-500 to-indigo-700 text-white w-12 h-12 rounded-2xl flex flex-col items-center justify-center font-black shadow-lg border-2 border-white/50">
-            <span className="text-[8px] opacity-70 leading-none">LV</span>
-            <span className="text-xl leading-none">{stats.level}</span>
-          </div>
-          <div className="flex flex-col">
-            <div className="w-20 h-2 bg-slate-100 rounded-full overflow-hidden border border-white shadow-inner">
-              <div className="h-full rainbow-progress" style={{ width: `${(stats.xp % 1000) / 10}%` }} />
-            </div>
-            <span className="text-[9px] font-black text-slate-400 tracking-widest uppercase mt-1">Exp Journey</span>
-          </div>
-        </div>
-        <div className="flex items-center space-x-2">
-          <div className="flex items-center bg-amber-50 px-3 py-2 rounded-2xl border border-amber-100">
-            <Star size={14} className="text-amber-500 mr-1 fill-amber-200" />
-            <span className="font-black text-amber-700 text-xs">{stats.starCoins}</span>
-          </div>
-          <div className="flex items-center bg-indigo-600 px-3 py-2 rounded-2xl border-2 border-white/50 text-white">
-            <Trophy size={14} className="mr-1" />
-            <span className="font-black text-xs">{stats.xp}</span>
-          </div>
-        </div>
-      </div>
+    <div className="space-y-6 animate-in fade-in zoom-in-95 duration-700 pb-16 relative">
+      {/* Dynamic Nature Background - Ultra Rich Green */}
+      <div className="fixed inset-0 pointer-events-none overflow-hidden -z-10 bg-gradient-to-br from-[#10513e] via-[#064e3b] to-[#065f46]">
+        {/* Animated Sun Rays with Glow */}
+        <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_-10%,_rgba(52,211,153,0.2)_0%,_transparent_60%)]" />
+        <div className="absolute inset-0 bg-[radial-gradient(circle_at_10%_20%,_rgba(16,185,129,0.15)_0%,_transparent_40%)]" />
 
-      <div className="text-center py-6 relative">
-        <div className="absolute top-0 left-1/2 -translate-x-1/2 w-48 h-48 bg-indigo-500/20 rounded-full blur-3xl -z-10 animate-pulse"></div>
-        <div className="flex flex-col items-center">
-          <div className="w-28 h-28 bg-white rounded-[40px] shadow-2xl flex items-center justify-center text-6xl mb-4 animate-bounce-gentle border-4 border-indigo-100 transform rotate-3">
-            🐯
-          </div>
-          <h1 className="text-6xl font-black text-transparent bg-clip-text bg-gradient-to-r from-indigo-600 to-rose-500 tracking-tighter drop-shadow-sm">单词奇旅</h1>
-        </div>
-      </div>
-
-      <div className="grid grid-cols-2 gap-5">
-        <button onClick={() => onNavigate('ADVENTURE')} className="bg-rose-500 p-8 rounded-[40px] puffy-button text-white relative overflow-hidden group border-none">
-          <div className="absolute top-0 right-0 w-20 h-20 bg-white/10 rounded-full -mr-10 -mt-10 group-hover:scale-150 transition-transform"></div>
-          <div className="bg-white/20 w-16 h-16 rounded-3xl flex items-center justify-center mx-auto mb-4 backdrop-blur-md">
-            <BookOpen className="text-white w-9 h-9" />
-          </div>
-          <h3 className="font-black text-xl">冒险森林</h3>
-          <p className="text-[10px] opacity-80 font-bold mt-1 uppercase tracking-widest">Story Mode</p>
-          {reviewNeeded.length > 0 && <div className="absolute top-4 right-4 bg-white text-rose-600 text-[10px] font-black px-2 py-0.5 rounded-full shadow-lg">{reviewNeeded.length}</div>}
-        </button>
+        {/* Floating Nature Objects (Leaves, Flowers, Petals) */}
+        {[...Array(15)].map((_, i) => (
+          <motion.div
+            key={i}
+            initial={{ 
+              x: Math.random() * 100 + '%', 
+              y: -100, 
+              rotate: 0,
+              opacity: 0 
+            }}
+            animate={{ 
+              y: ['0vh', '110vh'],
+              x: [(Math.random() * 120 - 10) + '%', (Math.random() * 120 - 10) + '%'],
+              rotate: [0, 1080],
+              opacity: [0, 0.5, 0.5, 0],
+              scale: [0.7, 1.3, 0.7]
+            }}
+            transition={{ 
+              duration: 12 + Math.random() * 18, 
+              repeat: Infinity, 
+              delay: Math.random() * 15,
+              ease: "linear"
+            }}
+            className="absolute text-5xl filter blur-[0.3px] select-none pointer-events-none"
+          >
+            {['🍃', '🌿', '🌸', '🍀', '✨', '🌼'][i % 6]}
+          </motion.div>
+        ))}
         
-        <button onClick={() => onNavigate('ARCADE')} className="bg-indigo-600 p-8 rounded-[40px] puffy-button text-white relative overflow-hidden group border-none">
-          <div className="absolute top-0 right-0 w-20 h-20 bg-white/10 rounded-full -mr-10 -mt-10 group-hover:scale-150 transition-transform"></div>
-          <div className="bg-white/20 w-16 h-16 rounded-3xl flex items-center justify-center mx-auto mb-4 backdrop-blur-md">
-            <Gamepad2 className="text-white w-9 h-9" />
+        {/* Deep Forest Layers with Silhouettes */}
+        <div className="absolute bottom-0 left-0 right-0 h-96 opacity-10 flex justify-around items-end overflow-hidden">
+           <div className="text-[20rem] -mb-28 -ml-32 transform -rotate-6">🌳</div>
+           <div className="text-[14rem] -mb-16 text-emerald-900/30">🌲</div>
+           <div className="text-[22rem] -mb-32 text-emerald-900/50 transform rotate-3">🌳</div>
+           <div className="text-[15rem] -mb-12 -mr-32 text-emerald-900/30 transform -rotate-12">🌲</div>
+        </div>
+
+        {/* Ground Flora Details */}
+        <div className="absolute bottom-10 left-10 text-7xl opacity-20 transform -rotate-12">🍄</div>
+        <div className="absolute bottom-24 right-16 text-6xl opacity-15">🌸</div>
+        <div className="absolute bottom-32 left-1/3 text-4xl opacity-10">🌿</div>
+      </div>
+
+        {/* Magical Ecosystem Accents */}
+        <motion.div 
+          animate={{ opacity: [0.2, 0.4, 0.2] }} 
+          transition={{ duration: 4, repeat: Infinity }}
+          className="absolute bottom-32 left-16 text-6xl opacity-30 drop-shadow-[0_0_15px_rgba(255,255,255,0.5)]"
+        >
+          🍄
+        </motion.div>
+        <motion.div 
+          animate={{ 
+            x: [0, 100, 0], 
+            y: [0, -50, 0],
+            rotate: [0, 20, 0]
+          }} 
+          transition={{ duration: 12, repeat: Infinity, ease: "linear" }}
+          className="absolute top-1/4 right-20 text-5xl opacity-20"
+        >
+          🦋
+        </motion.div>
+        <motion.div 
+          animate={{ scale: [1, 1.2, 1], opacity: [0.1, 0.3, 0.1] }} 
+          transition={{ duration: 3, repeat: Infinity }}
+          className="absolute top-1/3 left-10 text-4xl"
+        >
+          ✨
+        </motion.div>
+
+      {/* Hero Stats Section - Glassmorphism Refined */}
+      <div className="bg-white rounded-[40px] p-6 shadow-[0_32px_64px_-16px_rgba(6,78,59,0.15)] border-2 border-emerald-100 flex justify-between items-center relative overflow-hidden group">
+        <div className="absolute inset-0 bg-gradient-to-br from-emerald-50/50 to-transparent pointer-events-none" />
+        <div className="absolute -top-12 -right-12 w-40 h-40 bg-emerald-200/40 rounded-full blur-3xl group-hover:scale-125 transition-transform duration-1000" />
+        
+        <div className="flex items-center space-x-6 relative z-10">
+          <motion.div 
+            whileHover={{ scale: 1.08, rotate: 5 }}
+            className="relative"
+          >
+            <div className="absolute inset-0 bg-emerald-400 rounded-[24px] blur-lg opacity-40 group-hover:opacity-60 transition-opacity" />
+            <div className="bg-gradient-to-br from-emerald-500 via-emerald-600 to-emerald-800 text-white w-16 h-16 rounded-[24px] flex flex-col items-center justify-center font-black shadow-xl border-2 border-white/50 relative overflow-hidden">
+              <span className="text-[10px] font-bold opacity-70 leading-none mb-1">LV</span>
+              <span className="text-3xl leading-none">{stats.level}</span>
+              <div className="absolute top-0 left-0 w-full h-full bg-gradient-to-tr from-white/0 via-white/20 to-white/0 -translate-x-full group-hover:translate-x-full transition-transform duration-1000" />
+            </div>
+          </motion.div>
+          <div className="flex flex-col space-y-2">
+            <div className="flex items-center justify-between min-w-[120px]">
+               <span className="text-[10px] font-black text-emerald-800/40 uppercase tracking-[0.2em]">Magical Core</span>
+               <span className="text-[10px] font-bold text-emerald-600/60 uppercase tracking-widest">{Math.floor((stats.xp % 1000) / 10)}%</span>
+            </div>
+            <div className="w-40 h-3 bg-emerald-100/50 rounded-full overflow-hidden border border-emerald-200/50 shadow-inner p-1">
+              <motion.div 
+                initial={{ width: 0 }}
+                animate={{ width: `${(stats.xp % 1000) / 10}%` }}
+                className="h-full bg-gradient-to-r from-emerald-400 to-emerald-600 rounded-full shadow-[0_0_10px_rgba(52,211,153,0.5)]" 
+              />
+            </div>
           </div>
-          <h3 className="font-black text-xl">游乐园</h3>
-          <p className="text-[10px] opacity-80 font-bold mt-1 uppercase tracking-widest">Skill Training</p>
-        </button>
+        </div>
+
+        <div className="flex items-center space-x-3 relative z-10">
+          <motion.div 
+            whileHover={{ scale: 1.05, y: -2 }}
+            className="flex items-center bg-white px-4 py-3 rounded-[24px] border-2 border-slate-100 shadow-sm"
+          >
+            <CircleDollarSign size={20} className="text-amber-500 mr-2 fill-amber-200" />
+            <span className="font-black text-slate-700 text-base tabular-nums tracking-tight">{stats.starCoins}</span>
+          </motion.div>
+        </div>
+      </div>
+
+      {/* Main Branding */}
+      <div className="text-center py-6 relative">
+        <motion.div 
+          initial={{ scale: 0.9, opacity: 0 }}
+          animate={{ scale: 1, opacity: 1 }}
+          className="flex flex-col items-center"
+        >
+          <div className="relative mb-8">
+            <motion.div 
+              animate={{ rotate: 360 }}
+              transition={{ duration: 30, repeat: Infinity, ease: "linear" }}
+              className="absolute -inset-10 bg-gradient-to-r from-emerald-200/40 via-lime-200/40 to-emerald-200/40 rounded-full blur-3xl"
+            />
+            <motion.div 
+              animate={{ y: [0, -12, 0] }}
+              transition={{ duration: 4, repeat: Infinity, ease: "easeInOut" }}
+              className="w-36 h-36 bg-white rounded-[48px] shadow-2xl shadow-emerald-900/10 flex items-center justify-center text-8xl relative z-10 border-4 border-emerald-50"
+            >
+              <div className="absolute -top-6 -left-6 text-5xl drop-shadow-lg">🌳</div>
+              🐯
+              <div className="absolute -top-6 -right-6 text-5xl drop-shadow-lg animate-pulse">✨</div>
+            </motion.div>
+          </div>
+          <div className="space-y-3">
+            <h1 className="text-6xl font-black tracking-tighter text-emerald-950 pb-1">
+              单词奇旅
+            </h1>
+            <div className="inline-flex px-6 py-2 bg-emerald-900 text-white rounded-full border border-emerald-800 shadow-lg magic-shadow">
+              <span className="text-[10px] font-black uppercase tracking-[0.4em]">Adventure Forest v2.0</span>
+            </div>
+          </div>
+        </motion.div>
+      </div>
+
+      {/* Main Navigation Grid */}
+      <div className="grid grid-cols-2 gap-6 px-1">
+        <motion.button 
+          whileHover={{ scale: 1.02, y: -8 }}
+          whileTap={{ scale: 0.98 }}
+          onClick={() => onNavigate('ADVENTURE')} 
+          className="puffy-card p-7 text-left relative overflow-hidden group h-64 flex flex-col justify-between border-emerald-100"
+        >
+          <div className="absolute -top-10 -right-10 w-32 h-32 bg-emerald-50 rounded-full blur-2xl opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
+          
+          <div className="relative">
+            <div className="bg-emerald-500 w-16 h-16 rounded-[28px] flex items-center justify-center mb-6 shadow-lg shadow-emerald-200 group-hover:scale-110 transition-transform">
+              <BookOpen className="text-white w-8 h-8" />
+            </div>
+            {reviewNeeded.length > 0 && (
+              <motion.div 
+                animate={{ scale: [1, 1.15, 1] }}
+                transition={{ repeat: Infinity, duration: 1.5 }}
+                className="absolute -top-2 -right-2 bg-rose-500 text-white text-[11px] font-black w-7 h-7 flex items-center justify-center rounded-full shadow-lg border-2 border-white z-20"
+              >
+                {reviewNeeded.length}
+              </motion.div>
+            )}
+          </div>
+
+          <div>
+            <h3 className="font-black text-2xl text-emerald-950 tracking-tight leading-tight">冒险森林</h3>
+            <p className="text-[11px] font-black text-emerald-500/70 uppercase tracking-widest mt-2 flex items-center">
+              EXPLORE WORLD <ArrowRight size={10} className="ml-1 opacity-0 group-hover:opacity-100 group-hover:translate-x-1 transition-all" />
+            </p>
+          </div>
+        </motion.button>
+        
+        <motion.button 
+          whileHover={{ scale: 1.02, y: -8 }}
+          whileTap={{ scale: 0.98 }}
+          onClick={() => onNavigate('ARCADE')} 
+          className="puffy-card p-7 text-left relative overflow-hidden group h-64 flex flex-col justify-between border-amber-100"
+        >
+           <div className="absolute -top-10 -right-10 w-32 h-32 bg-amber-50 rounded-full blur-2xl opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
+           
+           <div className="bg-amber-500 w-16 h-16 rounded-[28px] flex items-center justify-center mb-6 shadow-lg shadow-amber-200 group-hover:scale-110 transition-transform">
+            <Gamepad2 className="text-white w-8 h-8" />
+          </div>
+
+          <div>
+            <h3 className="font-black text-2xl text-amber-950 tracking-tight leading-tight">魔法乐园</h3>
+            <p className="text-[11px] font-black text-amber-600/70 uppercase tracking-widest mt-2 flex items-center">
+              PLAY GAMES <ArrowRight size={10} className="ml-1 opacity-0 group-hover:opacity-100 group-hover:translate-x-1 transition-all" />
+            </p>
+          </div>
+        </motion.button>
       </div>
 
       <DailyQuestBoard quests={stats.quests} onQuestClick={onQuestClick} />
       
-      {/* Achievement Preview */}
-      <div className="glass-pill rounded-[36px] p-6 flex items-center justify-between border-indigo-50">
-        <div className="flex items-center space-x-4">
-          <div className="w-12 h-12 bg-amber-100 rounded-2xl flex items-center justify-center text-2xl">🏆</div>
-          <div>
-            <h4 className="font-black text-slate-800 text-sm">小小单词家</h4>
-            <p className="text-[10px] font-bold text-slate-400">已掌握 {(stats.masteredWords || []).length} 个单词</p>
+      {/* Achievement Progress Bar Footprint */}
+      <motion.div 
+        whileHover={{ scale: 1.02 }}
+        className="bg-emerald-900 rounded-[40px] p-8 text-white shadow-2xl relative overflow-hidden group border-2 border-emerald-800"
+      >
+        <div className="absolute top-0 right-0 p-6 opacity-20 rotate-12 scale-150">🌲</div>
+        <div className="flex items-center justify-between mb-5 relative z-10">
+          <div className="flex items-center space-x-3">
+            <Trophy className="text-amber-400" size={24} />
+            <h4 className="font-black text-emerald-50 text-base">魔法成就</h4>
           </div>
+          <span className="text-xs font-black text-emerald-400">已掌握 {(stats.masteredWords || []).length} 个单词</span>
         </div>
-        <Sparkles className="text-amber-400" size={20} />
+        <div className="w-full h-3 bg-emerald-800 rounded-full overflow-hidden mb-2">
+          <motion.div 
+            initial={{ width: 0 }}
+            animate={{ width: stats.masteredWords?.length ? Math.min(100, (stats.masteredWords.length / 50) * 100) + '%' : '0%' }}
+            className="h-full bg-gradient-to-r from-amber-400 to-orange-400" 
+          />
+        </div>
+      </motion.div>
+
+      {/* Nature Footer Accent */}
+      <div className="flex justify-center items-center space-x-8 opacity-20 pointer-events-none pb-4">
+        <div className="text-4xl">🌲</div>
+        <div className="text-2xl">🍄</div>
+        <div className="text-4xl">🌳</div>
+        <div className="text-2xl">🍄</div>
+        <div className="text-4xl">🌲</div>
       </div>
     </div>
   );

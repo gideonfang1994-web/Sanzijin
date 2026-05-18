@@ -2,14 +2,16 @@
 import React, { useState } from 'react';
 import { UserStats, ShopItem, Character } from '../types';
 import { CHARACTERS, SHOP_ITEMS } from '../constants';
-import { Sparkles, ShoppingBag, Check, Lock, User, Shield, Sword, Wand2, Book, ArrowUp, Zap, BookOpen, ArrowRight } from 'lucide-react';
+import { Sparkles, ShoppingBag, Check, Lock, User, Shield, Sword, Wand2, Book, ArrowUp, Zap, BookOpen, ArrowRight, ChevronLeft } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
+import SafeImage from './SafeImage';
 
 interface MagicShopProps {
   stats: UserStats;
   onPurchase: (item: ShopItem) => void;
   onEquip: (characterId: string, itemId: string) => void;
   onSelectCharacter: (characterId: string) => void;
+  onClose?: () => void;
 }
 
 const ParticleEffect: React.FC<{ color: string }> = ({ color }) => {
@@ -144,15 +146,13 @@ const CharacterVisual: React.FC<{
         <div className="relative z-10 w-40 h-60 rounded-[32px] overflow-hidden border-2 border-white/20 shadow-2xl bg-black/20">
           {character.portraitUrl ? (
             <div className="relative w-full h-full">
-              <img 
+              <SafeImage 
                 src={character.portraitUrl} 
                 alt={character.name}
-                referrerPolicy="no-referrer"
                 className="w-full h-full object-cover"
-                onError={(e) => {
-                  const target = e.target as HTMLImageElement;
-                  target.src = `https://placehold.co/400x600/${character.color.replace('#', '')}/white?text=${character.name}`;
-                }}
+                fallback={`https://placehold.co/400x600/${character.color.replace('#', '')}/ffffff?text=${encodeURIComponent(character.name)}`}
+                width="160"
+                height="240"
               />
               
               {/* Equipment Overlays (Visual Feedback) */}
@@ -209,7 +209,7 @@ const CharacterVisual: React.FC<{
   );
 };
 
-const MagicShop: React.FC<MagicShopProps> = ({ stats, onPurchase, onEquip, onSelectCharacter }) => {
+const MagicShop: React.FC<MagicShopProps> = ({ stats, onPurchase, onEquip, onSelectCharacter, onClose }) => {
   const [isSelecting, setIsSelecting] = useState(false);
   const [selectedItem, setSelectedItem] = useState<ShopItem | null>(null);
   const selectedChar = CHARACTERS.find(c => c.id === stats.selectedCharacterId) || CHARACTERS[0];
@@ -280,17 +280,27 @@ const MagicShop: React.FC<MagicShopProps> = ({ stats, onPurchase, onEquip, onSel
             exit={{ opacity: 0, y: -20 }}
             className="space-y-4"
           >
-            {/* Header with Coins and Change Hero */}
+            {/* Header with Coins, Close, and Change Hero */}
             <div className="flex items-center justify-between px-2">
-              <button 
-                onClick={() => setIsSelecting(true)}
-                className="flex items-center space-x-2 bg-white px-4 py-2 rounded-2xl shadow-sm border border-slate-100 hover:bg-slate-50 transition-colors"
-              >
-                <User size={16} className="text-indigo-600" />
-                <span className="text-xs font-black text-slate-700">切换英雄</span>
-              </button>
+              <div className="flex items-center space-x-2">
+                {onClose && (
+                  <button 
+                    onClick={onClose}
+                    className="p-3 bg-white hover:bg-slate-50 rounded-2xl shadow-sm border border-slate-100 transition-all text-slate-700"
+                  >
+                    <ChevronLeft size={20} />
+                  </button>
+                )}
+                <button 
+                  onClick={() => setIsSelecting(true)}
+                  className="flex items-center space-x-2 bg-white px-4 py-2.5 rounded-2xl shadow-sm border border-slate-100 hover:bg-slate-50 transition-colors"
+                >
+                  <User size={16} className="text-indigo-600" />
+                  <span className="text-xs font-black text-slate-700">切换英雄</span>
+                </button>
+              </div>
               
-              <div className="flex items-center bg-indigo-600 px-4 py-2 rounded-2xl shadow-lg">
+              <div className="flex items-center bg-indigo-600 px-4 py-2.5 rounded-2xl shadow-lg border border-indigo-500">
                 <Sparkles size={16} className="text-white mr-2" />
                 <span className="text-sm font-black text-white">{stats.magicCoins}</span>
               </div>
@@ -338,9 +348,13 @@ const MagicShop: React.FC<MagicShopProps> = ({ stats, onPurchase, onEquip, onSel
                       className={`bg-white rounded-[40px] p-4 shadow-xl border-2 flex flex-col items-center justify-between min-h-[160px] relative overflow-hidden transition-all duration-300 ${
                         isEquipped ? 'border-emerald-500 shadow-emerald-100' : 
                         isLevelLocked ? 'border-slate-100 opacity-60 grayscale' :
+                        item.type === 'PET' ? 'border-indigo-400 bg-gradient-to-br from-white to-indigo-50/10' :
                         'border-slate-50 hover:border-indigo-100'
                       }`}
                     >
+                      {item.type === 'PET' && (
+                        <div className="absolute top-0 left-0 w-full h-1.5 bg-gradient-to-r from-indigo-500 via-purple-500 to-pink-500 opacity-60" />
+                      )}
                       {isEquipped && (
                         <div className="absolute top-3 right-3 bg-emerald-500 text-white p-1 rounded-full shadow-lg">
                           <Check size={10} />
@@ -362,15 +376,13 @@ const MagicShop: React.FC<MagicShopProps> = ({ stats, onPurchase, onEquip, onSel
                         (isUnlocked || isConsumable) && !isLevelLocked ? '' : 'grayscale opacity-50'
                       }`}>
                         {item.imageUrl ? (
-                          <img 
+                          <SafeImage 
                             src={item.imageUrl} 
                             alt={item.name} 
                             className="w-16 h-16 object-contain drop-shadow-xl"
-                            referrerPolicy="no-referrer"
-                            onError={(e) => {
-                              const target = e.target as HTMLImageElement;
-                              target.src = `https://placehold.co/100x100/indigo/white?text=${item.name}`;
-                            }}
+                            fallbackText={item.name}
+                            width="64"
+                            height="64"
                           />
                         ) : (
                           <Sparkles className="text-slate-200" size={32} />
@@ -410,16 +422,14 @@ const MagicShop: React.FC<MagicShopProps> = ({ stats, onPurchase, onEquip, onSel
                 
                 <div className="absolute inset-0 bg-gradient-to-b from-transparent to-white/50" />
                 
-                <motion.img 
+                <SafeImage 
                   layoutId={`item-img-${selectedItem.id}`}
                   src={selectedItem.imageUrl} 
                   alt={selectedItem.name}
                   className="w-32 h-32 object-contain relative z-10 drop-shadow-2xl"
-                  referrerPolicy="no-referrer"
-                  onError={(e) => {
-                    const target = e.target as HTMLImageElement;
-                    target.src = `https://placehold.co/200x200/indigo/white?text=${selectedItem.name}`;
-                  }}
+                  fallbackText={selectedItem.name}
+                  width="128"
+                  height="128"
                 />
               </div>
 

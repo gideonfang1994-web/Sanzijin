@@ -15,6 +15,8 @@ export interface Word {
   xpValue: number;
 }
 
+export type DifficultyLevel = 'PRIMARY' | 'INTERMEDIATE' | 'ADVANCED';
+
 export interface WordGroup {
   id: string;
   title: string;
@@ -25,6 +27,7 @@ export interface WordGroup {
   srsLevel: number; 
   nextReview: number; 
   lastIncorrect?: boolean; 
+  difficulty?: DifficultyLevel;
 }
 
 export interface DailyQuest {
@@ -37,6 +40,7 @@ export interface DailyQuest {
   rewardCoins: number;
   targetView: ViewState;
   isReviewType?: boolean;
+  levelId?: number;
 }
 
 export interface Pet {
@@ -72,6 +76,7 @@ export interface UserStats {
   completedLevelsCount: number;
   completedLevelIds: number[];
   masteredLevelIds: number[];
+  reviewSchedules?: Record<string, { nextReviewAt: number, intervalDays: number, levelId: number }>;
   cardsPerDay?: number;
   characterStats: Record<string, {
     level: number;
@@ -133,6 +138,7 @@ export interface WordCard {
   words: WordItem[];
   rhyme: string;
   learned: boolean;
+  difficulty?: DifficultyLevel;
 }
 
 export interface AdventureDay {
@@ -145,10 +151,11 @@ export type AdventureMode = 'RELAXED' | 'SPEED';
 
 export interface AdventureForestProps {
   onClose: () => void;
-  onCompleteLevel?: (words: WordItem[]) => void;
+  onCompleteLevel?: (words: WordItem[], levelId: number) => void;
   onReward?: (xp: number, coins: number) => void;
   stats: UserStats;
   onUpdateStats: (stats: Partial<UserStats>) => void;
+  initialLevelId?: number;
 }
 
-export type ViewState = 'HOME' | 'CARDS' | 'VIDEOS' | 'CHALLENGE' | 'SCRAMBLE' | 'MEMORY' | 'BALLOON' | 'WHACK' | 'RANKING' | 'UPLOAD' | 'ARCADE' | 'SHEEP' | 'COLLECTION' | 'ADVENTURE' | 'DUBBING' | 'SHOP' | 'PETS';
+export type ViewState = 'HOME' | 'CARDS' | 'VIDEOS' | 'CHALLENGE' | 'SCRAMBLE' | 'MEMORY' | 'BALLOON' | 'WHACK' | 'RANKING' | 'UPLOAD' | 'ARCADE' | 'SHEEP' | 'COLLECTION' | 'ADVENTURE' | 'DUBBING' | 'SHOP' | 'PETS' | 'SPELLING';
