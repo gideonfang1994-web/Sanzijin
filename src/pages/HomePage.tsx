@@ -1,7 +1,7 @@
 
 import React from 'react';
-import { motion } from 'motion/react';
-import { BookOpen, Gamepad2, Sparkles, Star, Trophy, CircleDollarSign, ArrowRight } from 'lucide-react';
+import { motion, AnimatePresence } from 'motion/react';
+import { BookOpen, Gamepad2, Sparkles, Star, Trophy, CircleDollarSign, ArrowRight, Search, X } from 'lucide-react';
 import { UserStats, WordGroup, ViewState } from '../types';
 import DailyQuestBoard from '../components/DailyQuestBoard';
 
@@ -14,6 +14,28 @@ interface HomePageProps {
 }
 
 const HomePage: React.FC<HomePageProps> = ({ stats, groups, reviewNeeded, onNavigate, onQuestClick }) => {
+  const [searchQuery, setSearchQuery] = React.useState('');
+  const [searchResults, setSearchResults] = React.useState<WordGroup[]>([]);
+
+  const handleSearch = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const query = e.target.value.toLowerCase();
+    setSearchQuery(query);
+    if (query.trim() === '') {
+      setSearchResults([]);
+      return;
+    }
+    const filtered = groups.filter(group => 
+      group.words.some(word => word.text.toLowerCase().includes(query)) ||
+      group.title.toLowerCase().includes(query)
+    );
+    setSearchResults(filtered);
+  };
+
+  const clearSearch = () => {
+    setSearchQuery('');
+    setSearchResults([]);
+  };
+
   return (
     <div className="space-y-6 animate-in fade-in zoom-in-95 duration-700 pb-16 relative">
       {/* Dynamic Nature Background - Ultra Rich Green */}
@@ -167,6 +189,69 @@ const HomePage: React.FC<HomePageProps> = ({ stats, groups, reviewNeeded, onNavi
             </div>
           </div>
         </motion.div>
+      </div>
+
+      {/* Word Search Section */}
+      <div className="px-1">
+        <div className="relative group">
+          <div className="absolute inset-y-0 left-5 flex items-center pointer-events-none">
+            <Search className="text-emerald-500 w-5 h-5 group-focus-within:text-emerald-600 transition-colors" />
+          </div>
+          <input
+            type="text"
+            value={searchQuery}
+            onChange={handleSearch}
+            placeholder="搜索单词，寻找它的三字经魔法..."
+            className="w-full bg-white/80 backdrop-blur-md py-5 pl-14 pr-12 rounded-[28px] border-2 border-emerald-100/50 shadow-lg focus:ring-4 focus:ring-emerald-500/20 focus:border-emerald-400 outline-none transition-all text-emerald-900 font-bold placeholder:text-emerald-300"
+          />
+          {searchQuery && (
+            <button
+              onClick={clearSearch}
+              className="absolute inset-y-0 right-4 flex items-center px-2 text-emerald-300 hover:text-emerald-500 transition-colors"
+            >
+              <X className="w-5 h-5" />
+            </button>
+          )}
+        </div>
+
+        <AnimatePresence>
+          {searchResults.length > 0 && (
+            <motion.div
+              initial={{ opacity: 0, y: -10, height: 0 }}
+              animate={{ opacity: 1, y: 0, height: 'auto' }}
+              exit={{ opacity: 0, y: -10, height: 0 }}
+              className="mt-4 bg-white/90 backdrop-blur-xl rounded-[32px] border-2 border-emerald-100 shadow-2xl p-6 space-y-4 overflow-hidden"
+            >
+              <h4 className="text-[10px] font-black text-emerald-800/40 uppercase tracking-[0.2em] mb-2 px-2">发现魔法口诀</h4>
+              <div className="space-y-3 max-h-[300px] overflow-y-auto pr-2 custom-scrollbar">
+                {searchResults.map((group) => (
+                  <motion.div
+                    key={group.id}
+                    initial={{ opacity: 0, x: -10 }}
+                    animate={{ opacity: 1, x: 0 }}
+                    className="p-4 bg-emerald-50/50 rounded-2xl border border-emerald-100 hover:bg-emerald-50 transition-colors"
+                  >
+                    <div className="flex justify-between items-start mb-2">
+                      <div className="flex flex-wrap gap-1">
+                        {group.words.map(w => (
+                          <span key={w.text} className={`px-2 py-0.5 rounded-full text-[10px] font-black ${w.text.toLowerCase().includes(searchQuery.toLowerCase()) ? 'bg-emerald-500 text-white shadow-lg shadow-emerald-200' : 'bg-white text-emerald-600 border border-emerald-100'}`}>
+                            {w.text}
+                          </span>
+                        ))}
+                      </div>
+                      <span className="text-[8px] font-black text-emerald-300 uppercase tracking-widest">{group.title}</span>
+                    </div>
+                    <p className="text-emerald-900 font-bold text-sm leading-relaxed translate-y-1">
+                      {group.rhyme.split(',').map((part, i) => (
+                        <span key={i} className="block">{part.trim()}</span>
+                      ))}
+                    </p>
+                  </motion.div>
+                ))}
+              </div>
+            </motion.div>
+          )}
+        </AnimatePresence>
       </div>
 
       {/* Main Navigation Grid */}

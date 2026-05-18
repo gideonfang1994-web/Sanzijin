@@ -658,31 +658,53 @@ const App: React.FC = () => {
   if (showWelcome) {
     return (
       <motion.div 
-        className="fixed inset-0 z-[200] bg-gradient-to-br from-emerald-600 via-green-500 to-emerald-800 flex flex-col items-center justify-center overflow-hidden"
+        className="fixed inset-0 z-[200] bg-gradient-to-br from-emerald-400 via-green-300 to-emerald-200 flex flex-col items-center justify-center overflow-hidden"
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
         exit={{ opacity: 0 }}
       >
+        {/* Animated Background Blobs */}
+        <div className="absolute inset-0 overflow-hidden">
+          <motion.div 
+            animate={{ 
+              scale: [1, 1.2, 1],
+              x: [-10, 10, -10],
+              y: [-10, 10, -10],
+            }}
+            transition={{ duration: 8, repeat: Infinity, ease: "easeInOut" }}
+            className="absolute top-[-10%] left-[-10%] w-[50%] h-[50%] bg-white/30 rounded-full blur-[100px]"
+          />
+          <motion.div 
+            animate={{ 
+              scale: [1, 1.3, 1],
+              x: [10, -10, 10],
+              y: [10, -10, 10],
+            }}
+            transition={{ duration: 10, repeat: Infinity, ease: "easeInOut", delay: 1 }}
+            className="absolute bottom-[-10%] right-[-10%] w-[60%] h-[60%] bg-emerald-100/40 rounded-full blur-[120px]"
+          />
+        </div>
+
         {/* Animated Forest Background Elements */}
         <div className="absolute inset-0 overflow-hidden pointer-events-none">
           {/* Floating Sparkles/Fireflies */}
-          {[...Array(20)].map((_, i) => (
+          {[...Array(25)].map((_, i) => (
             <motion.div
               key={i}
-              className="absolute w-1.5 h-1.5 bg-yellow-200 rounded-full blur-[1px]"
+              className="absolute w-1 h-1 bg-yellow-100 rounded-full blur-[1px]"
               initial={{ 
                 x: Math.random() * 100 + "%", 
                 y: Math.random() * 100 + "%",
-                opacity: Math.random() * 0.5 + 0.2
+                opacity: 0
               }}
               animate={{ 
-                y: [null, "-20%", "20%"],
-                x: [null, "10%", "-10%"],
-                opacity: [0.2, 0.8, 0.2],
-                scale: [1, 1.5, 1]
+                y: [null, "-10%", "10%"],
+                x: [null, "5%", "-5%"],
+                opacity: [0, 0.7, 0],
+                scale: [0.5, 1.2, 0.5]
               }}
               transition={{ 
-                duration: 5 + Math.random() * 5, 
+                duration: 4 + Math.random() * 4, 
                 repeat: Infinity, 
                 ease: "easeInOut",
                 delay: Math.random() * 5
@@ -691,114 +713,108 @@ const App: React.FC = () => {
           ))}
           
           {/* Falling Leaves */}
-          {[...Array(12)].map((_, i) => (
+          {[...Array(15)].map((_, i) => (
             <motion.div
               key={`leaf-${i}`}
-              className="absolute text-4xl"
+              className="absolute text-5xl filter drop-shadow-sm opacity-60"
               initial={{ 
-                x: Math.random() * 100 + "%", 
+                x: Math.random() * 110 - 5 + "%", 
                 y: -100,
-                rotate: 0 
+                rotate: Math.random() * 360 
               }}
               animate={{ 
                 y: window.innerHeight + 100,
-                x: [null, (Math.random() - 0.5) * 200 + "px"],
-                rotate: 360
+                x: [null, (Math.random() - 0.5) * 300 + "px"],
+                rotate: 720
               }}
               transition={{ 
-                duration: 10 + Math.random() * 15, 
+                duration: 12 + Math.random() * 10, 
                 repeat: Infinity, 
                 ease: "linear",
-                delay: Math.random() * 10
+                delay: Math.random() * 15
               }}
             >
-              {['🍃', '🌿', '🍂', '🍁'][Math.floor(Math.random() * 4)]}
+              {['🍃', '🌿', '🌱'][Math.floor(Math.random() * 3)]}
             </motion.div>
           ))}
         </div>
 
         <motion.div
-           initial={{ scale: 0.5, opacity: 0, y: 50 }}
+           initial={{ scale: 0.8, opacity: 0, y: 30 }}
            animate={{ scale: 1, opacity: 1, y: 0 }}
-           transition={{ type: "spring", damping: 15, stiffness: 100 }}
+           transition={{ type: "spring", damping: 20, stiffness: 100 }}
            className="relative z-10 flex flex-col items-center"
         >
           {/* Main Visual Container */}
-          <div className="relative mb-12">
+          <div className="relative mb-14">
             <motion.div
               animate={{ 
-                scale: [1, 1.05, 1],
-                rotate: [0, 2, -2, 0]
+                y: [0, -10, 0],
+                rotate: [-1, 1, -1]
               }}
-              transition={{ duration: 6, repeat: Infinity, ease: "easeInOut" }}
-              className="w-48 h-48 bg-white/20 backdrop-blur-2xl rounded-[56px] border-4 border-white/40 flex items-center justify-center shadow-[0_20px_50px_rgba(0,0,0,0.2)] relative"
+              transition={{ duration: 5, repeat: Infinity, ease: "easeInOut" }}
+              className="w-52 h-52 bg-white/40 backdrop-blur-3xl rounded-[64px] border-4 border-white/60 flex items-center justify-center shadow-[0_25px_60px_rgba(0,0,0,0.1)] relative"
             >
               <motion.div
                 animate={{ rotate: 360 }}
-                transition={{ duration: 25, repeat: Infinity, ease: "linear" }}
-                className="absolute inset-0 border-2 border-white/30 rounded-[56px] border-dashed scale-110"
+                transition={{ duration: 30, repeat: Infinity, ease: "linear" }}
+                className="absolute inset-0 border-2 border-white/40 rounded-[64px] border-dashed scale-105"
               />
-              <span className="text-9xl relative z-10">🌳</span>
+              <span className="text-[120px] relative z-10 filter drop-shadow-lg">🌳</span>
               
               {/* Character Pipi/Tiger popping up */}
               <motion.div
-                initial={{ y: 20, opacity: 0 }}
+                initial={{ y: 30, opacity: 0 }}
                 animate={{ y: 0, opacity: 1 }}
-                transition={{ delay: 0.8, type: "spring" }}
-                className="absolute -bottom-6 -right-6 w-20 h-20 bg-emerald-100 rounded-3xl border-4 border-white shadow-xl flex items-center justify-center text-4xl"
+                transition={{ delay: 0.8, type: "spring", bounce: 0.5 }}
+                className="absolute -bottom-8 -right-8 w-24 h-24 bg-white rounded-3xl border-4 border-emerald-50 shadow-2xl flex items-center justify-center text-5xl"
               >
                 🐯
               </motion.div>
             </motion.div>
-            
-            {/* Pulsing light behind */}
-            <div className="absolute inset-0 bg-white/30 blur-[60px] rounded-full -z-10 animate-pulse" />
           </div>
           
-          <div className="text-center space-y-2">
+          <div className="text-center space-y-4">
             <motion.h1 
-              className="text-7xl font-black text-white text-stroke-2 drop-shadow-[0_10px_10px_rgba(0,0,0,0.3)] tracking-tighter"
-              animate={{ y: [0, -5, 0] }}
-              transition={{ duration: 4, repeat: Infinity, ease: "easeInOut" }}
+              initial={{ y: 20, opacity: 0 }}
+              animate={{ y: 0, opacity: 1 }}
+              transition={{ delay: 0.3 }}
+              className="text-7xl font-black text-emerald-900 drop-shadow-[0_4px_10px_rgba(255,255,255,1)] tracking-tighter"
             >
               单词奇旅
             </motion.h1>
             <motion.div 
-              className="flex items-center justify-center space-x-3 text-emerald-100/80"
+              className="flex items-center justify-center space-x-4 text-emerald-800/60"
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
-              transition={{ delay: 0.5 }}
+              transition={{ delay: 0.7 }}
             >
-              <div className="h-[2px] w-8 bg-current" />
-              <p className="text-lg font-bold uppercase tracking-[0.4em]">
-                森林魔法乐园
+              <div className="h-[2px] w-12 bg-current opacity-30" />
+              <p className="text-xl font-bold uppercase tracking-[0.6em] ml-2">
+                单词魔法乐园
               </p>
-              <div className="h-[2px] w-8 bg-current" />
+              <div className="h-[2px] w-12 bg-current opacity-30" />
             </motion.div>
           </div>
           
-          <div className="mt-16 relative">
-            {/* Button Glint/Magical Shadow */}
-            <div className="absolute inset-0 bg-emerald-400 blur-2xl opacity-40 scale-110 animate-pulse" />
-            
+          <div className="mt-20 relative">
             <motion.button
-              whileHover={{ scale: 1.08, y: -4 }}
-              whileTap={{ scale: 0.92 }}
+              whileHover={{ scale: 1.05, y: -5 }}
+              whileTap={{ scale: 0.95 }}
               onClick={() => { audio.playClick(); setShowWelcome(false); }}
-              className="group relative px-16 py-6 bg-white rounded-[40px] font-black text-3xl text-emerald-600 shadow-[0_15px_30px_rgba(0,0,0,0.2),inset_0_-8px_0_#D1FAE5] hover:bg-emerald-50 transition-all flex items-center space-x-4 overflow-hidden"
+              className="group relative px-20 py-7 bg-white rounded-[44px] font-black text-3xl text-emerald-600 shadow-[0_20px_40px_rgba(16,185,129,0.15),inset_0_-8px_0_#ECFDF5] hover:shadow-[0_25px_50px_rgba(16,185,129,0.2)] transition-all flex items-center space-x-5 overflow-hidden"
             >
-              <span className="relative z-10">开启探险</span>
+              <span className="relative z-10 text-emerald-700">开启探险</span>
               <motion.div
-                animate={{ x: [0, 6, 0], rotate: [0, 10, -10, 0] }}
-                transition={{ repeat: Infinity, duration: 2 }}
-                className="relative z-10"
+                animate={{ rotate: [0, 15, -15, 0], scale: [1, 1.1, 0.9, 1] }}
+                transition={{ repeat: Infinity, duration: 3 }}
+                className="relative z-10 text-emerald-500"
               >
                 <Compass className="w-10 h-10" />
               </motion.div>
               
-              {/* Shine effect on button */}
               <motion.div 
-                className="absolute inset-0 bg-gradient-to-r from-transparent via-white/40 to-transparent -translate-x-full group-hover:animate-shine"
+                className="absolute inset-0 bg-gradient-to-r from-transparent via-emerald-50/50 to-transparent -translate-x-full group-hover:animate-shine"
                 style={{ skewX: '-20deg' }}
               />
             </motion.button>
@@ -806,15 +822,29 @@ const App: React.FC = () => {
         </motion.div>
         
         {/* Decorative elements in corners */}
-        <div className="absolute top-10 left-10 text-6xl opacity-30 animate-bounce-gentle">🍄</div>
-        <div className="absolute bottom-10 right-10 text-6xl opacity-30 animate-bounce-gentle" style={{ animationDelay: '1s' }}>🌺</div>
-        <div className="absolute top-1/3 right-10 text-5xl opacity-20 rotate-12">🦋</div>
-        <div className="absolute bottom-1/4 left-10 text-5xl opacity-20 -rotate-12">🦉</div>
-        
-
+        <motion.div 
+          animate={{ y: [0, -15, 0], rotate: [0, 5, 0] }}
+          transition={{ duration: 4, repeat: Infinity, ease: "easeInOut" }}
+          className="absolute top-12 left-12 text-7xl filter drop-shadow-xl"
+        >
+          🍄
+        </motion.div>
+        <motion.div 
+          animate={{ y: [0, -10, 0], rotate: [0, -5, 0] }}
+          transition={{ duration: 5, repeat: Infinity, ease: "easeInOut", delay: 0.5 }}
+          className="absolute bottom-16 right-16 text-7xl filter drop-shadow-xl"
+        >
+          🌺
+        </motion.div>
+        <div className="absolute top-1/4 right-[15%] text-6xl opacity-30 animate-pulse">🦋</div>
+        <div className="absolute bottom-1/3 left-[12%] text-6xl opacity-20 rotate-12">🦉</div>
       </motion.div>
     );
   }
+
+        
+
+
 
   return (
     <div className="min-h-screen pt-10 pb-32 px-5 flex flex-col items-center max-w-lg mx-auto overflow-x-hidden relative">
