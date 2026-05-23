@@ -3,6 +3,7 @@ export interface WordItem {
   text: string;
   translation: string;
   imageUrl: string;
+  syllables?: string[];
 }
 
 export interface Word {

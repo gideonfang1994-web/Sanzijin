@@ -85,8 +85,38 @@ export const audio = {
     const utterance = new SpeechSynthesisUtterance(text);
     // Simple detection: if contains Chinese characters, use zh-CN
     const isChinese = /[\u4e00-\u9fa5]/.test(text);
-    utterance.lang = isChinese ? 'zh-CN' : 'en-US';
-    utterance.rate = 0.9;
+    
+    if (isChinese) {
+      utterance.lang = 'zh-CN';
+    } else {
+      const voices = window.speechSynthesis.getVoices();
+      const normalizeLang = (lang: string) => lang.toLowerCase().replace('_', '-');
+      const englishVoice = voices.find(v => {
+        const l = normalizeLang(v.lang);
+        const name = v.name.toLowerCase();
+        const isEnglish = l.startsWith('en-us') || l.startsWith('en-gb') || l === 'en';
+        if (!isEnglish) return false;
+        return (
+          name.includes('samantha') ||
+          name.includes('google') ||
+          name.includes('natural') ||
+          name.includes('microsoft') ||
+          name.includes('karen') ||
+          name.includes('daniel') ||
+          name.includes('zira') ||
+          name.includes('david')
+        );
+      }) || voices.find(v => normalizeLang(v.lang).startsWith('en-us'))
+        || voices.find(v => normalizeLang(v.lang).startsWith('en'));
+        
+      if (englishVoice) {
+        utterance.voice = englishVoice;
+        utterance.lang = englishVoice.lang; // Align exactly with voice's custom tag (e.g., en_US on iOS)
+      } else {
+        utterance.lang = 'en-US';
+      }
+      utterance.rate = 0.85;
+    }
     window.speechSynthesis.speak(utterance);
   }
 };

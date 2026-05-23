@@ -1,11 +1,18 @@
 import { initializeApp } from 'firebase/app';
 import { getAuth, GoogleAuthProvider, signInWithPopup, signOut, onAuthStateChanged, signInAnonymously, User as FirebaseUser } from 'firebase/auth';
-import { getFirestore, doc, getDoc, setDoc, updateDoc, onSnapshot, collection, query, orderBy, limit, getDocs, getDocFromServer } from 'firebase/firestore';
+import { initializeFirestore, persistentLocalCache, persistentMultipleTabManager, doc, getDoc, setDoc, updateDoc, onSnapshot, collection, query, orderBy, limit, getDocs, getDocFromServer } from 'firebase/firestore';
 import firebaseConfig from '../firebase-applet-config.json';
 
 // Initialize Firebase SDK
 const app = initializeApp(firebaseConfig);
-export const db = getFirestore(app, firebaseConfig.firestoreDatabaseId);
+
+// Initialize with offline persistence for a seamless offline-first experience
+export const db = initializeFirestore(app, {
+  localCache: persistentLocalCache({
+    tabManager: persistentMultipleTabManager()
+  })
+}, firebaseConfig.firestoreDatabaseId);
+
 export const auth = getAuth(app);
 export const googleProvider = new GoogleAuthProvider();
 
@@ -66,8 +73,26 @@ async function testConnection() {
   try {
     await getDocFromServer(doc(db, 'test', 'connection'));
   } catch (error) {
-    if (error instanceof Error && error.message.includes('the client is offline')) {
-      console.error("Please check your Firebase configuration. ");
+    const errMsg = error instanceof Error ? error.message : String(error);
+    console.warn("Firestore connection check outcome:", errMsg);
+    
+    // Check if the connection fails due to network/offline/blocking behavior
+    const isNetworkOrBlockerError = 
+      errMsg.includes('offline') || 
+      errMsg.includes('Could not reach') || 
+      errMsg.includes('timeout') ||
+      errMsg.includes('network') ||
+      errMsg.includes('unreachable') ||
+      errMsg.includes('failed-precondition');
+      
+    if (isNetworkOrBlockerError) {
+      console.error(
+        "Please check your Firebase configuration.\n" +
+        "⚠️ CONNECTION BLOCKER DETECTED:\n" +
+        "1. Active ad-blockers or privacy extensions (e.g., uBlock Origin, Brave Shield, Privacy Badger) might be blocking requests to 'firestore.googleapis.com'. Please try pausing them for this tab/domain.\n" +
+        "2. If you are behind a strict corporate VPN, proxy, or firewall, verify that googleapis.com domains are allowed.\n" +
+        "3. Ensure the project and billing are correctly configured in your Firebase Console."
+      );
     }
   }
 }

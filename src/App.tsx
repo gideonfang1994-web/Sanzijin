@@ -16,14 +16,15 @@ import Leaderboard from './components/Leaderboard';
 import UploadContent from './components/UploadContent';
 import MagicShop from './components/MagicShop';
 import PetPage from './pages/PetPage';
+import CollectionCenter from './components/CollectionCenter';
 import constants from './constants';
 import { WordGroup, UserStats, ViewState, DailyQuest, Word, WordItem, ShopItem, Pet } from './types';
-import { Home, BookOpen, Gamepad2, BarChart3, Award, ShoppingBag, Heart, Compass } from 'lucide-react';
+import { Home, BookOpen, Gamepad2, BarChart3, Award, ShoppingBag, Heart, Compass, AlertCircle, X, ShieldAlert, Globe, Sparkles, ExternalLink } from 'lucide-react';
 import audio from './utils/AudioUtils';
 import confetti from 'canvas-confetti';
 import { generateCharacterPortrait } from './services/portraitService';
 import { motion, AnimatePresence } from 'framer-motion';
-import { auth, db, doc, getDoc, setDoc, onAuthStateChanged, FirebaseUser, handleFirestoreError, OperationType, signInWithPopup, googleProvider, signOut } from './firebase';
+import { auth, db, doc, getDoc, setDoc, onAuthStateChanged, FirebaseUser, handleFirestoreError, OperationType, signInWithPopup, googleProvider, signOut, signInAnonymously } from './firebase';
 import SafeImage from './components/SafeImage';
 
 const App: React.FC = () => {
@@ -96,16 +97,36 @@ const App: React.FC = () => {
     };
   }, []);
 
+  const [authError, setAuthError] = useState<{ code: string; message: string } | null>(null);
+
   const handleLogin = async () => {
     try {
+      setAuthError(null);
       await signInWithPopup(auth, googleProvider);
-    } catch (error) {
+    } catch (error: any) {
       console.error("Login failed:", error);
+      const code = error?.code || "unknown_error";
+      const message = error?.message || String(error);
+      setAuthError({ code, message });
+    }
+  };
+
+  const handleGuestLogin = async () => {
+    try {
+      setAuthError(null);
+      await signInAnonymously(auth);
+    } catch (error: any) {
+      console.error("Guest login failed:", error);
+      setAuthError({
+        code: error?.code || "guest_failed",
+        message: error?.message || "无法开启极速访客会话，请检查配额或网络链接。"
+      });
     }
   };
 
   const handleLogout = async () => {
     try {
+      setAuthError(null);
       await signOut(auth);
       setUser(null);
     } catch (error) {
@@ -135,8 +156,8 @@ const App: React.FC = () => {
           const initialData = {
             ...stats,
             uid: user.uid,
-            displayName: user.displayName,
-            photoURL: user.photoURL,
+            displayName: user.displayName || (user.isAnonymous ? '魔法访客' : '魔法学徒'),
+            photoURL: user.photoURL || null,
             lastLogin: new Date().toISOString()
           };
           await setDoc(userDocRef, initialData);
@@ -994,6 +1015,16 @@ const App: React.FC = () => {
               <UploadContent onAddWord={handleAddWord} onAddVideo={() => {}} />
             </motion.div>
           )}
+
+          {view === 'COLLECTION' && (
+            <motion.div key="collection" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}>
+              <CollectionCenter 
+                groups={groups} 
+                stats={stats} 
+                onClose={() => handleNavigate('HOME')} 
+              />
+            </motion.div>
+          )}
         </AnimatePresence>
       </main>
 
@@ -1030,6 +1061,105 @@ const App: React.FC = () => {
               >
                 继续冒险
               </button>
+            </motion.div>
+          </motion.div>
+        )}
+
+        {authError && (
+          <motion.div 
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 z-[110] flex items-center justify-center p-4 bg-slate-900/80 backdrop-blur-md"
+          >
+            <motion.div 
+              initial={{ scale: 0.9, y: 30 }}
+              animate={{ scale: 1, y: 0 }}
+              exit={{ scale: 0.9, y: 30 }}
+              className="bg-white rounded-[40px] p-8 shadow-2xl border-4 border-indigo-600 max-w-md w-full relative overflow-hidden flex flex-col max-h-[95vh]"
+            >
+              <div className="absolute top-0 left-0 w-full h-2 bg-gradient-to-r from-amber-400 via-rose-500 to-indigo-600" />
+              
+              <button 
+                onClick={() => setAuthError(null)}
+                className="absolute top-5 right-5 p-2 bg-slate-100 hover:bg-slate-200 text-slate-500 rounded-full transition-all cursor-pointer border border-transparent hover:border-slate-300"
+              >
+                <X size={16} />
+              </button>
+
+              <div className="flex items-center space-x-3 mb-5 mt-2 shrink-0">
+                <div className="w-12 h-12 bg-indigo-50 rounded-2xl flex items-center justify-center text-indigo-600 shrink-0">
+                  <ShieldAlert size={26} />
+                </div>
+                <div>
+                  <h3 className="text-lg font-black text-slate-800 leading-tight">登录通道受阻</h3>
+                  <p className="text-[10px] uppercase font-black text-slate-400 tracking-wider">Login Process Interrupted</p>
+                </div>
+              </div>
+
+              <div className="bg-amber-50 rounded-2xl p-4 border border-amber-200/60 text-slate-700 text-xs font-bold leading-relaxed space-y-2 mb-6 overflow-y-auto max-h-[160px] scrollbar-thin shrink-0">
+                <p className="text-amber-800 font-extrabold flex items-center gap-1.5 shrink-0">
+                  <AlertCircle size={14} className="shrink-0" />
+                  <span>为什么会出现这个情况？</span>
+                </p>
+                <p className="opacity-90 leading-relaxed">
+                  检测到登录账号弹窗未完成。由于 AI Studio 预览环境运行在沙盒 Safe-iFrame 中，浏览器的安全拦截限制可能会导致 Google 登录窗口被阻止弹出，从而触发 <code className="bg-amber-100/80 text-amber-900 px-1 py-0.5 rounded font-mono">auth/popup-closed-by-user</code> 错误。
+                </p>
+                <p className="text-[10.5px] text-slate-400">
+                  系统错误代码: {authError.code}
+                </p>
+              </div>
+
+              <div className="space-y-4 overflow-y-auto flex-1 pr-1 scrollbar-thin">
+                <div className="space-y-1.5 bg-slate-50/50 p-3 rounded-[24px] border border-slate-100">
+                  <button 
+                    onClick={handleGuestLogin}
+                    className="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-extrabold py-3 px-4 rounded-[18px] shadow-lg shadow-indigo-200 flex items-center justify-between transition-all active:scale-[0.98] text-xs cursor-pointer"
+                  >
+                    <div className="flex items-center space-x-2">
+                      <Sparkles size={14} className="text-amber-300 animate-pulse" />
+                      <span>✨ 开启「魔法访客」(极速直登)</span>
+                    </div>
+                    <span className="text-[9px] bg-white/20 px-2 py-0.5 rounded-full uppercase font-black text-white">推荐</span>
+                  </button>
+                  <p className="text-[10px] text-slate-500 pl-1 leading-relaxed">
+                    一键创建访客身份，同样能将你的宠物、金币和冒险进度安全记录于 Firestore 数据库！(完美避开 iframe 限制)
+                  </p>
+                </div>
+
+                <div className="space-y-1.5 bg-slate-50/50 p-3 rounded-[24px] border border-slate-100">
+                  <button 
+                    onClick={() => {
+                      window.open(window.location.href, '_blank');
+                    }}
+                    className="w-full bg-slate-100 hover:bg-slate-200 text-slate-700 font-extrabold py-3 px-4 rounded-[18px] flex items-center justify-between transition-all active:scale-[0.98] text-xs cursor-pointer border border-slate-200"
+                  >
+                    <div className="flex items-center space-x-2">
+                      <Globe size={14} className="text-slate-500" />
+                      <span>🌐 在新标签页打开网页登录</span>
+                    </div>
+                    <ExternalLink size={12} className="text-slate-400" />
+                  </button>
+                  <p className="text-[10px] text-slate-500 pl-1 leading-relaxed">
+                    在新独立的标签浏览器窗口中打开应用，彻底摆脱外部沙盒，即可完美支持 Google 登录同步！
+                  </p>
+                </div>
+              </div>
+
+              <div className="mt-6 pt-4 border-t border-slate-100 flex gap-2.5 shrink-0">
+                <button 
+                  onClick={handleLogin}
+                  className="flex-1 bg-teal-500 hover:bg-teal-600 text-white font-black text-xs py-3 rounded-[16px] transition-all cursor-pointer text-center"
+                >
+                  重试登录
+                </button>
+                <button 
+                  onClick={() => setAuthError(null)}
+                  className="flex-1 bg-slate-100 hover:bg-slate-200 text-slate-600 font-black text-xs py-3 rounded-[16px] transition-all cursor-pointer text-center"
+                >
+                  取消
+                </button>
+              </div>
             </motion.div>
           </motion.div>
         )}

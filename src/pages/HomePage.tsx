@@ -306,6 +306,33 @@ const HomePage: React.FC<HomePageProps> = ({ stats, groups, reviewNeeded, onNavi
             </p>
           </div>
         </motion.button>
+
+        {/* 单词森林 - 魔法三字经图鉴 */}
+        <motion.button 
+          whileHover={{ scale: 1.01, y: -4 }}
+          whileTap={{ scale: 0.99 }}
+          onClick={() => onNavigate('COLLECTION')} 
+          className="col-span-2 puffy-card p-6 text-left relative overflow-hidden group flex items-center justify-between border-rose-100 bg-gradient-to-r from-rose-50/50 to-indigo-50/30 h-40"
+        >
+          <div className="absolute -top-10 -right-10 w-32 h-32 bg-rose-100 rounded-full blur-2xl opacity-40 group-hover:opacity-80 transition-opacity duration-500" />
+          
+          <div className="flex items-center space-x-6 relative">
+            <div className="bg-rose-500 w-16 h-16 rounded-[28px] flex items-center justify-center shadow-lg shadow-rose-200 group-hover:scale-110 transition-transform">
+              <BookOpen className="text-white w-8 h-8" />
+            </div>
+            <div>
+              <h3 className="font-black text-2xl text-rose-950 tracking-tight leading-tight">单词森林 (魔法三字经)</h3>
+              <p className="text-rose-600/70 font-black text-xs mt-2">
+                查阅神奇拼读三字经与全部魔法单词
+              </p>
+            </div>
+          </div>
+
+          <div className="bg-white/80 border border-rose-150 px-4 py-2.5 rounded-2xl font-black text-xs text-rose-600 shadow-sm flex items-center space-x-1.5 hover:bg-rose-500 hover:text-white transition-all">
+            <span>进入图鉴</span>
+            <ArrowRight size={14} className="opacity-70 group-hover:opacity-100 group-hover:translate-x-0.5 transition-all" />
+          </div>
+        </motion.button>
       </div>
 
       <DailyQuestBoard quests={stats.quests} onQuestClick={onQuestClick} />

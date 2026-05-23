@@ -2,17 +2,18 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import { 
-  ChevronLeft, Play, Gamepad2, RefreshCw, Star, Trophy,
+  ChevronLeft, ChevronDown, Play, Gamepad2, RefreshCw, Star, Trophy,
   ArrowRight, Volume2, Lock, CheckCircle2, Zap, Trash2, Wand2,
-  BookOpen, Flame
+  BookOpen, Flame, Sparkles
 } from 'lucide-react';
 import confetti from 'canvas-confetti';
-import { WordItem, WordCard, AdventureForestProps } from '../types';
+import { WordItem, WordCard, AdventureForestProps, DifficultyLevel } from '../types';
 import { ALL_CARDS } from '../constants';
 import audio from '../utils/AudioUtils';
 import { GoogleGenAI } from "@google/genai";
 import VoiceDubbing from '../components/VoiceDubbing';
 import SafeImage from '../components/SafeImage';
+import PhonicsSpellingModal from '../components/PhonicsSpellingModal';
 
 const getAi = () => {
   const apiKey = process.env.GEMINI_API_KEY || process.env.API_KEY;
@@ -27,6 +28,7 @@ type AdventureStep = 'SETUP' | 'MAP' | 'LEARN' | 'REVIEW' | 'DUBBING' | 'TEST' |
 
 interface Level {
   id: number;
+  displayId?: number;
   name: string;
   cards: WordCard[];
   isUnlocked: boolean;
@@ -69,7 +71,7 @@ const LevelNode = React.memo(({
         <div className={`${isEven ? 'text-right' : 'text-left'}`}>
           <h4 className={`font-black text-lg leading-tight whitespace-nowrap transition-colors ${isLocked ? 'text-emerald-200' : 'text-emerald-800 group-hover:text-emerald-600'}`}>{level.name}</h4>
           <div className="flex items-center mt-1 space-x-1 opacity-60 whitespace-nowrap">
-             <span className={`text-[10px] font-black uppercase tracking-tighter ${isLocked ? 'text-emerald-200' : 'text-emerald-500'}`}>关卡 {level.id} • {level.cards.length} 魔法</span>
+             <span className={`text-[10px] font-black uppercase tracking-tighter ${isLocked ? 'text-emerald-200' : 'text-emerald-500'}`}>关卡 {level.displayId || level.id} • {level.cards.length} 魔法</span>
              <span className={`text-[10px] font-black uppercase tracking-widest px-1.5 py-0.5 rounded-md ${isLocked ? 'bg-emerald-50/50 text-emerald-200' : 'bg-emerald-100 text-emerald-800'}`}>
                {level.cards[0]?.difficulty === 'PRIMARY' ? '初级' : level.cards[0]?.difficulty === 'INTERMEDIATE' ? '中级' : '高级'}
              </span>
@@ -115,7 +117,7 @@ const LevelNode = React.memo(({
           {isLocked ? <Lock size={28} /> : level.isMastered ? <CheckCircle2 size={32} /> : level.isDue ? <RefreshCw size={32} /> : <Play size={32} className="ml-1 fill-emerald-600" />}
           
           <div className={`absolute -top-3 -right-3 w-8 h-8 rounded-full border-4 border-white flex items-center justify-center text-[10px] font-black shadow-md ${isLocked ? 'bg-emerald-100 text-emerald-300' : 'bg-emerald-800 text-white'}`}>
-            {level.id}
+            {level.displayId || level.id}
           </div>
           
           {/* @ts-ignore */}
@@ -146,6 +148,25 @@ const AdventurePage: React.FC<AdventurePageProps> = ({
 }) => {
   const [step, setStep] = useState<AdventureStep>('SETUP');
   const [cardsPerDay, setCardsPerDay] = useState<5 | 10>(5);
+  const [selectedDifficulty, setSelectedDifficulty] = useState<DifficultyLevel>(() => {
+    const saved = localStorage.getItem('selected_adventure_difficulty');
+    return (saved as any) || 'PRIMARY';
+  });
+  
+  const [isDropdownOpen, setIsDropdownOpen] = useState(false);
+  const dropdownRef = React.useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    function handleClickOutside(event: MouseEvent) {
+      if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
+        setIsDropdownOpen(false);
+      }
+    }
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutside);
+    };
+  }, []);
   const [localCompletedLevels, setLocalCompletedLevels] = useState<number[]>([]);
   const [localMasteredLevels, setLocalMasteredLevels] = useState<number[]>([]);
 
@@ -217,6 +238,11 @@ const AdventurePage: React.FC<AdventurePageProps> = ({
 
   // Learning/Test session state
   const [cardIndex, setCardIndex] = useState(0);
+  const [activeWordIdx, setActiveWordIdx] = useState(0);
+
+  useEffect(() => {
+    setActiveWordIdx(0);
+  }, [cardIndex]);
   const [streak, setStreak] = useState(() => {
     const saved = localStorage.getItem('adventure_streak');
     return saved ? parseInt(saved, 10) : 0;
@@ -258,6 +284,7 @@ const AdventurePage: React.FC<AdventurePageProps> = ({
   };
 
   const [showLevelModeSelector, setShowLevelModeSelector] = useState(false);
+  const [spellingWord, setSpellingWord] = useState<WordItem | null>(null);
 
   // Scroll to top when step changes
   useEffect(() => {
@@ -292,22 +319,30 @@ const AdventurePage: React.FC<AdventurePageProps> = ({
       "光影回廊", "元素祭坛", "空谷寻宝", "迷雾山脉", "落日之森"
     ];
 
-    for (let i = 0; i < ALL_CARDS.length; i += cardsPerDay) {
-      const levelId = Math.floor(i / cardsPerDay) + 1;
-      const levelCards = ALL_CARDS.slice(i, i + cardsPerDay);
+    const cardsOfDifficulty = ALL_CARDS.filter(card => (card.difficulty || 'PRIMARY') === selectedDifficulty);
+
+    let offset = 0;
+    if (selectedDifficulty === 'INTERMEDIATE') offset = 100;
+    if (selectedDifficulty === 'ADVANCED') offset = 200;
+
+    for (let i = 0; i < cardsOfDifficulty.length; i += cardsPerDay) {
+      const relativeId = Math.floor(i / cardsPerDay) + 1;
+      const levelId = offset + relativeId;
+      const levelCards = cardsOfDifficulty.slice(i, i + cardsPerDay);
       
       const isCompleted = completedLevels.includes(levelId);
       const isMastered = masteredLevels.includes(levelId);
-      const prevLevelCompleted = levelId === 1 || completedLevels.includes(levelId - 1);
+      const prevLevelCompleted = relativeId === 1 || completedLevels.includes(levelId - 1);
 
       const schedule = reviewSchedules[levelId.toString()];
       const isDue = schedule && now >= schedule.nextReviewAt;
 
       generatedLevels.push({
         id: levelId,
+        displayId: relativeId,
         name: adventureNames[(levelId - 1) % adventureNames.length],
         cards: levelCards,
-        isUnlocked: levelId === 1 || isCompleted || isMastered || prevLevelCompleted,
+        isUnlocked: relativeId === 1 || isCompleted || isMastered || prevLevelCompleted,
         isCompleted,
         isMastered,
         // @ts-ignore
@@ -317,7 +352,7 @@ const AdventurePage: React.FC<AdventurePageProps> = ({
       });
     }
     return generatedLevels;
-  }, [cardsPerDay, completedLevels, masteredLevels, reviewSchedules]);
+  }, [selectedDifficulty, cardsPerDay, completedLevels, masteredLevels, reviewSchedules]);
 
   // Trigger initial level review if requested
   useEffect(() => {
@@ -715,6 +750,148 @@ const AdventurePage: React.FC<AdventurePageProps> = ({
     return 'text-xl';
   };
 
+  const formatInteractiveRhymeText = (text: string, suffix: string = '') => {
+    const regex = /([a-zA-Z]+)\s*(（[^）]+）|\([^)]+\))?/g;
+    const parts: React.ReactNode[] = [];
+    let lastIndex = 0;
+    let match;
+
+    while ((match = regex.exec(text)) !== null) {
+      if (match.index > lastIndex) {
+        parts.push(<span key={`text-${lastIndex}`} className="text-emerald-950 font-black text-xl md:text-2xl">{text.substring(lastIndex, match.index)}</span>);
+      }
+      const englishWord = match[1];
+      const translation = match[2] || '';
+      
+      const isSuffixWord = suffix ? (englishWord.toLowerCase().endsWith(suffix.toLowerCase()) || englishWord.toLowerCase().includes(suffix.toLowerCase())) : false;
+
+      parts.push(
+        <motion.span 
+          key={`word-${match.index}`}
+          whileHover={{ scale: 1.15, rotate: -1.5 }}
+          whileTap={{ scale: 0.9 }}
+          onClick={(e) => {
+            e.stopPropagation();
+            audio.playPop();
+            audio.speak(englishWord);
+          }}
+          className={`inline-flex items-center mx-1.5 px-4 py-1.5 rounded-[22px] font-black text-xl md:text-2xl shadow-md cursor-pointer select-none transition-all ${
+            isSuffixWord 
+              ? 'bg-gradient-to-r from-amber-300 to-yellow-400 border-2 border-amber-200 text-slate-900 shadow-amber-500/10'
+              : 'bg-white border-2 border-slate-200 text-slate-800'
+          }`}
+        >
+          {englishWord}
+          {translation && (
+            <span className={`text-[12px] md:text-[13px] font-extrabold ml-1.5 px-2 py-0.5 rounded-lg ${
+              isSuffixWord 
+                ? 'bg-amber-950/10 text-amber-950/80' 
+                : 'bg-slate-100 text-slate-500'
+            }`}>
+              {translation.replace(/[（）()]/g, '')}
+            </span>
+          )}
+        </motion.span>
+      );
+      lastIndex = regex.lastIndex;
+    }
+
+    if (lastIndex < text.length) {
+      parts.push(<span key={`text-end`} className="text-emerald-950 font-black text-xl md:text-2xl">{text.substring(lastIndex)}</span>);
+    }
+
+    return parts.length > 0 ? parts : text;
+  };
+
+  const renderSanzijingLine = (line: string, suffix: string = '') => {
+    // Regex matches any English word optionally followed by translation inside parenthesis
+    const regex = /([a-zA-Z]+)\s*([（(][^）)]+[）)])?/g;
+    const parts: React.ReactNode[] = [];
+    let lastIndex = 0;
+    let match;
+
+    while ((match = regex.exec(line)) !== null) {
+      if (match.index > lastIndex) {
+        parts.push(
+          <span key={`text-${lastIndex}`} className="text-slate-800 font-extrabold text-lg md:text-xl">
+            {line.substring(lastIndex, match.index)}
+          </span>
+        );
+      }
+
+      const englishWord = match[1];
+      const translation = match[2] || '';
+
+      const renderWordPart = () => {
+        if (!suffix) {
+          return <span className="text-indigo-600 font-black">{englishWord}</span>;
+        }
+        
+        const lowerWord = englishWord.toLowerCase();
+        const lowerSuffix = suffix.toLowerCase();
+        
+        if (lowerWord.endsWith(lowerSuffix)) {
+          const rootLen = englishWord.length - suffix.length;
+          const root = englishWord.substring(0, rootLen);
+          const endPart = englishWord.substring(rootLen);
+          return (
+            <span className="font-black text-xl md:text-2xl">
+              <span className="text-indigo-600">{root}</span>
+              <span className="text-red-500">{endPart}</span>
+            </span>
+          );
+        } else if (lowerWord.includes(lowerSuffix)) {
+          const idx = lowerWord.indexOf(lowerSuffix);
+          const part1 = englishWord.substring(0, idx);
+          const part2 = englishWord.substring(idx, idx + suffix.length);
+          const part3 = englishWord.substring(idx + suffix.length);
+          return (
+            <span className="font-black text-xl md:text-2xl">
+              <span className="text-indigo-600">{part1}</span>
+              <span className="text-red-500">{part2}</span>
+              {part3 && <span className="text-indigo-600">{part3}</span>}
+            </span>
+          );
+        }
+        
+        return <span className="text-indigo-600 font-black text-xl md:text-2xl">{englishWord}</span>;
+      };
+
+      parts.push(
+        <span 
+          key={`word-${match.index}`}
+          onClick={(e) => {
+            e.stopPropagation();
+            audio.playPop();
+            audio.speak(englishWord);
+          }}
+          className="cursor-pointer hover:underline mx-1 inline-flex items-center"
+          title="点击发音"
+        >
+          {renderWordPart()}
+          {translation && (
+            <span className="text-slate-700 font-bold text-lg md:text-xl ml-1">
+              {translation}
+            </span>
+          )}
+        </span>
+      );
+
+      lastIndex = regex.lastIndex;
+    }
+
+    if (lastIndex < line.length) {
+      const remaining = line.substring(lastIndex);
+      parts.push(
+        <span key={`text-end`} className="text-slate-800 font-extrabold text-lg md:text-xl">
+          {remaining}
+        </span>
+      );
+    }
+
+    return parts.length > 0 ? parts : line;
+  };
+
   const handleBack = () => {
     if (step === 'MAP' || step === 'SETUP') {
       onClose();
@@ -873,6 +1050,93 @@ const AdventurePage: React.FC<AdventurePageProps> = ({
                 <h3 className="text-3xl font-black text-emerald-900">魔法森林地图</h3>
                 <p className="text-emerald-600 font-medium">开启你的单词冒险之旅</p>
               </div>
+
+              {/* Difficulty/Level Selector */}
+              <div className="bg-white rounded-[44px] p-6 border-2 border-[#e6faf3] shadow-[0_16px_40px_-10px_rgba(16,185,129,0.08)] flex flex-col sm:flex-row sm:items-center sm:justify-between gap-6 relative select-none animate-fade-in z-30">
+                <div className="flex items-center space-x-4 sm:space-x-5">
+                  <div className="w-[56px] h-[86px] bg-[#e6fcf5] rounded-[22px] flex items-center justify-center text-3xl shrink-0 shadow-[inset_0_2px_4px_rgba(0,0,0,0.03)] border border-[#c2f3e1]/50">
+                    🗺️
+                  </div>
+                  <div className="flex flex-row items-center gap-4 sm:gap-6">
+                    <div className="flex flex-col text-[#00c280] font-black tracking-widest text-[10px] sm:text-[11px] leading-[1.2] uppercase font-sans select-none opacity-90">
+                      <span>SELECT</span>
+                      <span>FOREST</span>
+                      <span>STAGE</span>
+                    </div>
+                    <div className="flex flex-col text-slate-800 font-black text-xl sm:text-2xl leading-[1.2]">
+                      <span>选择探险</span>
+                      <span>等级</span>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Highly Custom Interactive Dropdown Selection Pill */}
+                <div className="relative" ref={dropdownRef}>
+                  <button
+                    onClick={() => {
+                      setIsDropdownOpen(!isDropdownOpen);
+                      audio.playClick();
+                    }}
+                    className="bg-[#00c280] hover:bg-[#00b073] text-white font-extrabold px-6 py-4 rounded-[28px] shadow-lg shadow-emerald-500/15 flex items-center justify-between gap-4 text-sm sm:text-base transition-all focus:outline-none min-w-[240px] sm:min-w-[280px] active:scale-[0.98] cursor-pointer border-2 border-transparent z-40"
+                  >
+                    <div className="flex items-center space-x-2">
+                      <span className="text-xl">
+                        {selectedDifficulty === 'PRIMARY' ? '🌱' : selectedDifficulty === 'INTERMEDIATE' ? '🧭' : '🧙‍♂️'}
+                      </span>
+                      <span>
+                        {selectedDifficulty === 'PRIMARY' ? '初级拼读 (Beginner)' : selectedDifficulty === 'INTERMEDIATE' ? '中级拼读 (Intermediate)' : '高级拼读 (Advanced)'}
+                      </span>
+                    </div>
+                    <ChevronDown size={18} className={`transition-transform duration-300 text-white/90 shrink-0 ${isDropdownOpen ? 'rotate-180' : ''}`} />
+                  </button>
+
+                  <AnimatePresence>
+                    {isDropdownOpen && (
+                      <motion.div
+                        initial={{ opacity: 0, y: 15, scale: 0.95 }}
+                        animate={{ opacity: 1, y: 0, scale: 1 }}
+                        exit={{ opacity: 0, y: 15, scale: 0.95 }}
+                        transition={{ duration: 0.2, ease: "easeOut" }}
+                        className="absolute right-0 top-full mt-3 bg-white border-2 border-[#e6faf3] rounded-[30px] p-3 shadow-[0_20px_50px_rgba(16,185,129,0.12)] min-w-[280px] z-50 flex flex-col gap-1.5"
+                      >
+                        {[
+                          { key: 'PRIMARY', label: '初级拼读', english: 'Beginner', icon: '🌱' },
+                          { key: 'INTERMEDIATE', label: '中级拼读', english: 'Intermediate', icon: '🧭' },
+                          { key: 'ADVANCED', label: '高级拼读', english: 'Advanced', icon: '🧙‍♂️' }
+                        ].map((item) => {
+                          const isSelected = selectedDifficulty === item.key;
+                          return (
+                            <button
+                              key={item.key}
+                              onClick={() => {
+                                setSelectedDifficulty(item.key as DifficultyLevel);
+                                localStorage.setItem('selected_adventure_difficulty', item.key);
+                                setIsDropdownOpen(false);
+                                audio.playClick();
+                              }}
+                              className={`flex items-center justify-between px-4.5 py-3.5 rounded-[22px] transition-all text-left font-black text-sm select-none cursor-pointer ${
+                                isSelected
+                                  ? 'bg-[#e6fcf5] text-[#00c280] border border-[#c2f3e1]'
+                                  : 'text-slate-600 hover:bg-slate-50 border border-transparent hover:text-slate-900'
+                              }`}
+                            >
+                              <div className="flex items-center space-x-2.5">
+                                <span className="text-lg">{item.icon}</span>
+                                <span>
+                                  {item.label} <span className={`text-xs font-bold ${isSelected ? 'text-[#00c280]/70' : 'text-slate-400'}`}>({item.english})</span>
+                                </span>
+                              </div>
+                              {isSelected && (
+                                <div className="w-2 h-2 rounded-full bg-[#00c280] animate-pulse shrink-0" />
+                              )}
+                            </button>
+                          );
+                        })}
+                      </motion.div>
+                    )}
+                  </AnimatePresence>
+                </div>
+              </div>
               
               <div className="bg-white/60 backdrop-blur-sm rounded-[32px] p-6 border-2 border-emerald-100 shadow-sm flex items-center justify-between">
                 <div className="flex items-center space-x-3">
@@ -944,7 +1208,7 @@ const AdventurePage: React.FC<AdventurePageProps> = ({
                         {step === 'REVIEW' ? '复习模式' : currentActiveLevel.name}
                       </span>
                       <h3 className="text-2xl font-black text-emerald-900 leading-none">
-                        {step === 'REVIEW' ? `第 ${currentActiveLevel.id} 关复习` : `第 ${currentActiveLevel.id} 关`}
+                        {step === 'REVIEW' ? `第 ${(currentActiveLevel as any).displayId || currentActiveLevel.id} 关复习` : `第 ${(currentActiveLevel as any).displayId || currentActiveLevel.id} 关`}
                       </h3>
                     </div>
                     <div className="bg-white px-4 py-2 rounded-2xl border-2 border-emerald-100 font-black text-emerald-700 text-sm">
@@ -955,75 +1219,149 @@ const AdventurePage: React.FC<AdventurePageProps> = ({
                   <div className="bg-white rounded-[48px] p-8 shadow-[0_40px_80px_-24px_rgba(6,78,59,0.12)] border-b-[8px] border-emerald-100/50 space-y-10 relative overflow-hidden group">
                     <div className="absolute top-0 right-0 w-32 h-32 bg-emerald-50 rounded-full -mr-16 -mt-16 opacity-50 pointer-events-none group-hover:scale-110 transition-transform duration-700" />
                     
-                    {/* Top: 3 words + images */}
-                    <div className="grid grid-cols-3 gap-5 relative z-10">
-                      {currentActiveLevel.cards[cardIndex]?.words.map((word, i) => (
-                        <motion.div 
-                          key={i} 
-                          whileHover={{ scale: 1.05, y: -5 }}
-                          whileTap={{ scale: 0.95 }}
-                          onClick={() => audio.speak(word.text)} 
-                          className="flex flex-col items-center p-4 bg-emerald-50/50 rounded-[40px] cursor-pointer border-2 border-transparent hover:border-emerald-200 hover:bg-white transition-all shadow-sm"
-                        >
-                          <div className="w-full aspect-square bg-white rounded-3xl mb-4 flex items-center justify-center p-3 shadow-inner relative group/img overflow-hidden">
-                            <SafeImage 
-                              src={syncedImages[word.text] || word.imageUrl} 
-                              alt={word.text} 
-                              className="w-full h-full object-contain"
-                              fallbackText={word.text}
-                              width="60"
-                              height="60"
-                            />
-                            <button 
-                              onClick={(e) => { e.stopPropagation(); syncImage(word.text); }}
-                              disabled={isSyncing}
-                              className="absolute bottom-2 right-2 p-2 bg-emerald-500 text-white rounded-full shadow-lg opacity-0 group-hover/img:opacity-100 transition-opacity disabled:opacity-50 z-20"
-                              title="魔法同步 (AI生成图片)"
-                            >
-                              {isSyncing ? <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" /> : <Wand2 size={16} />}
-                            </button>
-                          </div>
-                          <span className="text-base font-black text-emerald-950 tracking-tight leading-none mb-1">{word.text}</span>
-                          <span className="text-[11px] font-bold text-emerald-500/60 uppercase tracking-widest">{word.translation}</span>
-                        </motion.div>
-                      ))}
+                    {/* Top: 3 words parallel layout */}
+                    <div className="grid grid-cols-3 gap-3 sm:gap-4 relative z-10">
+                      {(currentActiveLevel?.cards?.[cardIndex]?.words || []).map((word, i) => {
+                        const isSelected = activeWordIdx === i;
+                        const wordSuffix = currentActiveLevel?.cards?.[cardIndex]?.suffix || currentActiveLevel?.suffix || '';
+                        
+                        return (
+                          <motion.div 
+                            key={i} 
+                            whileHover={{ scale: 1.05, y: -4 }}
+                            whileTap={{ scale: 0.96 }}
+                            onClick={() => {
+                              audio.playPop();
+                              setActiveWordIdx(i);
+                              audio.speak(word.text);
+                            }} 
+                            className={`flex flex-col items-center p-3 rounded-[28px] cursor-pointer border-2 transition-all relative ${
+                              isSelected 
+                                ? 'bg-indigo-50/60 border-indigo-200 shadow-md ring-2 ring-indigo-100' 
+                                : 'bg-slate-50 border-slate-100 hover:border-slate-200 hover:bg-white shadow-sm'
+                            }`}
+                          >
+                            <div className="w-full aspect-square bg-white rounded-2xl mb-2.5 flex items-center justify-center p-2 shadow-inner relative group/img overflow-hidden">
+                              <SafeImage 
+                                src={syncedImages[word.text] || word.imageUrl} 
+                                alt={word.text} 
+                                className="w-full h-full object-contain"
+                                fallbackText={word.text}
+                                width="72"
+                                height="72"
+                              />
+                              <button 
+                                onClick={(e) => { e.stopPropagation(); syncImage(word.text); }}
+                                disabled={isSyncing}
+                                className="absolute bottom-1 right-1 p-1 bg-emerald-500 text-white rounded-lg shadow-sm opacity-0 group-hover/img:opacity-100 transition-opacity disabled:opacity-50 z-20"
+                                title="魔法同步由AI生成新插图"
+                              >
+                                {isSyncing ? <div className="w-3 h-3 border-2 border-white border-t-transparent rounded-full animate-spin" /> : <Wand2 size={11} />}
+                              </button>
+                            </div>
+                            
+                            <div className="text-center w-full">
+                              <span className="text-base sm:text-lg font-black text-slate-800 tracking-tight leading-none block mb-1">
+                                {(() => {
+                                  if (!wordSuffix) return <span>{word.text}</span>;
+                                  
+                                  const text = word.text;
+                                  const lowerWord = text.toLowerCase();
+                                  const lowerSuffix = wordSuffix.toLowerCase();
+                                  
+                                  if (lowerWord.endsWith(lowerSuffix)) {
+                                    const rootLen = text.length - wordSuffix.length;
+                                    const root = text.substring(0, rootLen);
+                                    const endPart = text.substring(rootLen);
+                                    return (
+                                      <span>
+                                        <span className="text-slate-800">{root}</span>
+                                        <span className="text-red-500 font-extrabold">{endPart}</span>
+                                      </span>
+                                    );
+                                  } else if (lowerWord.includes(lowerSuffix)) {
+                                    const idx = lowerWord.indexOf(lowerSuffix);
+                                    const part1 = text.substring(0, idx);
+                                    const part2 = text.substring(idx, idx + wordSuffix.length);
+                                    const part3 = text.substring(idx + wordSuffix.length);
+                                    return (
+                                      <span>
+                                        <span className="text-slate-800">{part1}</span>
+                                        <span className="text-red-500 font-extrabold">{part2}</span>
+                                        {part3 && <span className="text-slate-800">{part3}</span>}
+                                      </span>
+                                    );
+                                  }
+                                  return <span className="text-slate-800">{text}</span>;
+                                })()}
+                              </span>
+                              <span className="text-[11px] sm:text-xs font-bold text-slate-500 block leading-tight truncate">
+                                {word.translation}
+                              </span>
+                            </div>
+
+                            {/* Click to Speak/Spell buttons for individual words */}
+                            <div className="mt-2 flex items-center justify-center gap-1.5 w-full">
+                              <button
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  audio.playPop();
+                                  audio.speak(word.text);
+                                }}
+                                className="p-1 px-1.5 bg-slate-200/50 hover:bg-slate-200 text-slate-600 rounded-lg transition-colors"
+                                title="发音"
+                              >
+                                <Volume2 size={12} />
+                              </button>
+                              
+                              <button
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  audio.playPop();
+                                  setSpellingWord(word);
+                                }}
+                                className="px-2 py-1 bg-amber-100 hover:bg-amber-200 text-amber-900 rounded-lg font-extrabold text-[10px] flex items-center space-x-0.5 transition-colors"
+                                title="拼写闯关"
+                              >
+                                <Sparkles size={9} className="text-amber-650" />
+                                <span>拼写</span>
+                              </button>
+                            </div>
+                          </motion.div>
+                        );
+                      })}
                     </div>
 
-                    {/* Bottom: Rhyme - Enhanced Clarity */}
-                    <div className="space-y-5">
+                    {/* Bottom: Rhyme - Structured perfectly matching the screenshot */}
+                    <div className="space-y-4">
                       <div className="flex items-center justify-center space-x-3 px-4">
-                        <div className="h-px flex-1 bg-emerald-100/50" />
-                        <span className="text-[10px] font-black text-emerald-800/20 uppercase tracking-[0.3em]">Magical Rhyme</span>
-                        <div className="h-px flex-1 bg-emerald-100/50" />
+                        <div className="h-px flex-1 bg-slate-100" />
+                        <span className="text-[10px] font-black text-slate-350 uppercase tracking-[0.3em]">Magical Rhyme 三字经拼读</span>
+                        <div className="h-px flex-1 bg-slate-100" />
                       </div>
                       
                       {currentActiveLevel.cards[cardIndex] && (
-                        <motion.div 
-                          whileHover={{ scale: 1.01 }}
-                          whileTap={{ scale: 0.99 }}
-                          onClick={() => speakRhyme(currentActiveLevel.cards[cardIndex].rhyme)} 
-                          className="parchment-scroll p-8 sm:p-12 rounded-[44px] text-center cursor-pointer relative overflow-hidden group shadow-2xl"
-                        >
-                          <div className="absolute top-4 right-4 p-2 bg-emerald-800/5 rounded-xl backdrop-blur-md opacity-40 group-hover:opacity-100 transition-opacity">
-                            <Volume2 size={24} className="text-emerald-800" />
+                        <div className="bg-[#f8fafc] border-2 border-slate-100/70 p-6 sm:p-8 rounded-[36px] w-full flex flex-col justify-center space-y-4 relative group">
+                          <div className={`space-y-3.5 w-full justify-center flex flex-col items-center ${getRhymeFontSize(currentActiveLevel.cards[cardIndex].rhyme)}`}>
+                            {currentActiveLevel.cards[cardIndex].rhyme.split(/[,，.。!！?？]/).filter(s => s.trim()).map((line, idx) => (
+                              <div key={idx} className="flex flex-wrap justify-center items-center drop-shadow-sm font-black text-center whitespace-nowrap leading-relaxed tracking-wide">
+                                {renderSanzijingLine(line, currentActiveLevel.cards[cardIndex]?.suffix || currentActiveLevel.suffix || '')}
+                              </div>
+                            ))}
                           </div>
-                          <div className={`text-emerald-950 font-black leading-relaxed tracking-normal space-y-4 text-traditional ${getRhymeFontSize(currentActiveLevel.cards[cardIndex].rhyme)}`}>
-                            {currentActiveLevel.cards[cardIndex].rhyme.split(/[,，.。!！?？]/).filter(s => s.trim()).map((line, idx) => {
-                              const parts = line.split(/([a-zA-Z]+)/);
-                              return (
-                                <p key={idx} className="whitespace-nowrap drop-shadow-sm flex justify-center items-center gap-x-1">
-                                  {parts.map((p, i) => (
-                                    <span key={i} className={/^[a-zA-Z]+$/.test(p) ? "text-emerald-700 font-extrabold px-2 py-0.5 bg-emerald-100/40 rounded-lg" : "opacity-95 text-[1.1em] font-black"}>
-                                      {p}
-                                    </span>
-                                  ))}
-                                </p>
-                              );
-                            })}
+
+                          <div className="pt-2 flex flex-col items-center justify-center border-t border-slate-100/50 space-y-2">
+                            <motion.button
+                              whileHover={{ scale: 1.05 }}
+                              whileTap={{ scale: 0.95 }}
+                              onClick={() => speakRhyme(currentActiveLevel.cards[cardIndex].rhyme)}
+                              className="px-5 py-2 rounded-full bg-indigo-50 border border-indigo-100 text-indigo-600 font-extrabold text-xs flex items-center space-x-1.5 shadow-sm hover:bg-indigo-100 transition-colors"
+                            >
+                              <Volume2 size={14} className="text-indigo-500 animate-pulse" />
+                              <span>聆听整句三字经 Chanting!</span>
+                            </motion.button>
                           </div>
-                          <div className="absolute top-0 left-0 w-12 h-12 border-t-8 border-l-8 border-emerald-800/5 rounded-tl-[44px] m-4" />
-                          <div className="absolute bottom-0 right-0 w-12 h-12 border-b-8 border-r-8 border-emerald-800/5 rounded-br-[44px] m-4" />
-                        </motion.div>
+                        </div>
                       )}
                     </div>
 
@@ -1486,6 +1824,17 @@ const AdventurePage: React.FC<AdventurePageProps> = ({
               </div>
             </motion.div>
           </motion.div>
+        )}
+      </AnimatePresence>
+
+      <AnimatePresence>
+        {spellingWord && (
+          <PhonicsSpellingModal
+            word={spellingWord.text}
+            translation={spellingWord.translation}
+            imageUrl={syncedImages[spellingWord.text] || spellingWord.imageUrl}
+            onClose={() => setSpellingWord(null)}
+          />
         )}
       </AnimatePresence>
     </div>

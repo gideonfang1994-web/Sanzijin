@@ -41,22 +41,37 @@ const ArcadePage: React.FC<ArcadePageProps> = ({ groups, stats, lastLearnedWords
     const { cardsPerDay, completedLevels } = progress;
     const now = Date.now();
 
-    for (let i = 0; i < ALL_CARDS.length; i += cardsPerDay) {
-      const levelId = Math.floor(i / cardsPerDay) + 1;
-      const levelCards = ALL_CARDS.slice(i, i + cardsPerDay);
-      const isUnlocked = levelId === 1 || completedLevels.includes(levelId - 1);
-      
-      const schedule = stats.reviewSchedules?.[levelId.toString()];
-      const isDue = schedule && now >= schedule.nextReviewAt;
+    const difficulties: ('PRIMARY' | 'INTERMEDIATE' | 'ADVANCED')[] = ['PRIMARY', 'INTERMEDIATE', 'ADVANCED'];
+    
+    for (const diff of difficulties) {
+      let offset = 0;
+      if (diff === 'INTERMEDIATE') offset = 100;
+      if (diff === 'ADVANCED') offset = 200;
 
-      if (isUnlocked) {
-        generatedLevels.push({
-          id: levelId,
-          name: levelCards[0]?.levelName || `关卡 ${levelId}`,
-          words: levelCards.flatMap(c => c.words),
-          isCompleted: completedLevels.includes(levelId),
-          isDue
-        });
+      const diffCards = ALL_CARDS.filter(c => (c.difficulty || 'PRIMARY') === diff);
+      
+      for (let i = 0; i < diffCards.length; i += cardsPerDay) {
+        const relativeId = Math.floor(i / cardsPerDay) + 1;
+        const levelId = offset + relativeId;
+        const levelCards = diffCards.slice(i, i + cardsPerDay);
+        
+        // A level is unlocked if it's the first level of any difficulty, or if the previous level is completed.
+        const isUnlocked = relativeId === 1 || completedLevels.includes(levelId - 1) || completedLevels.includes(levelId);
+        
+        const schedule = stats.reviewSchedules?.[levelId.toString()];
+        const isDue = schedule && now >= schedule.nextReviewAt;
+
+        if (isUnlocked) {
+          const difficultyLabel = diff === 'PRIMARY' ? '初级' : diff === 'INTERMEDIATE' ? '中级' : '高级';
+          generatedLevels.push({
+            id: levelId,
+            displayId: relativeId,
+            name: `[${difficultyLabel}] ${levelCards[0]?.levelName || `第 ${relativeId} 关`}`,
+            words: levelCards.flatMap(c => c.words),
+            isCompleted: completedLevels.includes(levelId),
+            isDue
+          });
+        }
       }
     }
     return generatedLevels;
@@ -86,10 +101,11 @@ const ArcadePage: React.FC<ArcadePageProps> = ({ groups, stats, lastLearnedWords
     return groups.flatMap(g => g.words);
   }, [selectedLevelId, levels, lastLearnedWords, groups, dueWords]);
 
+  const targetLevel = levels.find(l => l.id === selectedLevelId);
   const displayText = selectedLevelId === 0
     ? '待复习的魔法'
     : selectedLevelId 
-      ? `关卡 ${selectedLevelId} 的魔法` 
+      ? `${targetLevel?.name || `关卡 ${selectedLevelId}`} 的魔法` 
       : lastLearnedWords.length > 0 ? '刚刚学过的魔法' : '全部已解锁魔法';
 
   return (
@@ -188,7 +204,7 @@ const ArcadePage: React.FC<ArcadePageProps> = ({ groups, stats, lastLearnedWords
                     >
                       <div className="flex items-center space-x-4 text-left">
                         <div className={`w-10 h-10 rounded-xl flex items-center justify-center font-black text-xs shadow-sm ${selectedLevelId === level.id ? 'bg-indigo-400' : 'bg-white text-slate-500'}`}>
-                          {level.id}
+                          {(level as any).displayId || level.id}
                         </div>
                         <span className="truncate max-w-[180px] tracking-tight">{level.name}</span>
                       </div>

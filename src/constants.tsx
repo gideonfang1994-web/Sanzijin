@@ -1,5 +1,12 @@
 
 import { WordCard, VideoLesson, WordGroup, Character, ShopItem } from './types';
+import { INTERMEDIATE_TEXTBOOK_CARDS as INTERMEDIATE_TEXTBOOK_CARDS_PART1 } from './intermediateCards';
+import { INTERMEDIATE_TEXTBOOK_CARDS_PART2 } from './intermediateCards2';
+import { INTERMEDIATE_TEXTBOOK_CARDS_PART3 } from './intermediateCards3';
+import { INTERMEDIATE_TEXTBOOK_CARDS_PART4 } from './intermediateCards4';
+import { INTERMEDIATE_TEXTBOOK_CARDS_PART5 } from './intermediateCards5';
+import { INTERMEDIATE_TEXTBOOK_CARDS_PART6 } from './intermediateCards6';
+import { INTERMEDIATE_TEXTBOOK_CARDS_PART7 } from './intermediateCards7';
 import wordPlaceholder from './assets/word_placeholder.png';
 
 const ICON_BASE = "https://img.icons8.com/clouds/200/";
@@ -562,7 +569,7 @@ export const SHOP_ITEMS: ShopItem[] = [
   { id: 'food_elixir', name: '生命灵药', description: '恢复 50 点生命值', price: 200, type: 'FOOD', characterId: 'all', slot: 'NONE', foodValue: 50, imageUrl: getShopImageUrl('potion') },
 ];
 
-export const ALL_CARDS: WordCard[] = [
+const ORIGINAL_CARDS_LIST: WordCard[] = [
   { id: 'p1', suffix: 'ad', levelName: '基础拼读 1-1', words: [{ text: 'bad', translation: '坏的', imageUrl: getImageUrl('bad') }, { text: 'dad', translation: '爸爸', imageUrl: getImageUrl('dad') }, { text: 'sad', translation: '伤心的', imageUrl: getImageUrl('sad') }], rhyme: '表现 bad（坏的）, 让我 dad（爸爸）, 非常 sad（伤心的）.', learned: false, difficulty: 'PRIMARY' },
   { id: 'p2', suffix: 'at', levelName: '基础拼读 1-2', words: [{ text: 'cat', translation: '猫', imageUrl: getImageUrl('cat') }, { text: 'rat', translation: '老鼠', imageUrl: getImageUrl('rat') }, { text: 'fat', translation: '胖的', imageUrl: getImageUrl('fat') }], rhyme: '这只 cat（猫）,专吃 rat（老鼠）,非常 fat（胖的）.', learned: false, difficulty: 'PRIMARY' },
   { id: 'p3', suffix: 'at', levelName: '基础拼读 1-3', words: [{ text: 'bat', translation: '球棒', imageUrl: getImageUrl('bat') }, { text: 'hat', translation: '帽子', imageUrl: getImageUrl('hat') }, { text: 'pat', translation: '轻拍', imageUrl: getImageUrl('pat') }], rhyme: '拿上 bat（球棒）,戴上 hat（帽子）,把球 pat（轻拍）.', learned: false, difficulty: 'PRIMARY' },
@@ -886,6 +893,43 @@ export const ALL_CARDS: WordCard[] = [
   { id: 'p328', suffix: 'are', levelName: '高级拼读 19-4', words: [{ text: 'aware', translation: '知', imageUrl: getImageUrl('idea') }, { text: 'square', translation: '方', imageUrl: getImageUrl('shape') }], rhyme: '已经 aware（知）, 站在 square（方）.', learned: false, difficulty: 'ADVANCED' },
   { id: 'p329', suffix: 'or', levelName: '高级拼读 20-1', words: [{ text: 'word', translation: '词', imageUrl: getImageUrl('word') }, { text: 'worm', translation: '虫', imageUrl: getImageUrl('worm') }], rhyme: '学个 word（词）, 变条 worm（虫）.', learned: false, difficulty: 'ADVANCED' },
   { id: 'p330', suffix: 'or', levelName: '高级拼读 20-2', words: [{ text: 'order', translation: '序', imageUrl: getImageUrl('list') }, { text: 'record', translation: '录', imageUrl: getImageUrl('record') }], rhyme: '遵守 order（序）, 打破 record（录）.', learned: false, difficulty: 'ADVANCED' },
+];
+
+const TEXTBOOK_ALL_CARDS = [
+  ...INTERMEDIATE_TEXTBOOK_CARDS_PART1,
+  ...INTERMEDIATE_TEXTBOOK_CARDS_PART2,
+  ...INTERMEDIATE_TEXTBOOK_CARDS_PART3,
+  ...INTERMEDIATE_TEXTBOOK_CARDS_PART4,
+  ...INTERMEDIATE_TEXTBOOK_CARDS_PART5,
+  ...INTERMEDIATE_TEXTBOOK_CARDS_PART6,
+  ...INTERMEDIATE_TEXTBOOK_CARDS_PART7
+];
+
+export const ALL_CARDS: WordCard[] = [
+  // Primary has pages 1 to 400 from our combined textbook list (giving exactly 400 cards)
+  ...TEXTBOOK_ALL_CARDS.slice(0, 400).map((card, index) => {
+    const pageNum = index + 1;
+    return {
+      ...card,
+      id: `pri_${pageNum}`,
+      levelName: `初级 课时 ${pageNum}`,
+      difficulty: 'PRIMARY' as const
+    };
+  }),
+
+  // Intermediate has all 959 pages (giving exactly 959 cards)
+  ...TEXTBOOK_ALL_CARDS.map((card, index) => {
+    const pageNum = index + 1;
+    return {
+      ...card,
+      id: `int_${pageNum}`,
+      levelName: `中级 课时 ${pageNum}`,
+      difficulty: 'INTERMEDIATE' as const
+    };
+  }),
+
+  // Advanced has original advanced cards
+  ...ORIGINAL_CARDS_LIST.filter(card => card.difficulty === 'ADVANCED')
 ];
 
 export const INITIAL_GROUPS: WordGroup[] = ALL_CARDS.map(card => ({
