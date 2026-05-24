@@ -62,6 +62,7 @@ const PhonicsSpellingModal: React.FC<PhonicsSpellingModalProps> = ({
   const [hasCompletedGuide, setHasCompletedGuide] = useState(false);
 
   const animatingRef = useRef(false);
+  const activeUtterancesRef = useRef<SpeechSynthesisUtterance[]>([]);
   const isMountedRef = useRef(true);
   const particleIdRef = useRef(0);
 
@@ -191,149 +192,196 @@ const PhonicsSpellingModal: React.FC<PhonicsSpellingModalProps> = ({
 
   const speakPart = (text: string, rate = 0.8) => {
     return new Promise<void>((resolve) => {
-      if (typeof window === 'undefined' || !window.speechSynthesis) {
+      if (typeof window === 'undefined') {
         resolve();
         return;
       }
-      
-      // Auto-resume if in a weird paused state
-      if (window.speechSynthesis.paused) {
-        try { window.speechSynthesis.resume(); } catch (e) {}
-      }
-      
-      let activeVoice = englishVoice;
-      if (!activeVoice) {
-        const voices = window.speechSynthesis.getVoices();
-        activeVoice = findBestEnglishVoice(voices);
-      }
 
-      let soundText = text.toLowerCase();
-      let activeRate = rate;
-      let activePitch = 1.15; // Pleasant high-pitch, but within safe boundaries for all operating systems
+      // Check if this text is a full word (e.g. "bad" or translations) rather than a short phonetic phone blend like "buh" or "fff"
+      const cleanText = text.trim();
+      const isWord = cleanText.length > 2 && !['shh', 'tch', 'thh', 'eee', 'ooo', 'ahh', 'ehh', 'ihh', 'uhh'].includes(cleanText.toLowerCase());
 
-      const activeWordLower = word.toLowerCase().trim();
-      
-      if (soundText === 'y') {
-        if (activeWordLower.length <= 4) {
-          soundText = 'eye';
-        } else {
-          soundText = 'eee';
-        }
-      }
-      else if (soundText === 'ea') {
-        if (['bread', 'head', 'deaf', 'pant'].includes(activeWordLower)) {
-          soundText = 'ehh';
-        } else {
-          soundText = 'eee';
-        }
-      }
-      else if (soundText === 'oo') {
-        if (['book', 'look', 'cook'].includes(activeWordLower)) {
-          soundText = 'uh';
-        } else {
-          soundText = 'ooo';
-        }
-      }
-      else if (soundText === 'a' && (activeWordLower.endsWith('e') && activeWordLower.length > 3)) {
-        soundText = 'ae';
-      }
-      else if (soundText === 'i' && (activeWordLower.endsWith('e') && activeWordLower.length > 3)) {
-        soundText = 'eye';
-      }
-      else if (soundText === 'o' && (activeWordLower.endsWith('e') && activeWordLower.length > 3)) {
-        soundText = 'oh';
-      }
-
-      interface PhonicsConfig {
-        sound: string;
-        rate?: number;
-        pitch?: number;
-      }
-
-      const phonicsConfigs: Record<string, PhonicsConfig> = {
-        'b': { sound: 'buh', rate: 1.45, pitch: 1.15 },
-        'c': { sound: 'kuh', rate: 1.45, pitch: 1.15 },
-        'd': { sound: 'duh', rate: 1.45, pitch: 1.15 },
-        'g': { sound: 'guh', rate: 1.45, pitch: 1.15 },
-        'j': { sound: 'juh', rate: 1.45, pitch: 1.15 },
-        'k': { sound: 'kuh', rate: 1.45, pitch: 1.15 },
-        'p': { sound: 'puh', rate: 1.45, pitch: 1.15 },
-        't': { sound: 'tuh', rate: 1.45, pitch: 1.15 },
-        'q': { sound: 'kwuh', rate: 1.35, pitch: 1.15 },
-        'w': { sound: 'wuh', rate: 1.35, pitch: 1.15 },
-        'y': { sound: 'yuh', rate: 1.35, pitch: 1.15 },
-
-        'f': { sound: 'fff', rate: 0.85, pitch: 1.1 },
-        'h': { sound: 'hhh', rate: 0.9, pitch: 1.1 },
-        'l': { sound: 'lll', rate: 0.8, pitch: 1.15 },
-        'm': { sound: 'mmm', rate: 0.8, pitch: 1.15 },
-        'n': { sound: 'nnn', rate: 0.8, pitch: 1.15 },
-        'r': { sound: 'rrr', rate: 0.8, pitch: 1.15 },
-        's': { sound: 'sss', rate: 0.9, pitch: 1.15 },
-        'v': { sound: 'vvv', rate: 0.8, pitch: 1.15 },
-        'x': { sound: 'ks', rate: 1.2, pitch: 1.15 },
-        'z': { sound: 'zzz', rate: 0.85, pitch: 1.15 },
-
-        'a': { sound: 'aah', rate: 0.75, pitch: 1.15 },
-        'e': { sound: 'ehh', rate: 0.75, pitch: 1.15 },
-        'i': { sound: 'ihh', rate: 0.75, pitch: 1.15 },
-        'o': { sound: 'ah', rate: 0.75, pitch: 1.15 },
-        'u': { sound: 'uhh', rate: 0.75, pitch: 1.15 },
-
-        'sh': { sound: 'shhh', rate: 0.85, pitch: 1.15 },
-        'ch': { sound: 'tch', rate: 1.1, pitch: 1.15 },
-        'th': { sound: 'thhh', rate: 0.85, pitch: 1.15 },
-        'wh': { sound: 'wuh', rate: 1.35, pitch: 1.15 },
-        'ph': { sound: 'fff', rate: 0.85, pitch: 1.15 },
-        'ck': { sound: 'kuh', rate: 1.45, pitch: 1.15 },
-        'ng': { sound: 'ng', rate: 0.8, pitch: 1.15 },
-        'ee': { sound: 'eee', rate: 0.7, pitch: 1.15 },
-        'ea': { sound: 'eee', rate: 0.7, pitch: 1.15 },
-        'oo': { sound: 'ooo', rate: 0.7, pitch: 1.15 },
-        'ai': { sound: 'ae', rate: 0.7, pitch: 1.15 },
-        'ay': { sound: 'ae', rate: 0.7, pitch: 1.15 },
-        'ar': { sound: 'ar', rate: 0.75, pitch: 1.1 },
-        'er': { sound: 'er', rate: 0.75, pitch: 1.1 },
-        'ir': { sound: 'er', rate: 0.75, pitch: 1.1 },
-        'or': { sound: 'or', rate: 0.75, pitch: 1.1 },
-        'ur': { sound: 'er', rate: 0.75, pitch: 1.1 },
-        'ou': { sound: 'ow', rate: 0.75, pitch: 1.1 },
-        'ow': { sound: 'ow', rate: 0.75, pitch: 1.1 },
-        'oi': { sound: 'oy', rate: 0.75, pitch: 1.1 },
-        'oy': { sound: 'oy', rate: 0.75, pitch: 1.1 }
-      };
-
-      const config = phonicsConfigs[soundText];
-      if (config) {
-        soundText = config.sound;
-        if (config.rate !== undefined) activeRate = config.rate;
-        if (config.pitch !== undefined) activePitch = config.pitch;
-      }
-
-      const utterance = new SpeechSynthesisUtterance(soundText);
-      if (activeVoice) {
-        utterance.voice = activeVoice;
-        utterance.lang = activeVoice.lang;
-      } else {
-        utterance.lang = 'en-US';
-      }
-      utterance.rate = activeRate;
-      utterance.pitch = activePitch;
-
-      let isResolved = false;
-      const done = () => {
-        if (!isResolved) {
-          isResolved = true;
+      const handleSpeechSynthesisFallback = () => {
+        if (!window.speechSynthesis) {
           resolve();
+          return;
         }
+        
+        // Auto-resume if in a weird paused state
+        if (window.speechSynthesis.paused) {
+          try { window.speechSynthesis.resume(); } catch (e) {}
+        }
+        
+        let activeVoice = englishVoice;
+        if (!activeVoice) {
+          const voices = window.speechSynthesis.getVoices();
+          activeVoice = findBestEnglishVoice(voices);
+        }
+
+        let soundText = text.toLowerCase();
+        let activeRate = rate;
+        let activePitch = 1.15; // Pleasant high-pitch, but within safe boundaries for all operating systems
+
+        const activeWordLower = word.toLowerCase().trim();
+        
+        if (soundText === 'y') {
+          if (activeWordLower.length <= 4) {
+            soundText = 'eye';
+          } else {
+            soundText = 'eee';
+          }
+        }
+        else if (soundText === 'ea') {
+          if (['bread', 'head', 'deaf', 'pant'].includes(activeWordLower)) {
+            soundText = 'ehh';
+          } else {
+            soundText = 'eee';
+          }
+        }
+        else if (soundText === 'oo') {
+          if (['book', 'look', 'cook'].includes(activeWordLower)) {
+            soundText = 'uh';
+          } else {
+            soundText = 'ooo';
+          }
+        }
+        else if (soundText === 'a' && (activeWordLower.endsWith('e') && activeWordLower.length > 3)) {
+          soundText = 'ae';
+        }
+        else if (soundText === 'i' && (activeWordLower.endsWith('e') && activeWordLower.length > 3)) {
+          soundText = 'eye';
+        }
+        else if (soundText === 'o' && (activeWordLower.endsWith('e') && activeWordLower.length > 3)) {
+          soundText = 'oh';
+        }
+
+        interface PhonicsConfig {
+          sound: string;
+          rate?: number;
+          pitch?: number;
+        }
+
+        const phonicsConfigs: Record<string, PhonicsConfig> = {
+          'b': { sound: 'buh', rate: 1.45, pitch: 1.15 },
+          'c': { sound: 'kuh', rate: 1.45, pitch: 1.15 },
+          'd': { sound: 'duh', rate: 1.45, pitch: 1.15 },
+          'g': { sound: 'guh', rate: 1.45, pitch: 1.15 },
+          'j': { sound: 'juh', rate: 1.45, pitch: 1.15 },
+          'k': { sound: 'kuh', rate: 1.45, pitch: 1.15 },
+          'p': { sound: 'puh', rate: 1.45, pitch: 1.15 },
+          't': { sound: 'tuh', rate: 1.45, pitch: 1.15 },
+          'q': { sound: 'kwuh', rate: 1.35, pitch: 1.15 },
+          'w': { sound: 'wuh', rate: 1.35, pitch: 1.15 },
+          'y': { sound: 'yuh', rate: 1.35, pitch: 1.15 },
+
+          'f': { sound: 'fff', rate: 0.85, pitch: 1.1 },
+          'h': { sound: 'hhh', rate: 0.9, pitch: 1.1 },
+          'l': { sound: 'lll', rate: 0.8, pitch: 1.15 },
+          'm': { sound: 'mmm', rate: 0.8, pitch: 1.15 },
+          'n': { sound: 'nnn', rate: 0.8, pitch: 1.15 },
+          'r': { sound: 'rrr', rate: 0.8, pitch: 1.15 },
+          's': { sound: 'sss', rate: 0.9, pitch: 1.15 },
+          'v': { sound: 'vvv', rate: 0.8, pitch: 1.15 },
+          'x': { sound: 'ks', rate: 1.2, pitch: 1.15 },
+          'z': { sound: 'zzz', rate: 0.85, pitch: 1.15 },
+
+          'a': { sound: 'aah', rate: 0.75, pitch: 1.15 },
+          'e': { sound: 'ehh', rate: 0.75, pitch: 1.15 },
+          'i': { sound: 'ihh', rate: 0.75, pitch: 1.15 },
+          'o': { sound: 'ah', rate: 0.75, pitch: 1.15 },
+          'u': { sound: 'uhh', rate: 0.75, pitch: 1.15 },
+
+          'sh': { sound: 'shhh', rate: 0.85, pitch: 1.15 },
+          'ch': { sound: 'tch', rate: 1.1, pitch: 1.15 },
+          'th': { sound: 'thhh', rate: 0.85, pitch: 1.15 },
+          'wh': { sound: 'wuh', rate: 1.35, pitch: 1.15 },
+          'ph': { sound: 'fff', rate: 0.85, pitch: 1.15 },
+          'ck': { sound: 'kuh', rate: 1.45, pitch: 1.15 },
+          'ng': { sound: 'ng', rate: 0.8, pitch: 1.15 },
+          'ee': { sound: 'eee', rate: 0.7, pitch: 1.15 },
+          'ea': { sound: 'eee', rate: 0.7, pitch: 1.15 },
+          'oo': { sound: 'ooo', rate: 0.7, pitch: 1.15 },
+          'ai': { sound: 'ae', rate: 0.7, pitch: 1.15 },
+          'ay': { sound: 'ae', rate: 0.7, pitch: 1.15 },
+          'ar': { sound: 'ar', rate: 0.75, pitch: 1.1 },
+          'er': { sound: 'er', rate: 0.75, pitch: 1.1 },
+          'ir': { sound: 'er', rate: 0.75, pitch: 1.1 },
+          'or': { sound: 'or', rate: 0.75, pitch: 1.1 },
+          'ur': { sound: 'er', rate: 0.75, pitch: 1.1 },
+          'ou': { sound: 'ow', rate: 0.75, pitch: 1.1 },
+          'ow': { sound: 'ow', rate: 0.75, pitch: 1.1 },
+          'oi': { sound: 'oy', rate: 0.75, pitch: 1.1 },
+          'oy': { sound: 'oy', rate: 0.75, pitch: 1.1 }
+        };
+
+        const config = phonicsConfigs[soundText];
+        if (config) {
+          soundText = config.sound;
+          if (config.rate !== undefined) activeRate = config.rate;
+          if (config.pitch !== undefined) activePitch = config.pitch;
+        }
+
+        const utterance = new SpeechSynthesisUtterance(soundText);
+        activeUtterancesRef.current.push(utterance); // Keep alive to prevent GC!
+
+        if (activeVoice) {
+          utterance.voice = activeVoice;
+          utterance.lang = activeVoice.lang;
+        } else {
+          utterance.lang = 'en-US';
+        }
+        utterance.rate = activeRate;
+        utterance.pitch = activePitch;
+
+        let isResolved = false;
+        const done = () => {
+          if (!isResolved) {
+            isResolved = true;
+            activeUtterancesRef.current = activeUtterancesRef.current.filter(u => u !== utterance);
+            resolve();
+          }
+        };
+
+        utterance.onend = done;
+        utterance.onerror = done;
+        
+        window.speechSynthesis.speak(utterance);
+        // safety timeout fallback
+        setTimeout(done, 1500);
       };
 
-      utterance.onend = done;
-      utterance.onerror = done;
-      
-      window.speechSynthesis.speak(utterance);
-      // safety timeout fallback
-      setTimeout(done, 1500);
+      if (isWord) {
+        try {
+          // Play premium native US voice recording
+          const url = `https://dict.youdao.com/dictvoice?audio=${encodeURIComponent(cleanText)}&type=2`;
+          const audioObj = new Audio(url);
+          audioObj.volume = 0.95;
+          
+          let resolved = false;
+          const finish = () => {
+            if (!resolved) {
+              resolved = true;
+              resolve();
+            }
+          };
+
+          audioObj.onended = finish;
+          audioObj.onerror = () => {
+            handleSpeechSynthesisFallback();
+          };
+          audioObj.play().catch(() => {
+            // Autoplay blocked fallback
+            handleSpeechSynthesisFallback();
+          });
+          
+          // Safety timeout
+          setTimeout(finish, 2000);
+        } catch (e) {
+          handleSpeechSynthesisFallback();
+        }
+      } else {
+        handleSpeechSynthesisFallback();
+      }
     });
   };
 
@@ -347,8 +395,12 @@ const PhonicsSpellingModal: React.FC<PhonicsSpellingModalProps> = ({
     try {
       // Clear any pending speech synthesis once at the start of animation
       if (typeof window !== 'undefined' && window.speechSynthesis) {
+        if (window.speechSynthesis.paused) {
+          try { window.speechSynthesis.resume(); } catch (e) {}
+        }
         try { window.speechSynthesis.cancel(); } catch (e) {}
       }
+      activeUtterancesRef.current = [];
       
       // Direct Stage 1: STEP_BY_STEP (Show each letter block and read its phonetic sound)
       if (!isMountedRef.current) return;
@@ -400,7 +452,14 @@ const PhonicsSpellingModal: React.FC<PhonicsSpellingModalProps> = ({
 
   // Click on a letter block to practice on demand (Interactive Xylophone Mode)
   const handleLetterBlockClick = async (idx: number, clickType: 'letter' | 'phoneme' = 'letter') => {
-    if (animatingRef.current) return; // ignore during auto-run
+    if (animatingRef.current) {
+      // Allow stopping animation immediately to turn on playable playroom mode
+      animatingRef.current = false;
+      setHasCompletedGuide(true);
+      if (typeof window !== 'undefined' && window.speechSynthesis) {
+        try { window.speechSynthesis.cancel(); } catch (e) {}
+      }
+    }
     audio.playPop();
     safeSetCurrentSyllableIdx(idx);
     
@@ -408,18 +467,16 @@ const PhonicsSpellingModal: React.FC<PhonicsSpellingModalProps> = ({
     setKikiState('talking');
     
     const letterName = wordParts[idx];
+    const segment = !syllables ? phonicsSegments[idx] : null;
+    const targetSound = segment ? (segment.sound || segment.letter) : letterName;
+    const ipaRepr = segment ? segment.ipa : `[${letterName}]`;
     
     if (clickType === 'letter') {
-      // Pronounce the plain letter name, e.g., 'A', 'B', 'C'
-      setSpeech(`✨ 这是字母 [ ${letterName.toUpperCase()} ] ！`);
-      await speakPart(letterName, 0.85);
+      setSpeech(`✨ 拼读积木 [ ${letterName} ] 的发音是 ${ipaRepr} ！`);
+      await speakPart(targetSound, 0.65);
     } else {
-      // Pronounce the phonetic spelling sound, e.g., 'aah', 'buh', 'lll'
-      const segment = !syllables ? phonicsSegments[idx] : null;
-      const targetSound = segment ? (segment.sound || segment.letter) : letterName;
-      const ipaRepr = segment ? segment.ipa : `[${letterName}]`;
-      setSpeech(`🔑 字母组合 [ ${letterName} ] 的自然拼读发音是 ${ipaRepr} ！`);
-      await speakPart(targetSound, 0.62);
+      setSpeech(`🔑 音标 ${ipaRepr} 发音为 /${ipaRepr.replace(/[\[\]]/g, '')}/`);
+      await speakPart(targetSound, 0.65);
     }
     
     setTimeout(() => {

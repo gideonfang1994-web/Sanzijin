@@ -1,9 +1,29 @@
 
 let currentBgm: HTMLAudioElement | null = null;
+let activeUtterances: SpeechSynthesisUtterance[] = [];
 
 export const audio = {
   init: () => {
     // Initialize audio context if needed
+  },
+  unlockSpeech: () => {
+    if (typeof window !== 'undefined' && window.speechSynthesis) {
+      if (window.speechSynthesis.paused) {
+        try { window.speechSynthesis.resume(); } catch (e) {}
+      }
+      try {
+        const u = new SpeechSynthesisUtterance(' ');
+        u.volume = 0;
+        u.rate = 1;
+        activeUtterances.push(u); // Prevent GC
+        const cleanup = () => {
+          activeUtterances = activeUtterances.filter(item => item !== u);
+        };
+        u.onend = cleanup;
+        u.onerror = cleanup;
+        window.speechSynthesis.speak(u);
+      } catch (e) {}
+    }
   },
   playBGM: (_type: 'HOME' | 'ADVENTURE' | 'ARCADE' | 'SHOP' | 'GAME') => {
     // BGM removed per user request
@@ -80,44 +100,90 @@ export const audio = {
     audio.play().catch(() => {});
   },
   speak: (text: string) => {
-    if (!window.speechSynthesis) return;
-    window.speechSynthesis.cancel();
-    const utterance = new SpeechSynthesisUtterance(text);
-    // Simple detection: if contains Chinese characters, use zh-CN
-    const isChinese = /[\u4e00-\u9fa5]/.test(text);
+    if (!text || typeof window === 'undefined') return;
     
-    if (isChinese) {
-      utterance.lang = 'zh-CN';
-    } else {
-      const voices = window.speechSynthesis.getVoices();
-      const normalizeLang = (lang: string) => lang.toLowerCase().replace('_', '-');
-      const englishVoice = voices.find(v => {
-        const l = normalizeLang(v.lang);
-        const name = v.name.toLowerCase();
-        const isEnglish = l.startsWith('en-us') || l.startsWith('en-gb') || l === 'en';
-        if (!isEnglish) return false;
-        return (
-          name.includes('samantha') ||
-          name.includes('google') ||
-          name.includes('natural') ||
-          name.includes('microsoft') ||
-          name.includes('karen') ||
-          name.includes('daniel') ||
-          name.includes('zira') ||
-          name.includes('david')
-        );
-      }) || voices.find(v => normalizeLang(v.lang).startsWith('en-us'))
-        || voices.find(v => normalizeLang(v.lang).startsWith('en'));
-        
-      if (englishVoice) {
-        utterance.voice = englishVoice;
-        utterance.lang = englishVoice.lang; // Align exactly with voice's custom tag (e.g., en_US on iOS)
-      } else {
-        utterance.lang = 'en-US';
+    const cleanWord = text.trim();
+    if (!cleanWord) return;
+
+    const isChinese = /[\u4e00-\u9fa5]/.test(cleanWord);
+    
+    // Short phonic segment sounds like "buh", "duh", "fff"
+    const isPhonicSegmentSound = [
+      'buh', 'duh', 'guh', 'kuh', 'puh', 'tuh', 'fff', 'hhh', 'lll', 'mmm', 'nnn', 'rrr', 'sss', 'vvv', 'zzz',
+      'aah', 'ehh', 'ihh', 'uhh', 'shhh', 'tch', 'thhh', 'wuh', 'kwuh', 'eee', 'ooo', 'ow', 'oy'
+    ].includes(cleanWord.toLowerCase());
+
+    const speakSynth = (phrase: string, isZh: boolean) => {
+      if (!window.speechSynthesis) return;
+      if (window.speechSynthesis.paused) {
+        try { window.speechSynthesis.resume(); } catch (e) {}
       }
-      utterance.rate = 0.85;
+      try { window.speechSynthesis.cancel(); } catch (e) {}
+
+      const utterance = new SpeechSynthesisUtterance(phrase);
+      activeUtterances.push(utterance); // Prevent GC
+      const cleanup = () => {
+        activeUtterances = activeUtterances.filter(u => u !== utterance);
+      };
+      utterance.onend = cleanup;
+      utterance.onerror = cleanup;
+
+      if (isZh) {
+        utterance.lang = 'zh-CN';
+      } else {
+        const voices = window.speechSynthesis.getVoices();
+        const normalizeLang = (lang: string) => lang.toLowerCase().replace('_', '-');
+        const englishVoice = voices.find(v => {
+          const l = normalizeLang(v.lang);
+          const name = v.name.toLowerCase();
+          const isEnglish = l.startsWith('en-us') || l.startsWith('en-gb') || l === 'en';
+          if (!isEnglish) return false;
+          return (
+            name.includes('samantha') ||
+            name.includes('google') ||
+            name.includes('natural') ||
+            name.includes('microsoft') ||
+            name.includes('karen') ||
+            name.includes('daniel') ||
+            name.includes('zira') ||
+            name.includes('david')
+          );
+        }) || voices.find(v => normalizeLang(v.lang).startsWith('en-us'))
+          || voices.find(v => normalizeLang(v.lang).startsWith('en'));
+          
+        if (englishVoice) {
+          utterance.voice = englishVoice;
+          utterance.lang = englishVoice.lang;
+        } else {
+          utterance.lang = 'en-US';
+        }
+        utterance.rate = 0.85;
+      }
+      window.speechSynthesis.speak(utterance);
+    };
+
+    // If it's a real word or translation phrase, play the Youdao audio (guaranteed to bypass lock/iframe limits with beautiful, human speech)
+    if (!isPhonicSegmentSound && (cleanWord.length > 1 || isChinese)) {
+      isBypassed: {
+        try {
+          // Play Youdao Premium Human TTS
+          const audioUrl = isChinese 
+            ? `https://dict.youdao.com/dictvoice?audio=${encodeURIComponent(cleanWord)}&le=zh`
+            : `https://dict.youdao.com/dictvoice?audio=${encodeURIComponent(cleanWord)}&type=2`; // type=2 is US Accent
+          
+          const aud = new Audio(audioUrl);
+          aud.volume = 0.95;
+          aud.play().catch(() => {
+            // Autoplay restriction fallback to synthesis
+            speakSynth(cleanWord, isChinese);
+          });
+        } catch (e) {
+          speakSynth(cleanWord, isChinese);
+        }
+      }
+    } else {
+      speakSynth(cleanWord, isChinese);
     }
-    window.speechSynthesis.speak(utterance);
   }
 };
 

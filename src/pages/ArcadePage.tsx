@@ -78,6 +78,7 @@ const ArcadePage: React.FC<ArcadePageProps> = ({ groups, stats, lastLearnedWords
   }, [progress, stats.reviewSchedules]);
 
   const games: GameInfo[] = [
+    { id: 'PLANTS', title: '植物守卫战', icon: <Zap />, color: 'bg-emerald-600', xp: '+450', description: '召唤绿植词灵射手，击退单词僵尸！', category: 'ARCADE' },
     { id: 'SHEEP', title: '羊羊消消乐', icon: <Layers />, color: 'bg-emerald-500', xp: '+400', description: '消除3个相同魔法，清空法阵！', category: 'ARCADE' },
     { id: 'SPELLING', title: '单词拼写蜂', icon: <Sparkles />, color: 'bg-amber-500', xp: '+350', description: '听音辨词，像勤劳的蜜蜂一样拼写。', category: 'CHALLENGE' },
     { id: 'SCRAMBLE', title: '拼词大师', icon: <Zap />, color: 'bg-rose-500', xp: '+250', description: '释放字母能量，拼出正确的咒语。', category: 'CHALLENGE' },
@@ -218,40 +219,104 @@ const ArcadePage: React.FC<ArcadePageProps> = ({ groups, stats, lastLearnedWords
         </AnimatePresence>
       </div>
 
-      <div className="grid grid-cols-1 gap-5">
-        {games.map((game, idx) => (
-          <motion.button
-            key={game.id}
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: idx * 0.05 + 0.2 }}
-            whileHover={{ scale: 1.02, x: 8 }}
-            whileTap={{ scale: 0.98 }}
-            onClick={() => { audio.playClick(); onSelectGame(game.id, currentWords); }}
-            className="group flex items-center p-6 bg-white rounded-[40px] border-2 border-slate-50 hover:border-indigo-100 transition-all shadow-[0_15px_30px_-10px_rgba(0,0,0,0.05)] relative overflow-hidden"
-          >
-            <div className={`absolute top-0 right-0 w-32 h-32 ${game.color} opacity-[0.04] rounded-full -mr-16 -mt-16 group-hover:scale-125 transition-transform duration-700`} />
-            
-            <div className={`${game.color} w-20 h-20 rounded-[32px] flex items-center justify-center text-white shadow-2xl ${game.color.replace('bg-', 'shadow-')}/20 shrink-0 group-hover:rotate-6 transition-transform border-4 border-white/20`}>
-              {React.cloneElement(game.icon, { size: 36, strokeWidth: 2.5 })}
-            </div>
-            
-            <div className="ml-6 flex-1 text-left">
-              <div className="flex items-center space-x-2 mb-1.5">
-                <h3 className="font-black text-slate-950 text-xl tracking-tight">{game.title}</h3>
-                <div className="bg-amber-100 px-2.5 py-1 rounded-full text-[10px] font-black text-amber-600 uppercase flex items-center border border-amber-200">
-                  <Star size={10} className="mr-1 fill-amber-600" />
-                  {game.xp} XP
-                </div>
+      {/* 3D Magical Winding Road Map Container */}
+      <div className="relative px-2 py-4 space-y-4">
+        {/* Decorative Map Title */}
+        <div className="text-center pb-2">
+          <span className="text-[10px] font-black text-emerald-600/60 uppercase tracking-[0.2em] bg-emerald-50 border border-emerald-100/60 px-3 py-1 rounded-full animate-pulse select-none">
+            ✨ 点击关卡小岛，开始单词特训魔法仪式 ✨
+          </span>
+        </div>
+
+        {games.map((game, idx) => {
+          const mapLayouts = [
+            { align: 'justify-start', decor: 'right-[4%] top-4', decorIcon: '🌲' },
+            { align: 'justify-center', decor: 'left-[10%] top-2', decorIcon: '🍄' },
+            { align: 'justify-end', decor: 'left-[4%] top-5', decorIcon: '☁️' },
+            { align: 'justify-center', decor: 'right-[12%] top-3 animate-pulse', decorIcon: '🦋' },
+            { align: 'justify-start', decor: 'right-[8%] top-1 rotate-12', decorIcon: '🌺' },
+            { align: 'justify-center', decor: 'left-[15%] top-4 animate-bounce', decorIcon: '🎁' },
+            { align: 'justify-end', decor: 'left-[6%] top-2', decorIcon: '🧙⭐' },
+          ];
+
+          const gameMapEmojis: Record<string, string> = {
+            PLANTS: '🧟',
+            SHEEP: '🐑',
+            SPELLING: '🐝',
+            SCRAMBLE: '🌀',
+            WHACK: '🐹',
+            BALLOON: '🎈',
+            DUBBING: '🎙️',
+            CHALLENGE: '⚔️'
+          };
+
+          const layout = mapLayouts[idx % mapLayouts.length];
+          const emoji = gameMapEmojis[game.id] || '🎮';
+          
+          return (
+            <div key={game.id} className="relative z-10 flex flex-col items-center">
+              {/* Outer Alignment Box */}
+              <div className={`w-full flex ${layout.align} items-center relative py-1`}>
+                
+                {/* Visual Scenic Decoration Floating on empty spaces */}
+                <span className={`absolute ${layout.decor} text-3xl select-none pointer-events-none filter drop-shadow-md transition-all duration-300 z-0`}>
+                  {layout.decorIcon}
+                </span>
+
+                {/* Magical Stage Button/Island Card */}
+                <motion.button
+                  initial={{ opacity: 0, scale: 0.9, y: 15 }}
+                  animate={{ opacity: 1, scale: 1, y: 0 }}
+                  transition={{ delay: idx * 0.08 + 0.1, type: 'spring', stiffness: 100 }}
+                  whileHover={{ scale: 1.03 }}
+                  whileTap={{ scale: 0.97 }}
+                  onClick={() => { audio.playClick(); onSelectGame(game.id, currentWords); }}
+                  className="w-[85%] bg-white rounded-[32px] p-4 border-2 border-slate-100 hover:border-emerald-200 transition-all shadow-[0_12px_24px_rgba(16,185,129,0.05)] hover:shadow-[0_20px_40px_rgba(16,185,129,0.12)] flex items-center relative overflow-hidden text-left border-b-[6px] border-b-slate-200 cursor-pointer active:border-b-2 active:translate-y-1"
+                >
+                  {/* Glowing Mini Platform Base under Emoji */}
+                  <div className={`w-14 h-14 rounded-2xl ${game.color} bg-gradient-to-br flex items-center justify-center text-white shrink-0 shadow-lg border-2 border-white/40 group-hover:rotate-6 transition-transform relative z-10`}>
+                    <span className="text-3xl filter drop-shadow-sm">{emoji}</span>
+                    
+                    {/* Stage Number Badge */}
+                    <div className="absolute -top-3.5 -left-3.5 bg-amber-400 text-amber-950 font-black text-[9px] px-2 py-0.5 rounded-full border border-white shadow-md uppercase tracking-wider scale-90">
+                      S.{idx + 1}
+                    </div>
+                  </div>
+
+                  <div className="ml-4 flex-1 pr-1">
+                    <div className="flex items-center gap-1.5 flex-wrap">
+                      <h3 className="font-extrabold text-[#064e3b] text-[15px] tracking-tight">{game.title}</h3>
+                      <span className="bg-amber-100 text-amber-700 font-extrabold px-1.5 py-0.5 rounded-md text-[8.5px]">
+                        {game.xp} XP
+                      </span>
+                    </div>
+                    <p className="text-[10px] text-slate-400 mt-1 line-clamp-1 font-bold leading-normal uppercase select-none">{game.description}</p>
+                  </div>
+
+                  <div className="w-8 h-8 rounded-full bg-slate-50 hover:bg-emerald-50 text-slate-400 hover:text-emerald-600 flex items-center justify-center shrink-0">
+                    <ArrowRight size={16} />
+                  </div>
+                </motion.button>
               </div>
-              <p className="text-[11px] font-bold text-slate-400 line-clamp-1 uppercase tracking-wider">{game.description}</p>
+
+              {/* Dotted Pathway Footprints Segment in between nodes */}
+              {idx < games.length - 1 && (
+                <div className="py-2 flex items-center justify-center w-full relative h-7 select-none">
+                  <motion.div 
+                    animate={{ opacity: [0.4, 1, 0.4] }}
+                    transition={{ repeat: Infinity, duration: 2, delay: idx * 0.3 }}
+                    className="flex items-center gap-2.5 text-slate-300 font-extrabold text-sm"
+                  >
+                    <span>🐾</span>
+                    <span>•</span>
+                    <span>•</span>
+                    <span>🐾</span>
+                  </motion.div>
+                </div>
+              )}
             </div>
-            
-            <div className="w-12 h-12 rounded-full bg-slate-50 flex items-center justify-center text-slate-300 group-hover:bg-indigo-50 group-hover:text-indigo-600 transition-all group-hover:rotate-45">
-              <ArrowRight size={24} />
-            </div>
-          </motion.button>
-        ))}
+          );
+        })}
       </div>
 
       <button 

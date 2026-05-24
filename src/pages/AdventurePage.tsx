@@ -2,7 +2,7 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import { 
-  ChevronLeft, ChevronDown, Play, Gamepad2, RefreshCw, Star, Trophy,
+  ChevronLeft, ChevronRight, ChevronDown, Play, Gamepad2, RefreshCw, Star, Trophy,
   ArrowRight, Volume2, Lock, CheckCircle2, Zap, Trash2, Wand2,
   BookOpen, Flame, Sparkles
 } from 'lucide-react';
@@ -56,83 +56,105 @@ const LevelNode = React.memo(({
   isCurrent: boolean, 
   onSelect: (level: Level) => void 
 }) => {
-  const isEven = index % 2 === 0;
+  // We want a beautiful winding S-curve snaking path
+  // Left aligned, Middle aligned, Right aligned, Middle aligned
+  const pathStep = index % 4;
+  let justifyClass = 'justify-center';
+  let offsetClass = '';
+  if (pathStep === 1) {
+    justifyClass = 'justify-start pl-8 md:pl-16';
+  } else if (pathStep === 3) {
+    justifyClass = 'justify-end pr-8 md:pr-16';
+  } else if (pathStep === 0) {
+    offsetClass = '-translate-x-6';
+  } else if (pathStep === 2) {
+    offsetClass = 'translate-x-6';
+  }
 
   return (
     <motion.div 
-      initial={{ opacity: 0, x: isEven ? -20 : 20 }}
-      whileInView={{ opacity: 1, x: 0 }}
-      viewport={{ once: true }}
-      className={`flex items-center group cursor-pointer relative z-30 ${isEven ? 'flex-row' : 'flex-row-reverse'}`}
+      initial={{ opacity: 0, scale: 0.82, y: 15 }}
+      whileInView={{ opacity: 1, scale: 1, y: 0 }}
+      viewport={{ once: true, margin: "-20px" }}
+      className={`flex items-center group cursor-pointer relative z-30 ${justifyClass} ${offsetClass}`}
       onClick={() => onSelect(level)}
-      whileTap={!isLocked ? { scale: 0.98 } : {}}
+      whileTap={!isLocked ? { scale: 0.94 } : {}}
     >
-      <div className={`flex-1 flex ${isEven ? 'justify-end pr-10' : 'justify-start pl-10'}`}>
-        <div className={`${isEven ? 'text-right' : 'text-left'}`}>
-          <h4 className={`font-black text-lg leading-tight whitespace-nowrap transition-colors ${isLocked ? 'text-emerald-200' : 'text-emerald-800 group-hover:text-emerald-600'}`}>{level.name}</h4>
-          <div className="flex items-center mt-1 space-x-1 opacity-60 whitespace-nowrap">
-             <span className={`text-[10px] font-black uppercase tracking-tighter ${isLocked ? 'text-emerald-200' : 'text-emerald-500'}`}>关卡 {level.displayId || level.id} • {level.cards.length} 魔法</span>
-             <span className={`text-[10px] font-black uppercase tracking-widest px-1.5 py-0.5 rounded-md ${isLocked ? 'bg-emerald-50/50 text-emerald-200' : 'bg-emerald-100 text-emerald-800'}`}>
-               {level.cards[0]?.difficulty === 'PRIMARY' ? '初级' : level.cards[0]?.difficulty === 'INTERMEDIATE' ? '中级' : '高级'}
-             </span>
-          </div>
-        </div>
-      </div>
-
-      <div className="relative">
+      <div className="flex flex-col items-center text-center relative max-w-[130px]">
+        {/* Background Aura */}
         {isCurrent && (
           <motion.div 
             layoutId="current-indicator"
-            className="absolute inset-0 bg-emerald-400 rounded-full blur-xl opacity-40"
-            animate={{ scale: [1, 1.4, 1] }}
-            transition={{ duration: 2, repeat: Infinity }}
+            className="absolute -inset-2 bg-emerald-400 rounded-[36px] blur-xl opacity-35"
+            animate={{ scale: [1, 1.25, 1] }}
+            transition={{ duration: 2.2, repeat: Infinity }}
           />
         )}
 
+        {/* Level Due Indicator */}
         {/* @ts-ignore */}
         {level.isDue && (
           <motion.div 
-            className="absolute -top-4 -left-4 z-40 bg-rose-500 text-white px-3 py-1 rounded-full text-[10px] font-black shadow-lg border-2 border-white flex items-center space-x-1"
-            animate={{ y: [0, -5, 0] }}
+            className="absolute -top-6 z-40 bg-rose-500 text-white px-2.5 py-0.5 rounded-full text-[9px] font-black shadow-lg border-2 border-white flex items-center space-x-0.5"
+            animate={{ y: [0, -4, 0] }}
             transition={{ repeat: Infinity, duration: 2 }}
           >
-             <RefreshCw size={10} className="animate-spin-slow" />
-             <span>该复习了</span>
+             <RefreshCw size={8} className="animate-spin-slow" />
+             <span>待复习</span>
           </motion.div>
         )}
 
+        {/* Circular Level Button */}
         <div 
-          className={`w-20 h-20 rounded-[28px] border-[6px] flex items-center justify-center transition-all shadow-xl relative z-10 ${
+          className={`w-18 h-18 sm:w-20 sm:h-20 rounded-[32px] border-[6px] flex items-center justify-center transition-all shadow-xl relative z-10 ${
             isLocked 
-              ? 'bg-emerald-50 border-emerald-100 text-emerald-200' 
+              ? 'bg-[#f4fcf8] border-emerald-100 text-emerald-250 shadow-emerald-50/10' 
               : level.isMastered 
-                ? 'bg-emerald-500 border-emerald-200 text-white group-hover:scale-110' 
+                ? 'bg-gradient-to-br from-emerald-400 to-emerald-500 border-emerald-200 text-white hover:scale-112 shadow-emerald-200/50' 
                 // @ts-ignore
                 : level.isDue
-                  ? 'bg-rose-50 border-rose-500 text-rose-500 scale-110 group-hover:scale-125'
-                  : 'bg-white border-emerald-500 text-emerald-600 scale-110 group-hover:scale-125 group-hover:rotate-6'
+                  ? 'bg-gradient-to-br from-rose-400 to-rose-500 border-rose-100 text-white scale-108 hover:scale-118'
+                  : 'bg-white border-emerald-500 text-emerald-600 scale-108 hover:scale-118 hover:rotate-6 shadow-emerald-200/40'
           }`}
         >
-          {/* @ts-ignore */}
-          {isLocked ? <Lock size={28} /> : level.isMastered ? <CheckCircle2 size={32} /> : level.isDue ? <RefreshCw size={32} /> : <Play size={32} className="ml-1 fill-emerald-600" />}
+          {/* Icons */}
+          {isLocked ? (
+            <Lock size={22} className="text-emerald-250" />
+          ) : level.isMastered ? (
+            <CheckCircle2 size={26} className="text-white" />
+          ) : level.isDue ? (
+            <RefreshCw size={26} className="text-white animate-spin-slow" />
+          ) : (
+            <Play size={26} className="ml-1 fill-emerald-600 text-emerald-600" />
+          )}
           
-          <div className={`absolute -top-3 -right-3 w-8 h-8 rounded-full border-4 border-white flex items-center justify-center text-[10px] font-black shadow-md ${isLocked ? 'bg-emerald-100 text-emerald-300' : 'bg-emerald-800 text-white'}`}>
+          {/* Level Number Badges */}
+          <div className={`absolute -top-1.5 -right-1.5 w-6.5 h-6.5 rounded-full border-2 border-white flex items-center justify-center text-[9px] font-black shadow-md ${isLocked ? 'bg-emerald-100 text-emerald-350' : 'bg-emerald-800 text-white'}`}>
             {level.displayId || level.id}
           </div>
           
+          {/* Due progress / reviews indicators */}
           {/* @ts-ignore */}
           {level.intervalDays > 0 && !isLocked && (
-             <div className="absolute -bottom-3 left-1/2 -translate-x-1/2 flex space-x-0.5">
-               {/* @ts-ignore */}
-               {[...Array(Math.min(5, level.intervalDays === 1 ? 1 : level.intervalDays === 3 ? 2 : level.intervalDays === 7 ? 3 : level.intervalDays === 14 ? 4 : 5))].map((_, i) => (
-                  <div key={i} className="w-2 h-2 rounded-full bg-amber-400 border border-white shadow-sm" />
-               ))}
+             <div className="absolute -bottom-2 px-1 bg-white rounded-full border border-slate-150 flex space-x-0.5 scale-90 shadow-sm">
+                {/* @ts-ignore */}
+                {[...Array(Math.min(5, level.intervalDays === 1 ? 1 : level.intervalDays === 3 ? 2 : level.intervalDays === 7 ? 3 : level.intervalDays === 14 ? 4 : 5))].map((_, i) => (
+                   <div key={i} className="w-1.5 h-1.5 rounded-full bg-amber-400" />
+                ))}
              </div>
           )}
         </div>
-      </div>
 
-      <div className="flex-1"></div>
+        {/* Compact Below Label */}
+        <div className="mt-2 text-center w-full">
+          <h4 className={`font-black text-[13px] leading-tight transition-colors line-clamp-1 ${isLocked ? 'text-emerald-200' : 'text-slate-800 font-cute group-hover:text-emerald-600'}`}>
+            {level.name}
+          </h4>
+          <p className={`text-[9px] font-extrabold tracking-tight mt-0.5 ${isLocked ? 'text-emerald-200' : 'text-emerald-500'}`}>
+            {level.cards.length} 词 • {level.cards[0]?.difficulty === 'PRIMARY' ? '初级' : level.cards[0]?.difficulty === 'INTERMEDIATE' ? '中级' : '高级'}
+          </p>
+        </div>
+      </div>
     </motion.div>
   );
 });
@@ -283,17 +305,6 @@ const AdventurePage: React.FC<AdventurePageProps> = ({
     } as any);
   };
 
-  const [showLevelModeSelector, setShowLevelModeSelector] = useState(false);
-  const [spellingWord, setSpellingWord] = useState<WordItem | null>(null);
-
-  // Scroll to top when step changes
-  useEffect(() => {
-    const container = document.getElementById('adventure-content-container');
-    if (container) {
-      container.scrollTo({ top: 0, behavior: 'instant' });
-    }
-  }, [step]);
-
   // Generate levels
   const levels = useMemo(() => {
     const generatedLevels: Level[] = [];
@@ -353,6 +364,27 @@ const AdventurePage: React.FC<AdventurePageProps> = ({
     }
     return generatedLevels;
   }, [selectedDifficulty, cardsPerDay, completedLevels, masteredLevels, reviewSchedules]);
+
+  const [showLevelModeSelector, setShowLevelModeSelector] = useState(false);
+  const [spellingWord, setSpellingWord] = useState<WordItem | null>(null);
+  const [currentSectorIndex, setCurrentSectorIndex] = useState(0);
+
+  // Auto-focus the sector where the user is currently learning
+  useEffect(() => {
+    if (levels.length > 0) {
+      const activeIdx = levels.findIndex(level => level.isUnlocked && !level.isMastered);
+      const targetSector = activeIdx !== -1 ? Math.floor(activeIdx / 12) : 0;
+      setCurrentSectorIndex(targetSector);
+    }
+  }, [selectedDifficulty, cardsPerDay, levels]);
+
+  // Scroll to top when step changes
+  useEffect(() => {
+    const container = document.getElementById('adventure-content-container');
+    if (container) {
+      container.scrollTo({ top: 0, behavior: 'instant' });
+    }
+  }, [step]);
 
   // Trigger initial level review if requested
   useEffect(() => {
@@ -813,7 +845,7 @@ const AdventurePage: React.FC<AdventurePageProps> = ({
     while ((match = regex.exec(line)) !== null) {
       if (match.index > lastIndex) {
         parts.push(
-          <span key={`text-${lastIndex}`} className="text-slate-800 font-extrabold text-lg md:text-xl">
+          <span key={`text-${lastIndex}`} className="text-slate-800 font-black text-xl md:text-2xl font-cute tracking-wide">
             {line.substring(lastIndex, match.index)}
           </span>
         );
@@ -824,7 +856,7 @@ const AdventurePage: React.FC<AdventurePageProps> = ({
 
       const renderWordPart = () => {
         if (!suffix) {
-          return <span className="text-indigo-600 font-black">{englishWord}</span>;
+          return <span className="text-indigo-600 font-black font-cute">{englishWord}</span>;
         }
         
         const lowerWord = englishWord.toLowerCase();
@@ -835,9 +867,9 @@ const AdventurePage: React.FC<AdventurePageProps> = ({
           const root = englishWord.substring(0, rootLen);
           const endPart = englishWord.substring(rootLen);
           return (
-            <span className="font-black text-xl md:text-2xl">
-              <span className="text-indigo-600">{root}</span>
-              <span className="text-red-500">{endPart}</span>
+            <span className="font-black text-2xl md:text-3xl font-cute tracking-normal scale-105 inline-block">
+              <span className="text-indigo-600 hover:text-indigo-500 transition-colors">{root}</span>
+              <span className="text-red-500 hover:text-red-400 transition-colors">{endPart}</span>
             </span>
           );
         } else if (lowerWord.includes(lowerSuffix)) {
@@ -846,15 +878,15 @@ const AdventurePage: React.FC<AdventurePageProps> = ({
           const part2 = englishWord.substring(idx, idx + suffix.length);
           const part3 = englishWord.substring(idx + suffix.length);
           return (
-            <span className="font-black text-xl md:text-2xl">
-              <span className="text-indigo-600">{part1}</span>
-              <span className="text-red-500">{part2}</span>
-              {part3 && <span className="text-indigo-600">{part3}</span>}
+            <span className="font-black text-2xl md:text-3xl font-cute tracking-normal scale-105 inline-block">
+              <span className="text-indigo-600 hover:text-indigo-500 transition-colors">{part1}</span>
+              <span className="text-red-500 hover:text-red-400 transition-colors">{part2}</span>
+              {part3 && <span className="text-indigo-600 hover:text-indigo-500 transition-colors">{part3}</span>}
             </span>
           );
         }
         
-        return <span className="text-indigo-600 font-black text-xl md:text-2xl">{englishWord}</span>;
+        return <span className="text-indigo-600 font-black text-2xl md:text-3xl font-cute tracking-normal scale-105 inline-block">{englishWord}</span>;
       };
 
       parts.push(
@@ -865,12 +897,12 @@ const AdventurePage: React.FC<AdventurePageProps> = ({
             audio.playPop();
             audio.speak(englishWord);
           }}
-          className="cursor-pointer hover:underline mx-1 inline-flex items-center"
+          className="cursor-pointer hover:scale-110 active:scale-95 mx-1.5 inline-flex items-center transition-all animate-bounce-gentle-once"
           title="点击发音"
         >
           {renderWordPart()}
           {translation && (
-            <span className="text-slate-700 font-bold text-lg md:text-xl ml-1">
+            <span className="text-indigo-550 font-black text-xl md:text-2xl ml-1 font-cute">
               {translation}
             </span>
           )}
@@ -883,7 +915,7 @@ const AdventurePage: React.FC<AdventurePageProps> = ({
     if (lastIndex < line.length) {
       const remaining = line.substring(lastIndex);
       parts.push(
-        <span key={`text-end`} className="text-slate-800 font-extrabold text-lg md:text-xl">
+        <span key={`text-end`} className="text-slate-800 font-black text-xl md:text-2xl font-cute tracking-wide">
           {remaining}
         </span>
       );
@@ -1051,150 +1083,195 @@ const AdventurePage: React.FC<AdventurePageProps> = ({
                 <p className="text-emerald-600 font-medium">开启你的单词冒险之旅</p>
               </div>
 
-              {/* Difficulty/Level Selector */}
-              <div className="bg-white rounded-[44px] p-6 border-2 border-[#e6faf3] shadow-[0_16px_40px_-10px_rgba(16,185,129,0.08)] flex flex-col sm:flex-row sm:items-center sm:justify-between gap-6 relative select-none animate-fade-in z-30">
-                <div className="flex items-center space-x-4 sm:space-x-5">
-                  <div className="w-[56px] h-[86px] bg-[#e6fcf5] rounded-[22px] flex items-center justify-center text-3xl shrink-0 shadow-[inset_0_2px_4px_rgba(0,0,0,0.03)] border border-[#c2f3e1]/50">
-                    🗺️
+              {/* Unified & Harmonious Level Selector & Progress Dashboard Card */}
+              <div className="bg-white rounded-[38px] p-5.5 border-2 border-[#e6faf3] shadow-[0_20px_50px_rgba(16,185,129,0.08)] space-y-4 relative select-none animate-fade-in z-30">
+                {/* Header Row */}
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center space-x-3">
+                    <span className="text-2xl animate-bounce" style={{ animationDuration: '3s' }}>🗺️</span>
+                    <div>
+                      <h4 className="text-[10px] font-black text-[#00c280] tracking-widest uppercase leading-none mb-1">FOREST STAGE</h4>
+                      <h3 className="text-lg font-black text-slate-800 leading-none font-cute">探索关卡地图</h3>
+                    </div>
                   </div>
-                  <div className="flex flex-row items-center gap-4 sm:gap-6">
-                    <div className="flex flex-col text-[#00c280] font-black tracking-widest text-[10px] sm:text-[11px] leading-[1.2] uppercase font-sans select-none opacity-90">
-                      <span>SELECT</span>
-                      <span>FOREST</span>
-                      <span>STAGE</span>
-                    </div>
-                    <div className="flex flex-col text-slate-800 font-black text-xl sm:text-2xl leading-[1.2]">
-                      <span>选择探险</span>
-                      <span>等级</span>
-                    </div>
+                  {/* Action Icons */}
+                  <div className="flex items-center space-x-1.5">
+                    <button 
+                      onClick={() => {
+                        audio.playClick();
+                        setStep('SETUP');
+                      }} 
+                      className="bg-emerald-50 text-emerald-600 p-2.5 rounded-2xl hover:bg-emerald-100 transition-all active:scale-95" 
+                      title="切换漫步/穿梭模式"
+                    >
+                      <RefreshCw size={15} />
+                    </button>
+                    <button 
+                      onClick={() => {
+                        audio.playClick();
+                        if (window.confirm('确定要重置所有冒险进度吗？')) {
+                          localStorage.removeItem('adventure_forest_progress');
+                          onUpdateStats({ completedLevelIds: [], masteredLevelIds: [] });
+                          setStep('SETUP');
+                        }
+                      }} 
+                      className="bg-rose-50 text-rose-600 p-2.5 rounded-2xl hover:bg-rose-100 transition-all active:scale-95" 
+                      title="重置进度"
+                    >
+                      <Trash2 size={15} />
+                    </button>
                   </div>
                 </div>
 
-                {/* Highly Custom Interactive Dropdown Selection Pill */}
-                <div className="relative" ref={dropdownRef}>
-                  <button
-                    onClick={() => {
-                      setIsDropdownOpen(!isDropdownOpen);
-                      audio.playClick();
-                    }}
-                    className="bg-[#00c280] hover:bg-[#00b073] text-white font-extrabold px-6 py-4 rounded-[28px] shadow-lg shadow-emerald-500/15 flex items-center justify-between gap-4 text-sm sm:text-base transition-all focus:outline-none min-w-[240px] sm:min-w-[280px] active:scale-[0.98] cursor-pointer border-2 border-transparent z-40"
-                  >
-                    <div className="flex items-center space-x-2">
-                      <span className="text-xl">
-                        {selectedDifficulty === 'PRIMARY' ? '🌱' : selectedDifficulty === 'INTERMEDIATE' ? '🧭' : '🧙‍♂️'}
-                      </span>
-                      <span>
-                        {selectedDifficulty === 'PRIMARY' ? '初级拼读 (Beginner)' : selectedDifficulty === 'INTERMEDIATE' ? '中级拼读 (Intermediate)' : '高级拼读 (Advanced)'}
-                      </span>
-                    </div>
-                    <ChevronDown size={18} className={`transition-transform duration-300 text-white/90 shrink-0 ${isDropdownOpen ? 'rotate-180' : ''}`} />
-                  </button>
-
-                  <AnimatePresence>
-                    {isDropdownOpen && (
-                      <motion.div
-                        initial={{ opacity: 0, y: 15, scale: 0.95 }}
-                        animate={{ opacity: 1, y: 0, scale: 1 }}
-                        exit={{ opacity: 0, y: 15, scale: 0.95 }}
-                        transition={{ duration: 0.2, ease: "easeOut" }}
-                        className="absolute right-0 top-full mt-3 bg-white border-2 border-[#e6faf3] rounded-[30px] p-3 shadow-[0_20px_50px_rgba(16,185,129,0.12)] min-w-[280px] z-50 flex flex-col gap-1.5"
+                {/* Inline 3-Tab Group for Level Selection */}
+                <div className="grid grid-cols-3 gap-1.5 bg-slate-50 p-1 rounded-2xl border border-slate-100/80">
+                  {[
+                    { key: 'PRIMARY', label: '初级', icon: '🌱', activeClass: 'bg-emerald-500 text-white shadow-emerald-250/40' },
+                    { key: 'INTERMEDIATE', label: '中级', icon: 'Compass', activeClass: 'bg-[#00c280] text-white shadow-emerald-250/40' },
+                    { key: 'ADVANCED', label: '高级', icon: '🧙‍♂️', activeClass: 'bg-indigo-500 text-white shadow-indigo-250/40' }
+                  ].map((item) => {
+                    const isSelected = selectedDifficulty === item.key;
+                    return (
+                      <button
+                        key={item.key}
+                        onClick={() => {
+                          setSelectedDifficulty(item.key as DifficultyLevel);
+                          localStorage.setItem('selected_adventure_difficulty', item.key);
+                          audio.playClick();
+                        }}
+                        className={`py-2 rounded-xl transition-all text-center flex flex-col items-center justify-center font-black text-xs gap-1 cursor-pointer select-none ${
+                          isSelected
+                            ? `${item.activeClass} shadow-md scale-102 font-cute`
+                            : 'text-slate-500 hover:text-slate-800 hover:bg-white/50 font-cute font-black'
+                        }`}
                       >
-                        {[
-                          { key: 'PRIMARY', label: '初级拼读', english: 'Beginner', icon: '🌱' },
-                          { key: 'INTERMEDIATE', label: '中级拼读', english: 'Intermediate', icon: '🧭' },
-                          { key: 'ADVANCED', label: '高级拼读', english: 'Advanced', icon: '🧙‍♂️' }
-                        ].map((item) => {
-                          const isSelected = selectedDifficulty === item.key;
+                        <span className="text-base">{item.icon === 'Compass' ? '🧭' : item.icon}</span>
+                        <span className="text-[11px] font-black">{item.label}</span>
+                      </button>
+                    );
+                  })}
+                </div>
+
+                {/* Integrated Progress Bar & Counter Banner */}
+                <div className="bg-[#fbfcfa] p-3.5 rounded-2xl border border-slate-100/50 space-y-1.5">
+                  <div className="flex items-center justify-between text-xs font-black">
+                    <span className="text-slate-400 font-cute flex items-center gap-1.5">
+                      <Trophy size={13} className="text-amber-500" />
+                      当前关卡进度 (Adventure Progress)
+                    </span>
+                    <span className="text-[#00c280] font-black text-[13px]">
+                      {masteredLevels.length} / {levels.length} <span className="text-[10px] text-slate-400 font-bold">已掌握</span>
+                    </span>
+                  </div>
+                  
+                  {/* Linear Progress Indicator */}
+                  <div className="w-full h-2.5 bg-slate-100 rounded-full overflow-hidden border border-slate-200/40 relative">
+                    <motion.div 
+                      initial={{ width: 0 }}
+                      animate={{ width: `${levels.length > 0 ? (masteredLevels.length / levels.length) * 100 : 0}%` }}
+                      className="h-full bg-gradient-to-r from-emerald-400 via-[#00c280] to-indigo-500 rounded-full"
+                    />
+                  </div>
+                </div>
+              </div>
+
+              {/* Dynamic Winding World Map Container */}
+              {(() => {
+                const totalSectors = Math.ceil(levels.length / 12);
+                const currentSectorLevels = levels.slice(currentSectorIndex * 12, (currentSectorIndex + 1) * 12);
+                
+                const SECTOR_THEMES = [
+                  { name: "翠绿林境", emoji: "🌲", bg: "from-emerald-50 via-emerald-100/30 to-green-100/40", accent: "text-emerald-700", lineBg: "bg-emerald-350/40", decor: ["🌲", "🍄", "🌳", "🦊"] },
+                  { name: "碎星金滩", emoji: "🏖️", bg: "from-sky-50 via-sky-100/30 to-amber-100/40", accent: "text-sky-700", lineBg: "bg-sky-305/40", decor: ["🐚", "🌊", "🏖️", "🦀"] },
+                  { name: "烈焰高地", emoji: "🌋", bg: "from-orange-50 via-orange-100/30 to-red-100/40", accent: "text-orange-700", lineBg: "bg-red-351/40", decor: ["🌋", "🔥", "🧱", "🦖"] },
+                  { name: "月神祭坛", emoji: "🔮", bg: "from-indigo-50 via-indigo-100/30 to-purple-100/40", accent: "text-indigo-700", lineBg: "bg-purple-302/40", decor: ["🔮", "🌙", "☄️", "🦉"] },
+                  { name: "极寒冰川", emoji: "❄️", bg: "from-blue-50 via-blue-100/30 to-cyan-100/40", accent: "text-blue-750", lineBg: "bg-blue-305/40", decor: ["❄️", "⛄", "🧊", "🐧"] },
+                  { name: "云霄天空城", emoji: "🏰", bg: "from-amber-50 via-amber-100/30 to-rose-100/40", accent: "text-rose-700", lineBg: "bg-rose-302/40", decor: ["🏰", "🕊️", "☁️", "🎠"] },
+                  { name: "黄金幽谷", emoji: "🪙", bg: "from-yellow-50 via-yellow-105/30 to-amber-100/40", accent: "text-amber-800", lineBg: "bg-yellow-303/40", decor: ["🪙", "🏺", "🗝️", "🐫"] },
+                ];
+
+                const activeTheme = SECTOR_THEMES[currentSectorIndex % SECTOR_THEMES.length];
+
+                return (
+                  <div className="space-y-4">
+                    {/* Sector Navigation Command Switcher in the Map */}
+                    {totalSectors > 1 && (
+                      <div className="flex items-center justify-between bg-white rounded-2xl p-3 border-2 border-emerald-50/50 shadow-sm">
+                        <button
+                          disabled={currentSectorIndex === 0}
+                          onClick={() => {
+                            audio.playClick();
+                            setCurrentSectorIndex(p => Math.max(0, p - 1));
+                          }}
+                          className="p-1.5 hover:bg-slate-100 rounded-lg disabled:opacity-20 disabled:hover:bg-transparent transition-all cursor-pointer"
+                        >
+                          <ChevronLeft size={20} className="text-slate-600" />
+                        </button>
+                        
+                        <div className="text-center font-sans select-none">
+                          <div className="text-[9px] font-black text-slate-400 uppercase tracking-widest mb-0.5">MAP CHAPTER {currentSectorIndex + 1}</div>
+                          <div className="font-black text-sm text-slate-800 flex items-center justify-center gap-1.5 font-cute">
+                            <span>{activeTheme.emoji}</span>
+                            <span>{activeTheme.name}</span>
+                            <span className="text-[11px] text-[#00c280] font-black">
+                              ({currentSectorIndex * 12 + 1} - {Math.min(levels.length, (currentSectorIndex + 1) * 12)} 关)
+                            </span>
+                          </div>
+                        </div>
+
+                        <button
+                          disabled={currentSectorIndex >= totalSectors - 1}
+                          onClick={() => {
+                            audio.playClick();
+                            setCurrentSectorIndex(p => Math.min(totalSectors - 1, p + 1));
+                          }}
+                          className="p-1.5 hover:bg-slate-100 rounded-lg disabled:opacity-20 disabled:hover:bg-transparent transition-all cursor-pointer"
+                        >
+                          <ChevronRight size={20} className="text-slate-600" />
+                        </button>
+                      </div>
+                    )}
+
+                    {/* Winding Map Forest Stage Board */}
+                    <div className={`relative py-12 px-6 rounded-[48px] overflow-hidden bg-gradient-to-b ${activeTheme.bg} border-4 border-white shadow-xl transition-all duration-700 min-h-[550px]`}>
+                      {/* Floating Thematic Emojis */}
+                      <div className="absolute inset-0 overflow-hidden pointer-events-none z-0 select-none">
+                        <div className="absolute top-8 left-10 text-3xl opacity-25 animate-bounce-gentle">{activeTheme.decor[0]}</div>
+                        <div className="absolute top-1/4 right-8 text-3xl opacity-20 animate-pulse">{activeTheme.decor[1]}</div>
+                        <div className="absolute bottom-1/3 left-12 text-3xl opacity-20 animate-pulse" style={{ animationDelay: '1.2s' }}>{activeTheme.decor[2]}</div>
+                        <div className="absolute bottom-10 right-14 text-3xl opacity-25 animate-bounce-gentle" style={{ animationDelay: '2s' }}>{activeTheme.decor[3]}</div>
+                        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 text-[140px] opacity-[0.06] z-0 pointer-events-none rotate-12">🗺️</div>
+                      </div>
+
+                      {/* Path Line - Curve connecting */}
+                      <div className={`absolute left-1/2 top-0 bottom-0 w-2.5 ${activeTheme.lineBg} -translate-x-1/2 rounded-full overflow-hidden pointer-events-none z-10`}>
+                        <motion.div 
+                          className="w-full bg-emerald-500/80" 
+                          initial={{ height: 0 }}
+                          animate={{ height: `${levels.length > 0 ? (levels.filter(l => l.isMastered).length / levels.length) * 100 : 0}%` }}
+                        />
+                      </div>
+
+                      {/* Snaking Level Nodes Grid layout */}
+                      <div className="space-y-12 relative z-20">
+                        {currentSectorLevels.map((level, sliceIdx) => {
+                          const originalIdx = currentSectorIndex * 12 + sliceIdx;
                           return (
-                            <button
-                              key={item.key}
-                              onClick={() => {
-                                setSelectedDifficulty(item.key as DifficultyLevel);
-                                localStorage.setItem('selected_adventure_difficulty', item.key);
-                                setIsDropdownOpen(false);
-                                audio.playClick();
-                              }}
-                              className={`flex items-center justify-between px-4.5 py-3.5 rounded-[22px] transition-all text-left font-black text-sm select-none cursor-pointer ${
-                                isSelected
-                                  ? 'bg-[#e6fcf5] text-[#00c280] border border-[#c2f3e1]'
-                                  : 'text-slate-600 hover:bg-slate-50 border border-transparent hover:text-slate-900'
-                              }`}
-                            >
-                              <div className="flex items-center space-x-2.5">
-                                <span className="text-lg">{item.icon}</span>
-                                <span>
-                                  {item.label} <span className={`text-xs font-bold ${isSelected ? 'text-[#00c280]/70' : 'text-slate-400'}`}>({item.english})</span>
-                                </span>
-                              </div>
-                              {isSelected && (
-                                <div className="w-2 h-2 rounded-full bg-[#00c280] animate-pulse shrink-0" />
-                              )}
-                            </button>
+                            <LevelNode 
+                              key={level.id}
+                              level={level}
+                              index={originalIdx}
+                              isLocked={!level.isUnlocked}
+                              isCurrent={level.isUnlocked && !level.isMastered}
+                              onSelect={startLevel}
+                            />
                           );
                         })}
-                      </motion.div>
-                    )}
-                  </AnimatePresence>
-                </div>
-              </div>
-              
-              <div className="bg-white/60 backdrop-blur-sm rounded-[32px] p-6 border-2 border-emerald-100 shadow-sm flex items-center justify-between">
-                <div className="flex items-center space-x-3">
-                  <div className="bg-emerald-500 text-white p-2.5 rounded-2xl shadow-lg shadow-emerald-100"><Trophy size={24} /></div>
-                  <div>
-                    <p className="text-[10px] font-black text-emerald-400 uppercase tracking-widest leading-none mb-1">Adventure Progress</p>
-                    <p className="text-xl font-black text-emerald-900 leading-none">{masteredLevels.length} / {levels.length} <span className="text-sm font-bold opacity-40">Mastered</span></p>
+                      </div>
+                    </div>
                   </div>
-                </div>
-                <div className="flex space-x-2">
-                  <button onClick={() => setStep('SETUP')} className="bg-emerald-100 p-3 rounded-2xl text-emerald-600 hover:bg-emerald-200 transition-all" title="切换模式"><RefreshCw size={18} /></button>
-                  <button 
-                    onClick={() => {
-                      if (window.confirm('确定要重置所有冒险进度吗？')) {
-                        localStorage.removeItem('adventure_forest_progress');
-                        onUpdateStats({ completedLevelIds: [], masteredLevelIds: [] });
-                        setStep('SETUP');
-                      }
-                    }} 
-                    className="bg-rose-100 p-3 rounded-2xl text-rose-600 hover:bg-rose-200 transition-all" 
-                    title="重置进度"
-                  >
-                    <Trash2 size={18} />
-                  </button>
-                </div>
-              </div>
-
-              <div className="relative py-10 px-4 min-h-[600px] rounded-[40px] overflow-hidden">
-                {/* Map Background Decor */}
-                <div className="absolute inset-0 -z-10 opacity-20 pointer-events-none">
-                  <div className="absolute top-10 left-10 text-6xl pointer-events-none">🌲</div>
-                  <div className="absolute top-40 right-10 text-6xl pointer-events-none">🌳</div>
-                  <div className="absolute bottom-20 left-20 text-6xl pointer-events-none">🍄</div>
-                  <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 text-[200px] opacity-10 pointer-events-none">🗺️</div>
-                </div>
-
-                {/* Path Line */}
-                <div className="absolute left-1/2 top-0 bottom-0 w-3 bg-emerald-100/50 -translate-x-1/2 rounded-full overflow-hidden pointer-events-none">
-                   <motion.div 
-                    initial={{ height: 0 }}
-                    animate={{ height: `${(masteredLevels.length / levels.length) * 100}%` }}
-                    className="w-full bg-emerald-400"
-                   />
-                </div>
-
-                <div className="space-y-16 relative z-20">
-                  {levels.map((level, index) => (
-                    <LevelNode 
-                      key={level.id}
-                      level={level}
-                      index={index}
-                      isLocked={!level.isUnlocked}
-                      isCurrent={level.isUnlocked && !level.isMastered}
-                      onSelect={startLevel}
-                    />
-                  ))}
-                </div>
-              </div>
+                );
+              })()}
             </motion.div>
           )}
 
@@ -1318,13 +1395,14 @@ const AdventurePage: React.FC<AdventurePageProps> = ({
                                 onClick={(e) => {
                                   e.stopPropagation();
                                   audio.playPop();
+                                  audio.unlockSpeech();
                                   setSpellingWord(word);
                                 }}
                                 className="px-2 py-1 bg-amber-100 hover:bg-amber-200 text-amber-900 rounded-lg font-extrabold text-[10px] flex items-center space-x-0.5 transition-colors"
-                                title="拼写闯关"
+                                title="拼读闯关"
                               >
                                 <Sparkles size={9} className="text-amber-650" />
-                                <span>拼写</span>
+                                <span>拼读</span>
                               </button>
                             </div>
                           </motion.div>
@@ -1336,7 +1414,7 @@ const AdventurePage: React.FC<AdventurePageProps> = ({
                     <div className="space-y-4">
                       <div className="flex items-center justify-center space-x-3 px-4">
                         <div className="h-px flex-1 bg-slate-100" />
-                        <span className="text-[10px] font-black text-slate-350 uppercase tracking-[0.3em]">Magical Rhyme 三字经拼读</span>
+                        <span className="text-[10px] font-black text-slate-350 uppercase tracking-[0.3em] font-cute">Magical Rhyme 英文三字经</span>
                         <div className="h-px flex-1 bg-slate-100" />
                       </div>
                       
@@ -1358,7 +1436,7 @@ const AdventurePage: React.FC<AdventurePageProps> = ({
                               className="px-5 py-2 rounded-full bg-indigo-50 border border-indigo-100 text-indigo-600 font-extrabold text-xs flex items-center space-x-1.5 shadow-sm hover:bg-indigo-100 transition-colors"
                             >
                               <Volume2 size={14} className="text-indigo-500 animate-pulse" />
-                              <span>聆听整句三字经 Chanting!</span>
+                              <span>聆听整句英文三字经 Chanting!</span>
                             </motion.button>
                           </div>
                         </div>

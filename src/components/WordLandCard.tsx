@@ -146,7 +146,7 @@ const WordLandCard: React.FC<Props> = ({ card, onLearned, onNext, isLast, onChal
     while ((match = regex.exec(line)) !== null) {
       if (match.index > lastIndex) {
         parts.push(
-          <span key={`text-${lastIndex}`} className="text-white/95 font-extrabold text-lg md:text-xl">
+          <span key={`text-${lastIndex}`} className="text-white font-black text-xl md:text-2xl font-cute tracking-wide drop-shadow-sm">
             {line.substring(lastIndex, match.index)}
           </span>
         );
@@ -157,7 +157,7 @@ const WordLandCard: React.FC<Props> = ({ card, onLearned, onNext, isLast, onChal
 
       const renderWordPart = () => {
         if (!suffix) {
-          return <span className="text-amber-300 font-black">{englishWord}</span>;
+          return <span className="text-amber-300 font-black font-cute">{englishWord}</span>;
         }
         
         const lowerWord = englishWord.toLowerCase();
@@ -168,9 +168,9 @@ const WordLandCard: React.FC<Props> = ({ card, onLearned, onNext, isLast, onChal
           const root = englishWord.substring(0, rootLen);
           const endPart = englishWord.substring(rootLen);
           return (
-            <span className="font-black text-xl md:text-2xl">
-              <span className="text-amber-300">{root}</span>
-              <span className="text-red-400">{endPart}</span>
+            <span className="font-black text-2xl md:text-3xl font-cute tracking-normal scale-105 inline-block">
+              <span className="text-amber-300 hover:text-amber-200 transition-colors">{root}</span>
+              <span className="text-red-400 hover:text-red-350 transition-colors">{endPart}</span>
             </span>
           );
         } else if (lowerWord.includes(lowerSuffix)) {
@@ -179,15 +179,15 @@ const WordLandCard: React.FC<Props> = ({ card, onLearned, onNext, isLast, onChal
           const part2 = englishWord.substring(idx, idx + suffix.length);
           const part3 = englishWord.substring(idx + suffix.length);
           return (
-            <span className="font-black text-xl md:text-2xl">
-              <span className="text-amber-300">{part1}</span>
-              <span className="text-red-400">{part2}</span>
-              {part3 && <span className="text-amber-300">{part3}</span>}
+            <span className="font-black text-2xl md:text-3xl font-cute tracking-normal scale-105 inline-block">
+              <span className="text-amber-300 hover:text-amber-200 transition-colors">{part1}</span>
+              <span className="text-red-400 hover:text-red-350 transition-colors">{part2}</span>
+              {part3 && <span className="text-amber-300 hover:text-amber-200 transition-colors">{part3}</span>}
             </span>
           );
         }
         
-        return <span className="text-amber-300 font-black text-xl md:text-2xl">{englishWord}</span>;
+        return <span className="text-amber-300 font-black text-2xl md:text-3xl font-cute tracking-normal scale-105 inline-block">{englishWord}</span>;
       };
 
       parts.push(
@@ -198,12 +198,12 @@ const WordLandCard: React.FC<Props> = ({ card, onLearned, onNext, isLast, onChal
             audio.playPop();
             audio.speak(englishWord);
           }}
-          className="cursor-pointer hover:underline mx-1 inline-flex items-center"
+          className="cursor-pointer hover:scale-110 active:scale-95 mx-1.5 inline-flex items-center transition-all"
           title="点击发音"
         >
           {renderWordPart()}
           {translation && (
-            <span className="text-emerald-50/80 font-bold text-lg md:text-xl ml-1">
+            <span className="text-amber-100 font-bold text-xl md:text-2xl ml-1 font-cute drop-shadow-sm">
               {translation}
             </span>
           )}
@@ -216,7 +216,7 @@ const WordLandCard: React.FC<Props> = ({ card, onLearned, onNext, isLast, onChal
     if (lastIndex < line.length) {
       const remaining = line.substring(lastIndex);
       parts.push(
-        <span key={`text-end`} className="text-white/95 font-extrabold text-lg md:text-xl">
+        <span key={`text-end`} className="text-white font-black text-xl md:text-2xl font-cute tracking-wide drop-shadow-sm">
           {remaining}
         </span>
       );
@@ -246,7 +246,11 @@ const WordLandCard: React.FC<Props> = ({ card, onLearned, onNext, isLast, onChal
               <div 
                 key={idx} 
                 className="flex items-center justify-between group"
-                onClick={(e) => { e.stopPropagation(); setSpellingWord(word); }}
+                onClick={(e) => { 
+                  e.stopPropagation(); 
+                  audio.unlockSpeech();
+                  setSpellingWord(word); 
+                }}
               >
                 <div className="flex items-center space-x-4">
                   <div className="text-4xl font-black tracking-tight text-slate-800">
@@ -281,7 +285,7 @@ const WordLandCard: React.FC<Props> = ({ card, onLearned, onNext, isLast, onChal
               <span className="inline-block bg-white/20 text-white font-black text-[10px] px-2.5 py-0.5 rounded-full uppercase tracking-wider border border-white/15">
                 “{card.suffix}” 魔法节奏
               </span>
-              <h2 className="text-2xl font-black text-white/95 tracking-tight">拼读三字经</h2>
+              <h2 className="text-2xl font-black text-white font-cute tracking-wide">英文三字经</h2>
             </div>
             
             <button 
@@ -353,11 +357,14 @@ const WordLandCard: React.FC<Props> = ({ card, onLearned, onNext, isLast, onChal
                     <Volume2 size={16} />
                   </button>
                   <button 
-                    onClick={() => setSpellingWord(activeWord)}
+                    onClick={() => {
+                      audio.unlockSpeech();
+                      setSpellingWord(activeWord);
+                    }}
                     className="p-1.5 bg-amber-400 text-slate-900 rounded-xl hover:bg-amber-305 active:scale-95 shadow-sm font-bold text-[10px]"
-                    title="拼写挑战"
+                    title="拼读挑战"
                   >
-                    拼写
+                    拼读
                   </button>
                 </div>
               </div>

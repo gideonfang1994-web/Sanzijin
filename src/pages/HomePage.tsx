@@ -1,9 +1,21 @@
 
 import React from 'react';
 import { motion, AnimatePresence } from 'motion/react';
-import { BookOpen, Gamepad2, Sparkles, Star, Trophy, CircleDollarSign, ArrowRight, Search, X } from 'lucide-react';
+import { 
+  BookOpen, Gamepad2, Sparkles, Star, Trophy, CircleDollarSign, ArrowRight, Search, X,
+  Sword, Shield, Zap, ChevronDown, ChevronUp, Swords, Activity, Heart, ShoppingBag, Plus, Award
+} from 'lucide-react';
 import { UserStats, WordGroup, ViewState } from '../types';
 import DailyQuestBoard from '../components/DailyQuestBoard';
+import { CHARACTERS, SHOP_ITEMS } from '../constants';
+import SafeImage from '../components/SafeImage';
+
+const PET_EMOJIS: Record<string, string> = {
+  DRAGON: '🐲',
+  CAT: '🐱',
+  OWL: '🦉',
+  SLIME: '💧'
+};
 
 interface HomePageProps {
   stats: UserStats;
@@ -11,11 +23,14 @@ interface HomePageProps {
   reviewNeeded: WordGroup[];
   onNavigate: (view: ViewState) => void;
   onQuestClick: (view: ViewState, isReview?: boolean, levelId?: number) => void;
+  onUpdateStats?: (newStats: Partial<UserStats>) => void;
 }
 
-const HomePage: React.FC<HomePageProps> = ({ stats, groups, reviewNeeded, onNavigate, onQuestClick }) => {
+const HomePage: React.FC<HomePageProps> = ({ stats, groups, reviewNeeded, onNavigate, onQuestClick, onUpdateStats }) => {
   const [searchQuery, setSearchQuery] = React.useState('');
   const [searchResults, setSearchResults] = React.useState<WordGroup[]>([]);
+  const [isProfileExpanded, setIsProfileExpanded] = React.useState(false);
+  const [activeProfileTab, setActiveProfileTab] = React.useState<'HERO' | 'PETS'>('HERO');
 
   const handleSearch = (e: React.ChangeEvent<HTMLInputElement>) => {
     const query = e.target.value.toLowerCase();
@@ -35,6 +50,96 @@ const HomePage: React.FC<HomePageProps> = ({ stats, groups, reviewNeeded, onNavi
     setSearchQuery('');
     setSearchResults([]);
   };
+
+  const selectedChar = React.useMemo(() => {
+    return CHARACTERS.find(c => c.id === stats.selectedCharacterId) || CHARACTERS[0];
+  }, [stats.selectedCharacterId]);
+
+  const charStats = stats.characterStats[selectedChar.id] || {
+    level: 1,
+    strength: selectedChar.baseStats.strength,
+    magic: selectedChar.baseStats.magic,
+    defense: selectedChar.baseStats.defense,
+    agility: selectedChar.baseStats.agility
+  };
+
+  const baseStrength = selectedChar.baseStats.strength;
+  const baseMagic = selectedChar.baseStats.magic;
+  const baseDefense = selectedChar.baseStats.defense;
+  const baseAgility = selectedChar.baseStats.agility;
+
+  const spentPoints = React.useMemo(() => {
+    return (charStats.strength - baseStrength) + 
+           (charStats.magic - baseMagic) + 
+           (charStats.defense - baseDefense) + 
+           (charStats.agility - baseAgility);
+  }, [charStats, baseStrength, baseMagic, baseDefense, baseAgility]);
+
+  const totalAvailablePoints = stats.level * 3;
+  const unassignedPoints = Math.max(0, totalAvailablePoints - spentPoints);
+
+  const handleAddAttributePoint = (attr: 'strength' | 'magic' | 'defense' | 'agility') => {
+    if (unassignedPoints <= 0) return;
+    if (!onUpdateStats) return;
+
+    const updatedCharStat = {
+      ...charStats,
+      [attr]: charStats[attr] + 1
+    };
+
+    const newCharacterStats = {
+      ...stats.characterStats,
+      [selectedChar.id]: updatedCharStat
+    };
+
+    onUpdateStats({
+      characterStats: newCharacterStats
+    });
+  };
+
+  const handleResetAttributePoints = () => {
+    if (!onUpdateStats) return;
+
+    const updatedCharStat = {
+      ...charStats,
+      strength: baseStrength,
+      magic: baseMagic,
+      defense: baseDefense,
+      agility: baseAgility
+    };
+
+    const newCharacterStats = {
+      ...stats.characterStats,
+      [selectedChar.id]: updatedCharStat
+    };
+
+    onUpdateStats({
+      characterStats: newCharacterStats
+    });
+  };
+
+  // Equipment Bonuses
+  const equippedItemIds = stats.equippedItems[selectedChar.id] || [];
+  const equippedItems = SHOP_ITEMS.filter(item => equippedItemIds.includes(item.id));
+
+  const bonusStrength = equippedItems.reduce((acc, item) => acc + (item.stats?.strength || 0), 0);
+  const bonusMagic = equippedItems.reduce((acc, item) => acc + (item.stats?.magic || 0), 0);
+  const bonusDefense = equippedItems.reduce((acc, item) => acc + (item.stats?.defense || 0), 0);
+  const bonusAgility = equippedItems.reduce((acc, item) => acc + (item.stats?.agility || 0), 0);
+
+  const finalStrength = charStats.strength + bonusStrength;
+  const finalMagic = charStats.magic + bonusMagic;
+  const finalDefense = charStats.defense + bonusDefense;
+  const finalAgility = charStats.agility + bonusAgility;
+
+  // Combat Ratings
+  const characterCombatPower = (charStats.level * 100) + (finalStrength * 10) + (finalMagic * 10) + (finalDefense * 10) + (finalAgility * 10);
+  const activePetPower = stats.pets?.reduce((acc, pet) => {
+    if (pet.isDead) return acc;
+    return acc + Math.floor(pet.level * 50 + pet.happiness * 1.5 + pet.health * 1);
+  }, 0) || 0;
+
+  const totalCombatPower = characterCombatPower + activePetPower;
 
   return (
     <div className="space-y-6 animate-in fade-in zoom-in-95 duration-700 pb-16 relative">
@@ -155,6 +260,353 @@ const HomePage: React.FC<HomePageProps> = ({ stats, groups, reviewNeeded, onNavi
             <span className="font-black text-slate-700 text-base tabular-nums tracking-tight">{stats.starCoins}</span>
           </motion.div>
         </div>
+      </div>
+
+      {/* Expandable RPG Panel - Hook mechanism */}
+      <div className="bg-white rounded-[40px] border-2 border-emerald-100 shadow-[0_20px_40px_-12px_rgba(6,78,59,0.1)] overflow-hidden transition-all duration-300">
+        <button 
+          onClick={() => {
+            setIsProfileExpanded(!isProfileExpanded);
+          }}
+          className="w-full p-5 flex items-center justify-between hover:bg-emerald-50/40 transition-colors focus:outline-none"
+        >
+          <div className="flex items-center space-x-3.5">
+            <div className="w-11 h-11 bg-emerald-100 rounded-2xl flex items-center justify-center text-xl shadow-inner">
+              🗡️
+            </div>
+            <div className="text-left">
+              <h4 className="font-black text-emerald-950 text-base flex items-center gap-1.5 leading-none mb-1">
+                <span>勇者手账与契约兽</span>
+                {unassignedPoints > 0 && (
+                  <span className="inline-flex h-2.5 w-2.5 rounded-full bg-rose-500 animate-pulse" />
+                )}
+              </h4>
+              <p className="text-[11px] font-bold text-slate-400">
+                主神圣域总战斗力: <span className="font-extrabold text-emerald-600">{totalCombatPower}</span> 🗡️ · 分配奥术潜能点
+              </p>
+            </div>
+          </div>
+          <div className="flex items-center space-x-2">
+            {unassignedPoints > 0 && (
+              <span className="bg-rose-100 text-rose-600 font-black text-[10px] px-2.5 py-1 rounded-full border border-rose-200">
+                可分配 +{unassignedPoints}点
+              </span>
+            )}
+            <div className="p-1.5 hover:bg-emerald-100/50 rounded-xl transition-colors text-emerald-800">
+              {isProfileExpanded ? <ChevronUp size={18} /> : <ChevronDown size={18} />}
+            </div>
+          </div>
+        </button>
+
+        <AnimatePresence initial={false}>
+          {isProfileExpanded && (
+            <motion.div
+              initial={{ height: 0, opacity: 0 }}
+              animate={{ height: "auto", opacity: 1 }}
+              exit={{ height: 0, opacity: 0 }}
+              transition={{ duration: 0.3 }}
+              className="border-t border-emerald-50"
+            >
+              <div className="p-6 bg-slate-50/50">
+                {/* Visual tabs inside the RPG manual */}
+                <div className="flex bg-slate-100 p-1.5 rounded-2xl mb-6">
+                  <button 
+                    onClick={() => setActiveProfileTab('HERO')}
+                    className={`flex-1 py-3 text-xs font-black rounded-xl transition-all ${activeProfileTab === 'HERO' ? 'bg-white text-emerald-900 shadow-sm' : 'text-slate-500 hover:text-slate-800'}`}
+                  >
+                    🗡️ 勇者属性/天赋
+                  </button>
+                  <button 
+                    onClick={() => setActiveProfileTab('PETS')}
+                    className={`flex-1 py-3 text-xs font-black rounded-xl transition-all ${activeProfileTab === 'PETS' ? 'bg-white text-emerald-900 shadow-sm' : 'text-slate-500 hover:text-slate-800'}`}
+                  >
+                    🐾 契约守护兽 ({stats.pets?.length || 0})
+                  </button>
+                </div>
+
+                {activeProfileTab === 'HERO' ? (
+                  <div className="space-y-6">
+                    {/* Character Card Info */}
+                    <div className="bg-white rounded-3xl p-5 border border-slate-200/60 shadow-sm flex items-center space-x-5 relative overflow-hidden">
+                      <div className="absolute top-0 right-0 p-4 text-emerald-200/40 text-7xl font-mono select-none pointer-events-none">
+                        {selectedChar.avatar}
+                      </div>
+                      <div className="w-16 h-16 bg-emerald-50 rounded-[20px] border border-emerald-100 flex items-center justify-center text-3xl shadow-sm relative z-10">
+                        {selectedChar.avatar}
+                      </div>
+                      <div className="relative z-10 flex-1">
+                        <div className="flex items-center space-x-2">
+                          <h5 className="font-extrabold text-slate-800 text-lg leading-none">{selectedChar.name}</h5>
+                          <span className="text-[10px] bg-emerald-100 text-emerald-700 font-extrabold px-2 py-0.5 rounded-md">
+                            英雄 LV {charStats.level}
+                          </span>
+                        </div>
+                        <p className="text-[11px] font-medium text-slate-400 mt-1.5 italic leading-tight">
+                          {selectedChar.title}
+                        </p>
+                        <p className="text-[11px] font-bold text-slate-500 mt-2.5 leading-relaxed">
+                          {selectedChar.description}
+                        </p>
+                      </div>
+                    </div>
+
+                    {/* Combat Power Breakdown */}
+                    <div className="grid grid-cols-3 gap-3">
+                      <div className="bg-emerald-950/5 rounded-2xl p-3 border border-emerald-950/10 text-center">
+                        <span className="text-[10px] font-black text-emerald-800/60 block mb-0.5">勇者基础评分</span>
+                        <span className="font-black text-slate-700 text-sm md:text-base">{characterCombatPower}</span>
+                      </div>
+                      <div className="bg-indigo-950/5 rounded-2xl p-3 border border-indigo-950/10 text-center">
+                        <span className="text-[10px] font-black text-indigo-800/60 block mb-0.5">契约兽加功</span>
+                        <span className="font-black text-slate-700 text-sm md:text-base">+{activePetPower}</span>
+                      </div>
+                      <div className="bg-amber-950/5 rounded-2xl p-3 border border-amber-950/10 text-center">
+                        <span className="text-[10px] font-black text-amber-800/60 block mb-0.5">圣域总战斗力</span>
+                        <span className="font-black text-emerald-600 text-sm md:text-base">{totalCombatPower}</span>
+                      </div>
+                    </div>
+
+                    {/* Attributes Allocation Grid */}
+                    <div className="bg-white rounded-3xl p-5 border border-slate-200/60 shadow-sm space-y-4">
+                      <div className="flex items-center justify-between border-b border-slate-100 pb-3">
+                        <div>
+                          <h6 className="font-extrabold text-slate-800 text-sm">分配奥术潜能属性</h6>
+                          <p className="text-[10px] font-bold text-slate-400 mt-0.5">使用学习积攒的奥术能量升级角色</p>
+                        </div>
+                        <div className="flex items-center space-x-2.5 text-right">
+                          <span className="text-xs font-black text-slate-600">剩余点数:</span>
+                          <span className="bg-amber-100 text-amber-800 border border-amber-200 px-3 py-1 rounded-xl text-xs font-black tabular-nums">
+                            {unassignedPoints} 点
+                          </span>
+                        </div>
+                      </div>
+
+                      <div className="space-y-3">
+                        {/* Attribute 1: Strength */}
+                        <div className="flex items-center justify-between bg-slate-50/50 p-3.5 rounded-2xl border border-slate-100">
+                          <div className="flex items-center space-x-3">
+                            <div className="w-8 h-8 rounded-xl bg-red-50 border border-red-100 flex items-center justify-center text-red-500">
+                              <Sword size={16} />
+                            </div>
+                            <div>
+                              <span className="font-extrabold text-slate-700 text-xs">力量 (Strength)</span>
+                              <span className="text-[9px] font-bold text-slate-400 block mt-0.5">增加攻击强度 & 砍杀小恶魔效率</span>
+                            </div>
+                          </div>
+                          <div className="flex items-center space-x-3.5">
+                            <span className="font-black text-slate-800 text-sm tabular-nums">
+                              {charStats.strength}
+                              {bonusStrength > 0 && (
+                                <span className="text-emerald-500 text-xs font-bold ml-1.5">+{bonusStrength}</span>
+                              )}
+                            </span>
+                            <button
+                              disabled={unassignedPoints <= 0}
+                              onClick={() => handleAddAttributePoint('strength')}
+                              className={`w-7 h-7 rounded-lg flex items-center justify-center font-black text-xs shadow-md transition-all ${unassignedPoints > 0 ? 'bg-emerald-500 hover:bg-emerald-600 active:scale-90 text-white cursor-pointer' : 'bg-slate-100 text-slate-300 cursor-not-allowed'}`}
+                            >
+                              <Plus size={14} />
+                            </button>
+                          </div>
+                        </div>
+
+                        {/* Attribute 2: Magic */}
+                        <div className="flex items-center justify-between bg-slate-50/50 p-3.5 rounded-2xl border border-slate-100">
+                          <div className="flex items-center space-x-3">
+                            <div className="w-8 h-8 rounded-xl bg-purple-50 border border-purple-100 flex items-center justify-center text-purple-500">
+                              <Zap size={16} />
+                            </div>
+                            <div>
+                              <span className="font-extrabold text-slate-700 text-xs">魔力 (Magic)</span>
+                              <span className="text-[9px] font-bold text-slate-400 block mt-0.5">增加奥术屏障 & 净化音标能量</span>
+                            </div>
+                          </div>
+                          <div className="flex items-center space-x-3.5">
+                            <span className="font-black text-slate-800 text-sm tabular-nums">
+                              {charStats.magic}
+                              {bonusMagic > 0 && (
+                                <span className="text-emerald-500 text-xs font-bold ml-1.5">+{bonusMagic}</span>
+                              )}
+                            </span>
+                            <button
+                              disabled={unassignedPoints <= 0}
+                              onClick={() => handleAddAttributePoint('magic')}
+                              className={`w-7 h-7 rounded-lg flex items-center justify-center font-black text-xs shadow-md transition-all ${unassignedPoints > 0 ? 'bg-purple-500 hover:bg-purple-600 active:scale-90 text-white cursor-pointer' : 'bg-slate-100 text-slate-300 cursor-not-allowed'}`}
+                            >
+                              <Plus size={14} />
+                            </button>
+                          </div>
+                        </div>
+
+                        {/* Attribute 3: Defense */}
+                        <div className="flex items-center justify-between bg-slate-50/50 p-3.5 rounded-2xl border border-slate-100">
+                          <div className="flex items-center space-x-3">
+                            <div className="w-8 h-8 rounded-xl bg-blue-50 border border-blue-100 flex items-center justify-center text-blue-500">
+                              <Shield size={16} />
+                            </div>
+                            <div>
+                              <span className="font-extrabold text-slate-700 text-xs">防御 (Defense)</span>
+                              <span className="text-[9px] font-bold text-slate-400 block mt-0.5">增加生命护盾 & 拼读书写容错率</span>
+                            </div>
+                          </div>
+                          <div className="flex items-center space-x-3.5">
+                            <span className="font-black text-slate-800 text-sm tabular-nums">
+                              {charStats.defense}
+                              {bonusDefense > 0 && (
+                                <span className="text-emerald-500 text-xs font-bold ml-1.5">+{bonusDefense}</span>
+                              )}
+                            </span>
+                            <button
+                              disabled={unassignedPoints <= 0}
+                              onClick={() => handleAddAttributePoint('defense')}
+                              className={`w-7 h-7 rounded-lg flex items-center justify-center font-black text-xs shadow-md transition-all ${unassignedPoints > 0 ? 'bg-blue-500 hover:bg-blue-600 active:scale-90 text-white cursor-pointer' : 'bg-slate-100 text-slate-300 cursor-not-allowed'}`}
+                            >
+                              <Plus size={14} />
+                            </button>
+                          </div>
+                        </div>
+
+                        {/* Attribute 4: Agility */}
+                        <div className="flex items-center justify-between bg-slate-50/50 p-3.5 rounded-2xl border border-slate-100">
+                          <div className="flex items-center space-x-3">
+                            <div className="w-8 h-8 rounded-xl bg-green-50 border border-green-100 flex items-center justify-center text-green-500">
+                              <Activity size={16} />
+                            </div>
+                            <div>
+                              <span className="font-extrabold text-slate-700 text-xs">敏捷 (Agility)</span>
+                              <span className="text-[9px] font-bold text-slate-400 block mt-0.5">增加反应闪避 & 连击拼词得分倍率</span>
+                            </div>
+                          </div>
+                          <div className="flex items-center space-x-3.5">
+                            <span className="font-black text-slate-800 text-sm tabular-nums">
+                              {charStats.agility}
+                              {bonusAgility > 0 && (
+                                <span className="text-emerald-500 text-xs font-bold ml-1.5">+{bonusAgility}</span>
+                              )}
+                            </span>
+                            <button
+                              disabled={unassignedPoints <= 0}
+                              onClick={() => handleAddAttributePoint('agility')}
+                              className={`w-7 h-7 rounded-lg flex items-center justify-center font-black text-xs shadow-md transition-all ${unassignedPoints > 0 ? 'bg-green-500 hover:bg-green-600 active:scale-90 text-white cursor-pointer' : 'bg-slate-100 text-slate-300 cursor-not-allowed'}`}
+                            >
+                              <Plus size={14} />
+                            </button>
+                          </div>
+                        </div>
+                      </div>
+
+                      {/* Equipment List Section */}
+                      {equippedItems.length > 0 && (
+                        <div className="pt-2 border-t border-slate-150">
+                          <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest block mb-2 px-1">正在装备</span>
+                          <div className="grid grid-cols-2 gap-2">
+                            {equippedItems.map(item => (
+                              <div key={item.id} className="flex items-center space-x-2 p-2.5 bg-slate-50 border border-slate-200/50 rounded-xl relative overflow-hidden group/item">
+                                {item.imageUrl ? (
+                                  <SafeImage src={item.imageUrl} alt={item.name} className="w-8 h-8 object-contain animate-pulse" />
+                                ) : (
+                                  <div className="w-8 h-8 bg-amber-50 rounded-lg flex items-center justify-center text-sm font-black border border-amber-100">🛡️</div>
+                                )}
+                                <div className="min-w-0">
+                                  <span className="text-[11px] font-extrabold text-slate-700 block truncate leading-tight">{item.name}</span>
+                                  <span className="text-[9px] font-bold text-emerald-600 block leading-tight mt-0.5">
+                                    {Object.entries(item.stats || {}).map(([key, value]) => {
+                                      const label = key === 'strength' ? '力量' : key === 'magic' ? '魔力' : key === 'defense' ? '防御' : '敏捷';
+                                      return `${label}+${value}`;
+                                    }).join(', ')}
+                                  </span>
+                                </div>
+                              </div>
+                            ))}
+                          </div>
+                        </div>
+                      )}
+
+                      {/* Action buttons */}
+                      {spentPoints > 0 && (
+                        <div className="flex justify-end pt-2">
+                          <button 
+                            onClick={handleResetAttributePoints}
+                            className="bg-slate-100 hover:bg-slate-200 text-slate-600 hover:text-slate-800 font-extrabold text-[10px] px-3.5 py-2 rounded-xl transition-all border border-slate-200 focus:outline-none"
+                          >
+                            🔄 重置奥术天赋点
+                          </button>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                ) : (
+                  <div className="space-y-4">
+                    {stats.pets && stats.pets.length > 0 ? (
+                      <div className="grid grid-cols-1 gap-3.5">
+                        {stats.pets.map((pet, idx) => {
+                          const cp = Math.floor(pet.level * 50 + pet.happiness * 1.5 + pet.health * 1);
+                          return (
+                            <div key={pet.id || idx} className="bg-white rounded-3xl p-5 border border-emerald-100 shadow-sm flex items-center justify-between relative overflow-hidden">
+                              <div className="absolute top-0 right-0 p-3 opacity-[0.06] select-none pointer-events-none text-9xl leading-none">
+                                {PET_EMOJIS[pet.type] || '🐾'}
+                              </div>
+                              
+                              <div className="flex items-center space-x-4 relative z-10">
+                                <span className="text-4xl leading-none p-2 bg-emerald-50 rounded-2xl border border-emerald-100">
+                                  {PET_EMOJIS[pet.type] || '🐾'}
+                                </span>
+                                <div className="text-left">
+                                  <div className="flex items-center gap-1.5 leading-none mb-1.5">
+                                    <h5 className="font-extrabold text-slate-800 text-sm">{pet.name}</h5>
+                                    <span className="text-[8px] bg-emerald-800 text-emerald-300 font-black px-1.5 py-0.5 rounded uppercase">
+                                      LV {pet.level}
+                                    </span>
+                                  </div>
+                                  <div className="flex items-center space-x-3 text-[10px] font-bold text-slate-400">
+                                    <span className="flex items-center gap-0.5">
+                                      ❤️ 生命 {pet.health}/{pet.maxHealth || 100}
+                                    </span>
+                                    <span className="flex items-center gap-0.5">
+                                      ⭐ 快乐 {pet.happiness}/100
+                                    </span>
+                                  </div>
+                                </div>
+                              </div>
+
+                              <div className="text-right flex flex-col justify-center relative z-10 shrink-0">
+                                <span className="text-[8px] font-black text-slate-400 uppercase tracking-widest block mb-1">守护力评分</span>
+                                <span className="font-black text-emerald-600 text-base tabular-nums">+{cp} CP</span>
+                              </div>
+                            </div>
+                          );
+                        })}
+                        <div className="pt-2">
+                          <button
+                            onClick={() => onNavigate('PETS')}
+                            className="w-full bg-emerald-800 hover:bg-emerald-950 text-white font-black text-xs py-4 rounded-2xl shadow-lg shadow-emerald-900/10 transition-all flex items-center justify-center space-x-1.5"
+                          >
+                            <span>进入宠兽神域进行挂机特训 ⚔️</span>
+                            <ArrowRight size={14} />
+                          </button>
+                        </div>
+                      </div>
+                    ) : (
+                      <div className="bg-white rounded-3xl p-8 border border-slate-200/60 shadow-sm text-center py-10">
+                        <span className="text-5xl block mb-4 select-none">🥚</span>
+                        <h6 className="font-extrabold text-slate-700 text-sm mb-1.5">还未契约守护魔兽</h6>
+                        <p className="text-[11px] font-medium text-slate-400 max-w-xs mx-auto mb-6 leading-relaxed">
+                          背诵和拼写魔法字母可以积攒金币。快去魔法商店购买一颗珍贵魔晶兽卵，唤醒在星砂里沉睡的雷光雏龙吧！
+                        </p>
+                        <button
+                          onClick={() => onNavigate('SHOP')}
+                          className="bg-emerald-100 font-black text-emerald-800 hover:bg-emerald-800 hover:text-white border border-emerald-100 text-xs px-6 py-3.5 rounded-2xl transition-all shadow-sm focus:outline-none"
+                        >
+                          前往魔法商店 🪙
+                        </button>
+                      </div>
+                    )}
+                  </div>
+                )}
+              </div>
+            </motion.div>
+          )}
+        </AnimatePresence>
       </div>
 
       {/* Main Branding */}
@@ -321,9 +773,9 @@ const HomePage: React.FC<HomePageProps> = ({ stats, groups, reviewNeeded, onNavi
               <BookOpen className="text-white w-8 h-8" />
             </div>
             <div>
-              <h3 className="font-black text-2xl text-rose-950 tracking-tight leading-tight">单词森林 (魔法三字经)</h3>
+              <h3 className="font-black text-2xl text-rose-950 tracking-tight leading-tight">单词森林 (英文三字经)</h3>
               <p className="text-rose-600/70 font-black text-xs mt-2">
-                查阅神奇拼读三字经与全部魔法单词
+                查阅神奇英文三字经与全部魔法单词
               </p>
             </div>
           </div>

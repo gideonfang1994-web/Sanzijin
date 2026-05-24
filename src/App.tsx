@@ -12,6 +12,7 @@ import FlyingDagger from './components/FlyingDagger';
 import WhackAMole from './components/WhackAMole';
 import VoiceDubbing from './components/VoiceDubbing';
 import SpellingBee from './components/SpellingBee';
+import PlantsVsMonsters from './components/PlantsVsMonsters';
 import Leaderboard from './components/Leaderboard';
 import UploadContent from './components/UploadContent';
 import MagicShop from './components/MagicShop';
@@ -906,6 +907,7 @@ const App: React.FC = () => {
                 reviewNeeded={reviewNeeded} 
                 onNavigate={handleNavigate} 
                 onQuestClick={(v, r, l) => { setIsReviewChallenge(!!r); handleNavigate(v, l); }} 
+                onUpdateStats={handleUpdateStats}
               />
             </motion.div>
           )}
@@ -992,7 +994,7 @@ const App: React.FC = () => {
           )}
           
           {/* Game Views - Smooth Scale Entrance */}
-          {['CHALLENGE', 'SCRAMBLE', 'SHEEP', 'BALLOON', 'WHACK', 'DUBBING', 'SPELLING'].includes(view) && (
+          {['CHALLENGE', 'SCRAMBLE', 'SHEEP', 'BALLOON', 'WHACK', 'DUBBING', 'SPELLING', 'PLANTS'].includes(view) && (
             <motion.div key="game" initial={{ scale: 0.9, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} exit={{ scale: 1.1, opacity: 0 }} transition={{ type: "spring", damping: 20 }}>
               {view === 'CHALLENGE' && <WordChallenge groups={activeGroups} isReviewMode={isReviewChallenge} onFinish={handleGameFinish} onMistake={() => {}} onSuccess={handleGameSuccess} onClose={() => handleNavigate('ARCADE')} />}
               {view === 'SCRAMBLE' && <LetterScramble groups={activeGroups} onFinish={handleGameFinish} onClose={() => handleNavigate('ARCADE')} />}
@@ -1001,6 +1003,7 @@ const App: React.FC = () => {
               {view === 'WHACK' && <WhackAMole groups={activeGroups} onFinish={handleGameFinish} onMistake={() => {}} onSuccess={handleGameSuccess} onClose={() => handleNavigate('ARCADE')} />}
               {view === 'DUBBING' && <VoiceDubbing items={activeGroups.flatMap(g => g.words.map((w, idx) => ({ id: `${g.id}-${idx}`, ...w })))} onFinish={handleGameFinish} onClose={() => handleNavigate('ARCADE')} />}
               {view === 'SPELLING' && <SpellingBee groups={activeGroups} onFinish={handleGameFinish} onClose={() => handleNavigate('ARCADE')} />}
+              {view === 'PLANTS' && <PlantsVsMonsters groups={activeGroups} stats={stats} onFinish={handleGameFinish} onClose={() => handleNavigate('ARCADE')} />}
             </motion.div>
           )}
 
@@ -1168,7 +1171,7 @@ const App: React.FC = () => {
       <nav className="fixed bottom-8 left-1/2 -translate-x-1/2 w-[95%] glass-pill h-20 rounded-[32px] flex items-center justify-around px-4 z-50 border-white/80 shadow-2xl">
         <NavButton icon={<Home />} label="主页" active={view === 'HOME'} onClick={() => handleNavigate('HOME')} color="text-indigo-600" />
         <NavButton icon={<BookOpen />} label="冒险" active={view === 'ADVENTURE'} onClick={() => handleNavigate('ADVENTURE')} color="text-rose-500" />
-        <NavButton icon={<Gamepad2 />} label="游玩" active={view === 'ARCADE' || ['CHALLENGE', 'SCRAMBLE', 'SHEEP', 'BALLOON', 'WHACK', 'DUBBING', 'SPELLING'].includes(view)} onClick={() => handleNavigate('ARCADE')} color="text-sky-500" />
+        <NavButton icon={<Gamepad2 />} label="游玩" active={view === 'ARCADE' || ['CHALLENGE', 'SCRAMBLE', 'SHEEP', 'BALLOON', 'WHACK', 'DUBBING', 'SPELLING', 'PLANTS'].includes(view)} onClick={() => handleNavigate('ARCADE')} color="text-sky-500" />
         <NavButton icon={<Heart />} label="宠兽" active={view === 'PETS'} onClick={() => handleNavigate('PETS')} color="text-rose-400" />
         <NavButton icon={<ShoppingBag />} label="商店" active={view === 'SHOP'} onClick={() => handleNavigate('SHOP')} color="text-purple-500" />
         <NavButton icon={<BarChart3 />} label="排行" active={view === 'RANKING'} onClick={() => handleNavigate('RANKING')} color="text-amber-500" />

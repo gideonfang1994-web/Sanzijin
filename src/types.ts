@@ -159,4 +159,4 @@ export interface AdventureForestProps {
   initialLevelId?: number;
 }
 
-export type ViewState = 'HOME' | 'CARDS' | 'VIDEOS' | 'CHALLENGE' | 'SCRAMBLE' | 'MEMORY' | 'BALLOON' | 'WHACK' | 'RANKING' | 'UPLOAD' | 'ARCADE' | 'SHEEP' | 'COLLECTION' | 'ADVENTURE' | 'DUBBING' | 'SHOP' | 'PETS' | 'SPELLING';
+export type ViewState = 'HOME' | 'CARDS' | 'VIDEOS' | 'CHALLENGE' | 'SCRAMBLE' | 'MEMORY' | 'BALLOON' | 'WHACK' | 'RANKING' | 'UPLOAD' | 'ARCADE' | 'SHEEP' | 'COLLECTION' | 'ADVENTURE' | 'DUBBING' | 'SHOP' | 'PETS' | 'SPELLING' | 'PLANTS';

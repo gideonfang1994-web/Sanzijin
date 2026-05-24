@@ -368,7 +368,7 @@ const CollectionCenter: React.FC<Props> = ({ groups, stats, onClose }) => {
           }`}
         >
           <BookMarked size={16} />
-          <span>拼读神奇三字经</span>
+          <span>拼读神奇英文三字经</span>
         </button>
         <button
           onClick={() => setActiveTab('WORD_DICTIONARY')}
@@ -407,7 +407,7 @@ const CollectionCenter: React.FC<Props> = ({ groups, stats, onClose }) => {
             {renderMagicCategoryCard(
               'INTERMEDIATE',
               '风暴密林',
-              '进阶元音、辅音混合发音组合，在三字经故事中乘风晋级。',
+              '进阶元音、辅音混合发音组合，在英文三字经故事中乘风晋级。',
               '🧭',
               'from-indigo-500 via-indigo-600 to-blue-800',
               'text-indigo-500',
@@ -417,7 +417,7 @@ const CollectionCenter: React.FC<Props> = ({ groups, stats, onClose }) => {
             {renderMagicCategoryCard(
               'ADVANCED',
               '星辉神殿',
-              '特殊字母发音拼写，双重语调技巧，练就出类拔萃的魔法直觉。',
+              '特殊字母发音拼读，双重语调技巧，练就出类拔萃 of 魔法直觉。',
               '🧙‍♂️',
               'from-amber-400 via-orange-500 to-rose-700',
               'text-amber-500',
@@ -427,7 +427,7 @@ const CollectionCenter: React.FC<Props> = ({ groups, stats, onClose }) => {
             {renderMagicCategoryCard(
               'CUSTOM',
               '魔力法阵',
-              '您所上传、保存的一切魔法信件及编排创作的专属三字经秘典。',
+              '您所上传、保存的一切魔法信件及编排创作的专属英文三字经秘典。',
               '✨',
               'from-purple-500 via-fuchsia-600 to-pink-600',
               'text-purple-500',
@@ -478,7 +478,7 @@ const CollectionCenter: React.FC<Props> = ({ groups, stats, onClose }) => {
                       <button
                         onClick={() => audio.speak(pkg.rhyme)}
                         className="absolute right-3 bottom-3 p-2 bg-indigo-50 hover:bg-indigo-100 text-indigo-600 rounded-full transition-all active:scale-95 shadow-sm"
-                        title="聆听整句三字经节奏发音"
+                        title="聆听整句英文三字经节奏发音"
                       >
                         <Volume2 size={16} />
                       </button>
@@ -494,7 +494,10 @@ const CollectionCenter: React.FC<Props> = ({ groups, stats, onClose }) => {
                           <motion.div
                             key={word.text}
                             whileHover={{ y: -4, scale: 1.02 }}
-                            onClick={() => setActivePhonicsWord({ text: word.text, imageUrl: word.imageUrl })}
+                            onClick={() => {
+                              audio.unlockSpeech();
+                              setActivePhonicsWord({ text: word.text, imageUrl: word.imageUrl });
+                            }}
                             className="bg-slate-50/60 rounded-[28px] p-4 text-center border-2 border-slate-100 hover:border-indigo-100 cursor-pointer transition-all flex flex-col items-center justify-center relative"
                           >
                             <div className="relative mb-2">
@@ -538,7 +541,7 @@ const CollectionCenter: React.FC<Props> = ({ groups, stats, onClose }) => {
             {sequentialRhymingPackages.length === 0 && (
               <div className="bg-slate-50 rounded-[40px] p-12 text-center border-2 border-dashed border-slate-200">
                 <Compass className="w-12 h-12 mx-auto text-slate-300 mb-2" />
-                <p className="text-slate-400 font-bold">这一章节没有任何已上传或保存的魔法三字经喔</p>
+                <p className="text-slate-400 font-bold">这一章节没有任何已上传或保存的英文三字经喔</p>
                 {selectedDifficulty === 'CUSTOM' && (
                   <p className="text-slate-300 font-bold text-xs mt-1">快去“上传/魔法宝箱”板块编排属于你的魔力口诀吧！</p>
                 )}
@@ -598,7 +601,10 @@ const CollectionCenter: React.FC<Props> = ({ groups, stats, onClose }) => {
                   key={word.text}
                   whileHover={{ y: -5 }}
                   whileTap={{ scale: 0.95 }}
-                  onClick={() => setActivePhonicsWord({ text: word.text, imageUrl: word.imageUrl })}
+                  onClick={() => {
+                    audio.unlockSpeech();
+                    setActivePhonicsWord({ text: word.text, imageUrl: word.imageUrl });
+                  }}
                   className={`relative bg-white rounded-[32px] p-4 border-2 transition-all flex flex-col items-center text-center ${
                     isMastered ? 'border-amber-200 shadow-md' : isLearning ? 'border-rose-100' : 'border-slate-50 opacity-60'
                   }`}
