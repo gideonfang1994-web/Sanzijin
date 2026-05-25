@@ -107,11 +107,28 @@ export const audio = {
 
     const isChinese = /[\u4e00-\u9fa5]/.test(cleanWord);
     
-    // Short phonic segment sounds like "buh", "duh", "fff"
+    // Master IPA dictionary
+    const ipaMap: Record<string, string> = {
+      'æ': 'aah', 'ɑː': 'ah', 'aː': 'ah', 'ʌ': 'uhh', 'ɔː': 'aw', 'ɒ': 'ah', 'ə': 'uh', 'ɜː': 'err',
+      'e': 'ehh', 'ɛ': 'ehh', 'iː': 'eee', 'ɪ': 'ihh', 'uː': 'ooo', 'ʊ': 'uuh',
+      'eɪ': 'ae', 'aɪ': 'eye', 'ɔɪ': 'oy', 'oʊ': 'oh', 'əʊ': 'oh', 'aʊ': 'ow', 'ɪə': 'ear', 'eə': 'air', 'ʊə': 'yoor',
+      'p': 'puh', 'b': 'buh', 't': 'tuh', 'd': 'duh', 'k': 'kuh', 'g': 'guh', 'ɡ': 'guh', 'f': 'fff', 'v': 'vvv',
+      'θ': 'thhh', 'ð': 'thuh', 's': 'sss', 'z': 'zzz', 'ʃ': 'shhh', 'ʒ': 'zh', 'h': 'hhh', 'm': 'mmm', 'n': 'nnn',
+      'ŋ': 'ing', 'l': 'lll', 'r': 'rrr', 'j': 'yuh', 'w': 'wuh', 'tʃ': 'tch', 'dʒ': 'juh', 'kw': 'kwuh'
+    };
+
+    const normText = cleanWord.toLowerCase().replace(/[\[\]\/\/]/g, '').trim();
+
+    // Short phonic segment sounds like "buh", "duh", "fff" or explicit IPA representations
     const isPhonicSegmentSound = [
       'buh', 'duh', 'guh', 'kuh', 'puh', 'tuh', 'fff', 'hhh', 'lll', 'mmm', 'nnn', 'rrr', 'sss', 'vvv', 'zzz',
       'aah', 'ehh', 'ihh', 'uhh', 'shhh', 'tch', 'thhh', 'wuh', 'kwuh', 'eee', 'ooo', 'ow', 'oy'
-    ].includes(cleanWord.toLowerCase());
+    ].includes(cleanWord.toLowerCase()) || 
+    cleanWord.startsWith('[') || 
+    cleanWord.endsWith(']') || 
+    cleanWord.startsWith('/') ||
+    cleanWord.endsWith('/') ||
+    !!ipaMap[normText];
 
     const speakSynth = (phrase: string, isZh: boolean) => {
       if (!window.speechSynthesis) return;
@@ -120,7 +137,19 @@ export const audio = {
       }
       try { window.speechSynthesis.cancel(); } catch (e) {}
 
-      const utterance = new SpeechSynthesisUtterance(phrase);
+      let finalPhrase = phrase;
+      let rateMultiplier = 0.85;
+
+      if (!isZh) {
+        const norm = phrase.toLowerCase().replace(/[\[\]\/\/]/g, '').trim();
+        const ipaRes = ipaMap[norm];
+        if (ipaRes) {
+          finalPhrase = ipaRes;
+          rateMultiplier = 0.65; // slow down phonics for maximum clarity
+        }
+      }
+
+      const utterance = new SpeechSynthesisUtterance(finalPhrase);
       activeUtterances.push(utterance); // Prevent GC
       const cleanup = () => {
         activeUtterances = activeUtterances.filter(u => u !== utterance);
@@ -157,7 +186,7 @@ export const audio = {
         } else {
           utterance.lang = 'en-US';
         }
-        utterance.rate = 0.85;
+        utterance.rate = rateMultiplier;
       }
       window.speechSynthesis.speak(utterance);
     };

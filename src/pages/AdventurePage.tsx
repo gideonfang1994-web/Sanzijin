@@ -1,5 +1,5 @@
 
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useEffect, useMemo, useRef } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import { 
   ChevronLeft, ChevronRight, ChevronDown, Play, Gamepad2, RefreshCw, Star, Trophy,
@@ -72,15 +72,18 @@ const LevelNode = React.memo(({
   }
 
   return (
-    <motion.div 
-      initial={{ opacity: 0, scale: 0.82, y: 15 }}
-      whileInView={{ opacity: 1, scale: 1, y: 0 }}
-      viewport={{ once: true, margin: "-20px" }}
-      className={`flex items-center group cursor-pointer relative z-30 ${justifyClass} ${offsetClass}`}
-      onClick={() => onSelect(level)}
-      whileTap={!isLocked ? { scale: 0.94 } : {}}
-    >
-      <div className="flex flex-col items-center text-center relative max-w-[130px]">
+    <div className={`w-full flex ${justifyClass} pointer-events-none`}>
+      <motion.div 
+        initial={{ opacity: 0, scale: 0.82, y: 15 }}
+        whileInView={{ opacity: 1, scale: 1, y: 0 }}
+        viewport={{ once: true, margin: "-20px" }}
+        className={`flex flex-col items-center text-center relative max-w-[130px] group cursor-pointer z-30 pointer-events-auto ${offsetClass}`}
+        onClick={(e) => {
+          e.stopPropagation();
+          onSelect(level);
+        }}
+        whileTap={!isLocked ? { scale: 0.94 } : {}}
+      >
         {/* Background Aura */}
         {isCurrent && (
           <motion.div 
@@ -104,8 +107,40 @@ const LevelNode = React.memo(({
           </motion.div>
         )}
 
+        {/* Progress Character Indicator indicating "学到这里啦" */}
+        {isCurrent && (
+          <div className="absolute -top-14 z-50 flex flex-col items-center pointer-events-none select-none">
+            {/* Animated Speech Bubble */}
+            <motion.div
+              initial={{ y: 5, scale: 0.9, opacity: 0 }}
+              animate={{ y: [0, -4, 0], scale: 1, opacity: 1 }}
+              transition={{ repeat: Infinity, duration: 2.5, ease: "easeInOut" }}
+              className="bg-emerald-500 text-white font-black text-[9px] px-2 py-0.5 rounded-full shadow-lg whitespace-nowrap mb-1 border border-emerald-400 flex items-center space-x-0.5 relative"
+            >
+              <span>我学到这里啦</span>
+              <div className="absolute w-1.5 h-1.5 bg-emerald-500 rotate-45 border-r border-b border-emerald-400 bottom-[-3px] left-1/2 -translate-x-1/2" />
+            </motion.div>
+            
+            {/* Little Animated Character Explorer */}
+            <motion.div
+              animate={{ 
+                y: [0, -5, 0],
+                rotate: [-4, 4, -4]
+              }}
+              transition={{ 
+                y: { repeat: Infinity, duration: 1.6, ease: "easeInOut" },
+                rotate: { repeat: Infinity, duration: 2.0, ease: "easeInOut" }
+              }}
+              className="text-4xl filter drop-shadow-md select-none mt-1"
+            >
+              🧑‍🌾
+            </motion.div>
+          </div>
+        )}
+
         {/* Circular Level Button */}
         <div 
+          id={`level-btn-${level.id}`}
           className={`w-18 h-18 sm:w-20 sm:h-20 rounded-[32px] border-[6px] flex items-center justify-center transition-all shadow-xl relative z-10 ${
             isLocked 
               ? 'bg-[#f4fcf8] border-emerald-100 text-emerald-250 shadow-emerald-50/10' 
@@ -154,8 +189,8 @@ const LevelNode = React.memo(({
             {level.cards.length} 词 • {level.cards[0]?.difficulty === 'PRIMARY' ? '初级' : level.cards[0]?.difficulty === 'INTERMEDIATE' ? '中级' : '高级'}
           </p>
         </div>
-      </div>
-    </motion.div>
+      </motion.div>
+    </div>
   );
 });
 
@@ -353,7 +388,7 @@ const AdventurePage: React.FC<AdventurePageProps> = ({
         displayId: relativeId,
         name: adventureNames[(levelId - 1) % adventureNames.length],
         cards: levelCards,
-        isUnlocked: relativeId === 1 || isCompleted || isMastered || prevLevelCompleted,
+        isUnlocked: true,
         isCompleted,
         isMastered,
         // @ts-ignore
@@ -368,6 +403,65 @@ const AdventurePage: React.FC<AdventurePageProps> = ({
   const [showLevelModeSelector, setShowLevelModeSelector] = useState(false);
   const [spellingWord, setSpellingWord] = useState<WordItem | null>(null);
   const [currentSectorIndex, setCurrentSectorIndex] = useState(0);
+
+  const currentSectorLevels = useMemo(() => {
+    return levels.slice(currentSectorIndex * 12, (currentSectorIndex + 1) * 12);
+  }, [levels, currentSectorIndex]);
+
+  const selectedLevelRef = useRef<Level | null>(null);
+  const [svgPathData, setSvgPathData] = useState('');
+
+  const calculateSvgPath = () => {
+    const board = document.getElementById('adventure-board-container');
+    if (!board) return;
+    const boardRect = board.getBoundingClientRect();
+
+    let path = '';
+    for (let i = 0; i < currentSectorLevels.length; i++) {
+      const level = currentSectorLevels[i];
+      const el = document.getElementById(`level-btn-${level.id}`);
+      if (!el) {
+        // Fallback search if render is settling
+        continue;
+      }
+
+      const rect = el.getBoundingClientRect();
+      const x = rect.left + rect.width / 2 - boardRect.left;
+      const y = rect.top + rect.height / 2 - boardRect.top;
+
+      if (i === 0) {
+        path += `M ${x} ${y}`;
+      } else {
+        const prevLevel = currentSectorLevels[i - 1];
+        const prevEl = document.getElementById(`level-btn-${prevLevel.id}`);
+        if (prevEl) {
+          const prevRect = prevEl.getBoundingClientRect();
+          const prevX = prevRect.left + prevRect.width / 2 - boardRect.left;
+          const prevY = prevRect.top + prevRect.height / 2 - boardRect.top;
+          
+          // Smooth winding Bezier s-curve
+          const controlY1 = prevY + (y - prevY) / 2;
+          const controlY2 = prevY + (y - prevY) / 2;
+          path += ` C ${prevX} ${controlY1}, ${x} ${controlY2}, ${x} ${y}`;
+        } else {
+          path += ` L ${x} ${y}`;
+        }
+      }
+    }
+    setSvgPathData(path);
+  };
+
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      calculateSvgPath();
+    }, 150);
+
+    window.addEventListener('resize', calculateSvgPath);
+    return () => {
+      clearTimeout(timer);
+      window.removeEventListener('resize', calculateSvgPath);
+    };
+  }, [currentSectorIndex, currentSectorLevels, step, levels, selectedDifficulty]);
 
   // Auto-focus the sector where the user is currently learning
   useEffect(() => {
@@ -455,6 +549,7 @@ const AdventurePage: React.FC<AdventurePageProps> = ({
 
   const startLevel = (level: Level) => {
     console.log('[Adventure] Clicked level icon on map:', level.id);
+    selectedLevelRef.current = level;
     setActiveLevel(level);
     
     if (!level.isUnlocked) {
@@ -471,11 +566,11 @@ const AdventurePage: React.FC<AdventurePageProps> = ({
       e.stopPropagation();
     }
     
-    console.log('[Adventure] Attempting to start LEARN mode', activeLevel?.id);
+    const targetId = activeLevel?.id || selectedLevelRef.current?.id;
+    console.log('[Adventure] Attempting to start LEARN mode', targetId);
 
     // We want to use the fresh level data from our derived levels list
-    const targetId = activeLevel?.id;
-    const freshLevel = levels.find(l => l.id === targetId);
+    const freshLevel = levels.find(l => l.id === targetId) || activeLevel || selectedLevelRef.current;
     
     if (!freshLevel) {
       console.warn('[Adventure] No target level found for learning mode', targetId);
@@ -488,6 +583,7 @@ const AdventurePage: React.FC<AdventurePageProps> = ({
     
     // Set active level to the fresh one just in case
     setActiveLevel(freshLevel);
+    selectedLevelRef.current = freshLevel;
     setCardIndex(0);
     setStep('LEARN');
     setShowLevelModeSelector(false);
@@ -498,10 +594,10 @@ const AdventurePage: React.FC<AdventurePageProps> = ({
       e.stopPropagation();
     }
 
-    console.log('[Adventure] Attempting to start REVIEW mode', activeLevel?.id);
+    const targetId = activeLevel?.id || selectedLevelRef.current?.id;
+    console.log('[Adventure] Attempting to start REVIEW mode', targetId);
 
-    const targetId = activeLevel?.id;
-    const freshLevel = levels.find(l => l.id === targetId);
+    const freshLevel = levels.find(l => l.id === targetId) || activeLevel || selectedLevelRef.current;
     
     if (!freshLevel) {
       console.warn('[Adventure] No target level found for review mode', targetId);
@@ -1233,7 +1329,7 @@ const AdventurePage: React.FC<AdventurePageProps> = ({
                     )}
 
                     {/* Winding Map Forest Stage Board */}
-                    <div className={`relative py-12 px-6 rounded-[48px] overflow-hidden bg-gradient-to-b ${activeTheme.bg} border-4 border-white shadow-xl transition-all duration-700 min-h-[550px]`}>
+                    <div id="adventure-board-container" className={`relative py-12 px-6 rounded-[48px] overflow-hidden bg-gradient-to-b ${activeTheme.bg} border-4 border-white shadow-xl transition-all duration-700 min-h-[550px]`}>
                       {/* Floating Thematic Emojis */}
                       <div className="absolute inset-0 overflow-hidden pointer-events-none z-0 select-none">
                         <div className="absolute top-8 left-10 text-3xl opacity-25 animate-bounce-gentle">{activeTheme.decor[0]}</div>
@@ -1252,17 +1348,38 @@ const AdventurePage: React.FC<AdventurePageProps> = ({
                         />
                       </div>
 
+                      {/* Smooth Custom SVG Connector Path representing winding roads */}
+                      {svgPathData && (
+                        <svg className="absolute inset-0 w-full h-full pointer-events-none z-15">
+                          <motion.path
+                            initial={{ pathLength: 0 }}
+                            animate={{ pathLength: 1 }}
+                            transition={{ duration: 1.2, ease: "easeOut" }}
+                            d={svgPathData}
+                            fill="none"
+                            stroke="#10b981"
+                            strokeWidth="5"
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                            strokeDasharray="8,10"
+                            className="stroke-emerald-400 opacity-80"
+                          />
+                        </svg>
+                      )}
+
                       {/* Snaking Level Nodes Grid layout */}
                       <div className="space-y-12 relative z-20">
                         {currentSectorLevels.map((level, sliceIdx) => {
                           const originalIdx = currentSectorIndex * 12 + sliceIdx;
+                          const firstUnmasteredIdx = levels.findIndex(l => !l.isMastered);
+                          const isCurrent = originalIdx === (firstUnmasteredIdx !== -1 ? firstUnmasteredIdx : 0);
                           return (
                             <LevelNode 
                               key={level.id}
                               level={level}
                               index={originalIdx}
                               isLocked={!level.isUnlocked}
-                              isCurrent={level.isUnlocked && !level.isMastered}
+                              isCurrent={isCurrent}
                               onSelect={startLevel}
                             />
                           );

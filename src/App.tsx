@@ -13,6 +13,23 @@ import WhackAMole from './components/WhackAMole';
 import VoiceDubbing from './components/VoiceDubbing';
 import SpellingBee from './components/SpellingBee';
 import PlantsVsMonsters from './components/PlantsVsMonsters';
+import SpaceWordRaider from './components/SpaceWordRaider';
+import PolarWordFishing from './components/PolarWordFishing';
+import CauldronSorter from './components/CauldronSorter';
+import WordGoldMiner from './components/WordGoldMiner';
+import WordNinjaSlasher from './components/WordNinjaSlasher';
+import DeepSeaSonar from './components/DeepSeaSonar';
+import SizzlingWordKitchen from './components/SizzlingWordKitchen';
+import WordMonsterFeeding from './components/WordMonsterFeeding';
+import WordHamsterWhack from './components/WordHamsterWhack';
+import WordBubbleShooter from './components/WordBubbleShooter';
+import IceCreamSpelling from './components/IceCreamSpelling';
+import DinoRockJumper from './components/DinoRockJumper';
+import WordDJBeat from './components/WordDJBeat';
+import WordMagnetRocket from './components/WordMagnetRocket';
+import WordSpellingPopit from './components/WordSpellingPopit';
+import WordPotionLab from './components/WordPotionLab';
+import WordParrotDubbing from './components/WordParrotDubbing';
 import Leaderboard from './components/Leaderboard';
 import UploadContent from './components/UploadContent';
 import MagicShop from './components/MagicShop';
@@ -994,7 +1011,7 @@ const App: React.FC = () => {
           )}
           
           {/* Game Views - Smooth Scale Entrance */}
-          {['CHALLENGE', 'SCRAMBLE', 'SHEEP', 'BALLOON', 'WHACK', 'DUBBING', 'SPELLING', 'PLANTS'].includes(view) && (
+          {['CHALLENGE', 'SCRAMBLE', 'SHEEP', 'BALLOON', 'WHACK', 'DUBBING', 'SPELLING', 'PLANTS', 'RAIDEN', 'FISHING', 'ALCHEMIST', 'MINER', 'SLASHER', 'SONAR', 'COOKING', 'FEEDING', 'HAMSTER', 'SHOOTER', 'ICECREAM', 'DINO', 'DJ', 'ROCKET', 'POPIT', 'POTION', 'PARROT'].includes(view) && (
             <motion.div key="game" initial={{ scale: 0.9, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} exit={{ scale: 1.1, opacity: 0 }} transition={{ type: "spring", damping: 20 }}>
               {view === 'CHALLENGE' && <WordChallenge groups={activeGroups} isReviewMode={isReviewChallenge} onFinish={handleGameFinish} onMistake={() => {}} onSuccess={handleGameSuccess} onClose={() => handleNavigate('ARCADE')} />}
               {view === 'SCRAMBLE' && <LetterScramble groups={activeGroups} onFinish={handleGameFinish} onClose={() => handleNavigate('ARCADE')} />}
@@ -1004,6 +1021,23 @@ const App: React.FC = () => {
               {view === 'DUBBING' && <VoiceDubbing items={activeGroups.flatMap(g => g.words.map((w, idx) => ({ id: `${g.id}-${idx}`, ...w })))} onFinish={handleGameFinish} onClose={() => handleNavigate('ARCADE')} />}
               {view === 'SPELLING' && <SpellingBee groups={activeGroups} onFinish={handleGameFinish} onClose={() => handleNavigate('ARCADE')} />}
               {view === 'PLANTS' && <PlantsVsMonsters groups={activeGroups} stats={stats} onFinish={handleGameFinish} onClose={() => handleNavigate('ARCADE')} />}
+              {view === 'RAIDEN' && <SpaceWordRaider groups={activeGroups} stats={stats} onFinish={handleGameFinish} onClose={() => handleNavigate('ARCADE')} />}
+              {view === 'FISHING' && <PolarWordFishing groups={activeGroups} stats={stats} onFinish={handleGameFinish} onClose={() => handleNavigate('ARCADE')} />}
+              {view === 'ALCHEMIST' && <CauldronSorter groups={activeGroups} stats={stats} onFinish={handleGameFinish} onClose={() => handleNavigate('ARCADE')} />}
+              {view === 'MINER' && <WordGoldMiner groups={activeGroups} stats={stats} onFinish={handleGameFinish} onClose={() => handleNavigate('ARCADE')} />}
+              {view === 'SLASHER' && <WordNinjaSlasher groups={activeGroups} stats={stats} onFinish={handleGameFinish} onClose={() => handleNavigate('ARCADE')} />}
+              {view === 'SONAR' && <DeepSeaSonar groups={activeGroups} stats={stats} onFinish={handleGameFinish} onClose={() => handleNavigate('ARCADE')} />}
+              {view === 'COOKING' && <SizzlingWordKitchen groups={activeGroups} stats={stats} onFinish={handleGameFinish} onClose={() => handleNavigate('ARCADE')} />}
+              {view === 'FEEDING' && <WordMonsterFeeding groups={activeGroups} stats={stats} onFinish={handleGameFinish} onClose={() => handleNavigate('ARCADE')} />}
+              {view === 'HAMSTER' && <WordHamsterWhack groups={activeGroups} stats={stats} onFinish={handleGameFinish} onClose={() => handleNavigate('ARCADE')} />}
+              {view === 'SHOOTER' && <WordBubbleShooter groups={activeGroups} stats={stats} onFinish={handleGameFinish} onClose={() => handleNavigate('ARCADE')} />}
+              {view === 'ICECREAM' && <IceCreamSpelling groups={activeGroups} stats={stats} onFinish={handleGameFinish} onClose={() => handleNavigate('ARCADE')} />}
+              {view === 'DINO' && <DinoRockJumper groups={activeGroups} stats={stats} onFinish={handleGameFinish} onClose={() => handleNavigate('ARCADE')} />}
+              {view === 'DJ' && <WordDJBeat groups={activeGroups} stats={stats} onFinish={handleGameFinish} onClose={() => handleNavigate('ARCADE')} />}
+              {view === 'ROCKET' && <WordMagnetRocket groups={activeGroups} stats={stats} onFinish={handleGameFinish} onClose={() => handleNavigate('ARCADE')} />}
+              {view === 'POPIT' && <WordSpellingPopit groups={activeGroups} stats={stats} onFinish={handleGameFinish} onClose={() => handleNavigate('ARCADE')} />}
+              {view === 'POTION' && <WordPotionLab groups={activeGroups} stats={stats} onFinish={handleGameFinish} onClose={() => handleNavigate('ARCADE')} />}
+              {view === 'PARROT' && <WordParrotDubbing groups={activeGroups} stats={stats} onFinish={handleGameFinish} onClose={() => handleNavigate('ARCADE')} />}
             </motion.div>
           )}
 
@@ -1171,7 +1205,7 @@ const App: React.FC = () => {
       <nav className="fixed bottom-8 left-1/2 -translate-x-1/2 w-[95%] glass-pill h-20 rounded-[32px] flex items-center justify-around px-4 z-50 border-white/80 shadow-2xl">
         <NavButton icon={<Home />} label="主页" active={view === 'HOME'} onClick={() => handleNavigate('HOME')} color="text-indigo-600" />
         <NavButton icon={<BookOpen />} label="冒险" active={view === 'ADVENTURE'} onClick={() => handleNavigate('ADVENTURE')} color="text-rose-500" />
-        <NavButton icon={<Gamepad2 />} label="游玩" active={view === 'ARCADE' || ['CHALLENGE', 'SCRAMBLE', 'SHEEP', 'BALLOON', 'WHACK', 'DUBBING', 'SPELLING', 'PLANTS'].includes(view)} onClick={() => handleNavigate('ARCADE')} color="text-sky-500" />
+        <NavButton icon={<Gamepad2 />} label="游玩" active={view === 'ARCADE' || ['CHALLENGE', 'SCRAMBLE', 'SHEEP', 'BALLOON', 'WHACK', 'DUBBING', 'SPELLING', 'PLANTS', 'RAIDEN', 'FISHING', 'ALCHEMIST', 'MINER', 'SLASHER', 'SONAR', 'COOKING', 'FEEDING', 'HAMSTER', 'SHOOTER', 'ICECREAM', 'DINO', 'DJ', 'ROCKET', 'POPIT', 'POTION', 'PARROT'].includes(view)} onClick={() => handleNavigate('ARCADE')} color="text-sky-500" />
         <NavButton icon={<Heart />} label="宠兽" active={view === 'PETS'} onClick={() => handleNavigate('PETS')} color="text-rose-400" />
         <NavButton icon={<ShoppingBag />} label="商店" active={view === 'SHOP'} onClick={() => handleNavigate('SHOP')} color="text-purple-500" />
         <NavButton icon={<BarChart3 />} label="排行" active={view === 'RANKING'} onClick={() => handleNavigate('RANKING')} color="text-amber-500" />

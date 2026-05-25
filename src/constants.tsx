@@ -901,13 +901,12 @@ const TEXTBOOK_ALL_CARDS = [
   ...INTERMEDIATE_TEXTBOOK_CARDS_PART3,
   ...INTERMEDIATE_TEXTBOOK_CARDS_PART4,
   ...INTERMEDIATE_TEXTBOOK_CARDS_PART5,
-  ...INTERMEDIATE_TEXTBOOK_CARDS_PART6,
-  ...INTERMEDIATE_TEXTBOOK_CARDS_PART7
+  ...INTERMEDIATE_TEXTBOOK_CARDS_PART6
 ];
 
 export const ALL_CARDS: WordCard[] = [
-  // Primary has all entries from the original textbook PDF 1 (giving exactly 330 cards, nearly 400!)
-  ...ORIGINAL_CARDS_LIST.map((card, index) => {
+  // Primary difficulty maps to the first 150 physical textbook pages
+  ...TEXTBOOK_ALL_CARDS.slice(0, 150).map((card, index) => {
     const pageNum = index + 1;
     return {
       ...card,
@@ -917,8 +916,8 @@ export const ALL_CARDS: WordCard[] = [
     };
   }),
 
-  // Intermediate has all 959 pages from the phonetic textbook PDF 2 (giving exactly 959 cards, nearly 1000!)
-  ...TEXTBOOK_ALL_CARDS.map((card, index) => {
+  // Intermediate difficulty maps to pages 151 to 300 of the physical textbook pages
+  ...TEXTBOOK_ALL_CARDS.slice(150, 300).map((card, index) => {
     const pageNum = index + 1;
     return {
       ...card,
@@ -928,8 +927,8 @@ export const ALL_CARDS: WordCard[] = [
     };
   }),
 
-  // Advanced has advanced cards from ORIGINAL_CARDS_LIST
-  ...ORIGINAL_CARDS_LIST.filter(card => card.difficulty === 'ADVANCED').map((card, index) => {
+  // Advanced difficulty maps to the remaining pages 301 to 405 of the physical textbook pages
+  ...TEXTBOOK_ALL_CARDS.slice(300).map((card, index) => {
     const pageNum = index + 1;
     return {
       ...card,
