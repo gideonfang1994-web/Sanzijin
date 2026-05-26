@@ -78,11 +78,11 @@ const LetterScramble: React.FC<Props> = ({ groups, isReviewMode, onFinish, onClo
 
   const speak = (text: string) => {
     if (!text) return;
-    window.speechSynthesis.cancel();
-    const utterance = new SpeechSynthesisUtterance(text);
-    utterance.lang = 'en-US';
-    utterance.rate = 0.8;
-    window.speechSynthesis.speak(utterance);
+    try {
+      audio.speak(text);
+    } catch (e) {
+      console.error(e);
+    }
   };
 
   const initRound = () => {

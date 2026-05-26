@@ -706,6 +706,8 @@ const HomePage: React.FC<HomePageProps> = ({ stats, groups, reviewNeeded, onNavi
         </AnimatePresence>
       </div>
 
+      <DailyQuestBoard quests={stats.quests} onQuestClick={onQuestClick} />
+
       {/* Main Navigation Grid */}
       <div className="grid grid-cols-2 gap-6 px-1">
         <motion.button 
@@ -786,8 +788,6 @@ const HomePage: React.FC<HomePageProps> = ({ stats, groups, reviewNeeded, onNavi
           </div>
         </motion.button>
       </div>
-
-      <DailyQuestBoard quests={stats.quests} onQuestClick={onQuestClick} />
       
       {/* Achievement Progress Bar Footprint */}
       <motion.div 

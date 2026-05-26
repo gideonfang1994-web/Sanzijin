@@ -78,31 +78,11 @@ const ArcadePage: React.FC<ArcadePageProps> = ({ groups, stats, lastLearnedWords
   }, [progress, stats.reviewSchedules]);
 
   const games: GameInfo[] = [
-    { id: 'DJ', title: '听力DJ节奏控', icon: <Sparkles />, color: 'bg-indigo-600', xp: '+440', description: '点击黑胶大音箱！根据悦耳的英文原声，拍打浮起的节奏音符！', category: 'ARCADE' },
-    { id: 'ROCKET', title: '磁吸太空火箭号', icon: <Zap />, color: 'bg-cyan-500', xp: '+450', description: '控制火箭在陨石带左右穿行，用磁力防雨罩吸聚字母拼写词汇！', category: 'ARCADE' },
-    { id: 'POPIT', title: '马卡龙拼拼消消乐', icon: <Smile />, color: 'bg-pink-450', xp: '+420', description: '轻快触捏减压治愈系马卡龙气泡！以无比快乐舒适的姿势捏透拼写！', category: 'ARCADE' },
-    { id: 'POTION', title: '奇幻药水融合坩埚', icon: <Sparkles />, color: 'bg-purple-500', xp: '+430', description: '将印有密词的魔药瓶扔进正确译文印记的魔力沸水釜，升华强力药效！', category: 'ARCADE' },
-    { id: 'PARROT', title: '鹦鹉船长配音模拟号', icon: <Mic />, color: 'bg-teal-500', xp: '+480', description: '倾听鹦鹉船长优雅的声音。点击麦克风激情跟读，让船长为你拍案叫绝！', category: 'CHALLENGE' },
-    { id: 'FEEDING', title: '萌兽大胃喂养记', icon: <Sparkles />, color: 'bg-rose-500', xp: '+420', description: '点击抛落的汉字糖果！精准砸入肚子咕咕叫的小萌兽大嘴里！', category: 'ARCADE' },
-    { id: 'HAMSTER', title: '松鼠抢释义大本营', icon: <Hammer />, color: 'bg-amber-500', xp: '+380', description: '仓鼠背着翻译牌出洞！看准正确翻译，一气呵成锤击它！', category: 'ARCADE' },
-    { id: 'SHOOTER', title: '神力彩泡消消乐', icon: <Zap />, color: 'bg-indigo-500', xp: '+400', description: '瞄准空中词标彩气球！发射单词神弹，完美同化爆金币！', category: 'ARCADE' },
-    { id: 'ICECREAM', title: '冰淇淋字母叠高塔', icon: <Sparkles />, color: 'bg-pink-500', xp: '+460', description: '按字母拼写顺序接住落下的冰淇淋奶油球！叠成巍峨美味高山！', category: 'ARCADE' },
-    { id: 'DINO', title: '恐龙火山跨跃行', icon: <Star />, color: 'bg-orange-500', xp: '+420', description: '踩中正确的词义浮石！带小恐龙跨越岩浆登极，采摘九天星辰！', category: 'ARCADE' },
-    { id: 'SLASHER', title: '忍者词境神斩', icon: <Sparkles />, color: 'bg-emerald-550', xp: '+400', description: '武士之刃劈斩空气！划动手指斩击正确翻译的飘影！', category: 'ARCADE' },
-    { id: 'SONAR', title: '深海声呐大避障', icon: <Zap />, color: 'bg-cyan-600', xp: '+400', description: '驾驶海狼核潜艇，发射激振水波爆破水雷磁核！', category: 'ARCADE' },
-    { id: 'COOKING', title: '大中华词膳神厨', icon: <Coffee />, color: 'bg-orange-500', xp: '+420', description: '客官起筷！点击竹篮传送带字母配料投入火热大炒锅！', category: 'ARCADE' },
-    { id: 'FISHING', title: '冰川钓词翁', icon: <Star />, color: 'bg-sky-500', xp: '+400', description: '控制悬挂的吊钩，钓起正确翻译的冰湖群鱼！', category: 'ARCADE' },
-    { id: 'ALCHEMIST', title: '拼读炼金术', icon: <Sparkles />, color: 'bg-purple-600', xp: '+450', description: '萃取空气中下落的词元晶体，将其分类熔炼！', category: 'ARCADE' },
-    { id: 'MINER', title: '拼词黄金矿工', icon: <Hammer />, color: 'bg-amber-600', xp: '+400', description: '对准摇摆的机械大抓手，开挖按顺序拼写的字母矿！', category: 'ARCADE' },
-    { id: 'RAIDEN', title: '雷电词皇', icon: <Zap />, color: 'bg-indigo-600', xp: '+500', description: '校正星际重炮，轰向入侵的拼词外星舰队！', category: 'ARCADE' },
-    { id: 'PLANTS', title: '植物守卫战', icon: <Zap />, color: 'bg-emerald-600', xp: '+450', description: '召唤绿植词灵射手，击退单词僵尸！', category: 'ARCADE' },
-    { id: 'SHEEP', title: '羊羊消消乐', icon: <Layers />, color: 'bg-emerald-500', xp: '+400', description: '消除3个相同魔法，清空法阵！', category: 'ARCADE' },
-    { id: 'SPELLING', title: '单词拼写蜂', icon: <Sparkles />, color: 'bg-amber-500', xp: '+350', description: '听音辨词，像勤劳的蜜蜂一样拼写。', category: 'CHALLENGE' },
     { id: 'SCRAMBLE', title: '拼词大师', icon: <Zap />, color: 'bg-rose-500', xp: '+250', description: '释放字母能量，拼出正确的咒语。', category: 'CHALLENGE' },
-    { id: 'WHACK', title: '地鼠行动', icon: <Hammer />, color: 'bg-orange-500', xp: '+180', description: '快！打掉那些淘气的魔法地鼠。', category: 'ARCADE' },
-    { id: 'BALLOON', title: '飞飞飞刀', icon: <Music />, color: 'bg-teal-500', xp: '+150', description: '精准投掷魔力飞刀，刺破单词气球。', category: 'ARCADE' },
-    { id: 'DUBBING', title: '魔法配音', icon: <Mic />, color: 'bg-emerald-600', xp: '+300', description: '用魔法声音重复你的单词咒语。', category: 'CHALLENGE' },
-    { id: 'CHALLENGE', title: '森林对决', icon: <Zap />, color: 'bg-green-700', xp: '+200', description: '最极致的单词对决，测试你的反应。', category: 'CHALLENGE' },
+    { id: 'HAMSTER', title: '萌兽地鼠锤释义', icon: <Hammer />, color: 'bg-amber-500', xp: '+380', description: '仓鼠背着翻译牌出洞！看准正确翻译，一气呵成锤击它！', category: 'ARCADE' },
+    { id: 'FISHING', title: '冰川吊词翁', icon: <Star />, color: 'bg-sky-500', xp: '+400', description: '控制悬挂的吊钩，钓起正确翻译的冰湖群鱼！', category: 'ARCADE' },
+    { id: 'PLANTS', title: '植物守卫战', icon: <Zap />, color: 'bg-emerald-600', xp: '+450', description: '召唤绿植词灵射手，击退单词僵尸！', category: 'ARCADE' },
+    { id: 'SHEEP', title: '洋洋消消乐', icon: <Layers />, color: 'bg-emerald-500', xp: '+400', description: '消除3个相同魔法，清空法阵！', category: 'ARCADE' },
   ];
 
   const dueLevels = useMemo(() => levels.filter(l => l.isDue), [levels]);

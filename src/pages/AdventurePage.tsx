@@ -466,7 +466,7 @@ const AdventurePage: React.FC<AdventurePageProps> = ({
   // Auto-focus the sector where the user is currently learning
   useEffect(() => {
     if (levels.length > 0) {
-      const activeIdx = levels.findIndex(level => level.isUnlocked && !level.isMastered);
+      const activeIdx = levels.findIndex(level => !level.isCompleted);
       const targetSector = activeIdx !== -1 ? Math.floor(activeIdx / 12) : 0;
       setCurrentSectorIndex(targetSector);
     }
@@ -1371,8 +1371,8 @@ const AdventurePage: React.FC<AdventurePageProps> = ({
                       <div className="space-y-12 relative z-20">
                         {currentSectorLevels.map((level, sliceIdx) => {
                           const originalIdx = currentSectorIndex * 12 + sliceIdx;
-                          const firstUnmasteredIdx = levels.findIndex(l => !l.isMastered);
-                          const isCurrent = originalIdx === (firstUnmasteredIdx !== -1 ? firstUnmasteredIdx : 0);
+                          const firstUncompletedIdx = levels.findIndex(l => !l.isCompleted);
+                          const isCurrent = originalIdx === (firstUncompletedIdx !== -1 ? firstUncompletedIdx : Math.max(0, levels.length - 1));
                           return (
                             <LevelNode 
                               key={level.id}

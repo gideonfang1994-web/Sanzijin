@@ -421,7 +421,6 @@ export const PlantsVsMonsters: React.FC<PlantsVsMonstersProps> = ({ groups, stat
     if (selectedTranslation === currentWord.translation) {
       // Correct!
       audio.playSuccess();
-      try { audio.speak(currentWord.text); } catch (e){}
 
       // Attack Lane 1 & randomly another lane with standard peas
       launchAttack(1, 'PEA');
@@ -471,7 +470,6 @@ export const PlantsVsMonsters: React.FC<PlantsVsMonstersProps> = ({ groups, stat
       if (newSpelled.join('') === currentWord.text.toLowerCase()) {
         triggerFloatingText('🔥 成功拼写！超大瓜皮手投掷！', 20, 15, 'text-amber-500 font-black');
         audio.playSuccess();
-        try { audio.speak(currentWord.text); } catch (e){}
 
         // Fire giant spell fireballs or melons in MULTIPLE lanes!
         launchAttack(0, 'FIREBALL');

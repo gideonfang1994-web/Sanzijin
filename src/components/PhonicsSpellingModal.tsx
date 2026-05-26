@@ -77,23 +77,23 @@ export function getIPAPronunciation(token: string, fallbackWord?: string): Phone
   // Master IPA dictionary
   const map: Record<string, PhoneticResult> = {
     // Monophthongs (Vowels)
-    'æ': { sound: 'aah', rate: 0.65, pitch: 1.15 }, // cat
-    'ɑː': { sound: 'ah', rate: 0.58, pitch: 1.05 }, // father
-    'aː': { sound: 'ah', rate: 0.58, pitch: 1.05 },
-    'ʌ': { sound: 'uhh', rate: 0.7, pitch: 1.1 },   // cup
-    'ɔː': { sound: 'aww', rate: 0.58, pitch: 1.05 }, // law / port
-    'ɒ': { sound: 'ah', rate: 0.7, pitch: 1.05 },   // hot
-    'ə': { sound: 'uh', rate: 0.75, pitch: 1.1 },   // schwa
-    'ɜː': { sound: 'err', rate: 0.58, pitch: 1.1 },  // bird
-    'e': { sound: 'ehh', rate: 0.7, pitch: 1.15 },  // bed
-    'ɛ': { sound: 'ehh', rate: 0.7, pitch: 1.15 },
-    'iː': { sound: 'eee', rate: 0.58, pitch: 1.18 }, // see
-    'ɪ': { sound: 'ihh', rate: 0.7, pitch: 1.15 },  // sit
-    'uː': { sound: 'ooo', rate: 0.58, pitch: 1.12 }, // too
-    'ʊ': { sound: 'uuh', rate: 0.65, pitch: 1.1 },   // book
+    'æ': { sound: 'add', rate: 1.3, pitch: 1.15 }, // flat a as in cat / bat / add
+    'ɑː': { sound: 'ah', rate: 0.65, pitch: 1.05 }, // father
+    'aː': { sound: 'ah', rate: 0.65, pitch: 1.05 },
+    'ʌ': { sound: 'uhh', rate: 0.8, pitch: 1.1 },   // cup
+    'ɔː': { sound: 'aww', rate: 0.65, pitch: 1.05 }, // law / port
+    'ɒ': { sound: 'ah', rate: 0.8, pitch: 1.05 },   // hot
+    'ə': { sound: 'uh', rate: 0.85, pitch: 1.1 },   // schwa
+    'ɜː': { sound: 'err', rate: 0.65, pitch: 1.1 },  // bird
+    'e': { sound: 'ehh', rate: 0.8, pitch: 1.12 },  // bed
+    'ɛ': { sound: 'ehh', rate: 0.8, pitch: 1.12 },
+    'iː': { sound: 'eee', rate: 0.65, pitch: 1.18 }, // see
+    'ɪ': { sound: 'ihh', rate: 0.8, pitch: 1.15 },  // sit
+    'uː': { sound: 'ooo', rate: 0.65, pitch: 1.12 }, // too
+    'ʊ': { sound: 'uuh', rate: 0.75, pitch: 1.1 },   // book
     
     // Diphthongs
-    'eɪ': { sound: 'ae', rate: 0.6, pitch: 1.15 },   // say
+    'eɪ': { sound: 'ay', rate: 0.6, pitch: 1.15 },   // say
     'aɪ': { sound: 'eye', rate: 0.6, pitch: 1.15 },  // my
     'ɔɪ': { sound: 'oy', rate: 0.6, pitch: 1.1 },   // boy
     'oʊ': { sound: 'oh', rate: 0.6, pitch: 1.1 },   // go
@@ -103,51 +103,51 @@ export function getIPAPronunciation(token: string, fallbackWord?: string): Phone
     'eə': { sound: 'air', rate: 0.62, pitch: 1.1 },  // hair
     'ʊə': { sound: 'yoor', rate: 0.62, pitch: 1.1 }, // cure
 
-    // Consonants (Perfecting Plosives & Soft Fricatives for Web Speech API with High-Fidelity Speed Cutoff)
-    'p': { sound: 'peh', rate: 1.8, pitch: 1.2 },
-    'b': { sound: 'beh', rate: 1.6, pitch: 1.05 },
-    't': { sound: 'teh', rate: 1.9, pitch: 1.2 },
-    'd': { sound: 'deh', rate: 1.6, pitch: 1.05 },
-    'k': { sound: 'keh', rate: 1.8, pitch: 1.2 },
-    'g': { sound: 'geh', rate: 1.6, pitch: 1.05 },
-    'ɡ': { sound: 'geh', rate: 1.6, pitch: 1.05 },
-    'f': { sound: 'fff', rate: 0.9, pitch: 1.1 },
-    'v': { sound: 'vveh', rate: 1.5, pitch: 1.05 },
-    'θ': { sound: 'thhh', rate: 0.95, pitch: 1.15 }, // thin
-    'ð': { sound: 'theh', rate: 1.6, pitch: 1.05 },  // this
-    's': { sound: 'sss', rate: 0.95, pitch: 1.15 },
-    'z': { sound: 'zzz', rate: 0.95, pitch: 1.1 },
-    'ʃ': { sound: 'shhh', rate: 0.85, pitch: 1.1 }, // she
-    'ʒ': { sound: 'zh', rate: 1.1, pitch: 1.05 },   // measure
-    'h': { sound: 'hhh', rate: 0.9, pitch: 1.1 },
-    'm': { sound: 'mmm', rate: 0.8, pitch: 1.1 },
-    'n': { sound: 'nnn', rate: 0.8, pitch: 1.1 },
-    'ŋ': { sound: 'ing', rate: 1.2, pitch: 1.12 }, // sing
-    'l': { sound: 'lll', rate: 0.85, pitch: 1.1 },
-    'r': { sound: 'rrr', rate: 0.85, pitch: 1.1 },
-    'j': { sound: 'yuh', rate: 1.5, pitch: 1.15 },  // yes
-    'w': { sound: 'wuh', rate: 1.5, pitch: 1.12 },
-    'tʃ': { sound: 'tch', rate: 1.3, pitch: 1.15 }, // chin
-    'dʒ': { sound: 'juh', rate: 1.6, pitch: 1.1 }, // jam
-    'kw': { sound: 'kwuh', rate: 1.5, pitch: 1.15 },
+    // Consonants (Perfecting Plosives & Soft Fricatives using rapid truncated open/closed syllables to isolate the clean IPA sound and prevent spelling-out)
+    'p': { sound: 'puh', rate: 2.2, pitch: 1.25 },
+    'b': { sound: 'buh', rate: 2.2, pitch: 1.05 },
+    't': { sound: 'tuh', rate: 2.2, pitch: 1.25 },
+    'd': { sound: 'duh', rate: 2.2, pitch: 1.05 },
+    'k': { sound: 'kuh', rate: 2.2, pitch: 1.25 },
+    'g': { sound: 'guh', rate: 2.2, pitch: 1.05 },
+    'ɡ': { sound: 'guh', rate: 2.2, pitch: 1.05 },
+    'f': { sound: 'fuh', rate: 2.2, pitch: 1.15 },
+    'v': { sound: 'vuh', rate: 2.2, pitch: 1.05 },
+    'θ': { sound: 'thuh', rate: 2.2, pitch: 1.15 }, // thin -> pure /θ/
+    'ð': { sound: 'dhuh', rate: 2.2, pitch: 1.05 },  // this -> pure /ð/
+    's': { sound: 'suh', rate: 2.2, pitch: 1.15 },
+    'z': { sound: 'zuh', rate: 2.2, pitch: 1.1 },
+    'ʃ': { sound: 'shuh', rate: 2.2, pitch: 1.15 }, // she -> pure /ʃ/
+    'ʒ': { sound: 'zhuh', rate: 2.2, pitch: 1.05 },  // measure
+    'h': { sound: 'huh', rate: 2.2, pitch: 1.2 },
+    'm': { sound: 'muh', rate: 2.2, pitch: 1.1 },
+    'n': { sound: 'nuh', rate: 2.2, pitch: 1.1 },
+    'ŋ': { sound: 'nguh', rate: 2.2, pitch: 1.12 }, // sing
+    'l': { sound: 'luh', rate: 2.1, pitch: 1.1 },
+    'r': { sound: 'ruh', rate: 2.1, pitch: 1.1 },
+    'j': { sound: 'yuh', rate: 2.2, pitch: 1.15 },  // yes
+    'w': { sound: 'wuh', rate: 2.2, pitch: 1.12 },
+    'tʃ': { sound: 'chuh', rate: 2.2, pitch: 1.15 }, // chin
+    'dʒ': { sound: 'juh', rate: 2.2, pitch: 1.1 },  // jam
+    'kw': { sound: 'kwuh', rate: 2.2, pitch: 1.15 },
   };
 
   if (map[clean]) return map[clean];
 
   // Map of basic single/double letter combinations (Grapheme helper fallback)
   const fallbackGraphMap: Record<string, PhoneticResult> = {
-    'sh': { sound: 'shhh', rate: 0.85, pitch: 1.1 },
-    'ch': { sound: 'tch', rate: 1.3, pitch: 1.15 },
-    'th': { sound: 'thhh', rate: 0.95, pitch: 1.15 },
-    'wh': { sound: 'wuh', rate: 1.5, pitch: 1.12 },
-    'ph': { sound: 'fff', rate: 0.9, pitch: 1.1 },
-    'ck': { sound: 'keh', rate: 1.8, pitch: 1.2 },
-    'ng': { sound: 'ing', rate: 1.2, pitch: 1.12 },
+    'sh': { sound: 'shuh', rate: 2.2, pitch: 1.15 },
+    'ch': { sound: 'chuh', rate: 2.2, pitch: 1.15 },
+    'th': { sound: 'thuh', rate: 2.2, pitch: 1.15 },
+    'wh': { sound: 'wuh', rate: 2.2, pitch: 1.12 },
+    'ph': { sound: 'fuh', rate: 2.2, pitch: 1.15 },
+    'ck': { sound: 'kuh', rate: 2.2, pitch: 1.25 },
+    'ng': { sound: 'nguh', rate: 2.2, pitch: 1.12 },
     'ee': { sound: 'eee', rate: 0.65, pitch: 1.18 },
     'ea': { sound: 'eee', rate: 0.65, pitch: 1.18 },
     'oo': { sound: 'ooo', rate: 0.65, pitch: 1.15 },
-    'ai': { sound: 'ae', rate: 0.6, pitch: 1.15 },
-    'ay': { sound: 'ae', rate: 0.6, pitch: 1.15 },
+    'ai': { sound: 'ay', rate: 0.6, pitch: 1.15 },
+    'ay': { sound: 'ay', rate: 0.6, pitch: 1.15 },
     'ar': { sound: 'ar', rate: 0.75, pitch: 1.1 },
     'er': { sound: 'er', rate: 0.75, pitch: 1.1 },
     'ir': { sound: 'er', rate: 0.75, pitch: 1.1 },
@@ -158,32 +158,32 @@ export function getIPAPronunciation(token: string, fallbackWord?: string): Phone
     'oi': { sound: 'oy', rate: 0.7, pitch: 1.1 },
     'oy': { sound: 'oy', rate: 0.7, pitch: 1.1 },
 
-    'b': { sound: 'beh', rate: 1.6, pitch: 1.05 },
-    'c': { sound: 'keh', rate: 1.8, pitch: 1.2 },
-    'd': { sound: 'deh', rate: 1.6, pitch: 1.05 },
-    'f': { sound: 'fff', rate: 0.9, pitch: 1.1 },
-    'g': { sound: 'geh', rate: 1.6, pitch: 1.05 },
-    'h': { sound: 'heh', rate: 1.7, pitch: 1.2 },
-    'j': { sound: 'juh', rate: 1.6, pitch: 1.1 },
-    'k': { sound: 'keh', rate: 1.8, pitch: 1.2 },
-    'l': { sound: 'lll', rate: 0.85, pitch: 1.1 },
-    'm': { sound: 'mmm', rate: 0.8, pitch: 1.1 },
-    'n': { sound: 'nnn', rate: 0.8, pitch: 1.1 },
-    'p': { sound: 'peh', rate: 1.8, pitch: 1.2 },
-    'q': { sound: 'kwuh', rate: 1.5, pitch: 1.15 },
-    'r': { sound: 'rrr', rate: 0.85, pitch: 1.1 },
-    's': { sound: 'sss', rate: 0.95, pitch: 1.15 },
-    't': { sound: 'teh', rate: 1.9, pitch: 1.2 },
-    'v': { sound: 'vveh', rate: 1.5, pitch: 1.15 },
-    'w': { sound: 'wuh', rate: 1.5, pitch: 1.12 },
-    'x': { sound: 'ks', rate: 1.2, pitch: 1.15 },
-    'z': { sound: 'zzz', rate: 0.95, pitch: 1.15 },
+    'b': { sound: 'buh', rate: 2.2, pitch: 1.05 },
+    'c': { sound: 'kuh', rate: 2.2, pitch: 1.25 },
+    'd': { sound: 'duh', rate: 2.2, pitch: 1.05 },
+    'f': { sound: 'fuh', rate: 2.2, pitch: 1.15 },
+    'g': { sound: 'guh', rate: 2.2, pitch: 1.05 },
+    'h': { sound: 'huh', rate: 2.2, pitch: 1.2 },
+    'j': { sound: 'juh', rate: 2.2, pitch: 1.1 },
+    'k': { sound: 'kuh', rate: 2.2, pitch: 1.25 },
+    'l': { sound: 'luh', rate: 2.1, pitch: 1.1 },
+    'm': { sound: 'muh', rate: 2.2, pitch: 1.1 },
+    'n': { sound: 'nuh', rate: 2.2, pitch: 1.1 },
+    'p': { sound: 'puh', rate: 2.2, pitch: 1.25 },
+    'q': { sound: 'kwuh', rate: 2.2, pitch: 1.15 },
+    'r': { sound: 'ruh', rate: 2.1, pitch: 1.1 },
+    's': { sound: 'suh', rate: 2.2, pitch: 1.15 },
+    't': { sound: 'tuh', rate: 2.2, pitch: 1.25 },
+    'v': { sound: 'vuh', rate: 2.2, pitch: 1.15 },
+    'w': { sound: 'wuh', rate: 2.2, pitch: 1.12 },
+    'x': { sound: 'ks', rate: 1.8, pitch: 1.15 },
+    'z': { sound: 'zuh', rate: 2.2, pitch: 1.15 },
 
-    'a': { sound: 'aah', rate: 0.75, pitch: 1.15 },
-    'e': { sound: 'ehh', rate: 0.75, pitch: 1.15 },
-    'i': { sound: 'ihh', rate: 0.75, pitch: 1.15 },
-    'o': { sound: 'ah', rate: 0.75, pitch: 1.15 },
-    'u': { sound: 'uhh', rate: 0.75, pitch: 1.15 },
+    'a': { sound: 'add', rate: 1.3, pitch: 1.15 },
+    'e': { sound: 'ehh', rate: 0.8, pitch: 1.12 },
+    'i': { sound: 'ihh', rate: 0.8, pitch: 1.12 },
+    'o': { sound: 'ah', rate: 0.8, pitch: 1.12 },
+    'u': { sound: 'uhh', rate: 0.8, pitch: 1.12 },
   };
 
   if (fallbackGraphMap[clean]) return fallbackGraphMap[clean];
@@ -210,6 +210,7 @@ const PhonicsSpellingModal: React.FC<PhonicsSpellingModalProps> = ({
 
   const animatingRef = useRef(false);
   const activeUtterancesRef = useRef<SpeechSynthesisUtterance[]>([]);
+  const activeAudioRef = useRef<HTMLAudioElement | null>(null);
   const isMountedRef = useRef(true);
   const particleIdRef = useRef(0);
 
@@ -282,6 +283,10 @@ const PhonicsSpellingModal: React.FC<PhonicsSpellingModalProps> = ({
     return () => {
       isMountedRef.current = false;
       clearTimeout(timer);
+      if (activeAudioRef.current) {
+        try { activeAudioRef.current.pause(); } catch (e) {}
+        activeAudioRef.current = null;
+      }
       if (typeof window !== 'undefined' && window.speechSynthesis) {
         try { window.speechSynthesis.cancel(); } catch (e) {}
         window.speechSynthesis.onvoiceschanged = null;
@@ -411,10 +416,14 @@ const PhonicsSpellingModal: React.FC<PhonicsSpellingModalProps> = ({
           // Play premium native US voice recording
           const url = `https://dict.youdao.com/dictvoice?audio=${encodeURIComponent(cleanText)}&type=2`;
           const audioObj = new Audio(url);
+          activeAudioRef.current = audioObj;
           audioObj.volume = 0.95;
           
           let resolved = false;
           const finish = () => {
+            if (activeAudioRef.current === audioObj) {
+              activeAudioRef.current = null;
+            }
             if (!resolved) {
               resolved = true;
               resolve();
@@ -423,9 +432,15 @@ const PhonicsSpellingModal: React.FC<PhonicsSpellingModalProps> = ({
 
           audioObj.onended = finish;
           audioObj.onerror = () => {
+            if (activeAudioRef.current === audioObj) {
+              activeAudioRef.current = null;
+            }
             handleSpeechSynthesisFallback();
           };
           audioObj.play().catch(() => {
+            if (activeAudioRef.current === audioObj) {
+              activeAudioRef.current = null;
+            }
             // Autoplay blocked fallback
             handleSpeechSynthesisFallback();
           });
@@ -508,10 +523,18 @@ const PhonicsSpellingModal: React.FC<PhonicsSpellingModalProps> = ({
 
   // Click on a letter block to practice on demand (Interactive Xylophone Mode)
   const handleLetterBlockClick = async (idx: number, clickType: 'letter' | 'phoneme' = 'letter') => {
+    if (activeAudioRef.current) {
+      try { activeAudioRef.current.pause(); } catch (e) {}
+      activeAudioRef.current = null;
+    }
     if (animatingRef.current) {
       // Allow stopping animation immediately to turn on playable playroom mode
       animatingRef.current = false;
       setHasCompletedGuide(true);
+      if (typeof window !== 'undefined' && window.speechSynthesis) {
+        try { window.speechSynthesis.cancel(); } catch (e) {}
+      }
+    } else {
       if (typeof window !== 'undefined' && window.speechSynthesis) {
         try { window.speechSynthesis.cancel(); } catch (e) {}
       }

@@ -131,7 +131,6 @@ export const WordHamsterWhack: React.FC<WordHamsterWhackProps> = ({ groups, stat
     if (currentHole.isCorrect) {
       // Correct Smack! 😂
       audio.playSuccess();
-      try { audio.speak(targetWord?.text || ''); } catch (e) {}
       setScore(s => s + 60);
       setCoinsEarned(c => c + 3);
       setXpEarned(x => x + 6);

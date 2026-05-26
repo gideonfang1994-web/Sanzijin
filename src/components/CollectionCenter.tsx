@@ -4,23 +4,137 @@ import { Trophy, Star, Award, Sparkles, BookOpen, Search, Eye, Filter, Info, X, 
 import audio from '../utils/AudioUtils';
 import { ALL_CARDS } from '../constants';
 import { motion, AnimatePresence } from 'framer-motion';
+import confetti from 'canvas-confetti';
 import SafeImage from './SafeImage';
 import PhonicsSpellingModal from './PhonicsSpellingModal';
 
 interface Props {
   groups: WordGroup[];
   stats: UserStats;
+  onUpdateStats?: (stats: Partial<UserStats>) => void;
+  onReward?: (xp: number, coins: number) => void;
   onClose: () => void;
 }
 
-const CollectionCenter: React.FC<Props> = ({ groups, stats, onClose }) => {
-  const [activeTab, setActiveTab] = useState<'RHYME_FOREST' | 'WORD_DICTIONARY'>('RHYME_FOREST');
+const CollectionCenter: React.FC<Props> = ({ groups, stats, onUpdateStats, onReward, onClose }) => {
+  const [activeTab, setActiveTab] = useState<'RHYME_FOREST' | 'WORD_DICTIONARY' | 'MAGIC_CABINET'>('RHYME_FOREST');
   const [selectedDifficulty, setSelectedDifficulty] = useState<'PRIMARY' | 'INTERMEDIATE' | 'ADVANCED' | 'CUSTOM'>('PRIMARY');
   const [activePhonicsWord, setActivePhonicsWord] = useState<{ text: string; imageUrl: string } | null>(null);
 
   // Search & Filter state for Word Dictionary Tab
   const [searchQuery, setSearchQuery] = useState('');
   const [dictFilter, setDictFilter] = useState<'ALL' | 'MASTERED' | 'LEARNING'>('ALL');
+
+  // Gamified claim states
+  const [claimedRewardPackages, setClaimedRewardPackages] = useState<string[]>(() => 
+    JSON.parse(localStorage.getItem('claimed_collection_packages') || '[]')
+  );
+
+  const [claimedBadges, setClaimedBadges] = useState<string[]>(() => 
+    JSON.parse(localStorage.getItem('claimed_badge_rewards') || '[]')
+  );
+
+  const badges = useMemo(() => {
+    return [
+      {
+        id: 'badge-1',
+        title: '魔法学徒',
+        desc: '登堂入室第一步！自动解锁。',
+        icon: '🌱',
+        met: true,
+        progressText: '1/1',
+        xpReward: 30,
+        coinReward: 10
+      },
+      {
+        id: 'badge-2',
+        title: '词海勘探者',
+        desc: '累计掌握 10 个魔法单字。',
+        icon: '💎',
+        met: stats.masteredWords.length >= 10,
+        progressText: `${Math.min(10, stats.masteredWords.length)}/10`,
+        xpReward: 50,
+        coinReward: 20
+      },
+      {
+        id: 'badge-3',
+        title: '三字功德圆满',
+        desc: '累计掌握 30 个拼读神奇三字经词汇。',
+        icon: '📜',
+        met: stats.masteredWords.length >= 30,
+        progressText: `${Math.min(30, stats.masteredWords.length)}/30`,
+        xpReward: 100,
+        coinReward: 50
+      },
+      {
+        id: 'badge-4',
+        title: '探险前行精英',
+        desc: '冒险关卡累计解锁/通关达到第 2 关。',
+        icon: '🗺️',
+        met: (stats.completedLevelIds || []).length >= 1,
+        progressText: `${Math.min(2, (stats.completedLevelIds || []).length + 1)}/2`,
+        xpReward: 120,
+        coinReward: 60
+      },
+      {
+        id: 'badge-5',
+        title: '连击魔法行者',
+        desc: '每日魔法学业没有停过！连击达到 1+ 天。',
+        icon: '🔥',
+        met: (stats.streak || 1) >= 1,
+        progressText: `${Math.min(1, stats.streak || 1)}/1`,
+        xpReward: 80,
+        coinReward: 40
+      },
+      {
+        id: 'badge-6',
+        title: '法力成长专家',
+        desc: '魔法等级成功突破第 1 级！',
+        icon: '👑',
+        met: stats.level >= 1,
+        progressText: `${Math.min(1, stats.level)}/1`,
+        xpReward: 150,
+        coinReward: 100
+      }
+    ];
+  }, [stats]);
+
+  const claimBadgeReward = (badge: typeof badges[0]) => {
+    if (!badge.met || claimedBadges.includes(badge.id)) return;
+    setClaimedBadges(prev => {
+      const updated = [...prev, badge.id];
+      localStorage.setItem('claimed_badge_rewards', JSON.stringify(updated));
+      return updated;
+    });
+    if (onReward) {
+      onReward(badge.xpReward, badge.coinReward);
+    }
+    audio.playSuccess();
+    confetti({
+      particleCount: 120,
+      spread: 80,
+      origin: { y: 0.7 },
+      colors: ['#FBBF24', '#6EE7B7', '#60A5FA', '#F472B6']
+    });
+  };
+
+  const claimPackageReward = (pkgId: string) => {
+    if (claimedRewardPackages.includes(pkgId)) return;
+    setClaimedRewardPackages(prev => {
+      const updated = [...prev, pkgId];
+      localStorage.setItem('claimed_collection_packages', JSON.stringify(updated));
+      return updated;
+    });
+    if (onReward) {
+      onReward(50, 20); // 50 XP, 20 Magic Coins
+    }
+    audio.playSuccess();
+    confetti({
+      particleCount: 100,
+      spread: 70,
+      origin: { y: 0.7 }
+    });
+  };
 
   const masteredWordsCount = stats.masteredWords.length;
 
@@ -357,29 +471,40 @@ const CollectionCenter: React.FC<Props> = ({ groups, stats, onClose }) => {
         </div>
       </div>
 
-      {/* Main Tab Toggle: Rhymes vs Dictionary */}
-      <div className="flex bg-slate-100 p-1.5 rounded-[28px] border border-slate-200 shadow-inner">
+      {/* Main Tab Toggle: Rhymes vs Dictionary vs Medal Cabinet */}
+      <div className="flex bg-slate-100 p-1.5 rounded-[28px] border border-slate-200 shadow-inner overflow-x-auto whitespace-nowrap scrollbar-none">
         <button
           onClick={() => setActiveTab('RHYME_FOREST')}
-          className={`flex-1 flex items-center justify-center space-x-2 py-3.5 rounded-[22px] font-black tracking-wide text-sm transition-all ${
+          className={`flex-1 flex items-center justify-center space-x-1.5 py-3.5 px-4 rounded-[22px] font-black tracking-wide text-xs transition-all ${
             activeTab === 'RHYME_FOREST'
               ? 'bg-white text-indigo-600 shadow-md scale-[1.01]'
               : 'text-slate-400 hover:text-slate-600'
           }`}
         >
-          <BookMarked size={16} />
-          <span>拼读神奇英文三字经</span>
+          <BookMarked size={14} />
+          <span>拼读神奇三字经</span>
         </button>
         <button
           onClick={() => setActiveTab('WORD_DICTIONARY')}
-          className={`flex-1 flex items-center justify-center space-x-2 py-3.5 rounded-[22px] font-black tracking-wide text-sm transition-all ${
+          className={`flex-1 flex items-center justify-center space-x-1.5 py-3.5 px-4 rounded-[22px] font-black tracking-wide text-xs transition-all ${
             activeTab === 'WORD_DICTIONARY'
               ? 'bg-white text-rose-500 shadow-md scale-[1.01]'
               : 'text-slate-400 hover:text-slate-600'
           }`}
         >
-          <Search size={16} />
-          <span>收集魔法单字词典</span>
+          <Search size={14} />
+          <span>收集单字词典</span>
+        </button>
+        <button
+          onClick={() => setActiveTab('MAGIC_CABINET')}
+          className={`flex-1 flex items-center justify-center space-x-1.5 py-3.5 px-4 rounded-[22px] font-black tracking-wide text-xs transition-all ${
+            activeTab === 'MAGIC_CABINET'
+              ? 'bg-white text-amber-500 shadow-md scale-[1.01]'
+              : 'text-slate-400 hover:text-slate-600'
+          }`}
+        >
+          <Trophy size={14} />
+          <span>魔法荣誉勋章阁</span>
         </button>
       </div>
 
@@ -440,6 +565,11 @@ const CollectionCenter: React.FC<Props> = ({ groups, stats, onClose }) => {
           <div className="space-y-6">
             <AnimatePresence mode="popLayout">
               {sequentialRhymingPackages.map((pkg, index) => {
+                const masteredCount = pkg.words.filter(w => (stats.wordMastery[w.text] || 0) >= 5).length;
+                const totalWords = pkg.words.length;
+                const isFullyCollected = masteredCount === totalWords;
+                const isRewardClaimed = claimedRewardPackages.includes(pkg.id || `pkg-${index}`);
+
                 return (
                   <motion.div
                     key={pkg.id || `pkg-${index}`}
@@ -482,6 +612,54 @@ const CollectionCenter: React.FC<Props> = ({ groups, stats, onClose }) => {
                       >
                         <Volume2 size={16} />
                       </button>
+                    </div>
+
+                    {/* Gamified Crystal Completion Tracker */}
+                    <div className="flex flex-wrap items-center justify-between bg-gradient-to-r from-slate-50 to-indigo-50 border border-slate-100 rounded-3xl px-5 py-3 mb-4 text-xs font-black text-slate-750 gap-2">
+                      <div className="flex items-center space-x-2">
+                        <span>星梦法力结晶进度:</span>
+                        <div className="flex items-center space-x-1">
+                          {pkg.words.map((w, wIdx) => {
+                            const wMastery = stats.wordMastery[w.text] || 0;
+                            const isWMastered = wMastery >= 5;
+                            return (
+                              <motion.span
+                                key={`${w.text}-${wIdx}`}
+                                animate={isWMastered ? { scale: [1, 1.3, 1] } : {}}
+                                transition={{ repeat: Infinity, repeatDelay: 5, duration: 0.6 }}
+                                className={`text-base ${isWMastered ? 'filter drop-shadow-sm' : 'opacity-20 grayscale'}`}
+                              >
+                                💎
+                              </motion.span>
+                            );
+                          })}
+                        </div>
+                        <span className="text-slate-400 font-extrabold">({masteredCount}/{totalWords})</span>
+                      </div>
+
+                      {isFullyCollected ? (
+                        isRewardClaimed ? (
+                          <div className="flex items-center space-x-1 text-emerald-600 font-bold bg-emerald-50 px-2.5 py-1 rounded-xl border border-emerald-100 text-[10px]">
+                            <Trophy size={10} />
+                            <span>法能已灌注 (+50 XP)</span>
+                          </div>
+                        ) : (
+                          <motion.button
+                            whileHover={{ scale: 1.05 }}
+                            whileTap={{ scale: 0.95 }}
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              claimPackageReward(pkg.id || `pkg-${index}`);
+                            }}
+                            className="bg-gradient-to-r from-amber-400 to-yellow-500 hover:from-amber-500 hover:to-yellow-600 text-amber-950 px-3 py-1.5 rounded-xl border border-amber-300 shadow-sm flex items-center space-x-1 cursor-pointer animate-bounce text-[10px]"
+                          >
+                            <Sparkle size={10} className="animate-spin" />
+                            <span>提取满溢法能 (+50 XP)</span>
+                          </motion.button>
+                        )
+                      ) : (
+                        <span className="text-[10px] font-bold text-slate-400">点亮全法术结晶可领法能</span>
+                      )}
                     </div>
 
                     {/* Word row with cute images */}
@@ -643,6 +821,91 @@ const CollectionCenter: React.FC<Props> = ({ groups, stats, onClose }) => {
               <p className="text-slate-400 font-bold">没有匹配词典里的任何魔法文字喔</p>
             </div>
           )}
+        </div>
+      )}
+
+      {activeTab === 'MAGIC_CABINET' && (
+        <div className="space-y-6">
+          {/* Arcane Energy Dashboard */}
+          <div className="bg-gradient-to-br from-amber-500 to-yellow-600 rounded-[36px] p-6 text-amber-950 border-2 border-amber-300 shadow-xl relative overflow-hidden">
+            <div className="absolute top-0 right-0 w-32 h-32 bg-white/10 rounded-full blur-2xl pointer-events-none" />
+            <div className="flex items-center space-x-3 mb-2">
+              <Trophy className="w-8 h-8 text-white filter drop-shadow" />
+              <div>
+                <h4 className="font-extrabold text-white text-lg tracking-tight">魔法奥术总能量阁</h4>
+                <p className="text-white/80 text-[10px] uppercase font-bold tracking-wider">Badge Merit Hall</p>
+              </div>
+            </div>
+
+            <div className="grid grid-cols-2 gap-4 mt-4 bg-black/10 backdrop-blur-sm rounded-2xl p-4 border border-white/10">
+              <div>
+                <span className="text-[10px] font-bold text-white/60 block mb-0.5">荣誉成就点数</span>
+                <span className="text-2xl font-black text-white">{claimedBadges.length} / {badges.length}</span>
+              </div>
+              <div>
+                <span className="text-[10px] font-bold text-white/60 block mb-0.5">已融魔力水晶</span>
+                <span className="text-2xl font-black text-white">{claimedRewardPackages.length} 颗</span>
+              </div>
+            </div>
+          </div>
+
+          {/* Badge grid */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            {badges.map((badge) => {
+              const isClaimed = claimedBadges.includes(badge.id);
+              return (
+                <motion.div
+                  key={badge.id}
+                  whileHover={{ scale: 1.01 }}
+                  className={`border-2 rounded-[32px] p-5 transition-all flex flex-col justify-between ${
+                    badge.met 
+                    ? 'bg-white border-amber-100 shadow-md animate-fade-in' 
+                    : 'bg-slate-50/50 border-slate-100 opacity-60'
+                  }`}
+                >
+                  <div className="flex items-start space-x-4">
+                    <span className="text-4xl filter drop-shadow-md select-none">{badge.icon}</span>
+                    <div className="flex-1">
+                      <div className="flex items-center justify-between">
+                        <h5 className="font-black text-slate-800 text-sm tracking-tight">{badge.title}</h5>
+                        <span className={`text-[10px] font-black px-2 py-0.5 rounded-full ${
+                          badge.met ? 'bg-amber-100 text-amber-700' : 'bg-slate-200 text-slate-400'
+                        }`}>
+                          {badge.progressText}
+                        </span>
+                      </div>
+                      <p className="text-slate-400 font-bold text-[10px] mt-1 leading-relaxed">{badge.desc}</p>
+                    </div>
+                  </div>
+
+                  <div className="mt-5 pt-3 border-t border-slate-100 flex items-center justify-between">
+                    <div className="flex flex-wrap items-center space-x-1.5 font-bold text-[9px] text-slate-400">
+                      <span>励志重赏:</span>
+                      <span className="text-amber-500 font-extrabold">+{badge.coinReward} 金币</span>
+                      <span className="text-indigo-500 font-extrabold">+{badge.xpReward} 经验</span>
+                    </div>
+
+                    {badge.met ? (
+                      isClaimed ? (
+                        <span className="text-[10px] font-bold text-slate-400 bg-slate-100 px-3 py-1 rounded-xl">已领</span>
+                      ) : (
+                        <motion.button
+                          whileHover={{ scale: 1.05 }}
+                          whileTap={{ scale: 0.95 }}
+                          onClick={() => claimBadgeReward(badge)}
+                          className="bg-indigo-600 hover:bg-indigo-700 text-white font-black text-[10px] px-3.5 py-1 rounded-xl transition-all shadow-md shadow-indigo-100 cursor-pointer"
+                        >
+                          领取礼盒
+                        </motion.button>
+                      )
+                    ) : (
+                      <span className="text-[10px] font-bold text-slate-400">未满足</span>
+                    )}
+                  </div>
+                </motion.div>
+              );
+            })}
+          </div>
         </div>
       )}
 

@@ -1,6 +1,7 @@
 
 let currentBgm: HTMLAudioElement | null = null;
 let activeUtterances: SpeechSynthesisUtterance[] = [];
+let activeWordAudio: HTMLAudioElement | null = null;
 
 export const audio = {
   init: () => {
@@ -100,6 +101,15 @@ export const audio = {
     audio.play().catch(() => {});
   },
   speak: (text: string) => {
+    if (typeof window !== 'undefined') {
+      if (activeWordAudio) {
+        try { activeWordAudio.pause(); } catch (e) {}
+        activeWordAudio = null;
+      }
+      if (window.speechSynthesis) {
+        try { window.speechSynthesis.cancel(); } catch (e) {}
+      }
+    }
     if (!text || typeof window === 'undefined') return;
     
     const cleanWord = text.trim();
@@ -201,9 +211,11 @@ export const audio = {
             : `https://dict.youdao.com/dictvoice?audio=${encodeURIComponent(cleanWord)}&type=2`; // type=2 is US Accent
           
           const aud = new Audio(audioUrl);
+          activeWordAudio = aud;
           aud.volume = 0.95;
           aud.play().catch(() => {
             // Autoplay restriction fallback to synthesis
+            if (activeWordAudio === aud) activeWordAudio = null;
             speakSynth(cleanWord, isChinese);
           });
         } catch (e) {

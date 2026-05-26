@@ -267,7 +267,6 @@ export const PolarWordFishing: React.FC<PolarWordFishingProps> = ({ groups, stat
 
     if (catchObj.isCorrect) {
       audio.playSuccess();
-      try { audio.speak(targetWord?.text || ''); } catch(e){}
 
       setScore(s => s + 50);
       setCoinsEarned(c => c + 4);

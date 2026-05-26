@@ -35,7 +35,8 @@ import UploadContent from './components/UploadContent';
 import MagicShop from './components/MagicShop';
 import PetPage from './pages/PetPage';
 import CollectionCenter from './components/CollectionCenter';
-import constants from './constants';
+import constants, { ALL_CARDS } from './constants';
+import { RepetitiveMagicStudyModal } from './components/RepetitiveMagicStudyModal';
 import { WordGroup, UserStats, ViewState, DailyQuest, Word, WordItem, ShopItem, Pet } from './types';
 import { Home, BookOpen, Gamepad2, BarChart3, Award, ShoppingBag, Heart, Compass, AlertCircle, X, ShieldAlert, Globe, Sparkles, ExternalLink } from 'lucide-react';
 import audio from './utils/AudioUtils';
@@ -61,10 +62,12 @@ const App: React.FC = () => {
   const navigateTimestamp = React.useRef<number>(0);
   
   const initialQuests: DailyQuest[] = [
-    { id: 'q1', label: '解锁一个新魔法', target: 1, current: 0, completed: false, rewardXp: 100, rewardCoins: 10, targetView: 'CARDS' },
+    { id: 'q1', label: '解锁一个新魔法', target: 1, current: 0, completed: false, rewardXp: 100, rewardCoins: 10, targetView: 'ADVENTURE' },
     { id: 'q2', label: '游乐园大获全胜', target: 1, current: 0, completed: false, rewardXp: 200, rewardCoins: 25, targetView: 'ARCADE' },
-    { id: 'q3', label: '魔法净化行动', target: 1, current: 0, completed: false, rewardXp: 300, rewardCoins: 50, targetView: 'ARCADE', isReviewType: true },
+    { id: 'q3', label: '反复研习魔法', target: 1, current: 0, completed: false, rewardXp: 300, rewardCoins: 50, targetView: 'HOME', isReviewType: true },
   ];
+
+  const [showReviewModal, setShowReviewModal] = useState(false);
 
   const initialCharacterStats = useMemo(() => {
     const stats: Record<string, any> = {};
@@ -337,6 +340,20 @@ const App: React.FC = () => {
     });
   };
 
+  const getLevelWords = useCallback((levelId: number): WordItem[] => {
+    const savedDifficulty = localStorage.getItem('selected_adventure_difficulty') || 'PRIMARY';
+    const cardsPerDay = stats.cardsPerDay || 5;
+    
+    let offset = 0;
+    if (savedDifficulty === 'INTERMEDIATE') offset = 100;
+    if (savedDifficulty === 'ADVANCED') offset = 200;
+
+    const cardsOfDifficulty = ALL_CARDS.filter(card => (card.difficulty || 'PRIMARY') === savedDifficulty);
+    const relativeId = levelId - offset;
+    const levelCards = cardsOfDifficulty.slice((relativeId - 1) * cardsPerDay, relativeId * cardsPerDay);
+    return levelCards.flatMap(c => c.words);
+  }, [stats.cardsPerDay]);
+
   const handleNavigate = useCallback((newView: ViewState, levelId?: number) => {
     try {
       // Fault tolerance: prevent rapid double-clicks using a stable ref
@@ -427,6 +444,36 @@ const App: React.FC = () => {
 
   const dynamicQuests = useMemo(() => {
     const baseQuests = [...stats.quests];
+    
+    // Compute first uncompleted level ID
+    const savedDifficulty = localStorage.getItem('selected_adventure_difficulty') || 'PRIMARY';
+    const cardsPerDay = stats.cardsPerDay || 5;
+    let offset = 0;
+    if (savedDifficulty === 'INTERMEDIATE') offset = 100;
+    if (savedDifficulty === 'ADVANCED') offset = 200;
+
+    const cardsOfDifficulty = ALL_CARDS.filter(card => (card.difficulty || 'PRIMARY') === savedDifficulty);
+    const completedLevels = stats.completedLevelIds || [];
+    let firstUncompletedLevelId = offset + 1;
+    
+    for (let i = 0; i < cardsOfDifficulty.length; i += cardsPerDay) {
+      const relativeId = Math.floor(i / cardsPerDay) + 1;
+      const levelId = offset + relativeId;
+      if (!completedLevels.map(Number).includes(levelId)) {
+        firstUncompletedLevelId = levelId;
+        break;
+      }
+    }
+
+    // Assign dynamically to q1
+    const q1Idx = baseQuests.findIndex(q => q.id === 'q1');
+    if (q1Idx !== -1) {
+      baseQuests[q1Idx] = {
+        ...baseQuests[q1Idx],
+        levelId: firstUncompletedLevelId,
+      };
+    }
+
     if (dueReviews.length > 0) {
       // Find the review quest or add it
       const reviewQuestIdx = baseQuests.findIndex(q => q.id === 'q3');
@@ -434,16 +481,16 @@ const App: React.FC = () => {
         const targetLevelId = dueReviews[0];
         baseQuests[reviewQuestIdx] = {
           ...baseQuests[reviewQuestIdx],
-          label: `复习魔法 (关卡 ${targetLevelId})`,
+          label: `反复研习魔法 (第 ${targetLevelId % 100} 关)`,
           isReviewType: true,
-          targetView: 'ADVENTURE',
+          targetView: 'HOME',
           levelId: targetLevelId,
           completed: false, // Force active if due
         };
       }
     }
     return baseQuests;
-  }, [stats.quests, dueReviews]);
+  }, [stats.quests, stats.completedLevelIds, stats.cardsPerDay, dueReviews]);
 
   const activeGroups = useMemo(() => {
     if (lastLearnedWords.length > 0) {
@@ -923,7 +970,31 @@ const App: React.FC = () => {
                 groups={groups} 
                 reviewNeeded={reviewNeeded} 
                 onNavigate={handleNavigate} 
-                onQuestClick={(v, r, l) => { setIsReviewChallenge(!!r); handleNavigate(v, l); }} 
+                onQuestClick={(v, r, l) => {
+                  if (r) {
+                    setShowReviewModal(true);
+                  } else if (v === 'ARCADE') {
+                    // Preload words from highest completed/learned level if lastLearnedWords is empty
+                    const completed = stats.completedLevelIds || [];
+                    if (completed.length > 0 && lastLearnedWords.length === 0) {
+                      const levelId = Number(completed[completed.length - 1]);
+                      const words = getLevelWords(levelId);
+                      if (words && words.length > 0) {
+                        setLastLearnedWords(words);
+                      }
+                    } else if (lastLearnedWords.length === 0) {
+                      // Fallback to first level if none completed yet
+                      const words = getLevelWords(1);
+                      if (words && words.length > 0) {
+                        setLastLearnedWords(words);
+                      }
+                    }
+                    handleNavigate(v, l);
+                  } else {
+                    setIsReviewChallenge(!!r); 
+                    handleNavigate(v, l);
+                  }
+                }} 
                 onUpdateStats={handleUpdateStats}
               />
             </motion.div>
@@ -940,6 +1011,7 @@ const App: React.FC = () => {
                 onConsumedLevelId={() => setPendingLevelId(undefined)}
                 onCompleteLevel={(words, levelId) => {
                   setLastLearnedWords(words);
+                  updateQuest('q1');
                   setStats(prev => ({
                     ...prev,
                     totalWordsLearned: prev.totalWordsLearned + words.length,
@@ -1058,6 +1130,11 @@ const App: React.FC = () => {
               <CollectionCenter 
                 groups={groups} 
                 stats={stats} 
+                onUpdateStats={handleUpdateStats}
+                onReward={(xp, coins) => {
+                  handleReward(xp, coins);
+                  audio.playCoin();
+                }}
                 onClose={() => handleNavigate('HOME')} 
               />
             </motion.div>
@@ -1066,6 +1143,21 @@ const App: React.FC = () => {
       </main>
 
       <AnimatePresence>
+        {showReviewModal && (
+          <RepetitiveMagicStudyModal
+            stats={stats}
+            onClose={() => setShowReviewModal(false)}
+            onCompleteReview={() => {
+              updateQuest('q3');
+              setShowReviewModal(false);
+            }}
+            onSelectReviewLevel={(levelId) => {
+              setShowReviewModal(false);
+              handleNavigate('ADVENTURE', levelId);
+            }}
+          />
+        )}
+
         {showLevelUp && (
           <motion.div 
             initial={{ opacity: 0 }}
