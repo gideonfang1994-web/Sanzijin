@@ -42,6 +42,70 @@ interface AdventurePageProps extends AdventureForestProps {
   onConsumedLevelId?: () => void;
 }
 
+export function getMilestoneReward(displayId: number) {
+  if (displayId % 5 !== 0) return null;
+  if (displayId === 5) {
+    return {
+      title: "【第 5 关勇士礼包】",
+      desc: "喜提软萌守护兽「波利史莱姆」！",
+      items: [
+        { name: "宠物：波利史莱姆", icon: "🟢", detail: "生命 +100，伴你拼读左右" },
+        { name: "奥术经验", icon: "✨", detail: "+200 XP" },
+        { name: "星星币", icon: "🪙", detail: "+150 星星币" }
+      ],
+      xp: 200,
+      coins: 150,
+      petType: "SLIME",
+      petName: "波利史莱姆",
+      itemId: null
+    };
+  }
+  if (displayId === 10) {
+    return {
+      title: "【第 10 关魔法先锋】",
+      desc: "荣获魔法学院精美法装「星光法帽」！",
+      items: [
+        { name: "装备：星光法帽", icon: "🎩", detail: "魔力增幅 +10" },
+        { name: "奥术经验", icon: "✨", detail: "+400 XP" },
+        { name: "星星币", icon: "🪙", detail: "+300 星星币" }
+      ],
+      xp: 400,
+      coins: 300,
+      petType: null,
+      itemId: "i2_4"
+    };
+  }
+  if (displayId === 15) {
+    return {
+      title: "【第 15 关见习大师】",
+      desc: "喜迎来自然拼读最强伴侣「智慧之鸮」！",
+      items: [
+        { name: "宠物：智慧之鸮", icon: "🦉", detail: "拥有博学智慧的守护猫头鹰" },
+        { name: "奥术经验", icon: "✨", detail: "+500 XP" },
+        { name: "星星币", icon: "🪙", detail: "+500 星星币" }
+      ],
+      xp: 500,
+      coins: 500,
+      petType: "OWL",
+      petName: "智慧之鸮",
+      itemId: null
+    };
+  }
+  return {
+    title: `【第 ${displayId} 关里程碑礼包】`,
+    desc: "荣获「经验药水」与巨额魔法物资！",
+    items: [
+      { name: "消耗品：经验药水", icon: "🧪", detail: "瞬间增加经验，助英雄突破" },
+      { name: "奥术经验", icon: "✨", detail: "+250 XP" },
+      { name: "星星币", icon: "🪙", detail: "+200 星星币" }
+    ],
+    xp: 250,
+    coins: 200,
+    petType: null,
+    itemId: "gen_1"
+  };
+}
+
 // Memoized Level Node for performance
 const LevelNode = React.memo(({ 
   level, 
@@ -152,6 +216,18 @@ const LevelNode = React.memo(({
                   : 'bg-white border-emerald-500 text-emerald-600 scale-108 hover:scale-118 hover:rotate-6 shadow-emerald-200/40'
           }`}
         >
+          {/* Milestone Chest Overlay */}
+          {((level.displayId || level.id) % 5 === 0) && (
+            <motion.div
+              animate={{ y: [0, -3, 0], scale: [1, 1.08, 1] }}
+              transition={{ repeat: Infinity, duration: 1.8, ease: "easeInOut" }}
+              className="absolute -top-4 -left-4 z-40 bg-gradient-to-br from-yellow-400 via-amber-400 to-yellow-500 border-2 border-white rounded-full w-9 h-9 flex items-center justify-center shadow-lg text-lg select-none"
+              title="通关本关可得里程碑大奖！"
+            >
+              {level.isCompleted ? '🔓' : '🎁'}
+            </motion.div>
+          )}
+
           {/* Icons */}
           {isLocked ? (
             <Lock size={22} className="text-emerald-250" />
@@ -480,14 +556,20 @@ const AdventurePage: React.FC<AdventurePageProps> = ({
     }
   }, [step]);
 
-  // Trigger initial level review if requested
+  // Trigger initial level review or learning if requested
   useEffect(() => {
     if (initialLevelId && levels.length > 0 && (step === 'MAP' || step === 'SETUP')) {
       const level = levels.find(l => l.id === initialLevelId);
       if (level && level.isUnlocked) {
-        console.log('[Adventure] Auto-starting review for level:', initialLevelId);
+        console.log('[Adventure] Auto-starting level:', initialLevelId);
         setActiveLevel(level);
-        startChallenge(level);
+        
+        if (!level.isCompleted) {
+          setCardIndex(0);
+          setStep('LEARN');
+        } else {
+          startChallenge(level);
+        }
         
         // Notify parent that we've handled this ID
         if (onConsumedLevelId) {
@@ -712,11 +794,16 @@ const AdventurePage: React.FC<AdventurePageProps> = ({
           const newMastered = [...new Set([...masteredLevels, currentId])];
           const newCompleted = [...new Set([...completedLevels, currentId])];
           
-          // SRS Logic
-          const SRS_INTERVALS = [0, 1, 3, 7, 14, 30, 60, 90];
+          // SRS Logic updated to review yesterday (1 day later) and 3 days ago (3 days later) contents
           const currentSchedule = reviewSchedules[currentId.toString()];
-          const currentIntervalIdx = currentSchedule ? SRS_INTERVALS.indexOf(currentSchedule.intervalDays) : 0;
-          const nextInterval = SRS_INTERVALS[Math.min(currentIntervalIdx + 1, SRS_INTERVALS.length - 1)] || 1;
+          const currentInterval = currentSchedule ? currentSchedule.intervalDays : 1;
+          
+          let nextInterval = 3; 
+          if (currentInterval === 3) {
+            nextInterval = 14; // Fully mastered first curves, review extends to 14 days
+          } else if (currentInterval === 1) {
+            nextInterval = 3;
+          }
           
           const newSchedules = {
             ...reviewSchedules,
