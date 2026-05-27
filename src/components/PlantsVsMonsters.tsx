@@ -21,7 +21,7 @@ interface Monster {
   id: string;
   lane: number;
   word: WordItem;
-  type: 'ZOMBIE' | 'GOBLIN' | 'GIANT';
+  type: 'ZOMBIE' | 'GOBLIN' | 'GIANT' | 'BOSS';
   emoji: string;
   name: string;
   hp: number;
@@ -77,7 +77,9 @@ export const PlantsVsMonsters: React.FC<PlantsVsMonstersProps> = ({ groups, stat
   const [hearts, setHearts] = useState(5);
   const [monstersDefeated, setMonstersDefeated] = useState(0);
   const [wave, setWave] = useState(1);
-  const [totalMonstersInWave] = useState(12);
+  const [testedCount, setTestedCount] = useState(0);
+  const [totalMonstersInWave] = useState(11);
+  const [bossState, setBossState] = useState<'NONE' | 'WARNING' | 'ACTIVE' | 'DEFEATED'>('NONE');
 
   // Gameplay lists
   const [monsters, setMonsters] = useState<Monster[]>([]);
@@ -99,6 +101,8 @@ export const PlantsVsMonsters: React.FC<PlantsVsMonstersProps> = ({ groups, stat
   const monsterSpawnTimer = useRef<NodeJS.Timeout | null>(null);
   const gameLoopTimer = useRef<NodeJS.Timeout | null>(null);
   const usedWordsIdx = useRef(0);
+  const bgmSynthRef = useRef<{ ctx: AudioContext; interval?: any } | null>(null);
+  const lastSpokenWordRef = useRef<{ text: string; time: number }>({ text: '', time: 0 });
 
   // Active User character
   const hero = useMemo(() => {
@@ -165,14 +169,151 @@ export const PlantsVsMonsters: React.FC<PlantsVsMonstersProps> = ({ groups, stat
     setMonsters(prev => [...prev, newMonster]);
   };
 
+  // Retro Chiptune BGM loops
+  const startBgmSynth = () => {
+    try {
+      stopBgmSynth();
+      const AudioContextClass = window.AudioContext || (window as any).webkitAudioContext;
+      if (!AudioContextClass) return;
+      
+      const ctx = new AudioContextClass();
+      const gainNode = ctx.createGain();
+      gainNode.gain.setValueAtTime(0.04, ctx.currentTime); // Soft background level
+      gainNode.connect(ctx.destination);
+
+      // Magical chord loop: C major (C4, E4, G4) -> A minor (A3, C4, E4) -> F major (F3, A3, C4) -> G major (G3, B3, D4)
+      const loops = [
+        [52, 55, 60], // Am
+        [48, 52, 55], // C
+        [53, 57, 60], // F
+        [55, 59, 62]  // G
+      ];
+      let barIdx = 0;
+
+      const beat = () => {
+        if (ctx.state === 'suspended') {
+          ctx.resume();
+        }
+        const now = ctx.currentTime;
+        const notes = loops[barIdx];
+        barIdx = (barIdx + 1) % loops.length;
+
+        // Arpeggiate notes
+        notes.forEach((midi, idx) => {
+          const osc = ctx.createOscillator();
+          const noteGain = ctx.createGain();
+          
+          osc.type = 'triangle';
+          osc.frequency.setValueAtTime(440 * Math.pow(2, (midi - 69) / 12), now + idx * 0.15);
+          
+          // Note envelope
+          noteGain.gain.setValueAtTime(0, now + idx * 0.15);
+          noteGain.gain.linearRampToValueAtTime(0.012, now + idx * 0.15 + 0.05);
+          noteGain.gain.exponentialRampToValueAtTime(0.0001, now + idx * 0.15 + 1.2);
+
+          osc.connect(noteGain);
+          noteGain.connect(gainNode);
+          osc.start(now + idx * 0.15);
+          osc.stop(now + idx * 0.15 + 1.3);
+        });
+
+        // Bass root note
+        const bassOsc = ctx.createOscillator();
+        const bassGain = ctx.createGain();
+        bassOsc.type = 'sawtooth';
+        
+        // Root freq filter
+        const bassFreq = 440 * Math.pow(2, ((notes[0] - 24) - 69) / 12);
+        bassOsc.frequency.setValueAtTime(bassFreq, now);
+        
+        // Low pass filter to keep it warm and bassy
+        const filter = ctx.createBiquadFilter();
+        filter.type = 'lowpass';
+        filter.frequency.setValueAtTime(150, now);
+
+        bassGain.gain.setValueAtTime(0, now);
+        bassGain.gain.linearRampToValueAtTime(0.02, now + 0.1);
+        bassGain.gain.exponentialRampToValueAtTime(0.0001, now + 1.8);
+
+        bassOsc.connect(filter);
+        filter.connect(bassGain);
+        bassGain.connect(gainNode);
+        bassOsc.start(now);
+        bassOsc.stop(now + 1.9);
+      };
+
+      beat();
+      const interval = setInterval(beat, 1800);
+      bgmSynthRef.current = { ctx, interval };
+    } catch (e) {
+      console.warn("BGM Synthesis failed or not supported in this frame:", e);
+    }
+  };
+
+  const stopBgmSynth = () => {
+    if (bgmSynthRef.current) {
+      try {
+        clearInterval(bgmSynthRef.current.interval);
+        bgmSynthRef.current.ctx.close();
+      } catch (e) {}
+      bgmSynthRef.current = null;
+    }
+  };
+
+  // Play/Stop BGM safely
+  useEffect(() => {
+    if (gameState === 'PLAYING') {
+      startBgmSynth();
+      try { audio.playBGM('PLANTS'); } catch(e){}
+    } else {
+      stopBgmSynth();
+      try { audio.stopBGM(); } catch(e){}
+    }
+    return () => {
+      stopBgmSynth();
+      try { audio.stopBGM(); } catch(e){}
+    };
+  }, [gameState]);
+
   // Next Word Task Generator
-  const generateNewTask = () => {
+  const generateNewTask = (customIndex?: number) => {
     if (allWords.length === 0) return;
     
-    // Select index
-    const targetIdx = usedWordsIdx.current % allWords.length;
-    const word = allWords[targetIdx];
-    usedWordsIdx.current += 1;
+    // Choose index sequentially to ensure ALL words must be tested
+    const targetIdx = customIndex !== undefined ? customIndex : testedCount;
+    
+    let word = allWords[targetIdx % allWords.length];
+    
+    if (targetIdx >= allWords.length) {
+      // ALL Words tested! Trigger the BOSS monster epic battle warning!
+      setBossState(current => {
+        if (current === 'NONE') {
+          setBossState('WARNING');
+          audio.playError();
+          if (monsterSpawnTimer.current) clearInterval(monsterSpawnTimer.current);
+          setTimeout(() => {
+            setBossState('ACTIVE');
+            const randomBossWord = allWords[Math.floor(Math.random() * allWords.length)] || { text: 'magic', translation: '魔法', imageUrl: '' };
+            const bossMonster: Monster = {
+              id: `m-boss-${Date.now()}`,
+              lane: Math.floor(Math.random() * 3),
+              word: randomBossWord,
+              type: 'BOSS',
+              emoji: '👑👹',
+              name: '终极词霸大魔王',
+              hp: 350,
+              maxHp: 350,
+              progress: 95,
+              speed: 0.16
+            };
+            setMonsters(prev => [...prev.filter(m => m.type !== 'BOSS'), bossMonster]);
+          }, 3000);
+        }
+        return current;
+      });
+      // Pick a random word from the tested list for continuing attacks on the Boss!
+      word = allWords[Math.floor(Math.random() * allWords.length)];
+    }
     
     setCurrentWord(word);
     
@@ -219,11 +360,15 @@ export const PlantsVsMonsters: React.FC<PlantsVsMonstersProps> = ({ groups, stat
       setSpelledWord([]);
     }
 
-    // Automatically speak word in some cases to prompt listening
+    // Automatically speak word in some cases to prompt listening (limited to once per 1.5s)
     if (audio) {
-      setTimeout(() => {
-        try { audio.speak(word.text); } catch(e){}
-      }, 500);
+      const now = Date.now();
+      if (lastSpokenWordRef.current.text !== word.text || now - lastSpokenWordRef.current.time > 1500) {
+        lastSpokenWordRef.current = { text: word.text, time: now };
+        setTimeout(() => {
+          try { audio.speak(word.text); } catch(e){}
+        }, 500);
+      }
     }
   };
 
@@ -235,14 +380,16 @@ export const PlantsVsMonsters: React.FC<PlantsVsMonstersProps> = ({ groups, stat
     setXpEarned(0);
     setHearts(5);
     setMonstersDefeated(0);
+    setTestedCount(0);
     setWave(1);
+    setBossState('NONE');
     setMonsters([]);
     setProjectiles([]);
     setFloatingTexts([]);
     usedWordsIdx.current = 0;
     
     audio.playPop();
-    generateNewTask();
+    generateNewTask(0);
   };
 
   // Spawns and Ticks
@@ -256,7 +403,12 @@ export const PlantsVsMonsters: React.FC<PlantsVsMonstersProps> = ({ groups, stat
     // Spawn zombie every 5.5s (speeds up as wave increases)
     const spawnRate = Math.max(2800, 6000 - wave * 600);
     monsterSpawnTimer.current = setInterval(() => {
-      spawnMonster();
+      setBossState(currentBoss => {
+        if (currentBoss === 'NONE') {
+          spawnMonster();
+        }
+        return currentBoss;
+      });
     }, spawnRate);
 
     // Game loop running every 100ms
@@ -313,17 +465,27 @@ export const PlantsVsMonsters: React.FC<PlantsVsMonstersProps> = ({ groups, stat
                   
                   if (isKilled) {
                     audio.playCoin();
-                    setMonstersDefeated(count => {
-                      const newCount = count + 1;
-                      setCoinsEarned(c => c + (m.type === 'GIANT' ? 10 : m.type === 'GOBLIN' ? 5 : 4));
-                      setXpEarned(x => x + (m.type === 'GIANT' ? 25 : m.type === 'GOBLIN' ? 12 : 8));
-                      setScore(s => s + (m.type === 'GIANT' ? 150 : m.type === 'GOBLIN' ? 80 : 50));
-                      if (newCount >= totalMonstersInWave) {
+                    if (m.type === 'BOSS') {
+                      setCoinsEarned(c => c + 50);
+                      setXpEarned(x => x + 100);
+                      setScore(s => s + 1000);
+                      setBossState('DEFEATED');
+                      setMonstersDefeated(count => {
+                        const newCount = count + 1;
                         handleVictory();
-                      }
-                      return newCount;
-                    });
-                    triggerFloatingText(`💥 击败! +${m.type === 'GIANT' ? '150' : '50'} XP`, targetM.progress, 20 + targetM.lane * 25, 'text-yellow-400 font-black');
+                        return newCount;
+                      });
+                      triggerFloatingText(`🏆 击败终极魔王! +1000 SCORE`, targetM.progress, 20 + targetM.lane * 25, 'text-yellow-400 font-extrabold text-lg animate-bounce z-50');
+                    } else {
+                      setMonstersDefeated(count => {
+                        const newCount = count + 1;
+                        setCoinsEarned(c => c + (m.type === 'GIANT' ? 10 : m.type === 'GOBLIN' ? 5 : 4));
+                        setXpEarned(x => x + (m.type === 'GIANT' ? 25 : m.type === 'GOBLIN' ? 12 : 8));
+                        setScore(s => s + (m.type === 'GIANT' ? 150 : m.type === 'GOBLIN' ? 80 : 50));
+                        return newCount;
+                      });
+                      triggerFloatingText(`💥 击败! +${m.type === 'GIANT' ? '150' : '50'} XP`, targetM.progress, 20 + targetM.lane * 25, 'text-yellow-400 font-black');
+                    }
                   } else {
                     triggerFloatingText(`-${dmg}`, targetM.progress, 25 + targetM.lane * 25, 'text-rose-400 font-extrabold text-sm');
                   }
@@ -433,8 +595,10 @@ export const PlantsVsMonsters: React.FC<PlantsVsMonstersProps> = ({ groups, stat
       setXpEarned(xp => xp + 2);
       setScore(s => s + 30);
 
-      // Generate next word task
-      generateNewTask();
+      // Save tested sequence and transition (split state update from side-effects)
+      const nextIndex = testedCount + 1;
+      setTestedCount(nextIndex);
+      generateNewTask(nextIndex);
     } else {
       // Incorrect translation
       audio.playError();
@@ -480,9 +644,11 @@ export const PlantsVsMonsters: React.FC<PlantsVsMonstersProps> = ({ groups, stat
         setXpEarned(xp => xp + 6);
         setScore(s => s + 60);
 
-        // Next word wait
+        // Next word wait (split state update from side-effects)
         setTimeout(() => {
-          generateNewTask();
+          const nextIndex = testedCount + 1;
+          setTestedCount(nextIndex);
+          generateNewTask(nextIndex);
         }, 1000);
       }
     } else {
@@ -622,22 +788,74 @@ export const PlantsVsMonsters: React.FC<PlantsVsMonstersProps> = ({ groups, stat
               </div>
 
               {/* Progress to Wave Complete */}
-              <div className="flex items-center space-x-3 flex-1 max-w-[140px] justify-end">
-                <span className="font-extrabold text-[#34d399] tracking-tight shrink-0">入侵防守:</span>
-                <div className="w-full bg-slate-800 h-2 rounded-full overflow-hidden border border-[#334155] flex items-center relative">
-                  <div 
-                    className="bg-[#34d399] h-full rounded-full transition-all duration-300" 
-                    style={{ width: `${(monstersDefeated / totalMonstersInWave) * 100}%` }}
-                  />
-                </div>
-                <span className="text-[10px] font-black text-slate-400 shrink-0 tabular-nums">
-                  {monstersDefeated}/{totalMonstersInWave}
-                </span>
+              <div className="flex items-center space-x-3 flex-1 max-w-[180px] sm:max-w-[220px] justify-end">
+                {bossState === 'ACTIVE' ? (
+                  <>
+                    <span className="font-extrabold text-red-500 tracking-tight shrink-0 animate-pulse flex items-center gap-0.5">
+                      👹 BOSS:
+                    </span>
+                    {(() => {
+                      const bossMonster = monsters.find(m => m.type === 'BOSS');
+                      if (bossMonster) {
+                        const pct = Math.round((bossMonster.hp / bossMonster.maxHp) * 100);
+                        return (
+                          <div className="w-full bg-slate-800 h-2.5 rounded-full overflow-hidden border border-red-500 flex items-center relative shadow-[0_0_8px_rgba(239,68,68,0.5)]">
+                            <div 
+                              className="bg-gradient-to-r from-red-600 via-rose-500 to-amber-500 h-full rounded-full transition-all duration-150" 
+                              style={{ width: `${pct}%` }}
+                            />
+                            <span className="absolute inset-0 flex items-center justify-center text-[7px] font-black text-white leading-none">
+                              {bossMonster.hp}/{bossMonster.maxHp}
+                            </span>
+                          </div>
+                        );
+                      }
+                      return null;
+                    })()}
+                  </>
+                ) : (
+                  <>
+                    <span className="font-extrabold text-emerald-400 tracking-tight shrink-0">魔法防卫战 (Tested):</span>
+                    <div className="w-full bg-slate-800 h-2 rounded-full overflow-hidden border border-[#334155] flex items-center relative">
+                      <div 
+                        className="bg-gradient-to-r from-emerald-400 to-teal-400 h-full rounded-full transition-all duration-300" 
+                        style={{ width: `${Math.min(100, (testedCount / allWords.length) * 100)}%` }}
+                      />
+                    </div>
+                    <span className="text-[10px] font-black text-slate-400 shrink-0 tabular-nums">
+                      {Math.min(allWords.length, testedCount)}/{allWords.length}
+                    </span>
+                  </>
+                )}
               </div>
             </div>
 
             {/* PVZ BATTLEFIELD GRID (3 HORIZONTAL LANES) */}
-            <div className="w-full aspect-[2/1] min-h-[220px] bg-gradient-to-b from-[#15803d]/40 via-[#16a34a]/30 to-[#14532d]/50 border-b border-[#334155] relative overflow-hidden flex flex-col justify-around py-2 px-1">
+            <div className="w-full aspect-[2/1] min-h-[220px] bg-gradient-to-b from-[#022c22] via-[#064e3b] to-[#111827] border-b border-[#334155] relative overflow-hidden flex flex-col justify-around py-2 px-1">
+              
+              {/* Stunning floating glowing magical moon & twinkle stars in background */}
+              <div className="absolute top-3 right-6 w-11 h-11 rounded-full bg-slate-100 shadow-[0_0_20px_rgba(253,224,71,0.5)] flex items-center justify-center animate-pulse z-0 pointer-events-none opacity-80">
+                <span className="text-base select-none">🌙</span>
+              </div>
+              <div className="absolute top-1.5 right-20 text-yellow-300/30 text-[9px] pointer-events-none animate-bounce">✨</div>
+              <div className="absolute top-8 left-1/4 text-yellow-300/20 text-[7px] pointer-events-none animate-pulse">⭐</div>
+              <div className="absolute bottom-6 right-24 text-white/10 text-xs pointer-events-none">💫</div>
+              
+              {/* Boss Warning Flashing Screen Overlay */}
+              {bossState === 'WARNING' && (
+                <motion.div 
+                   initial={{ opacity: 0 }}
+                   animate={{ opacity: [0.3, 0.7, 0.3] }}
+                   transition={{ repeat: Infinity, duration: 0.8 }}
+                   className="absolute inset-0 z-40 bg-red-600/20 border-[6px] border-red-600/40 flex flex-col items-center justify-center pointer-events-none"
+                >
+                  <div className="bg-red-950/90 text-white border border-red-500 px-6 py-4 rounded-[24px] shadow-2xl flex flex-col items-center space-y-1.5 pointer-events-auto max-w-[85%] text-center animate-pulse scale-90 sm:scale-100">
+                    <span className="text-xl sm:text-2xl font-black text-red-500 animate-bounce">🚨 BOSS WARNING 🚨</span>
+                    <span className="text-[11px] sm:text-xs font-black tracking-wide text-red-400">「终极语法大魔王 · 词霸巨兽」正在撕裂虚空！</span>
+                    <span className="text-[9px] text-red-300 font-bold">小法师，请准备充沛精力，狂飙拼词将其打回原形！</span>
+                  </div>
+                </motion.div>
+              )}
               
               {/* Back ambient forest details */}
               <div className="absolute inset-0 select-none pointer-events-none opacity-10">
@@ -689,17 +907,22 @@ export const PlantsVsMonsters: React.FC<PlantsVsMonstersProps> = ({ groups, stat
                       {/* Render monsters on this specific lane */}
                       {monsters.filter(m => m.lane === laneIndex).map(m => {
                         const hpPct = (m.hp / m.maxHp) * 100;
+                        const isBoss = m.type === 'BOSS';
                         return (
                           <motion.div 
                             key={m.id}
                             style={{ left: `${m.progress}%` }}
                             animate={m.isHit ? { x: [-10, 10, -5, 0] } : {}}
-                            className="absolute -translate-y-1/2 top-1/2 -ml-5 w-10 h-10 select-none z-10 flex flex-col items-center justify-center transition-all duration-100"
+                            className={`absolute -translate-y-1/2 top-1/2 select-none z-10 flex flex-col items-center justify-center transition-all duration-100 ${
+                              isBoss 
+                                ? '-ml-12 w-24 h-24 bg-red-950/25 border-[3px] border-red-500 rounded-[32px] shadow-xl shadow-red-500/30 p-2' 
+                                : '-ml-5 w-10 h-10'
+                            }`}
                           >
                             {/* Health standard bar */}
-                            <div className="w-8 h-1.5 bg-slate-800/80 rounded border border-[#334155] overflow-hidden mb-1 shadow-sm shrink-0">
+                            <div className={`${isBoss ? 'w-20 h-2' : 'w-8 h-1.5'} bg-slate-800/80 rounded border ${isBoss ? 'border-red-500' : 'border-[#334155]'} overflow-hidden mb-1 shadow-sm shrink-0`}>
                               <div 
-                                className={`h-full rounded ${hpPct > 55 ? 'bg-emerald-400' : hpPct > 25 ? 'bg-amber-400' : 'bg-rose-500'}`}
+                                className={`h-full rounded ${isBoss ? 'bg-gradient-to-r from-red-500 to-amber-500' : hpPct > 55 ? 'bg-emerald-400' : hpPct > 25 ? 'bg-amber-400' : 'bg-rose-500'}`}
                                 style={{ width: `${hpPct}%` }}
                               />
                             </div>
@@ -707,18 +930,23 @@ export const PlantsVsMonsters: React.FC<PlantsVsMonstersProps> = ({ groups, stat
                             {/* Main Animated emoji representing zombie */}
                             <motion.div 
                               animate={{ 
-                                y: [-4, 0, -4],
-                                rotate: m.type === 'GOBLIN' ? [-4, 4, -4] : [-2, 2, -2]
+                                y: isBoss ? [-8, 0, -8] : [-4, 0, -4],
+                                rotate: isBoss ? [-6, 6, -6] : m.type === 'GOBLIN' ? [-4, 4, -4] : [-2, 2, -2],
+                                scale: isBoss ? [1, 1.05, 1] : 1
                               }}
-                              transition={{ repeat: Infinity, duration: m.type === 'GOBLIN' ? 0.7 : 1.5 }}
-                              className="text-2xl relative"
+                              transition={{ repeat: Infinity, duration: isBoss ? 1.2 : m.type === 'GOBLIN' ? 0.7 : 1.5 }}
+                              className={`${isBoss ? 'text-5xl' : 'text-2xl'} relative flex flex-col items-center justify-center`}
                             >
                               <span className={m.isHit ? 'filter invert hue-rotate-180 brightness-110' : ''}>
                                 {m.emoji}
                               </span>
                               
                               {/* Attached Word translation clue on top */}
-                              <div className="absolute top-[102%] left-1/2 -translate-x-1/2 bg-slate-900/90 text-[7px] font-bold px-1 py-0.5 rounded leading-none shrink-0 border border-[#475569] truncate w-[54px] text-center text-slate-300">
+                              <div className={`absolute top-[102%] left-1/2 -translate-x-1/2 font-bold px-1 rounded leading-none shrink-0 text-center truncate ${
+                                isBoss 
+                                  ? 'bg-red-900/90 text-[9px] py-1 border border-red-500 text-white w-[88px] shadow-lg shadow-black/50' 
+                                  : 'bg-slate-900/90 text-[7px] py-0.5 border border-[#475569] text-slate-300 w-[54px]'
+                              }`}>
                                 {m.word.text}
                               </div>
                             </motion.div>

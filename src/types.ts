@@ -77,6 +77,7 @@ export interface UserStats {
   completedLevelsCount: number;
   completedLevelIds: number[];
   masteredLevelIds: number[];
+  claimedMilestones?: number[];
   reviewSchedules?: Record<string, { nextReviewAt: number, intervalDays: number, levelId: number }>;
   cardsPerDay?: number;
   characterStats: Record<string, {

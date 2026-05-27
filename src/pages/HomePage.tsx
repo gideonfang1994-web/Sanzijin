@@ -1,9 +1,8 @@
-
 import React from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import { 
-  BookOpen, Gamepad2, Sparkles, Star, Trophy, CircleDollarSign, ArrowRight, Search, X,
-  Sword, Shield, Zap, ChevronDown, ChevronUp, Swords, Activity, Heart, ShoppingBag, Plus, Award
+  BookOpen, Gamepad2, Sparkles, Trophy, CircleDollarSign, ArrowRight, Search, X,
+  Sword, Shield, Zap, Swords, Activity, Heart, Plus, Award
 } from 'lucide-react';
 import { UserStats, WordGroup, ViewState } from '../types';
 import DailyQuestBoard from '../components/DailyQuestBoard';
@@ -142,683 +141,540 @@ const HomePage: React.FC<HomePageProps> = ({ stats, groups, reviewNeeded, onNavi
   const totalCombatPower = characterCombatPower + activePetPower;
 
   return (
-    <div className="space-y-6 animate-in fade-in zoom-in-95 duration-700 pb-16 relative">
-      {/* Dynamic Nature Background - Ultra Rich Green */}
-      <div className="fixed inset-0 pointer-events-none overflow-hidden -z-10 bg-gradient-to-br from-[#10513e] via-[#064e3b] to-[#065f46]">
-        {/* Animated Sun Rays with Glow */}
-        <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_-10%,_rgba(52,211,153,0.2)_0%,_transparent_60%)]" />
-        <div className="absolute inset-0 bg-[radial-gradient(circle_at_10%_20%,_rgba(16,185,129,0.15)_0%,_transparent_40%)]" />
-
-        {/* Floating Nature Objects (Leaves, Flowers, Petals) */}
-        {[...Array(15)].map((_, i) => (
+    <div className="space-y-4 animate-in fade-in duration-500 pb-4 relative w-full max-w-lg mx-auto overflow-x-hidden">
+      {/* Dynamic Magical Forest Background */}
+      <div className="fixed inset-0 pointer-events-none overflow-hidden -z-10 bg-gradient-to-br from-[#022c22] via-[#011c12] to-[#0b1320]">
+        {/* Soft glowing sunbeams and magical star lights */}
+        <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_-10%,_rgba(16,185,129,0.22)_0%,_transparent_65%)]" />
+        <div className="absolute top-10 left-1/4 text-emerald-400/20 text-xl pointer-events-none animate-pulse">⭐</div>
+        <div className="absolute top-1/3 right-12 text-yellow-300/15 text-2xl pointer-events-none animate-pulse">✨</div>
+        <div className="absolute bottom-1/4 left-10 text-emerald-400/10 text-3xl pointer-events-none">✨</div>
+        
+        {/* Floating Spore Particles / Fireflies */}
+        {[...Array(12)].map((_, i) => (
           <motion.div
             key={i}
-            initial={{ 
-              x: Math.random() * 100 + '%', 
-              y: -100, 
-              rotate: 0,
-              opacity: 0 
+            className="absolute rounded-full bg-emerald-400/20 blur-[2px]"
+            style={{
+              width: Math.random() * 6 + 4,
+              height: Math.random() * 6 + 4,
+              left: `${Math.random() * 100}%`,
+              top: `${Math.random() * 100}%`,
             }}
-            animate={{ 
-              y: ['0vh', '110vh'],
-              x: [(Math.random() * 120 - 10) + '%', (Math.random() * 120 - 10) + '%'],
-              rotate: [0, 1080],
-              opacity: [0, 0.5, 0.5, 0],
-              scale: [0.7, 1.3, 0.7]
+            animate={{
+              y: [-10, -130],
+              x: [0, Math.random() * 50 - 25],
+              opacity: [0, 0.75, 0],
+              scale: [0.6, 1.2, 0.6],
             }}
-            transition={{ 
-              duration: 12 + Math.random() * 18, 
-              repeat: Infinity, 
-              delay: Math.random() * 15,
-              ease: "linear"
+            transition={{
+              duration: Math.random() * 12 + 10,
+              repeat: Infinity,
+              delay: Math.random() * 6,
+              ease: "easeInOut"
             }}
-            className="absolute text-5xl filter blur-[0.3px] select-none pointer-events-none"
-          >
-            {['🍃', '🌿', '🌸', '🍀', '✨', '🌼'][i % 6]}
-          </motion.div>
+          />
         ))}
-        
-        {/* Deep Forest Layers with Silhouettes */}
-        <div className="absolute bottom-0 left-0 right-0 h-96 opacity-10 flex justify-around items-end overflow-hidden">
-           <div className="text-[20rem] -mb-28 -ml-32 transform -rotate-6">🌳</div>
-           <div className="text-[14rem] -mb-16 text-emerald-900/30">🌲</div>
-           <div className="text-[22rem] -mb-32 text-emerald-900/50 transform rotate-3">🌳</div>
-           <div className="text-[15rem] -mb-12 -mr-32 text-emerald-900/30 transform -rotate-12">🌲</div>
-        </div>
-
-        {/* Ground Flora Details */}
-        <div className="absolute bottom-10 left-10 text-7xl opacity-20 transform -rotate-12">🍄</div>
-        <div className="absolute bottom-24 right-16 text-6xl opacity-15">🌸</div>
-        <div className="absolute bottom-32 left-1/3 text-4xl opacity-10">🌿</div>
       </div>
 
-        {/* Magical Ecosystem Accents */}
-        <motion.div 
-          animate={{ opacity: [0.2, 0.4, 0.2] }} 
-          transition={{ duration: 4, repeat: Infinity }}
-          className="absolute bottom-32 left-16 text-6xl opacity-30 drop-shadow-[0_0_15px_rgba(255,255,255,0.5)]"
-        >
-          🍄
-        </motion.div>
-        <motion.div 
-          animate={{ 
-            x: [0, 100, 0], 
-            y: [0, -50, 0],
-            rotate: [0, 20, 0]
-          }} 
-          transition={{ duration: 12, repeat: Infinity, ease: "linear" }}
-          className="absolute top-1/4 right-20 text-5xl opacity-20"
-        >
-          🦋
-        </motion.div>
-        <motion.div 
-          animate={{ scale: [1, 1.2, 1], opacity: [0.1, 0.3, 0.1] }} 
-          transition={{ duration: 3, repeat: Infinity }}
-          className="absolute top-1/3 left-10 text-4xl"
-        >
-          ✨
-        </motion.div>
-
-      {/* Hero Stats Section - Glassmorphism Refined */}
-      <div className="bg-white rounded-[40px] p-6 shadow-[0_32px_64px_-16px_rgba(6,78,59,0.15)] border-2 border-emerald-100 flex justify-between items-center relative overflow-hidden group">
-        <div className="absolute inset-0 bg-gradient-to-br from-emerald-50/50 to-transparent pointer-events-none" />
-        <div className="absolute -top-12 -right-12 w-40 h-40 bg-emerald-200/40 rounded-full blur-3xl group-hover:scale-125 transition-transform duration-1000" />
+      {/* COMPACT INTEGRATED MAGICAL ACADEMY DASHBOARD HEADER */}
+      <div className="bg-gradient-to-b from-[#042f20]/90 to-[#022c22]/90 backdrop-blur-md rounded-2xl p-3 border border-emerald-500/30 shadow-2xl flex items-center justify-between text-white relative overflow-hidden">
+        {/* Decorative ambient runic golden stream line */}
+        <div className="absolute top-0 inset-x-0 h-[1.5px] bg-gradient-to-r from-transparent via-amber-400/60 to-transparent animate-pulse" />
         
-        <div className="flex items-center space-x-6 relative z-10">
-          <motion.div 
-            whileHover={{ scale: 1.08, rotate: 5 }}
-            className="relative"
-          >
-            <div className="absolute inset-0 bg-emerald-400 rounded-[24px] blur-lg opacity-40 group-hover:opacity-60 transition-opacity" />
-            <div className="bg-gradient-to-br from-emerald-500 via-emerald-600 to-emerald-800 text-white w-16 h-16 rounded-[24px] flex flex-col items-center justify-center font-black shadow-xl border-2 border-white/50 relative overflow-hidden">
-              <span className="text-[10px] font-bold opacity-70 leading-none mb-1">LV</span>
-              <span className="text-3xl leading-none">{stats.level}</span>
-              <div className="absolute top-0 left-0 w-full h-full bg-gradient-to-tr from-white/0 via-white/20 to-white/0 -translate-x-full group-hover:translate-x-full transition-transform duration-1000" />
-            </div>
-          </motion.div>
-          <div className="flex flex-col space-y-2">
-            <div className="flex items-center justify-between min-w-[120px]">
-               <span className="text-[10px] font-black text-emerald-800/40 uppercase tracking-[0.2em]">Magical Core</span>
-               <span className="text-[10px] font-bold text-emerald-600/60 uppercase tracking-widest">{Math.floor((stats.xp % 1000) / 10)}%</span>
-            </div>
-            <div className="w-40 h-3 bg-emerald-100/50 rounded-full overflow-hidden border border-emerald-200/50 shadow-inner p-1">
-              <motion.div 
-                initial={{ width: 0 }}
-                animate={{ width: `${(stats.xp % 1000) / 10}%` }}
-                className="h-full bg-gradient-to-r from-emerald-400 to-emerald-600 rounded-full shadow-[0_0_10px_rgba(52,211,153,0.5)]" 
-              />
-            </div>
+        {/* Left: Branding Identity */}
+        <div className="flex items-center space-x-2.5">
+          <div className="relative">
+            <span className="text-3xl select-none block animate-bounce filter drop-shadow-[0_2px_10px_rgba(52,211,153,0.5)]">🐯</span>
+          </div>
+          <div className="text-left shrink-0">
+            <h1 className="text-sm font-black text-emerald-300 tracking-wider leading-none flex items-center gap-1 font-serif">
+              <span>单词奇旅</span>
+              <span className="text-[7.5px] bg-emerald-500/20 text-emerald-300 font-extrabold px-1 py-0.5 rounded leading-none border border-emerald-500/30">v2.1</span>
+            </h1>
+            <span className="text-[9px] text-emerald-400/60 font-black block mt-1 tracking-widest uppercase font-mono">Enchanted Realm</span>
           </div>
         </div>
 
-        <div className="flex items-center space-x-3 relative z-10">
-          <motion.div 
-            whileHover={{ scale: 1.05, y: -2 }}
-            className="flex items-center bg-white px-4 py-3 rounded-[24px] border-2 border-slate-100 shadow-sm"
+        {/* Middle: Integrated XP & Level Counter (Small and neat) */}
+        <div className="hidden sm:flex flex-col items-start space-y-1">
+          <div className="flex items-center space-x-1.5 font-mono leading-none">
+            <span className="text-[9px] font-black text-emerald-300 bg-emerald-900/50 border border-emerald-500/20 px-1 py-0.5 rounded">勇者.L{stats.level}</span>
+            <span className="text-[8.5px] font-black text-emerald-400/80">({Math.floor((stats.xp % 1000) / 10)}%)</span>
+          </div>
+          <div className="w-[72px] h-1 bg-emerald-950/80 rounded-full overflow-hidden border border-emerald-800/20">
+            <div className="bg-gradient-to-r from-emerald-400 via-teal-300 to-emerald-500 h-full shadow-[0_0_8px_rgba(52,211,153,0.6)]" style={{ width: `${(stats.xp % 1000) / 10}%` }} />
+          </div>
+        </div>
+
+        {/* Right: Gold and Attributes Character book trigger */}
+        <div className="flex items-center space-x-2 relative">
+          <div className="bg-[#011c12] border border-emerald-500/30 px-2 py-1 rounded-xl flex items-center space-x-1 shadow-inner">
+            <CircleDollarSign size={13} className="text-amber-400 fill-amber-200 shrink-0" />
+            <span className="font-extrabold text-[#fcd34d] text-xs tabular-nums">{stats.starCoins}</span>
+          </div>
+
+          <button 
+            onClick={() => {
+              setIsProfileExpanded(true);
+            }}
+            className="px-2.5 py-1.5 bg-emerald-800 hover:bg-emerald-700 text-emerald-100 border border-emerald-500/40 font-extrabold text-[10px] rounded-xl flex items-center gap-1 filter drop-shadow-[0_2px_4px_rgba(4,120,87,0.3)] hover:brightness-110 active:scale-95 transition-all cursor-pointer"
           >
-            <CircleDollarSign size={20} className="text-amber-500 mr-2 fill-amber-200" />
-            <span className="font-black text-slate-700 text-base tabular-nums tracking-tight">{stats.starCoins}</span>
-          </motion.div>
+            <span>🗡️ 契约符文</span>
+            {unassignedPoints > 0 && (
+              <span className="h-1.5 w-1.5 rounded-full bg-rose-500 animate-pulse shrink-0" />
+            )}
+          </button>
         </div>
       </div>
 
-      {/* Expandable RPG Panel - Hook mechanism */}
-      <div className="bg-white rounded-[40px] border-2 border-emerald-100 shadow-[0_20px_40px_-12px_rgba(6,78,59,0.1)] overflow-hidden transition-all duration-300">
-        <button 
-          onClick={() => {
-            setIsProfileExpanded(!isProfileExpanded);
-          }}
-          className="w-full p-5 flex items-center justify-between hover:bg-emerald-50/40 transition-colors focus:outline-none"
-        >
-          <div className="flex items-center space-x-3.5">
-            <div className="w-11 h-11 bg-emerald-100 rounded-2xl flex items-center justify-center text-xl shadow-inner">
-              🗡️
+      {/* COMPACT WORD SEARCH SECTION */}
+      <div className="relative group">
+        <div className="absolute inset-y-0 left-4 flex items-center pointer-events-none">
+          <Search className="text-emerald-400 w-4 h-4 group-focus-within:text-emerald-300 transition-colors" />
+        </div>
+        <input
+          type="text"
+          value={searchQuery}
+          onChange={handleSearch}
+          placeholder="搜索收录的魔法单词..."
+          className="w-full bg-[#032219]/60 backdrop-blur-md py-3 pl-11 pr-10 rounded-xl border border-emerald-500/20 shadow-lg focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-400 outline-none transition-all text-sm text-emerald-100 placeholder:text-emerald-600/70 font-bold"
+        />
+        {searchQuery && (
+          <button
+            onClick={clearSearch}
+            className="absolute inset-y-0 right-3 flex items-center px-1 text-emerald-400 hover:text-emerald-200 transition-colors cursor-pointer"
+          >
+            <X className="w-4 h-4" />
+          </button>
+        )}
+      </div>
+
+      {/* SEARCH RESULTS DROP-DOWN */}
+      <AnimatePresence>
+        {searchResults.length > 0 && (
+          <motion.div
+            initial={{ opacity: 0, y: -8, height: 0 }}
+            animate={{ opacity: 1, y: 0, height: 'auto' }}
+            exit={{ opacity: 0, y: -8, height: 0 }}
+            className="bg-gradient-to-b from-emerald-950 to-[#022c22] border-2 border-emerald-500/30 rounded-2xl shadow-2xl p-4 space-y-3.5 overflow-hidden"
+          >
+            <h4 className="text-[9px] font-black text-emerald-400 uppercase tracking-widest px-1">收录魔法口诀</h4>
+            <div className="space-y-2 max-h-[180px] overflow-y-auto pr-1 custom-scrollbar">
+              {searchResults.map((group) => (
+                <div
+                  key={group.id}
+                  className="p-3 bg-slate-900/60 rounded-xl border border-emerald-500/10 hover:bg-[#032219]/40 transition-colors text-left"
+                >
+                  <div className="flex justify-between items-start mb-1.5">
+                    <div className="flex flex-wrap gap-1">
+                      {group.words.map(w => (
+                        <span key={w.text} className={`px-1.5 py-0.5 rounded text-[9px] font-black ${w.text.toLowerCase().includes(searchQuery.toLowerCase()) ? 'bg-amber-400 text-emerald-950 shadow-md font-extrabold' : 'bg-emerald-950/80 text-emerald-300'}`}>
+                          {w.text}
+                        </span>
+                      ))}
+                    </div>
+                    <span className="text-[8px] font-black text-emerald-400/60 uppercase tracking-widest font-mono">{group.title}</span>
+                  </div>
+                  <p className="text-slate-200 font-bold text-xs leading-relaxed">
+                    {group.rhyme.split(',').map((part, i) => (
+                      <span key={i} className="block">{part.trim()}</span>
+                    ))}
+                  </p>
+                </div>
+              ))}
             </div>
-            <div className="text-left">
-              <h4 className="font-black text-emerald-950 text-base flex items-center gap-1.5 leading-none mb-1">
-                <span>勇者手账与契约兽</span>
-                {unassignedPoints > 0 && (
-                  <span className="inline-flex h-2.5 w-2.5 rounded-full bg-rose-500 animate-pulse" />
-                )}
-              </h4>
-              <p className="text-[11px] font-bold text-slate-400">
-                主神圣域总战斗力: <span className="font-extrabold text-emerald-600">{totalCombatPower}</span> 🗡️ · 分配奥术潜能点
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      {/* TODAY'S QUESTS BOARD CONTAINER (Highly snugged and beautifully integrated) */}
+      <div className="overflow-hidden">
+        <DailyQuestBoard quests={stats.quests} onQuestClick={onQuestClick} />
+      </div>
+
+      {/* COMPACT INTERACTIVE NAVIGATION PORTALS GRID - HIGHER DENSITY */}
+      <div className="grid grid-cols-2 gap-4">
+        {/* Portal A: Adventure Forest */}
+        <motion.button 
+          whileHover={{ scale: 1.02, boxShadow: "0 10px 30px -10px rgba(16,185,129,0.4)" }}
+          whileTap={{ scale: 0.98 }}
+          onClick={() => onNavigate('ADVENTURE')} 
+          className="p-4 bg-gradient-to-br from-[#064e3b]/50 to-[#022c22]/80 border-2 border-emerald-500/30 rounded-2xl text-left relative overflow-hidden group h-28 flex flex-col justify-between cursor-pointer shadow-lg"
+        >
+          <div className="absolute top-0 right-0 p-3 opacity-[0.05] group-hover:opacity-15 group-hover:scale-110 transition-all select-none pointer-events-none text-5xl">🌲</div>
+          <div className="relative">
+            <div className="bg-gradient-to-r from-emerald-500 to-teal-400 w-8 h-8 rounded-xl flex items-center justify-center shadow-md shadow-emerald-900/30">
+              <BookOpen className="text-[#022c22] w-4.5 h-4.5 stroke-[3]" />
+            </div>
+            {reviewNeeded.length > 0 && (
+              <span className="absolute -top-1.5 -right-1.5 bg-rose-500 text-white text-[9px] font-black w-4 h-4 flex items-center justify-center rounded-full animate-pulse border border-[#022c22]">
+                {reviewNeeded.length}
+              </span>
+            )}
+          </div>
+          <div>
+            <h3 className="font-extrabold text-emerald-50 text-sm leading-none flex items-center gap-1 font-serif tracking-wide">
+              <span>冒险深林密境</span>
+              <ArrowRight size={10} className="text-emerald-300 opacity-0 group-hover:opacity-100 group-hover:translate-x-0.5 transition-all" />
+            </h3>
+            <span className="text-[9px] font-black text-emerald-400/55 block mt-1 uppercase tracking-wider font-mono">Spellbound Levels</span>
+          </div>
+        </motion.button>
+        
+        {/* Portal B: Magic Playground */}
+        <motion.button 
+          whileHover={{ scale: 1.02, boxShadow: "0 10px 30px -10px rgba(245,158,11,0.3)" }}
+          whileTap={{ scale: 0.98 }}
+          onClick={() => onNavigate('ARCADE')} 
+          className="p-4 bg-gradient-to-br from-amber-950/40 via-[#78350f]/35 to-[#451a03]/80 border-2 border-amber-500/30 rounded-2xl text-left relative overflow-hidden group h-28 flex flex-col justify-between cursor-pointer shadow-lg"
+        >
+          <div className="absolute top-0 right-0 p-3 opacity-[0.05] group-hover:opacity-15 group-hover:scale-110 transition-all select-none pointer-events-none text-5xl">🔮</div>
+          <div className="bg-gradient-to-r from-amber-400 to-yellow-300 w-8 h-8 rounded-xl flex items-center justify-center shadow-md shadow-amber-900/30">
+            <Gamepad2 className="text-amber-950 w-4.5 h-4.5 stroke-[3]" />
+          </div>
+          <div>
+            <h3 className="font-extrabold text-amber-50 text-sm leading-none flex items-center gap-1 font-serif tracking-wide">
+              <span>魔法演武乐园</span>
+              <ArrowRight size={10} className="text-amber-300 opacity-0 group-hover:opacity-100 group-hover:translate-x-0.5 transition-all" />
+            </h3>
+            <span className="text-[9px] font-black text-amber-400/55 block mt-1 uppercase tracking-wider font-mono">Arcade Portal</span>
+          </div>
+        </motion.button>
+
+        {/* Portal C: Word Classic Album (Full Width / Sleek banner style) */}
+        <motion.button 
+          whileHover={{ scale: 1.01, boxShadow: "0 10px 25px -10px rgba(20,184,166,0.2)" }}
+          whileTap={{ scale: 0.99 }}
+          onClick={() => onNavigate('COLLECTION')} 
+          className="col-span-2 p-3.5 bg-gradient-to-r from-[#03241b]/95 via-[#022c22]/90 to-[#0e1726]/90 border-2 border-emerald-500/20 rounded-2xl text-left relative overflow-hidden group flex items-center justify-between cursor-pointer shadow-md"
+        >
+          <div className="flex items-center space-x-3.5 relative">
+            <div className="bg-gradient-to-r from-emerald-500 to-teal-400 w-8 h-8 rounded-xl flex items-center justify-center shadow-md">
+              <Award className="text-[#022c22] w-4.5 h-4.5 stroke-[3]" />
+            </div>
+            <div>
+              <h3 className="font-extrabold text-emerald-100 text-xs leading-none font-serif tracking-wide">太古百神之森 · 魔法秘图鉴</h3>
+              <p className="text-[9.5px] font-bold text-emerald-400/75 mt-1">
+                查阅我炼造的专属三字密经口诀卡、已征服 <span className="text-yellow-300 font-extrabold">{(stats.masteredWords || []).length}</span> 字咒语
               </p>
             </div>
           </div>
-          <div className="flex items-center space-x-2">
-            {unassignedPoints > 0 && (
-              <span className="bg-rose-100 text-rose-600 font-black text-[10px] px-2.5 py-1 rounded-full border border-rose-200">
-                可分配 +{unassignedPoints}点
-              </span>
-            )}
-            <div className="p-1.5 hover:bg-emerald-100/50 rounded-xl transition-colors text-emerald-800">
-              {isProfileExpanded ? <ChevronUp size={18} /> : <ChevronDown size={18} />}
-            </div>
-          </div>
-        </button>
+          <span className="text-[9px] bg-emerald-950/80 border border-emerald-500/30 text-emerald-300 font-black px-2.5 py-1 rounded-xl group-hover:bg-gradient-to-r group-hover:from-emerald-500 group-hover:to-teal-400 group-hover:text-emerald-950 transition-all shrink-0">
+            启阅秘阁 📖
+          </span>
+        </motion.button>
+      </div>
 
-        <AnimatePresence initial={false}>
-          {isProfileExpanded && (
+      {/* IMMERSIVE RPG ATTRIBUTE / INVENTORY SHEET OVERLAY MODAL */}
+      <AnimatePresence>
+        {isProfileExpanded && (
+          <motion.div 
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 z-50 bg-[#01140e]/85 backdrop-blur-md flex items-center justify-center p-4"
+          >
             <motion.div
-              initial={{ height: 0, opacity: 0 }}
-              animate={{ height: "auto", opacity: 1 }}
-              exit={{ height: 0, opacity: 0 }}
-              transition={{ duration: 0.3 }}
-              className="border-t border-emerald-50"
+              initial={{ scale: 0.95, y: 15 }}
+              animate={{ scale: 1, y: 0 }}
+              exit={{ scale: 0.95, y: 15 }}
+              className="w-full max-w-sm bg-gradient-to-b from-[#011c13] to-[#042e20] border-2 border-emerald-500/35 rounded-3xl p-5 text-white shadow-2xl relative overflow-hidden max-h-[92vh] flex flex-col"
             >
-              <div className="p-6 bg-slate-50/50">
-                {/* Visual tabs inside the RPG manual */}
-                <div className="flex bg-slate-100 p-1.5 rounded-2xl mb-6">
+              {/* Magical Header scroll effect */}
+              <div className="absolute top-0 inset-x-0 h-1 bg-gradient-to-r from-emerald-500 via-amber-400 to-emerald-500" />
+              
+              <div className="flex items-center justify-between mb-4 border-b border-emerald-500/10 pb-3">
+                <div className="flex items-center space-x-2">
+                  <span className="text-xl">🗡️</span>
+                  <div className="text-left">
+                    <h4 className="font-serif font-black text-sm text-emerald-300 tracking-wide">大勇者奥术契约书</h4>
+                    <span className="text-[9px] text-emerald-400/60 block font-bold">主神圣域总战斗力: <span className="text-yellow-300 font-extrabold">{totalCombatPower} CP</span></span>
+                  </div>
+                </div>
+
+                <button 
+                  onClick={() => setIsProfileExpanded(false)}
+                  className="p-1.5 hover:bg-emerald-900/50 bg-[#01140e] border border-emerald-500/30 rounded-lg text-emerald-400 hover:text-white transition-colors cursor-pointer"
+                >
+                  <X size={15} />
+                </button>
+              </div>
+
+              {/* Scrollable Panel Area */}
+              <div className="flex-1 overflow-y-auto space-y-4 pr-1 custom-scrollbar">
+                
+                {/* Visual Tab Selector inside stats overlay */}
+                <div className="flex bg-[#01120d] border border-emerald-500/10 p-1 rounded-xl">
                   <button 
                     onClick={() => setActiveProfileTab('HERO')}
-                    className={`flex-1 py-3 text-xs font-black rounded-xl transition-all ${activeProfileTab === 'HERO' ? 'bg-white text-emerald-900 shadow-sm' : 'text-slate-500 hover:text-slate-800'}`}
+                    className={`flex-1 py-1.5 text-[10px] font-black rounded-lg transition-all ${activeProfileTab === 'HERO' ? 'bg-gradient-to-r from-emerald-800 to-teal-800 border border-emerald-500/30 text-emerald-100 shadow-sm' : 'text-emerald-400/50 hover:text-emerald-200'}`}
                   >
-                    🗡️ 勇者属性/天赋
+                    🗡️ 勇者奥术属性
                   </button>
                   <button 
                     onClick={() => setActiveProfileTab('PETS')}
-                    className={`flex-1 py-3 text-xs font-black rounded-xl transition-all ${activeProfileTab === 'PETS' ? 'bg-white text-emerald-900 shadow-sm' : 'text-slate-500 hover:text-slate-800'}`}
+                    className={`flex-1 py-1.5 text-[10px] font-black rounded-lg transition-all ${activeProfileTab === 'PETS' ? 'bg-gradient-to-r from-emerald-800 to-teal-800 border border-emerald-500/30 text-emerald-100 shadow-sm' : 'text-emerald-400/50 hover:text-emerald-200'}`}
                   >
                     🐾 契约守护兽 ({stats.pets?.length || 0})
                   </button>
                 </div>
 
                 {activeProfileTab === 'HERO' ? (
-                  <div className="space-y-6">
+                  <div className="space-y-4">
                     {/* Character Card Info */}
-                    <div className="bg-white rounded-3xl p-5 border border-slate-200/60 shadow-sm flex items-center space-x-5 relative overflow-hidden">
-                      <div className="absolute top-0 right-0 p-4 text-emerald-200/40 text-7xl font-mono select-none pointer-events-none">
+                    <div className="bg-[#01130d] border border-emerald-500/20 rounded-2xl p-4 flex items-center space-x-3.5 relative overflow-hidden">
+                      <div className="absolute top-0 right-0 opacity-[0.06] select-none pointer-events-none text-9xl">
                         {selectedChar.avatar}
                       </div>
-                      <div className="w-16 h-16 bg-emerald-50 rounded-[20px] border border-emerald-100 flex items-center justify-center text-3xl shadow-sm relative z-10">
+                      <div className="w-12 h-12 bg-emerald-550/10 rounded-xl border border-emerald-500/35 flex items-center justify-center text-2xl shrink-0">
                         {selectedChar.avatar}
                       </div>
-                      <div className="relative z-10 flex-1">
-                        <div className="flex items-center space-x-2">
-                          <h5 className="font-extrabold text-slate-800 text-lg leading-none">{selectedChar.name}</h5>
-                          <span className="text-[10px] bg-emerald-100 text-emerald-700 font-extrabold px-2 py-0.5 rounded-md">
-                            英雄 LV {charStats.level}
+                      <div className="min-w-0">
+                        <div className="flex items-center gap-1.5">
+                          <h5 className="font-serif font-black text-white text-sm truncate">{selectedChar.name}</h5>
+                          <span className="text-[8px] bg-emerald-900/50 text-emerald-300 font-extrabold px-1.5 py-0.5 rounded leading-none shrink-0 border border-emerald-500/30">
+                            英雄 LV.{charStats.level}
                           </span>
                         </div>
-                        <p className="text-[11px] font-medium text-slate-400 mt-1.5 italic leading-tight">
-                          {selectedChar.title}
-                        </p>
-                        <p className="text-[11px] font-bold text-slate-500 mt-2.5 leading-relaxed">
+                        <p className="text-[9px] font-semibold text-emerald-400/60 mt-1 italic leading-none truncate">{selectedChar.title}</p>
+                        <p className="text-[10px] font-bold text-emerald-100/75 leading-normal mt-1.5 line-clamp-2">
                           {selectedChar.description}
                         </p>
                       </div>
                     </div>
 
-                    {/* Combat Power Breakdown */}
-                    <div className="grid grid-cols-3 gap-3">
-                      <div className="bg-emerald-950/5 rounded-2xl p-3 border border-emerald-950/10 text-center">
-                        <span className="text-[10px] font-black text-emerald-800/60 block mb-0.5">勇者基础评分</span>
-                        <span className="font-black text-slate-700 text-sm md:text-base">{characterCombatPower}</span>
+                    {/* Compact rating pills */}
+                    <div className="grid grid-cols-3 gap-2 bg-[#01140f]/60 p-2 rounded-2xl border border-emerald-500/20">
+                      <div className="text-center">
+                        <span className="text-[8px] font-black text-emerald-400/40 block mb-0.5 uppercase tracking-wide">基础战力</span>
+                        <span className="font-extrabold text-[#fda4af] text-xs tabular-nums">{characterCombatPower}</span>
                       </div>
-                      <div className="bg-indigo-950/5 rounded-2xl p-3 border border-indigo-950/10 text-center">
-                        <span className="text-[10px] font-black text-indigo-800/60 block mb-0.5">契约兽加功</span>
-                        <span className="font-black text-slate-700 text-sm md:text-base">+{activePetPower}</span>
+                      <div className="text-center border-x border-emerald-505/10">
+                        <span className="text-[8px] font-black text-emerald-400/40 block mb-0.5 uppercase tracking-wide">守护加功</span>
+                        <span className="font-extrabold text-teal-300 text-xs tabular-nums">+{activePetPower}</span>
                       </div>
-                      <div className="bg-amber-950/5 rounded-2xl p-3 border border-amber-950/10 text-center">
-                        <span className="text-[10px] font-black text-amber-800/60 block mb-0.5">圣域总战斗力</span>
-                        <span className="font-black text-emerald-600 text-sm md:text-base">{totalCombatPower}</span>
+                      <div className="text-center">
+                        <span className="text-[8px] font-black text-emerald-400/40 block mb-0.5 uppercase tracking-wide">契约评分</span>
+                        <span className="font-black text-yellow-300 text-xs tabular-nums">{totalCombatPower}</span>
                       </div>
                     </div>
 
-                    {/* Attributes Allocation Grid */}
-                    <div className="bg-white rounded-3xl p-5 border border-slate-200/60 shadow-sm space-y-4">
-                      <div className="flex items-center justify-between border-b border-slate-100 pb-3">
-                        <div>
-                          <h6 className="font-extrabold text-slate-800 text-sm">分配奥术潜能属性</h6>
-                          <p className="text-[10px] font-bold text-slate-400 mt-0.5">使用学习积攒的奥术能量升级角色</p>
+                    {/* Attributes Distribution */}
+                    <div className="space-y-3 bg-[#01130d]/35 border border-emerald-500/20 p-4 rounded-2xl">
+                      <div className="flex items-center justify-between border-b border-emerald-500/10 pb-2 mb-1">
+                        <span className="text-xs font-serif font-extrabold text-emerald-100">分配奥术神力属性</span>
+                        <span className="bg-amber-400/10 text-[#fcd34d] border border-amber-500/30 px-2 py-0.5 rounded-lg text-[9px] font-black">
+                          剩余 {unassignedPoints} 点
+                        </span>
+                      </div>
+
+                      {/* Attribute Row strength */}
+                      <div className="flex items-center justify-between bg-[#01150f] p-2 border border-emerald-500/10 rounded-xl">
+                        <div className="flex items-center space-x-2">
+                          <Sword size={12} className="text-red-400" />
+                          <div>
+                            <span className="font-black text-slate-200 text-xs block leading-none">力量</span>
+                            <span className="text-[8px] text-emerald-400/50 font-bold block mt-0.5">提高扫尾和词怪击落度</span>
+                          </div>
                         </div>
-                        <div className="flex items-center space-x-2.5 text-right">
-                          <span className="text-xs font-black text-slate-600">剩余点数:</span>
-                          <span className="bg-amber-100 text-amber-800 border border-amber-200 px-3 py-1 rounded-xl text-xs font-black tabular-nums">
-                            {unassignedPoints} 点
+                        <div className="flex items-center space-x-2">
+                          <span className="font-black text-xs text-slate-200 tabular-nums">
+                            {charStats.strength}
+                            {bonusStrength > 0 && <span className="text-emerald-400 text-[10px] font-bold ml-1">+{bonusStrength}</span>}
                           </span>
+                          <button
+                            disabled={unassignedPoints <= 0}
+                            onClick={() => handleAddAttributePoint('strength')}
+                            className={`w-5 h-5 rounded flex items-center justify-center font-bold text-xs ${unassignedPoints > 0 ? 'bg-emerald-700 hover:bg-emerald-600 cursor-pointer text-white' : 'bg-emerald-950 text-emerald-800'}`}
+                          >
+                            +
+                          </button>
                         </div>
                       </div>
 
-                      <div className="space-y-3">
-                        {/* Attribute 1: Strength */}
-                        <div className="flex items-center justify-between bg-slate-50/50 p-3.5 rounded-2xl border border-slate-100">
-                          <div className="flex items-center space-x-3">
-                            <div className="w-8 h-8 rounded-xl bg-red-50 border border-red-100 flex items-center justify-center text-red-500">
-                              <Sword size={16} />
-                            </div>
-                            <div>
-                              <span className="font-extrabold text-slate-700 text-xs">力量 (Strength)</span>
-                              <span className="text-[9px] font-bold text-slate-400 block mt-0.5">增加攻击强度 & 砍杀小恶魔效率</span>
-                            </div>
-                          </div>
-                          <div className="flex items-center space-x-3.5">
-                            <span className="font-black text-slate-800 text-sm tabular-nums">
-                              {charStats.strength}
-                              {bonusStrength > 0 && (
-                                <span className="text-emerald-500 text-xs font-bold ml-1.5">+{bonusStrength}</span>
-                              )}
-                            </span>
-                            <button
-                              disabled={unassignedPoints <= 0}
-                              onClick={() => handleAddAttributePoint('strength')}
-                              className={`w-7 h-7 rounded-lg flex items-center justify-center font-black text-xs shadow-md transition-all ${unassignedPoints > 0 ? 'bg-emerald-500 hover:bg-emerald-600 active:scale-90 text-white cursor-pointer' : 'bg-slate-100 text-slate-300 cursor-not-allowed'}`}
-                            >
-                              <Plus size={14} />
-                            </button>
+                      {/* Attribute Row magic */}
+                      <div className="flex items-center justify-between bg-[#01150f] p-2 border border-emerald-500/10 rounded-xl">
+                        <div className="flex items-center space-x-2">
+                          <Zap size={12} className="text-purple-400" />
+                          <div>
+                            <span className="font-black text-slate-200 text-xs block leading-none">魔力</span>
+                            <span className="text-[8px] text-emerald-400/50 font-bold block mt-0.5">净化音标及闪避护盾</span>
                           </div>
                         </div>
-
-                        {/* Attribute 2: Magic */}
-                        <div className="flex items-center justify-between bg-slate-50/50 p-3.5 rounded-2xl border border-slate-100">
-                          <div className="flex items-center space-x-3">
-                            <div className="w-8 h-8 rounded-xl bg-purple-50 border border-purple-100 flex items-center justify-center text-purple-500">
-                              <Zap size={16} />
-                            </div>
-                            <div>
-                              <span className="font-extrabold text-slate-700 text-xs">魔力 (Magic)</span>
-                              <span className="text-[9px] font-bold text-slate-400 block mt-0.5">增加奥术屏障 & 净化音标能量</span>
-                            </div>
-                          </div>
-                          <div className="flex items-center space-x-3.5">
-                            <span className="font-black text-slate-800 text-sm tabular-nums">
-                              {charStats.magic}
-                              {bonusMagic > 0 && (
-                                <span className="text-emerald-500 text-xs font-bold ml-1.5">+{bonusMagic}</span>
-                              )}
-                            </span>
-                            <button
-                              disabled={unassignedPoints <= 0}
-                              onClick={() => handleAddAttributePoint('magic')}
-                              className={`w-7 h-7 rounded-lg flex items-center justify-center font-black text-xs shadow-md transition-all ${unassignedPoints > 0 ? 'bg-purple-500 hover:bg-purple-600 active:scale-90 text-white cursor-pointer' : 'bg-slate-100 text-slate-300 cursor-not-allowed'}`}
-                            >
-                              <Plus size={14} />
-                            </button>
-                          </div>
-                        </div>
-
-                        {/* Attribute 3: Defense */}
-                        <div className="flex items-center justify-between bg-slate-50/50 p-3.5 rounded-2xl border border-slate-100">
-                          <div className="flex items-center space-x-3">
-                            <div className="w-8 h-8 rounded-xl bg-blue-50 border border-blue-100 flex items-center justify-center text-blue-500">
-                              <Shield size={16} />
-                            </div>
-                            <div>
-                              <span className="font-extrabold text-slate-700 text-xs">防御 (Defense)</span>
-                              <span className="text-[9px] font-bold text-slate-400 block mt-0.5">增加生命护盾 & 拼读书写容错率</span>
-                            </div>
-                          </div>
-                          <div className="flex items-center space-x-3.5">
-                            <span className="font-black text-slate-800 text-sm tabular-nums">
-                              {charStats.defense}
-                              {bonusDefense > 0 && (
-                                <span className="text-emerald-500 text-xs font-bold ml-1.5">+{bonusDefense}</span>
-                              )}
-                            </span>
-                            <button
-                              disabled={unassignedPoints <= 0}
-                              onClick={() => handleAddAttributePoint('defense')}
-                              className={`w-7 h-7 rounded-lg flex items-center justify-center font-black text-xs shadow-md transition-all ${unassignedPoints > 0 ? 'bg-blue-500 hover:bg-blue-600 active:scale-90 text-white cursor-pointer' : 'bg-slate-100 text-slate-300 cursor-not-allowed'}`}
-                            >
-                              <Plus size={14} />
-                            </button>
-                          </div>
-                        </div>
-
-                        {/* Attribute 4: Agility */}
-                        <div className="flex items-center justify-between bg-slate-50/50 p-3.5 rounded-2xl border border-slate-100">
-                          <div className="flex items-center space-x-3">
-                            <div className="w-8 h-8 rounded-xl bg-green-50 border border-green-100 flex items-center justify-center text-green-500">
-                              <Activity size={16} />
-                            </div>
-                            <div>
-                              <span className="font-extrabold text-slate-700 text-xs">敏捷 (Agility)</span>
-                              <span className="text-[9px] font-bold text-slate-400 block mt-0.5">增加反应闪避 & 连击拼词得分倍率</span>
-                            </div>
-                          </div>
-                          <div className="flex items-center space-x-3.5">
-                            <span className="font-black text-slate-800 text-sm tabular-nums">
-                              {charStats.agility}
-                              {bonusAgility > 0 && (
-                                <span className="text-emerald-500 text-xs font-bold ml-1.5">+{bonusAgility}</span>
-                              )}
-                            </span>
-                            <button
-                              disabled={unassignedPoints <= 0}
-                              onClick={() => handleAddAttributePoint('agility')}
-                              className={`w-7 h-7 rounded-lg flex items-center justify-center font-black text-xs shadow-md transition-all ${unassignedPoints > 0 ? 'bg-green-500 hover:bg-green-600 active:scale-90 text-white cursor-pointer' : 'bg-slate-100 text-slate-300 cursor-not-allowed'}`}
-                            >
-                              <Plus size={14} />
-                            </button>
-                          </div>
+                        <div className="flex items-center space-x-2">
+                          <span className="font-black text-xs text-slate-200 tabular-nums">
+                            {charStats.magic}
+                            {bonusMagic > 0 && <span className="text-emerald-400 text-[10px] font-bold ml-1">+{bonusMagic}</span>}
+                          </span>
+                          <button
+                            disabled={unassignedPoints <= 0}
+                            onClick={() => handleAddAttributePoint('magic')}
+                            className={`w-5 h-5 rounded flex items-center justify-center font-bold text-xs ${unassignedPoints > 0 ? 'bg-purple-700 hover:bg-purple-600 cursor-pointer text-white' : 'bg-emerald-950 text-emerald-800'}`}
+                          >
+                            +
+                          </button>
                         </div>
                       </div>
 
-                      {/* Equipment List Section */}
-                      {equippedItems.length > 0 && (
-                        <div className="pt-2 border-t border-slate-150">
-                          <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest block mb-2 px-1">正在装备</span>
-                          <div className="grid grid-cols-2 gap-2">
-                            {equippedItems.map(item => (
-                              <div key={item.id} className="flex items-center space-x-2 p-2.5 bg-slate-50 border border-slate-200/50 rounded-xl relative overflow-hidden group/item">
-                                {item.imageUrl ? (
-                                  <SafeImage src={item.imageUrl} alt={item.name} className="w-8 h-8 object-contain animate-pulse" />
-                                ) : (
-                                  <div className="w-8 h-8 bg-amber-50 rounded-lg flex items-center justify-center text-sm font-black border border-amber-100">🛡️</div>
-                                )}
-                                <div className="min-w-0">
-                                  <span className="text-[11px] font-extrabold text-slate-700 block truncate leading-tight">{item.name}</span>
-                                  <span className="text-[9px] font-bold text-emerald-600 block leading-tight mt-0.5">
-                                    {Object.entries(item.stats || {}).map(([key, value]) => {
-                                      const label = key === 'strength' ? '力量' : key === 'magic' ? '魔力' : key === 'defense' ? '防御' : '敏捷';
-                                      return `${label}+${value}`;
-                                    }).join(', ')}
-                                  </span>
-                                </div>
-                              </div>
-                            ))}
+                      {/* Attribute Row defense */}
+                      <div className="flex items-center justify-between bg-[#01150f] p-2 border border-emerald-500/10 rounded-xl">
+                        <div className="flex items-center space-x-2">
+                          <Shield size={12} className="text-blue-400" />
+                          <div>
+                            <span className="font-black text-slate-200 text-xs block leading-none">防御</span>
+                            <span className="text-[8px] text-emerald-400/50 font-bold block mt-0.5">提供更高的拼读防守度</span>
                           </div>
                         </div>
-                      )}
+                        <div className="flex items-center space-x-2">
+                          <span className="font-black text-xs text-slate-200 tabular-nums">
+                            {charStats.defense}
+                            {bonusDefense > 0 && <span className="text-emerald-400 text-[10px] font-bold ml-1">+{bonusDefense}</span>}
+                          </span>
+                          <button
+                            disabled={unassignedPoints <= 0}
+                            onClick={() => handleAddAttributePoint('defense')}
+                            className={`w-5 h-5 rounded flex items-center justify-center font-bold text-xs ${unassignedPoints > 0 ? 'bg-blue-705 hover:bg-blue-600 cursor-pointer text-white' : 'bg-emerald-950 text-emerald-800'}`}
+                          >
+                            +
+                          </button>
+                        </div>
+                      </div>
 
-                      {/* Action buttons */}
+                      {/* Attribute Row agility */}
+                      <div className="flex items-center justify-between bg-[#01150f] p-2 border border-emerald-500/10 rounded-xl">
+                        <div className="flex items-center space-x-2">
+                          <Activity size={12} className="text-[#34d399]" />
+                          <div>
+                            <span className="font-black text-slate-200 text-xs block leading-none">敏捷</span>
+                            <span className="text-[8px] text-emerald-400/50 font-bold block mt-0.5">提升连击爆伤倍率</span>
+                          </div>
+                        </div>
+                        <div className="flex items-center space-x-2">
+                          <span className="font-black text-xs text-slate-200 tabular-nums">
+                            {charStats.agility}
+                            {bonusAgility > 0 && <span className="text-[#34d399] text-[10px] font-bold ml-1">+{bonusAgility}</span>}
+                          </span>
+                          <button
+                            disabled={unassignedPoints <= 0}
+                            onClick={() => handleAddAttributePoint('agility')}
+                            className={`w-5 h-5 rounded flex items-center justify-center font-bold text-xs ${unassignedPoints > 0 ? 'bg-emerald-700 hover:bg-emerald-600 cursor-pointer text-white' : 'bg-emerald-950 text-emerald-800'}`}
+                          >
+                            +
+                          </button>
+                        </div>
+                      </div>
+
                       {spentPoints > 0 && (
-                        <div className="flex justify-end pt-2">
+                        <div className="flex justify-end pt-1">
                           <button 
                             onClick={handleResetAttributePoints}
-                            className="bg-slate-100 hover:bg-slate-200 text-slate-600 hover:text-slate-800 font-extrabold text-[10px] px-3.5 py-2 rounded-xl transition-all border border-slate-200 focus:outline-none"
+                            className="bg-emerald-950/80 hover:bg-emerald-900 text-emerald-400 font-extrabold text-[9px] px-2.5 py-1.5 rounded-lg border border-emerald-500/20 focus:outline-none transition-all cursor-pointer"
                           >
-                            🔄 重置奥术天赋点
+                            🔄 重置大奥术潜能点
                           </button>
                         </div>
                       )}
                     </div>
+
+                    {/* Active Equipments List */}
+                    {equippedItems.length > 0 && (
+                      <div className="bg-[#01130d]/35 border border-emerald-500/25 p-3 rounded-2xl">
+                        <span className="text-[9px] font-black text-emerald-355 block mb-2 uppercase px-1 font-mono tracking-wider">正在装备魔法圣护具</span>
+                        <div className="grid grid-cols-2 gap-2">
+                          {equippedItems.map(item => (
+                            <div key={item.id} className="flex items-center space-x-2 p-2 bg-emerald-950/70 border border-emerald-500/10 rounded-xl">
+                              <div className="w-6 h-6 bg-amber-500/10 text-xs flex items-center justify-center rounded-lg border border-amber-500/20">🛡️</div>
+                              <div className="min-w-0">
+                                <span className="text-[10px] font-extrabold text-emerald-100 block truncate leading-none">{item.name}</span>
+                                <span className="text-[8px] font-bold text-emerald-400 block mt-0.5 truncate leading-none">
+                                  {Object.entries(item.stats || {}).map(([key, value]) => `${key === 'strength' ? '力' : key === 'magic' ? '魔' : key === 'defense' ? '防' : '敏'}+${value}`).join(',')}
+                                </span>
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    )}
                   </div>
                 ) : (
-                  <div className="space-y-4">
+                  <div className="space-y-3.5">
                     {stats.pets && stats.pets.length > 0 ? (
-                      <div className="grid grid-cols-1 gap-3.5">
+                      <div className="space-y-2.5">
                         {stats.pets.map((pet, idx) => {
                           const cp = Math.floor(pet.level * 50 + pet.happiness * 1.5 + pet.health * 1);
                           return (
-                            <div key={pet.id || idx} className="bg-white rounded-3xl p-5 border border-emerald-100 shadow-sm flex items-center justify-between relative overflow-hidden">
-                              <div className="absolute top-0 right-0 p-3 opacity-[0.06] select-none pointer-events-none text-9xl leading-none">
+                            <div key={pet.id || idx} className="bg-[#01130d] border border-emerald-500/20 rounded-2xl p-3 flex justify-between items-center relative overflow-hidden">
+                              <div className="absolute top-0 right-0 p-1 opacity-[0.03] select-none pointer-events-none text-7xl">
                                 {PET_EMOJIS[pet.type] || '🐾'}
                               </div>
-                              
-                              <div className="flex items-center space-x-4 relative z-10">
-                                <span className="text-4xl leading-none p-2 bg-emerald-50 rounded-2xl border border-emerald-100">
+                              <div className="flex items-center space-x-3 relative z-10 min-w-0">
+                                <span className="text-3xl p-1.5 bg-[#01110c] rounded-xl border border-emerald-500/20 shrink-0">
                                   {PET_EMOJIS[pet.type] || '🐾'}
                                 </span>
-                                <div className="text-left">
-                                  <div className="flex items-center gap-1.5 leading-none mb-1.5">
-                                    <h5 className="font-extrabold text-slate-800 text-sm">{pet.name}</h5>
-                                    <span className="text-[8px] bg-emerald-800 text-emerald-300 font-black px-1.5 py-0.5 rounded uppercase">
-                                      LV {pet.level}
+                                <div className="text-left min-w-0">
+                                  <div className="flex items-center gap-1">
+                                    <h5 className="font-extrabold text-white text-xs truncate">{pet.name}</h5>
+                                    <span className="text-[7.5px] bg-[#10b981]/15 text-emerald-300 font-extrabold px-1 rounded uppercase">
+                                      LV.{pet.level}
                                     </span>
                                   </div>
-                                  <div className="flex items-center space-x-3 text-[10px] font-bold text-slate-400">
-                                    <span className="flex items-center gap-0.5">
-                                      ❤️ 生命 {pet.health}/{pet.maxHealth || 100}
-                                    </span>
-                                    <span className="flex items-center gap-0.5">
-                                      ⭐ 快乐 {pet.happiness}/100
-                                    </span>
+                                  <div className="flex items-center space-x-2 text-[8.5px] font-bold text-emerald-400/50 mt-1">
+                                    <span>❤️生命 {pet.health}/100</span>
+                                    <span>⭐快乐 {pet.happiness}/100</span>
                                   </div>
                                 </div>
                               </div>
-
-                              <div className="text-right flex flex-col justify-center relative z-10 shrink-0">
-                                <span className="text-[8px] font-black text-slate-400 uppercase tracking-widest block mb-1">守护力评分</span>
-                                <span className="font-black text-emerald-600 text-base tabular-nums">+{cp} CP</span>
+                              <div className="text-right flex flex-col justify-center relative z-10 shrink-0 select-none">
+                                <span className="text-[7.5px] font-black text-emerald-500/50 uppercase">守护力</span>
+                                <span className="font-black text-emerald-400 text-xs tabular-nums">+{cp} CP</span>
                               </div>
                             </div>
                           );
                         })}
-                        <div className="pt-2">
-                          <button
-                            onClick={() => onNavigate('PETS')}
-                            className="w-full bg-emerald-800 hover:bg-emerald-950 text-white font-black text-xs py-4 rounded-2xl shadow-lg shadow-emerald-900/10 transition-all flex items-center justify-center space-x-1.5"
-                          >
-                            <span>进入宠兽神域进行挂机特训 ⚔️</span>
-                            <ArrowRight size={14} />
-                          </button>
-                        </div>
+                        <button
+                          onClick={() => {
+                            setIsProfileExpanded(false);
+                            onNavigate('PETS');
+                          }}
+                          className="w-full bg-emerald-805 hover:bg-emerald-900 bg-gradient-to-r from-emerald-800 to-teal-800 text-white font-black text-[10px] py-3 rounded-xl transition-all flex items-center justify-center space-x-1 border border-emerald-700 shadow-md cursor-pointer mt-2"
+                        >
+                          <span>进入契约兽神域进行特训 ⚔️</span>
+                          <ArrowRight size={11} />
+                        </button>
                       </div>
                     ) : (
-                      <div className="bg-white rounded-3xl p-8 border border-slate-200/60 shadow-sm text-center py-10">
-                        <span className="text-5xl block mb-4 select-none">🥚</span>
-                        <h6 className="font-extrabold text-slate-700 text-sm mb-1.5">还未契约守护魔兽</h6>
-                        <p className="text-[11px] font-medium text-slate-400 max-w-xs mx-auto mb-6 leading-relaxed">
-                          背诵和拼写魔法字母可以积攒金币。快去魔法商店购买一颗珍贵魔晶兽卵，唤醒在星砂里沉睡的雷光雏龙吧！
+                      <div className="bg-[#01110c] rounded-2xl p-6 border border-emerald-500/10 text-center py-8">
+                        <span className="text-4xl block mb-2 pointer-events-none select-none">🥚</span>
+                        <h6 className="font-extrabold text-[#f1f5f9] text-xs">暂无在役宠兽</h6>
+                        <p className="text-[10px] font-bold text-emerald-400/50 max-w-xs mx-auto mb-4 leading-normal mt-1.5">
+                          可累积符文金币前往魔法商店购买雷光雏龙/萌兔之卵！在背词挑战中展现奥术魔法吧！
                         </p>
                         <button
-                          onClick={() => onNavigate('SHOP')}
-                          className="bg-emerald-100 font-black text-emerald-800 hover:bg-emerald-800 hover:text-white border border-emerald-100 text-xs px-6 py-3.5 rounded-2xl transition-all shadow-sm focus:outline-none"
+                          onClick={() => {
+                            setIsProfileExpanded(false);
+                            onNavigate('SHOP');
+                          }}
+                          className="bg-emerald-650 hover:bg-emerald-700 bg-gradient-to-r from-emerald-600 to-teal-600 text-white font-extrabold text-[10px] px-4 py-2 rounded-xl transition-all shadow-md cursor-pointer focus:outline-none"
                         >
-                          前往魔法商店 🪙
+                          前往魔法秘宝商店 🪙
                         </button>
                       </div>
                     )}
                   </div>
                 )}
               </div>
-            </motion.div>
-          )}
-        </AnimatePresence>
-      </div>
 
-      {/* Main Branding */}
-      <div className="text-center py-6 relative">
-        <motion.div 
-          initial={{ scale: 0.9, opacity: 0 }}
-          animate={{ scale: 1, opacity: 1 }}
-          className="flex flex-col items-center"
-        >
-          <div className="relative mb-8">
-            <motion.div 
-              animate={{ rotate: 360 }}
-              transition={{ duration: 30, repeat: Infinity, ease: "linear" }}
-              className="absolute -inset-10 bg-gradient-to-r from-emerald-200/40 via-lime-200/40 to-emerald-200/40 rounded-full blur-3xl"
-            />
-            <motion.div 
-              animate={{ y: [0, -12, 0] }}
-              transition={{ duration: 4, repeat: Infinity, ease: "easeInOut" }}
-              className="w-36 h-36 bg-white rounded-[48px] shadow-2xl shadow-emerald-900/10 flex items-center justify-center text-8xl relative z-10 border-4 border-emerald-50"
-            >
-              <div className="absolute -top-6 -left-6 text-5xl drop-shadow-lg">🌳</div>
-              🐯
-              <div className="absolute -top-6 -right-6 text-5xl drop-shadow-lg animate-pulse">✨</div>
-            </motion.div>
-          </div>
-          <div className="space-y-3">
-            <h1 className="text-6xl font-black tracking-tighter text-emerald-950 pb-1">
-              单词奇旅
-            </h1>
-            <div className="inline-flex px-6 py-2 bg-emerald-900 text-white rounded-full border border-emerald-800 shadow-lg magic-shadow">
-              <span className="text-[10px] font-black uppercase tracking-[0.4em]">Adventure Forest v2.0</span>
-            </div>
-          </div>
-        </motion.div>
-      </div>
-
-      {/* Word Search Section */}
-      <div className="px-1">
-        <div className="relative group">
-          <div className="absolute inset-y-0 left-5 flex items-center pointer-events-none">
-            <Search className="text-emerald-500 w-5 h-5 group-focus-within:text-emerald-600 transition-colors" />
-          </div>
-          <input
-            type="text"
-            value={searchQuery}
-            onChange={handleSearch}
-            placeholder="搜索单词，寻找它的三字经魔法..."
-            className="w-full bg-white/80 backdrop-blur-md py-5 pl-14 pr-12 rounded-[28px] border-2 border-emerald-100/50 shadow-lg focus:ring-4 focus:ring-emerald-500/20 focus:border-emerald-400 outline-none transition-all text-emerald-900 font-bold placeholder:text-emerald-300"
-          />
-          {searchQuery && (
-            <button
-              onClick={clearSearch}
-              className="absolute inset-y-0 right-4 flex items-center px-2 text-emerald-300 hover:text-emerald-500 transition-colors"
-            >
-              <X className="w-5 h-5" />
-            </button>
-          )}
-        </div>
-
-        <AnimatePresence>
-          {searchResults.length > 0 && (
-            <motion.div
-              initial={{ opacity: 0, y: -10, height: 0 }}
-              animate={{ opacity: 1, y: 0, height: 'auto' }}
-              exit={{ opacity: 0, y: -10, height: 0 }}
-              className="mt-4 bg-white/90 backdrop-blur-xl rounded-[32px] border-2 border-emerald-100 shadow-2xl p-6 space-y-4 overflow-hidden"
-            >
-              <h4 className="text-[10px] font-black text-emerald-800/40 uppercase tracking-[0.2em] mb-2 px-2">发现魔法口诀</h4>
-              <div className="space-y-3 max-h-[300px] overflow-y-auto pr-2 custom-scrollbar">
-                {searchResults.map((group) => (
-                  <motion.div
-                    key={group.id}
-                    initial={{ opacity: 0, x: -10 }}
-                    animate={{ opacity: 1, x: 0 }}
-                    className="p-4 bg-emerald-50/50 rounded-2xl border border-emerald-100 hover:bg-emerald-50 transition-colors"
-                  >
-                    <div className="flex justify-between items-start mb-2">
-                      <div className="flex flex-wrap gap-1">
-                        {group.words.map(w => (
-                          <span key={w.text} className={`px-2 py-0.5 rounded-full text-[10px] font-black ${w.text.toLowerCase().includes(searchQuery.toLowerCase()) ? 'bg-emerald-500 text-white shadow-lg shadow-emerald-200' : 'bg-white text-emerald-600 border border-emerald-100'}`}>
-                            {w.text}
-                          </span>
-                        ))}
-                      </div>
-                      <span className="text-[8px] font-black text-emerald-300 uppercase tracking-widest">{group.title}</span>
-                    </div>
-                    <p className="text-emerald-900 font-bold text-sm leading-relaxed translate-y-1">
-                      {group.rhyme.split(',').map((part, i) => (
-                        <span key={i} className="block">{part.trim()}</span>
-                      ))}
-                    </p>
-                  </motion.div>
-                ))}
+              {/* Close attributes footer info */}
+              <div className="bg-[#01110c] rounded-xl p-2.5 border border-emerald-500/10 text-center mt-4 justify-center">
+                <span className="text-[8px] font-bold text-emerald-400/40 block">
+                  得到的奥术金币可以前往 [魔法商店] 购买神兽与圣域护甲
+                </span>
               </div>
             </motion.div>
-          )}
-        </AnimatePresence>
-      </div>
-
-      <DailyQuestBoard quests={stats.quests} onQuestClick={onQuestClick} />
-
-      {/* Main Navigation Grid */}
-      <div className="grid grid-cols-2 gap-6 px-1">
-        <motion.button 
-          whileHover={{ scale: 1.02, y: -8 }}
-          whileTap={{ scale: 0.98 }}
-          onClick={() => onNavigate('ADVENTURE')} 
-          className="puffy-card p-7 text-left relative overflow-hidden group h-64 flex flex-col justify-between border-emerald-100"
-        >
-          <div className="absolute -top-10 -right-10 w-32 h-32 bg-emerald-50 rounded-full blur-2xl opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
-          
-          <div className="relative">
-            <div className="bg-emerald-500 w-16 h-16 rounded-[28px] flex items-center justify-center mb-6 shadow-lg shadow-emerald-200 group-hover:scale-110 transition-transform">
-              <BookOpen className="text-white w-8 h-8" />
-            </div>
-            {reviewNeeded.length > 0 && (
-              <motion.div 
-                animate={{ scale: [1, 1.15, 1] }}
-                transition={{ repeat: Infinity, duration: 1.5 }}
-                className="absolute -top-2 -right-2 bg-rose-500 text-white text-[11px] font-black w-7 h-7 flex items-center justify-center rounded-full shadow-lg border-2 border-white z-20"
-              >
-                {reviewNeeded.length}
-              </motion.div>
-            )}
-          </div>
-
-          <div>
-            <h3 className="font-black text-2xl text-emerald-950 tracking-tight leading-tight">冒险森林</h3>
-            <p className="text-[11px] font-black text-emerald-500/70 uppercase tracking-widest mt-2 flex items-center">
-              EXPLORE WORLD <ArrowRight size={10} className="ml-1 opacity-0 group-hover:opacity-100 group-hover:translate-x-1 transition-all" />
-            </p>
-          </div>
-        </motion.button>
-        
-        <motion.button 
-          whileHover={{ scale: 1.02, y: -8 }}
-          whileTap={{ scale: 0.98 }}
-          onClick={() => onNavigate('ARCADE')} 
-          className="puffy-card p-7 text-left relative overflow-hidden group h-64 flex flex-col justify-between border-amber-100"
-        >
-           <div className="absolute -top-10 -right-10 w-32 h-32 bg-amber-50 rounded-full blur-2xl opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
-           
-           <div className="bg-amber-500 w-16 h-16 rounded-[28px] flex items-center justify-center mb-6 shadow-lg shadow-amber-200 group-hover:scale-110 transition-transform">
-            <Gamepad2 className="text-white w-8 h-8" />
-          </div>
-
-          <div>
-            <h3 className="font-black text-2xl text-amber-950 tracking-tight leading-tight">魔法乐园</h3>
-            <p className="text-[11px] font-black text-amber-600/70 uppercase tracking-widest mt-2 flex items-center">
-              PLAY GAMES <ArrowRight size={10} className="ml-1 opacity-0 group-hover:opacity-100 group-hover:translate-x-1 transition-all" />
-            </p>
-          </div>
-        </motion.button>
-
-        {/* 单词森林 - 魔法三字经图鉴 */}
-        <motion.button 
-          whileHover={{ scale: 1.01, y: -4 }}
-          whileTap={{ scale: 0.99 }}
-          onClick={() => onNavigate('COLLECTION')} 
-          className="col-span-2 puffy-card p-6 text-left relative overflow-hidden group flex items-center justify-between border-rose-100 bg-gradient-to-r from-rose-50/50 to-indigo-50/30 h-40"
-        >
-          <div className="absolute -top-10 -right-10 w-32 h-32 bg-rose-100 rounded-full blur-2xl opacity-40 group-hover:opacity-80 transition-opacity duration-500" />
-          
-          <div className="flex items-center space-x-6 relative">
-            <div className="bg-rose-500 w-16 h-16 rounded-[28px] flex items-center justify-center shadow-lg shadow-rose-200 group-hover:scale-110 transition-transform">
-              <BookOpen className="text-white w-8 h-8" />
-            </div>
-            <div>
-              <h3 className="font-black text-2xl text-rose-950 tracking-tight leading-tight">单词森林 (英文三字经)</h3>
-              <p className="text-rose-600/70 font-black text-xs mt-2">
-                查阅神奇英文三字经与全部魔法单词
-              </p>
-            </div>
-          </div>
-
-          <div className="bg-white/80 border border-rose-150 px-4 py-2.5 rounded-2xl font-black text-xs text-rose-600 shadow-sm flex items-center space-x-1.5 hover:bg-rose-500 hover:text-white transition-all">
-            <span>进入图鉴</span>
-            <ArrowRight size={14} className="opacity-70 group-hover:opacity-100 group-hover:translate-x-0.5 transition-all" />
-          </div>
-        </motion.button>
-      </div>
-      
-      {/* Achievement Progress Bar Footprint */}
-      <motion.div 
-        whileHover={{ scale: 1.02 }}
-        className="bg-emerald-900 rounded-[40px] p-8 text-white shadow-2xl relative overflow-hidden group border-2 border-emerald-800"
-      >
-        <div className="absolute top-0 right-0 p-6 opacity-20 rotate-12 scale-150">🌲</div>
-        <div className="flex items-center justify-between mb-5 relative z-10">
-          <div className="flex items-center space-x-3">
-            <Trophy className="text-amber-400" size={24} />
-            <h4 className="font-black text-emerald-50 text-base">魔法成就</h4>
-          </div>
-          <span className="text-xs font-black text-emerald-400">已掌握 {(stats.masteredWords || []).length} 个单词</span>
-        </div>
-        <div className="w-full h-3 bg-emerald-800 rounded-full overflow-hidden mb-2">
-          <motion.div 
-            initial={{ width: 0 }}
-            animate={{ width: stats.masteredWords?.length ? Math.min(100, (stats.masteredWords.length / 50) * 100) + '%' : '0%' }}
-            className="h-full bg-gradient-to-r from-amber-400 to-orange-400" 
-          />
-        </div>
-      </motion.div>
-
-      {/* Nature Footer Accent */}
-      <div className="flex justify-center items-center space-x-8 opacity-20 pointer-events-none pb-4">
-        <div className="text-4xl">🌲</div>
-        <div className="text-2xl">🍄</div>
-        <div className="text-4xl">🌳</div>
-        <div className="text-2xl">🍄</div>
-        <div className="text-4xl">🌲</div>
-      </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </div>
   );
 };

@@ -59,6 +59,13 @@ export const WordHamsterWhack: React.FC<WordHamsterWhackProps> = ({ groups, stat
     return CHARACTERS.find(c => c.id === stats.selectedCharacterId) || CHARACTERS[0];
   }, [stats.selectedCharacterId]);
 
+  useEffect(() => {
+    try { audio.playBGM('HAMSTER'); } catch(e){}
+    return () => {
+      try { audio.stopBGM(); } catch(e){}
+    };
+  }, []);
+
   const wordPointer = useRef(0);
   const mainCycleTimer = useRef<NodeJS.Timeout | null>(null);
 

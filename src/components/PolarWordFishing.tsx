@@ -74,6 +74,13 @@ export const PolarWordFishing: React.FC<PolarWordFishingProps> = ({ groups, stat
     return CHARACTERS.find(c => c.id === stats.selectedCharacterId) || CHARACTERS[0];
   }, [stats.selectedCharacterId]);
 
+  useEffect(() => {
+    try { audio.playBGM('FISHING'); } catch(e){}
+    return () => {
+      try { audio.stopBGM(); } catch(e){}
+    };
+  }, []);
+
   const wordIdx = useRef(0);
   const loopTimer = useRef<NodeJS.Timeout | null>(null);
 

@@ -55,6 +55,7 @@ const App: React.FC = () => {
   const [challengeGroupId, setChallengeGroupId] = useState<string | null>(null);
   const [selectedDayId, setSelectedDayId] = useState<string | null>(null);
   const [lastLearnedWords, setLastLearnedWords] = useState<WordItem[]>([]);
+  const [lastLearnedLevelId, setLastLearnedLevelId] = useState<number | null>(null);
   const [pendingLevelId, setPendingLevelId] = useState<number | undefined>(undefined);
   
   const [showLevelUp, setShowLevelUp] = useState(false);
@@ -317,6 +318,32 @@ const App: React.FC = () => {
 
     initializePortraits(stats);
   }, [initialCharacterStats]);
+
+  // Global View-Based BGM Orchestration
+  useEffect(() => {
+    const gameViews = [
+      'CHALLENGE', 'SCRAMBLE', 'SHEEP', 'BALLOON', 'WHACK', 'DUBBING', 'SPELLING', 'PLANTS', 
+      'RAIDEN', 'FISHING', 'ALCHEMIST', 'MINER', 'SLASHER', 'SONAR', 'COOKING', 'FEEDING', 
+      'HAMSTER', 'SHOOTER', 'ICECREAM', 'DINO', 'DJ', 'ROCKET', 'POPIT', 'POTION', 'PARROT'
+    ];
+    if (gameViews.includes(view)) {
+      try {
+        audio.playBGM(view);
+      } catch (e) {
+        console.warn('Failed to start game BGM:', e);
+      }
+    } else {
+      try {
+        audio.stopBGM();
+      } catch (e) {}
+    }
+    
+    return () => {
+      try {
+        audio.stopBGM();
+      } catch (e) {}
+    };
+  }, [view]);
 
   const updateQuest = (questId: string, amount: number = 1) => {
     setStats(prev => {
@@ -729,7 +756,29 @@ const App: React.FC = () => {
   }, []);
 
   const handleUpdateStats = useCallback((newStats: Partial<UserStats>) => {
-    setStats(prev => ({ ...prev, ...newStats }));
+    setStats(prev => {
+      let updatedQuests = prev.quests;
+      if (newStats.reviewSchedules && JSON.stringify(newStats.reviewSchedules) !== JSON.stringify(prev.reviewSchedules)) {
+        updatedQuests = prev.quests.map(q => {
+          if (q.id === 'q3' && !q.completed) {
+            const newCurrent = Math.min(q.target, q.current + 1);
+            const completed = newCurrent >= q.target;
+            if (completed) {
+              audio.playSuccess();
+              confetti({ 
+                  particleCount: 100, 
+                  spread: 70, 
+                  origin: { y: 0.6 },
+                  colors: ['#FF6B6B', '#FFD93D', '#6BCB77', '#4D96FF', '#6366F1']
+              });
+            }
+            return { ...q, current: newCurrent, completed };
+          }
+          return q;
+        });
+      }
+      return { ...prev, ...newStats, quests: updatedQuests };
+    });
   }, []);
 
   if (loading) {
@@ -1011,6 +1060,7 @@ const App: React.FC = () => {
                 onConsumedLevelId={() => setPendingLevelId(undefined)}
                 onCompleteLevel={(words, levelId) => {
                   setLastLearnedWords(words);
+                  setLastLearnedLevelId(levelId);
                   updateQuest('q1');
                   setStats(prev => ({
                     ...prev,
@@ -1050,11 +1100,12 @@ const App: React.FC = () => {
                 groups={groups} 
                 stats={stats}
                 lastLearnedWords={lastLearnedWords}
+                lastLearnedLevelId={lastLearnedLevelId}
                 onSelectGame={(id, words) => {
                   if (words) setLastLearnedWords(words);
                   handleNavigate(id as ViewState);
                 }} 
-                onClose={() => { handleNavigate('HOME'); setChallengeGroupId(null); setLastLearnedWords([]); }} 
+                onClose={() => { handleNavigate('HOME'); setChallengeGroupId(null); setLastLearnedWords([]); setLastLearnedLevelId(null); }} 
               />
             </motion.div>
           )}

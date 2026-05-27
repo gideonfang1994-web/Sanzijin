@@ -81,6 +81,13 @@ const SheepMatch: React.FC<Props> = ({ groups, onFinish, onClose }) => {
   const [syncedImages, setSyncedImages] = useState<Record<string, string>>({});
 
   useEffect(() => {
+    try { audio.playBGM('SHEEP'); } catch(e){}
+    return () => {
+      try { audio.stopBGM(); } catch(e){}
+    };
+  }, []);
+
+  useEffect(() => {
     const saved = localStorage.getItem('adventure_synced_images');
     if (saved) {
       setSyncedImages(JSON.parse(saved));

@@ -112,13 +112,15 @@ const LevelNode = React.memo(({
   index, 
   isLocked, 
   isCurrent, 
-  onSelect 
+  onSelect,
+  onShowMilestone
 }: { 
   level: Level, 
   index: number, 
   isLocked: boolean, 
   isCurrent: boolean, 
-  onSelect: (level: Level) => void 
+  onSelect: (level: Level) => void,
+  onShowMilestone?: (displayId: number, isCompleted: boolean) => void
 }) => {
   // We want a beautiful winding S-curve snaking path
   // Left aligned, Middle aligned, Right aligned, Middle aligned
@@ -218,14 +220,21 @@ const LevelNode = React.memo(({
         >
           {/* Milestone Chest Overlay */}
           {((level.displayId || level.id) % 5 === 0) && (
-            <motion.div
+            <motion.button
+              onClick={(e) => {
+                e.stopPropagation();
+                if (onShowMilestone) {
+                  onShowMilestone(level.displayId || level.id, level.isCompleted);
+                }
+              }}
+              whileHover={{ scale: 1.25, rotate: [0, -10, 10, 0] }}
               animate={{ y: [0, -3, 0], scale: [1, 1.08, 1] }}
               transition={{ repeat: Infinity, duration: 1.8, ease: "easeInOut" }}
-              className="absolute -top-4 -left-4 z-40 bg-gradient-to-br from-yellow-400 via-amber-400 to-yellow-500 border-2 border-white rounded-full w-9 h-9 flex items-center justify-center shadow-lg text-lg select-none"
-              title="通关本关可得里程碑大奖！"
+              className="absolute -top-4 -left-4 z-40 bg-gradient-to-br from-yellow-400 via-amber-400 to-yellow-500 border-2 border-white rounded-full w-9 h-9 flex items-center justify-center shadow-lg text-lg select-none cursor-pointer hover:shadow-yellow-300/50"
+              title="点击查看里程碑阶梯专享秘宝内容！"
             >
               {level.isCompleted ? '🔓' : '🎁'}
-            </motion.div>
+            </motion.button>
           )}
 
           {/* Icons */}
@@ -280,6 +289,8 @@ const AdventurePage: React.FC<AdventurePageProps> = ({
   onConsumedLevelId 
 }) => {
   const [step, setStep] = useState<AdventureStep>('SETUP');
+  const [activeMilestoneDisplayId, setActiveMilestoneDisplayId] = useState<number | null>(null);
+  const [activeMilestoneIsCompleted, setActiveMilestoneIsCompleted] = useState<boolean>(false);
   const [cardsPerDay, setCardsPerDay] = useState<5 | 10>(5);
   const [selectedDifficulty, setSelectedDifficulty] = useState<DifficultyLevel>(() => {
     const saved = localStorage.getItem('selected_adventure_difficulty');
@@ -900,7 +911,17 @@ const AdventurePage: React.FC<AdventurePageProps> = ({
         try {
           const currentId = currentActiveLevel.id;
           const newCompleted = [...new Set([...completedLevels, currentId])];
-          saveProgress(newCompleted, masteredLevels);
+          
+          // Set initial review schedule for 1 day later (review yesterday's learned content)
+          const initialSchedule = {
+            ...reviewSchedules,
+            [currentId.toString()]: {
+              levelId: currentId,
+              nextReviewAt: Date.now() + 1 * 24 * 60 * 60 * 1000,
+              intervalDays: 1
+            }
+          };
+          saveProgress(newCompleted, masteredLevels, cardsPerDay, initialSchedule);
           
           // Reward for finishing learning level: 50 XP, 20 Coins
           awardRewards(50, 20);
@@ -1468,6 +1489,14 @@ const AdventurePage: React.FC<AdventurePageProps> = ({
                               isLocked={!level.isUnlocked}
                               isCurrent={isCurrent}
                               onSelect={startLevel}
+                              onShowMilestone={(displayId, isCompleted) => {
+                                audio.playUnlock();
+                                setActiveMilestoneDisplayId(displayId);
+                                setActiveMilestoneIsCompleted(isCompleted);
+                                if (isCompleted) {
+                                  confetti({ particleCount: 60, spread: 65, origin: { y: 0.55 } });
+                                }
+                              }}
                             />
                           );
                         })}
@@ -2118,6 +2147,175 @@ const AdventurePage: React.FC<AdventurePageProps> = ({
             onClose={() => setSpellingWord(null)}
           />
         )}
+      </AnimatePresence>
+
+      {/* Milestone Prize Surprising Reveal Modal */}
+      <AnimatePresence>
+        {activeMilestoneDisplayId !== null && (() => {
+          const reward = getMilestoneReward(activeMilestoneDisplayId);
+          if (!reward) return null;
+          return (
+            <motion.div 
+              key="milestone-reveal"
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              className="fixed inset-0 z-[200] flex items-center justify-center p-4 bg-slate-950/80 backdrop-blur-md"
+            >
+              <motion.div 
+                initial={{ scale: 0.85, rotate: -2, y: 30 }}
+                animate={{ scale: 1, rotate: 0, y: 0 }}
+                exit={{ scale: 0.85, rotate: 2, y: 30 }}
+                className="bg-white rounded-[40px] border-[4px] border-amber-400 p-6 shadow-2xl relative overflow-hidden max-w-sm w-full text-center flex flex-col items-center"
+              >
+                {/* Cosmic Glow Background */}
+                <div className="absolute -top-12 left-1/2 -translate-x-1/2 w-48 h-48 bg-amber-400/20 rounded-full blur-3xl pointer-events-none" />
+                
+                <div className="text-4xl select-none mb-4 animate-bounce mt-4"> 🎉✨👑 </div>
+
+                <h3 className="text-xl font-black text-amber-600 leading-none">
+                  {reward.title}
+                </h3>
+                
+                <p className="text-xs text-slate-500 font-extrabold mt-2 px-4">
+                  {reward.desc}
+                </p>
+
+                {/* Golden Locked/Unlocked Chest Surprise animation container */}
+                <div className="w-40 h-40 my-3 flex items-center justify-center relative">
+                  <motion.div 
+                    animate={{ rotate: 360 }}
+                    transition={{ repeat: Infinity, duration: 8, ease: "linear" }}
+                    className="absolute inset-0 bg-[radial-gradient(circle,rgba(251,191,36,0.3)_0%,transparent_70%)] rounded-full"
+                  />
+                  
+                  <motion.div 
+                    animate={activeMilestoneIsCompleted ? {
+                      scale: [1, 1.15, 0.95, 1.05, 1],
+                      y: [0, -8, 2, -1, 0]
+                    } : {
+                      scale: [1, 1.05, 1],
+                      y: [0, -4, 0]
+                    }}
+                    transition={{ repeat: Infinity, duration: 2.5, ease: "easeInOut" }}
+                    className="text-7xl select-none relative z-10"
+                  >
+                    {activeMilestoneIsCompleted ? '🔓🎁' : '🔒🎁'}
+                  </motion.div>
+                </div>
+
+                <div className="mb-4">
+                  {activeMilestoneIsCompleted ? (
+                    <span className="text-[10px] bg-emerald-50 text-emerald-600 border border-emerald-100 font-black px-3 py-1.5 rounded-full flex items-center justify-center space-x-1 animate-pulse">
+                      <span>🌟 获得魔法解锁 (Unlocked!)</span>
+                    </span>
+                  ) : (
+                    <span className="text-[10px] bg-slate-50 text-slate-500 border border-slate-150 font-black px-3 py-1.5 rounded-full flex items-center justify-center space-x-1">
+                      <span>🔒 闯关解锁后方可拆封</span>
+                    </span>
+                  )}
+                </div>
+
+                {/* Staggered Prize Item Cards with visual polish */}
+                <div className="w-full space-y-2.5 mb-5 pl-1 pr-1">
+                  {reward.items.map((item, id) => (
+                    <motion.div 
+                      key={id}
+                      initial={{ opacity: 0, x: -15 }}
+                      animate={{ opacity: 1, x: 0 }}
+                      transition={{ delay: id * 0.15 }}
+                      className="bg-slate-50/80 border border-slate-150 rounded-2xl p-3 flex items-center justify-between hover:bg-slate-50 hover:border-amber-300 transition-colors"
+                    >
+                      <div className="flex items-center space-x-2.5">
+                        <span className="text-2xl filter drop-shadow-sm">{item.icon}</span>
+                        <div className="text-left">
+                          <span className="block text-xs font-black text-slate-800 leading-none">
+                            {item.name}
+                          </span>
+                          <span className="text-[9px] font-bold text-slate-400 block mt-1 leading-none">
+                            {item.detail}
+                          </span>
+                        </div>
+                      </div>
+                      {activeMilestoneIsCompleted && (
+                        <span className="text-[10px] text-amber-500 font-black select-none">
+                          {stats.claimedMilestones?.includes(activeMilestoneDisplayId) ? '已领取 ✓' : '可领取 🎁'}
+                        </span>
+                      )}
+                    </motion.div>
+                  ))}
+                </div>
+
+                <button 
+                  onClick={() => {
+                    const hasClaimed = stats.claimedMilestones?.includes(activeMilestoneDisplayId);
+                    if (!activeMilestoneIsCompleted || hasClaimed) {
+                      setActiveMilestoneDisplayId(null);
+                      return;
+                    }
+
+                    // 1. Play success effects
+                    audio.playUnlock();
+                    confetti({
+                      particleCount: 150,
+                      spread: 80,
+                      origin: { y: 0.5 },
+                      colors: ['#FFD93D', '#34D399', '#60A5FA', '#F43F5E']
+                    });
+
+                    // 2. Award XP/Coins reward
+                    onReward(reward.xp, reward.coins);
+
+                    // 3. Award Pet if provided
+                    let updatedPets = [...(stats.pets || [])];
+                    if (reward.petType) {
+                      const petName = reward.petName || '守护神宠';
+                      const duplicate = stats.pets?.some(p => p.type === reward.petType);
+                      if (!duplicate) {
+                        const newPet = {
+                          id: `pet-milestone-${activeMilestoneDisplayId}-${Date.now()}`,
+                          name: petName,
+                          type: reward.petType as any,
+                          health: 100,
+                          maxHealth: 100,
+                          happiness: 100,
+                          level: 1,
+                          lastFed: Date.now(),
+                          isDead: false,
+                          birthDate: Date.now()
+                        };
+                        updatedPets = [...updatedPets, newPet];
+                      }
+                    }
+
+                    // 4. Award Equipment Item
+                    let updatedUnlockedItems = [...(stats.unlockedItems || [])];
+                    if (reward.itemId && !updatedUnlockedItems.includes(reward.itemId)) {
+                      updatedUnlockedItems = [...updatedUnlockedItems, reward.itemId];
+                    }
+
+                    // 5. Save as claimed
+                    const updatedClaimed = [...(stats.claimedMilestones || []), activeMilestoneDisplayId];
+
+                    // 6. Call save
+                    onUpdateStats({
+                      pets: updatedPets,
+                      unlockedItems: updatedUnlockedItems,
+                      claimedMilestones: updatedClaimed
+                    });
+
+                    setActiveMilestoneDisplayId(null);
+                  }}
+                  className="w-full bg-gradient-to-r from-amber-400 via-yellow-400 to-amber-500 text-white font-black text-sm py-3.5 rounded-3xl cursor-pointer border-b-4 border-amber-600 active:border-b-0 active:translate-y-1 transition-all shadow-lg hover:shadow-xl"
+                >
+                  {activeMilestoneIsCompleted 
+                    ? (stats.claimedMilestones?.includes(activeMilestoneDisplayId) ? '已被全部领取 👌' : '领取魔法宝箱 🎁✨') 
+                    : '我知道了 👌'}
+                </button>
+              </motion.div>
+            </motion.div>
+          );
+        })()}
       </AnimatePresence>
     </div>
     </div>

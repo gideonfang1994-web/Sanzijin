@@ -20,13 +20,20 @@ interface ArcadePageProps {
   groups: WordGroup[];
   stats: UserStats;
   lastLearnedWords?: WordItem[];
+  lastLearnedLevelId?: number | null;
   onSelectGame: (id: ViewState, words?: WordItem[]) => void;
   onClose: () => void;
 }
 
-const ArcadePage: React.FC<ArcadePageProps> = ({ groups, stats, lastLearnedWords = [], onSelectGame, onClose }) => {
+const ArcadePage: React.FC<ArcadePageProps> = ({ groups, stats, lastLearnedWords = [], lastLearnedLevelId, onSelectGame, onClose }) => {
   const [showLevelSelector, setShowLevelSelector] = useState(false);
-  const [selectedLevelId, setSelectedLevelId] = useState<number | null>(null);
+  const [selectedLevelId, setSelectedLevelId] = useState<number | null>(lastLearnedLevelId || null);
+
+  React.useEffect(() => {
+    if (lastLearnedLevelId !== undefined && lastLearnedLevelId !== null) {
+      setSelectedLevelId(lastLearnedLevelId);
+    }
+  }, [lastLearnedLevelId]);
 
   // Load progress for level selection
   const progress = useMemo(() => {

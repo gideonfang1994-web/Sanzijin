@@ -2,6 +2,8 @@
 let currentBgm: HTMLAudioElement | null = null;
 let activeUtterances: SpeechSynthesisUtterance[] = [];
 let activeWordAudio: HTMLAudioElement | null = null;
+let lastSpeakText = '';
+let lastSpeakTime = 0;
 
 export const audio = {
   init: () => {
@@ -26,12 +28,66 @@ export const audio = {
       } catch (e) {}
     }
   },
-  playBGM: (_type: 'HOME' | 'ADVENTURE' | 'ARCADE' | 'SHOP' | 'GAME') => {
-    // BGM removed per user request
+  playBGM: (gameId: string) => {
+    if (typeof window === 'undefined') return;
+    
+    // Stop any existing BGM
+    if (currentBgm) {
+      try {
+        currentBgm.pause();
+      } catch (e) {}
+      currentBgm = null;
+    }
+
+    const tracks: Record<string, string> = {
+      SCRAMBLE: 'https://www.soundhelix.com/examples/mp3/SoundHelix-Song-1.mp3', // Upbeat synth
+      HAMSTER: 'https://www.soundhelix.com/examples/mp3/SoundHelix-Song-2.mp3',  // Playful fast-beat
+      FISHING: 'https://www.soundhelix.com/examples/mp3/SoundHelix-Song-3.mp3',  // Smooth flow
+      PLANTS: 'https://www.soundhelix.com/examples/mp3/SoundHelix-Song-4.mp3',   // Intense battlefield
+      SHEEP: 'https://www.soundhelix.com/examples/mp3/SoundHelix-Song-8.mp3',    // Cheerful puzzle
+      
+      // Extended magical tracks for extra immersion
+      CHALLENGE: 'https://www.soundhelix.com/examples/mp3/SoundHelix-Song-10.mp3',
+      DINO: 'https://www.soundhelix.com/examples/mp3/SoundHelix-Song-5.mp3',
+      ICECREAM: 'https://www.soundhelix.com/examples/mp3/SoundHelix-Song-6.mp3',
+      RAIDEN: 'https://www.soundhelix.com/examples/mp3/SoundHelix-Song-7.mp3',
+      MINER: 'https://www.soundhelix.com/examples/mp3/SoundHelix-Song-9.mp3',
+      SLASHER: 'https://www.soundhelix.com/examples/mp3/SoundHelix-Song-11.mp3',
+      SONAR: 'https://www.soundhelix.com/examples/mp3/SoundHelix-Song-12.mp3',
+      COOKING: 'https://www.soundhelix.com/examples/mp3/SoundHelix-Song-13.mp3',
+      FEEDING: 'https://www.soundhelix.com/examples/mp3/SoundHelix-Song-14.mp3',
+      BALLOON: 'https://www.soundhelix.com/examples/mp3/SoundHelix-Song-15.mp3',
+      ALCHEMIST: 'https://www.soundhelix.com/examples/mp3/SoundHelix-Song-16.mp3',
+      WHACK: 'https://www.soundhelix.com/examples/mp3/SoundHelix-Song-2.mp3',
+      SPELLING: 'https://www.soundhelix.com/examples/mp3/SoundHelix-Song-1.mp3',
+      SHOOTER: 'https://www.soundhelix.com/examples/mp3/SoundHelix-Song-8.mp3',
+      ROCKET: 'https://www.soundhelix.com/examples/mp3/SoundHelix-Song-7.mp3',
+      POPIT: 'https://www.soundhelix.com/examples/mp3/SoundHelix-Song-6.mp3',
+      POTION: 'https://www.soundhelix.com/examples/mp3/SoundHelix-Song-16.mp3',
+      PARROT: 'https://www.soundhelix.com/examples/mp3/SoundHelix-Song-3.mp3',
+      DUBBING: 'https://www.soundhelix.com/examples/mp3/SoundHelix-Song-3.mp3'
+    };
+
+    const url = tracks[gameId];
+    if (!url) return;
+
+    try {
+      const audioObj = new Audio(url);
+      audioObj.loop = true;
+      audioObj.volume = 0.12; // Balanced background volume
+      currentBgm = audioObj;
+      audioObj.play().catch(err => {
+        console.log('[BGM] Failed to autoplay:', err);
+      });
+    } catch (e) {
+      console.warn('[BGM] Error playing BGM:', e);
+    }
   },
   stopBGM: () => {
     if (currentBgm) {
-      currentBgm.pause();
+      try {
+        currentBgm.pause();
+      } catch (e) {}
       currentBgm = null;
     }
   },
@@ -101,6 +157,14 @@ export const audio = {
     audio.play().catch(() => {});
   },
   speak: (text: string) => {
+    const now = Date.now();
+    if (text && text === lastSpeakText && now - lastSpeakTime < 800) {
+      console.log("[AudioUtils] Deduplicated rapid repeat speak request for:", text);
+      return;
+    }
+    lastSpeakText = text || '';
+    lastSpeakTime = now;
+
     if (typeof window !== 'undefined') {
       if (activeWordAudio) {
         try { activeWordAudio.pause(); } catch (e) {}

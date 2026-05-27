@@ -100,6 +100,13 @@ const LetterScramble: React.FC<Props> = ({ groups, isReviewMode, onFinish, onClo
   };
 
   useEffect(() => {
+    try { audio.playBGM('SCRAMBLE'); } catch(e){}
+    return () => {
+      try { audio.stopBGM(); } catch(e){}
+    };
+  }, []);
+
+  useEffect(() => {
     audio.init();
     if (pool.length > 0) initRound();
   }, [currentIdx, pool]);
