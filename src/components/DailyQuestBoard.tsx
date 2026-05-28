@@ -38,75 +38,65 @@ const DailyQuestBoard: React.FC<Props> = ({ quests = [], onQuestClick }) => {
   };
 
   return (
-    <div className="bg-gradient-to-b from-white via-[#f3fbf6] to-[#ecfdf3] backdrop-blur-md rounded-[28px] p-4.5 border-2 border-emerald-250 mb-4 relative overflow-hidden shadow-sm">
+    <div className="bg-gradient-to-b from-white via-[#f3fbf6] to-[#ecfdf3] backdrop-blur-md rounded-[24px] p-3 border-2 border-emerald-250 mb-4 relative overflow-hidden shadow-sm">
       {/* Light bubbles decorative backdrop */}
       <div className="absolute -top-12 -right-12 w-28 h-28 bg-emerald-100/40 rounded-full blur-xl pointer-events-none" />
       <div className="absolute -bottom-12 -left-12 w-32 h-32 bg-amber-100/50 rounded-full blur-xl pointer-events-none" />
       
-      <div className="flex items-center justify-between mb-4 border-b border-emerald-200/60 pb-3">
+      <div className="flex items-center justify-between mb-3 border-b border-emerald-200/60 pb-2.5">
         <div className="flex items-center space-x-2 relative z-10">
-          <span className="text-3xl select-none animate-bounce block">📜</span>
-          <h3 className="text-lg sm:text-2xl font-black text-emerald-900 tracking-wide flex items-center gap-1.5 leading-tight">
-            <span>森林魔法书 · 今日奥术任务</span>
-            <Sparkles size={18} className="text-amber-500 animate-pulse shrink-0" />
+          <span className="text-2xl select-none animate-bounce block">📜</span>
+          <h3 className="text-base sm:text-lg font-black text-emerald-900 tracking-wide flex items-center gap-1.5 leading-tight">
+            <span>今日任务</span>
+            <Sparkles size={14} className="text-amber-500 animate-pulse shrink-0" />
           </h3>
         </div>
-        <div className="text-xs sm:text-base font-black text-emerald-800 bg-white border border-emerald-250 shadow-md px-4 py-1.5 rounded-full select-none tracking-wider relative z-10">
-           任务完成 {safeQuests.filter(q => q.completed).length} / {safeQuests.length} 🔑
+        <div className="text-[10px] sm:text-xs font-black text-emerald-800 bg-white border border-emerald-250 shadow-sm px-3 py-1 rounded-full select-none tracking-wider relative z-10">
+           完成 {safeQuests.filter(q => q.completed).length} / {safeQuests.length} 🔑
          </div>
       </div>
       
-      <div className="space-y-2.5 relative z-10">
+      <div className="space-y-1.5 relative z-10">
         {safeQuests.map((quest, index) => {
           const style = getStyle(quest.id);
           return (
             <motion.button 
               key={quest.id} 
-              whileHover={quest.completed ? {} : { scale: 1.015, y: -0.5 }}
-              whileTap={quest.completed ? {} : { scale: 0.985 }}
+              whileHover={quest.completed ? {} : { scale: 1.01, y: -0.5 }}
+              whileTap={quest.completed ? {} : { scale: 0.99 }}
               onClick={() => onQuestClick(quest.targetView, quest.isReviewType, quest.levelId)}
-              className={`w-full flex flex-col p-4.5 rounded-2xl border transition-all relative overflow-hidden text-left cursor-pointer ${
+              className={`w-full flex items-center justify-between p-2.5 rounded-xl border transition-all relative overflow-hidden text-left cursor-pointer ${
                 quest.completed 
                 ? 'bg-emerald-50/50 border-emerald-250/50 opacity-60 text-emerald-600' 
-                : `${style.bg} border-2 shadow-sm hover:shadow-md`
+                : `${style.bg} border shadow-inner`
               }`}
             >
-              <div className="flex items-center w-full justify-between">
-                <div className="flex items-center space-x-4">
-                  <div className={`shrink-0 w-11 h-11 rounded-2xl flex items-center justify-center shadow-sm ${
-                    quest.completed ? 'bg-emerald-200 text-emerald-800 border border-emerald-300' : style.accent
-                  }`}>
-                    {quest.completed ? <CheckCircle2 size={18} strokeWidth={3} /> : 
-                     quest.id === 'q1' ? <BookOpen size={18} strokeWidth={2.5} /> : 
-                     quest.id === 'q2' ? <Swords size={18} strokeWidth={2.5} /> : <Gamepad2 size={18} strokeWidth={2.5} />}
+              <div className="flex items-center space-x-3 min-w-0">
+                <div className={`shrink-0 w-9 h-9 rounded-xl flex items-center justify-center shadow-xs ${
+                  quest.completed ? 'bg-emerald-100 text-emerald-800 border border-emerald-200' : style.accent
+                }`}>
+                  {quest.completed ? <CheckCircle2 size={16} strokeWidth={3} /> : 
+                   quest.id === 'q1' ? <BookOpen size={16} strokeWidth={2.5} /> : 
+                   quest.id === 'q2' ? <Swords size={16} strokeWidth={2.5} /> : <Gamepad2 size={16} strokeWidth={2.5} />}
+                </div>
+                
+                <div className="min-w-0">
+                  <div className={`text-sm sm:text-base font-black tracking-wide leading-tight ${quest.completed ? 'text-emerald-500/80 line-through' : style.text}`}>
+                    {quest.label}
                   </div>
-                  
-                  <div>
-                    <div className={`text-lg sm:text-[21px] font-black tracking-wide leading-tight ${quest.completed ? 'text-emerald-500/80 line-through' : style.text}`}>
-                      {quest.label}
-                    </div>
-                    <div className={`text-[13px] sm:text-[15.5px] font-bold mt-1.5 leading-relaxed ${quest.completed ? 'text-emerald-500/70' : 'text-emerald-700/75'}`}>
-                      {quest.completed ? '✨ 魔法已完美修成！' : quest.id === 'q1' ? '闯关深林密境，收获亮闪闪金币' : quest.id === 'q2' ? '和小萌兽快乐拼字斗法' : '战胜忘却，淬炼核心拼音魔法'}
-                    </div>
+                  <div className={`text-[11px] sm:text-xs font-bold leading-normal truncate mt-0.5 ${quest.completed ? 'text-emerald-500/70' : 'text-emerald-700/75'}`}>
+                    {quest.completed ? '✨ 魔法已完美修成！' : quest.id === 'q1' ? '闯关深林密境，收获亮闪闪金币' : quest.id === 'q2' ? '和小萌兽快乐拼字斗法' : '战胜忘却，淬炼核心拼音魔法'}
                   </div>
                 </div>
-
-                {!quest.completed && <ChevronRight size={18} className="text-emerald-400 group-hover:text-emerald-600 transition-colors shrink-0" />}
               </div>
 
-              {/* Polished progress segment */}
-              <div className="w-full mt-3.5">
-                <div className="flex justify-between items-center text-xs sm:text-sm font-black uppercase mb-1" style={{ color: quest.completed ? '#10b981' : '#047857' }}>
-                  <span>魔法潜能开发度</span>
-                  <span className="font-extrabold">{quest.completed ? '100% 已连通' : `${quest.current} / ${quest.target}`}</span>
-                </div>
-                <div className="w-full h-1.5 bg-emerald-100 border border-emerald-250/30 rounded-full overflow-hidden">
-                  <motion.div 
-                    initial={{ width: 0 }}
-                    animate={{ width: `${(quest.current / quest.target) * 100}%` }}
-                    className={`h-full rounded-full ${quest.completed ? 'bg-emerald-500' : style.bar}`} 
-                  />
-                </div>
+              <div className="flex items-center space-x-2 shrink-0">
+                <span className={`text-[10px] sm:text-xs font-black px-2 py-0.5 rounded-full ${
+                  quest.completed ? 'bg-emerald-100 text-emerald-700' : 'bg-amber-100 text-amber-800 border border-amber-200/50'
+                }`}>
+                  {quest.completed ? '已完成' : `${quest.current} / ${quest.target}`}
+                </span>
+                {!quest.completed && <ChevronRight size={14} className="text-emerald-400 group-hover:text-emerald-600 transition-colors shrink-0" />}
               </div>
             </motion.button>
           );
