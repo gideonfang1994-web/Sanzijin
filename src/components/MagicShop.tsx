@@ -364,12 +364,12 @@ const MagicShop: React.FC<MagicShopProps> = ({ stats, onPurchase, onEquip, onSel
                       {isLevelLocked && (
                         <div className="absolute inset-0 bg-slate-900/5 flex flex-col items-center justify-center z-10">
                           <Lock size={20} className="text-slate-400 mb-1" />
-                          <span className="text-[8px] font-bold text-slate-500">LV.{item.requiredLevel} 解锁</span>
+                          <span className="text-[11px] font-bold text-slate-600">LV.{item.requiredLevel} 解锁</span>
                         </div>
                       )}
                       
-                      <div className="text-center mb-2">
-                        <span className="text-[10px] font-black text-slate-800 tracking-tight line-clamp-1">{item.name}</span>
+                      <div className="text-center mb-2 px-1">
+                        <span className="text-sm sm:text-[15.5px] font-black text-slate-900 tracking-tight line-clamp-1">{item.name}</span>
                       </div>
 
                       <div className={`flex-1 flex items-center justify-center w-full mb-3 ${
@@ -391,7 +391,7 @@ const MagicShop: React.FC<MagicShopProps> = ({ stats, onPurchase, onEquip, onSel
 
                       <div className="flex items-center space-x-1.5 bg-indigo-50 px-4 py-1.5 rounded-2xl border border-indigo-100/50">
                         <Sparkles size={12} className="text-indigo-600" />
-                        <span className="text-xs font-black text-indigo-700">{item.price}</span>
+                        <span className="text-sm font-black text-indigo-800">{item.price}</span>
                       </div>
                     </motion.button>
                   );
@@ -433,16 +433,16 @@ const MagicShop: React.FC<MagicShopProps> = ({ stats, onPurchase, onEquip, onSel
                 />
               </div>
 
-              <div className="p-8 space-y-6">
+              <div className="p-8 space-y-6 text-left">
                 <div>
                   <div className="flex items-center justify-between mb-2">
-                    <h3 className="text-2xl font-black text-slate-800 tracking-tight">{selectedItem.name}</h3>
-                    <div className="flex items-center space-x-1 bg-indigo-600 px-3 py-1 rounded-full">
+                    <h3 className="text-3xl font-black text-slate-900 tracking-tight">{selectedItem.name}</h3>
+                    <div className="flex items-center space-x-1.5 bg-indigo-600 px-3.5 py-1.5 rounded-full shadow-md">
                       <Sparkles size={14} className="text-white" />
-                      <span className="text-sm font-black text-white">{selectedItem.price}</span>
+                      <span className="text-base font-black text-white">{selectedItem.price}</span>
                     </div>
                   </div>
-                  <p className="text-slate-500 font-medium leading-relaxed">
+                  <p className="text-slate-700 font-extrabold text-[15.5px] leading-relaxed">
                     {selectedItem.description}
                   </p>
                 </div>
@@ -473,10 +473,10 @@ const MagicShop: React.FC<MagicShopProps> = ({ stats, onPurchase, onEquip, onSel
                         onEquip(selectedChar.id, selectedItem.id);
                         setSelectedItem(null);
                       }}
-                      className={`w-full py-4 rounded-2xl font-black text-lg transition-all duration-300 ${
+                      className={`w-full py-4.5 rounded-2xl font-black text-xl transition-all duration-300 ${
                         (stats.equippedItems?.[selectedChar.id] || []).includes(selectedItem.id)
-                          ? 'bg-emerald-500 text-white shadow-lg shadow-emerald-200' 
-                          : 'bg-indigo-600 text-white shadow-lg shadow-indigo-200 hover:scale-[1.02]'
+                          ? 'bg-emerald-500 text-white shadow-lg shadow-emerald-250 scale-[1.01]' 
+                          : 'bg-indigo-600 text-white shadow-lg shadow-indigo-250 hover:scale-[1.03] active:scale-[0.98]'
                       }`}
                     >
                       {(stats.equippedItems?.[selectedChar.id] || []).includes(selectedItem.id) ? '已装备' : '立即装备'}
@@ -488,10 +488,10 @@ const MagicShop: React.FC<MagicShopProps> = ({ stats, onPurchase, onEquip, onSel
                         if (selectedItem.type !== 'CONSUMABLE') setSelectedItem(null);
                       }}
                       disabled={stats.magicCoins < selectedItem.price}
-                      className={`w-full py-4 rounded-2xl font-black text-lg flex items-center justify-center space-x-3 transition-all duration-300 ${
+                      className={`w-full py-4.5 rounded-2xl font-black text-xl flex items-center justify-center space-x-3 transition-all duration-300 mb-2 ${
                         stats.magicCoins >= selectedItem.price
-                          ? 'bg-indigo-600 text-white shadow-lg shadow-indigo-200 hover:scale-[1.02]'
-                          : 'bg-slate-100 text-slate-300 cursor-not-allowed'
+                          ? 'bg-indigo-600 text-white shadow-lg shadow-indigo-250 hover:scale-[1.03] active:scale-[0.98]'
+                          : 'bg-slate-100 text-slate-400 cursor-not-allowed'
                       }`}
                     >
                       <Sparkles size={20} />

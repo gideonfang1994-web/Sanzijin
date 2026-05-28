@@ -238,6 +238,11 @@ export const WordMonsterFeeding: React.FC<WordMonsterFeedingProps> = ({ groups, 
     onFinish(score, coinsEarned);
   };
 
+  const currentFeedIdx = Math.max(0, wordPointer.current - 1); // 0 to 6
+  const monsterScaleFactor = 1 + currentFeedIdx * 0.12; // increases of 12% per food
+  const sizeLabels = ['超轻巧袖珍怪', '咕噜萌宝怪', '蓬松少年怪', '丰满活力怪', '霸道大胃王', '究极超级巨无霸'];
+  const curSizeLabel = sizeLabels[Math.min(currentFeedIdx, sizeLabels.length - 1)];
+
   return (
     <div className="w-full max-w-xl mx-auto rounded-[40px] border-4 border-rose-400 shadow-[0_32px_64px_-16px_rgba(244,63,94,0.15)] bg-gradient-to-b from-[#fff1f2] to-[#ffe4e6] text-[#4c0519] overflow-hidden font-sans relative select-none">
       <h3 className="hidden">词灵大胃喂养记</h3>
@@ -333,7 +338,7 @@ export const WordMonsterFeeding: React.FC<WordMonsterFeedingProps> = ({ groups, 
               <div className="absolute bottom-2 left-1/2 -translate-x-1/2 flex flex-col items-center">
                 
                 {/* Speech balloon target word bubble pointing from candy monster */}
-                <div className="bg-white border-2 border-rose-400 p-2.5 px-4 rounded-2xl shadow-lg flex flex-col items-center relative mb-2.5 max-w-[150px] text-center">
+                <div className="bg-white border-2 border-rose-400 p-2.5 px-4 rounded-2xl shadow-lg flex flex-col items-center relative mb-2.5 max-w-[150px] text-center font-sans">
                   <div className="absolute bottom-[-10px] left-1/2 -translate-x-1/2 w-0 h-0 border-l-8 border-l-transparent border-r-8 border-r-transparent border-t-8 border-t-rose-400" />
                   <div className="absolute bottom-[-8px] left-1/2 -translate-x-1/2 w-0 h-0 border-l-[7px] border-l-transparent border-r-[7px] border-r-transparent border-t-[7px] border-t-white" />
                   <span className="text-[10px] text-rose-500 font-black tracking-widest block leading-none mb-1">
@@ -343,7 +348,7 @@ export const WordMonsterFeeding: React.FC<WordMonsterFeedingProps> = ({ groups, 
                     <span className="font-black text-rose-900 text-sm tracking-tight">{targetWord?.text}</span>
                     <button 
                       onClick={() => { if(targetWord) audio.speak(targetWord.text); }}
-                      className="p-0.5 hover:bg-rose-100 rounded text-rose-500 cursor-pointer"
+                      className="p-0.5 hover:bg-rose-100 rounded text-rose-500 cursor-pointer animate-none"
                     >
                       <Volume2 size={12} />
                     </button>
@@ -353,30 +358,35 @@ export const WordMonsterFeeding: React.FC<WordMonsterFeedingProps> = ({ groups, 
                 {/* Animated Monster Body */}
                 <motion.div
                   animate={monsterState === 'HUNGRY' ? {
-                    scale: [1, 1.05, 1],
+                    scale: [monsterScaleFactor, monsterScaleFactor * 1.05, monsterScaleFactor],
                   } : monsterState === 'YUMMY' ? {
-                    scale: [1, 1.3, 1],
-                    rotate: [0, 8, -8, 0],
+                    scale: [monsterScaleFactor, monsterScaleFactor * 1.45, monsterScaleFactor * 1.2, monsterScaleFactor * 1.35, monsterScaleFactor],
+                    rotate: [0, 12, -12, 6, -6, 0],
                   } : {
-                    rotate: [0, 15, -15, 0],
-                    scale: [1, 0.9, 1]
+                    rotate: [0, 20, -20, 10, -10, 0],
+                    scale: [monsterScaleFactor, monsterScaleFactor * 0.8, monsterScaleFactor]
                   }}
                   transition={{ duration: 0.5, repeat: monsterState === 'HUNGRY' ? Infinity : 0 }}
-                  className="text-6xl relative select-none pointer-events-none"
+                  className="text-6xl sm:text-7xl relative select-none pointer-events-none"
                 >
                   {monsterState === 'HUNGRY' && '👾'}
                   {monsterState === 'YUMMY' && '😋🥰'}
                   {monsterState === 'YUCK' && '🤢😭'}
 
                   {/* Mouth collision ring indicator for visualization */}
-                  <div className="absolute top-[50%] left-1/2 -translate-x-1/2 w-8 h-8 rounded-full border-2 border-dashed border-rose-400 opacity-20 pointer-events-none" />
+                  <div className="absolute top-[50%] left-1/2 -translate-x-1/2 w-8 h-8 rounded-full border-2 border-dashed border-rose-400 opacity-20 pointer-events-none animate-ping" />
                 </motion.div>
                 
-                <span className="text-[9px] font-black text-rose-800 bg-rose-200/55 rounded p-0.5 px-1.5 mt-1">
-                  {monsterState === 'HUNGRY' && '肚子咕咕叫中...'}
-                  {monsterState === 'YUMMY' && '超好吃！太香啦！'}
-                  {monsterState === 'YUCK' && '呜呜，吃错肚子疼！'}
-                </span>
+                <div className="flex flex-col items-center mt-1 space-y-0.5">
+                  <span className="text-[10px] font-black text-rose-800 bg-rose-200/60 rounded-full p-0.5 px-2.5 whitespace-nowrap">
+                    {monsterState === 'HUNGRY' && `肚子咕咕叫 [${curSizeLabel}]`}
+                    {monsterState === 'YUMMY' && `身体长大啦 (+12%)！`}
+                    {monsterState === 'YUCK' && '呜呜，吃错肚痛减小！'}
+                  </span>
+                  <span className="text-[9px] text-[#9f1239] font-bold">
+                    大胃容量: {Math.round(monsterScaleFactor * 100)}%
+                  </span>
+                </div>
               </div>
 
             </div>

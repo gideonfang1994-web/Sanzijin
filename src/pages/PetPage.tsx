@@ -40,8 +40,13 @@ const PetPage: React.FC<PetPageProps> = ({ stats, onUpdateStats, onNavigate, onC
   const [activeConsoleTab, setActiveConsoleTab] = useState<'FEED' | 'PLAY' | 'TRAIN' | 'CLEAN'>('FEED');
   const [showRules, setShowRules] = useState(false);
   const [message, setMessage] = useState<string | null>(null);
+  const [flyingFoods, setFlyingFoods] = useState<{ id: string; emoji: string; x: number; y: number }[]>([]);
 
   const activePet = stats.pets[selectedPetIndex];
+
+  const petSizeMultiplier = activePet 
+    ? (1 + (activePet.level - 1) * 0.05 + (activePet.health / activePet.maxHealth) * 0.12)
+    : 1;
 
   const PET_SPEECHES: Record<string, string[]> = {
     DRAGON: [
@@ -115,7 +120,22 @@ const PetPage: React.FC<PetPageProps> = ({ stats, onUpdateStats, onNavigate, onC
 
     setIsFeeding(true);
     audio.playPurchase();
-    setPetSpeech(`嗷呜！嚼嚼嚼... 正在美滋滋地享用「${food.name}」中！🍔✨`);
+    setPetSpeech(`嗷呜！敲好吃！正在美滋滋地享用「${food.name}」中！🍔✨`);
+
+    // Spawn flying food particles towards pet
+    const foodEmojis: Record<string, string> = {
+      'food_apple': '🍎',
+      'food_meat': '🍖',
+      'food_elixir': '🧪'
+    };
+    const emoji = foodEmojis[food.id] || '🍎';
+    const newFlyingFoods = Array.from({ length: 6 }).map((_, i) => ({
+      id: Math.random().toString(),
+      emoji,
+      x: 20 + Math.random() * 60, // scatter horizontally
+      y: 85 + Math.random() * 10  // start at the bottom area
+    }));
+    setFlyingFoods(newFlyingFoods);
     
     setTimeout(() => {
       onUpdateStats(prev => {
@@ -133,14 +153,15 @@ const PetPage: React.FC<PetPageProps> = ({ stats, onUpdateStats, onNavigate, onC
         };
       });
       setIsFeeding(false);
+      setFlyingFoods([]);
       audio.playSuccess();
       confetti({
-        particleCount: 40,
-        spread: 50,
-        origin: { y: 0.7 },
+        particleCount: 50,
+        spread: 60,
+        origin: { y: 0.5, x: 0.5 },
         colors: ['#FFD93D', '#6BCB77', '#FF8E8E']
       });
-      setPetSpeech("嗝~ 太好吃了！感觉元气满满，魔力能量大幅度回升！🍎💖");
+      setPetSpeech("嗝~ 真香！我感觉又长大了一圈，元气和魔力源源不断！🍎💖");
     }, 1200);
   };
 
@@ -332,29 +353,29 @@ const PetPage: React.FC<PetPageProps> = ({ stats, onUpdateStats, onNavigate, onC
                   ✨
                 </motion.div>
               </div>
-              <h3 className="text-4xl font-black text-emerald-950 tracking-tight leading-tight pt-4">契约召唤你的宠兽</h3>
-              <p className="text-emerald-700 font-bold text-lg">在冒险森林中，拥有一位忠诚的伙伴能让你的单词探索效率暴涨！</p>
+              <h3 className="text-5xl font-black text-emerald-950 tracking-tight leading-tight pt-4">契约召唤你的宠兽</h3>
+              <p className="text-emerald-700 font-extrabold text-xl leading-relaxed pt-2">在冒险森林中，拥有一位忠诚的伙伴能让你的单词探索效率暴涨！</p>
             </div>
 
             <div className="grid grid-cols-1 gap-4">
               {[
-                { icon: <Trophy className="text-amber-500" />, title: "荣耀历练", desc: "专属宠兽勋章，带在身边极具安全感。" },
-                { icon: <Gamepad2 className="text-sky-500" />, title: "特训探险", desc: "把金币分给宠兽特训，在野外可带回丰厚金币！" },
-                { icon: <Sword className="text-rose-500" />, title: "战力增益", desc: "宠兽拥有战斗力模块，伴随你在奇旅大杀四方。" },
+                { icon: <Trophy className="text-amber-500" size={24} />, title: "荣耀历练", desc: "专属宠兽勋章，带在身边极具安全感。" },
+                { icon: <Gamepad2 className="text-sky-500" size={24} />, title: "特训探险", desc: "把金币分给宠兽特训，在野外可带回丰厚金币！" },
+                { icon: <Sword className="text-rose-500" size={24} />, title: "战力增益", desc: "宠兽拥有战斗力模块，伴随你在奇旅大杀四方。" },
               ].map((benefit, i) => (
                 <motion.div 
                   key={i}
                   initial={{ opacity: 0, x: -20 }}
                   animate={{ opacity: 1, x: 0 }}
                   transition={{ delay: i * 0.1 }}
-                  className="bg-white p-5 rounded-[28px] border-2 border-emerald-50 shadow-sm flex items-center space-x-4"
+                  className="bg-white p-6 rounded-[28px] border-2 border-emerald-50 shadow-sm flex items-center space-x-5"
                 >
-                  <div className="w-14 h-14 bg-emerald-50 rounded-2xl flex items-center justify-center shrink-0">
+                  <div className="w-16 h-16 bg-emerald-50 rounded-2xl flex items-center justify-center shrink-0">
                     {benefit.icon}
                   </div>
                   <div>
-                    <h4 className="font-black text-emerald-950">{benefit.title}</h4>
-                    <p className="text-xs text-slate-400 font-bold">{benefit.desc}</p>
+                    <h4 className="font-black text-[20px] text-emerald-950">{benefit.title}</h4>
+                    <p className="text-[13.5px] text-slate-600 font-extrabold mt-1">{benefit.desc}</p>
                   </div>
                 </motion.div>
               ))}
@@ -435,12 +456,16 @@ const PetPage: React.FC<PetPageProps> = ({ stats, onUpdateStats, onNavigate, onC
               </div>
 
               <div className="relative z-10 text-center space-y-4 font-sans">
-                {/* Battle Power Star Rating */}
+                {/* Battle Power and Size Scale Rating Header */}
                 {!activePet.isDead && (
-                  <div className="flex justify-center text-emerald-700">
+                  <div className="flex justify-center items-center gap-3">
                     <div className="bg-gradient-to-r from-amber-400 to-orange-500 text-amber-950 font-black text-[10px] px-3 py-1 rounded-full border border-white shadow-md uppercase tracking-wider flex items-center gap-1 scale-105">
                      <span>⭐ 契约兽战力</span>
                      <span className="bg-white/80 text-orange-600 px-1.5 py-0.2 rounded-md font-extrabold">{combatPower}</span>
+                    </div>
+                    <div className="bg-gradient-to-r from-emerald-400 to-teal-500 text-teal-900 font-black text-[10px] px-3 py-1 rounded-full border border-white shadow-md uppercase tracking-wider flex items-center gap-1 scale-105">
+                     <span>⚖️ 萌宠体格</span>
+                     <span className="bg-white/90 text-teal-700 px-1.5 py-0.2 rounded-md font-extrabold">x{petSizeMultiplier.toFixed(2)}</span>
                     </div>
                   </div>
                 )}
@@ -460,15 +485,36 @@ const PetPage: React.FC<PetPageProps> = ({ stats, onUpdateStats, onNavigate, onC
 
                 {/* Pet Animated Avatar Node */}
                 <div className="relative inline-block py-2">
+                  {/* Flying Food Particles Inside Playground */}
+                  {flyingFoods.map(item => (
+                    <motion.div
+                      key={item.id}
+                      initial={{ left: `${item.x}%`, top: `${item.y}%`, scale: 1, opacity: 1, rotate: 0 }}
+                      animate={{ 
+                        left: '50%', 
+                        top: '50%', 
+                        scale: 0.2, 
+                        opacity: 0,
+                        rotate: 360
+                      }}
+                      transition={{ duration: 1.05, ease: 'easeInOut' }}
+                      className="absolute text-5xl z-30 pointer-events-none select-none -translate-x-1/2 -translate-y-1/2"
+                    >
+                      {item.emoji}
+                    </motion.div>
+                  ))}
+
                   <motion.div
                     onClick={handlePetClick}
                     animate={activePet.isDead ? {} : (isTraining ? {
                       y: [0, -25, 0, -15, 0],
-                      scale: [1, 1.08, 0.95, 1.05, 1],
+                      scale: [petSizeMultiplier, petSizeMultiplier * 1.08, petSizeMultiplier * 0.95, petSizeMultiplier * 1.05, petSizeMultiplier],
                       rotate: [0, -10, 10, -5, 0]
                     } : {
                       y: [0, -12, 0],
-                      scale: isFeeding ? [1, 1.15, 1] : [1, 1.03, 1],
+                      scale: isFeeding 
+                        ? [petSizeMultiplier, petSizeMultiplier * 1.35, petSizeMultiplier * 1.1, petSizeMultiplier * 1.25, petSizeMultiplier] 
+                        : [petSizeMultiplier, petSizeMultiplier * 1.03, petSizeMultiplier],
                       rotateY: [0, 8, -8, 0]
                     })}
                     transition={{ 

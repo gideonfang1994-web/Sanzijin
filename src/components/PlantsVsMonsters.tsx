@@ -773,9 +773,9 @@ export const PlantsVsMonsters: React.FC<PlantsVsMonstersProps> = ({ groups, stat
           <motion.div key="playing" className="flex flex-col relative z-10 bg-[#1e293b]">
             
             {/* Top wave slider & hearts */}
-            <div className="bg-[#0f172a]/80 px-4 py-3 flex items-center justify-between border-b border-[#334155] text-xs">
-              <div className="flex items-center space-x-3">
-                <span className="font-extrabold text-slate-400">生命值 (Hearts):</span>
+            <div className="bg-[#0f172a]/80 px-4 py-3 flex flex-wrap items-center justify-between gap-y-2 border-b border-[#334155] text-xs">
+              <div className="flex items-center space-x-2 shrink-0">
+                <span className="font-extrabold text-slate-400">生命值:</span>
                 <div className="flex items-center space-x-1">
                   {Array.from({ length: 5 }).map((_, i) => (
                     <Heart 
@@ -788,7 +788,7 @@ export const PlantsVsMonsters: React.FC<PlantsVsMonstersProps> = ({ groups, stat
               </div>
 
               {/* Progress to Wave Complete */}
-              <div className="flex items-center space-x-3 flex-1 max-w-[180px] sm:max-w-[220px] justify-end">
+              <div className="flex items-center space-x-2.5 flex-1 max-w-[220px] sm:max-w-[260px] justify-end min-w-[140px]">
                 {bossState === 'ACTIVE' ? (
                   <>
                     <span className="font-extrabold text-red-500 tracking-tight shrink-0 animate-pulse flex items-center gap-0.5">
@@ -815,7 +815,7 @@ export const PlantsVsMonsters: React.FC<PlantsVsMonstersProps> = ({ groups, stat
                   </>
                 ) : (
                   <>
-                    <span className="font-extrabold text-emerald-400 tracking-tight shrink-0">魔法防卫战 (Tested):</span>
+                    <span className="font-extrabold text-emerald-400 tracking-tight shrink-0">魔法防卫战:</span>
                     <div className="w-full bg-slate-800 h-2 rounded-full overflow-hidden border border-[#334155] flex items-center relative">
                       <div 
                         className="bg-gradient-to-r from-emerald-400 to-teal-400 h-full rounded-full transition-all duration-300" 

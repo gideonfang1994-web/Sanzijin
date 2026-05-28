@@ -226,12 +226,12 @@ const HomePage: React.FC<HomePageProps> = ({ stats, groups, reviewNeeded, onNavi
             <span className="text-4xl sm:text-5xl block filter drop-shadow-[0_3px_8px_rgba(52,211,153,0.5)]">🐯</span>
           </motion.div>
           <div className="text-left">
-            <h1 className="text-lg sm:text-2xl font-black text-emerald-900 tracking-wide leading-none flex items-center gap-1.5">
+            <h1 className="text-xl sm:text-3xl font-black text-emerald-900 tracking-wide leading-none flex items-center gap-1.5 font-sans">
               <span>单词奇旅</span>
-              <span className="text-[10px] bg-gradient-to-r from-amber-400 to-amber-500 text-amber-950 font-black px-1.5 py-0.5 rounded-md shadow-sm border-b border-amber-600">v2.5</span>
+              <span className="text-[11px] bg-gradient-to-r from-amber-400 to-amber-500 text-amber-950 font-black px-1.5 py-0.5 rounded-md shadow-sm border-b border-amber-600">v2.5</span>
             </h1>
             <div className="flex items-center gap-2 mt-1.5">
-              <span className="text-[11px] sm:text-sm font-black text-emerald-850 whitespace-nowrap bg-white/85 px-2 py-0.5 rounded-md border border-emerald-200">🌟 LV.{stats.level}</span>
+              <span className="text-[13px] sm:text-[16px] font-black text-emerald-850 whitespace-nowrap bg-white/85 px-2.5 py-0.5 rounded-md border border-emerald-200">🌟 LV.{stats.level}</span>
               <div className="w-16 sm:w-24 h-2.5 bg-emerald-100 rounded-full overflow-hidden border border-emerald-250 relative shadow-inner">
                 <div className="bg-gradient-to-r from-emerald-400 to-teal-400 h-full" style={{ width: `${(stats.xp % 1000) / 10}%` }} />
                 <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,_rgba(255,255,255,0.5)_1px,_transparent_1px)] bg-[length:4px_4px] animate-pulse" />
@@ -247,7 +247,7 @@ const HomePage: React.FC<HomePageProps> = ({ stats, groups, reviewNeeded, onNavi
             className="bg-white border-2 border-b-[4px] border-amber-300 px-3 py-1 rounded-xl flex items-center space-x-1 shadow-sm cursor-default"
           >
             <CircleDollarSign size={16} className="text-amber-500 fill-amber-200 shrink-0" />
-            <span className="font-black text-amber-800 text-xs sm:text-sm tabular-nums leading-none">{stats.starCoins} 星星币</span>
+            <span className="font-black text-amber-800 text-sm sm:text-base tabular-nums leading-none">{stats.starCoins} 星星币</span>
           </motion.div>
 
           <button 
@@ -256,7 +256,7 @@ const HomePage: React.FC<HomePageProps> = ({ stats, groups, reviewNeeded, onNavi
               try { audio.playClick(); } catch(e){}
               setIsProfileExpanded(true);
             }}
-            className="px-3.5 py-1.5 sm:px-4 sm:py-2 bg-gradient-to-r from-[#10b981] to-[#059669] hover:brightness-105 hover:scale-103 active:scale-97 text-white font-black text-xs sm:text-sm rounded-xl border-b-[4px] border-emerald-700 flex items-center gap-1 shadow-sm transition-all cursor-pointer"
+            className="px-4 py-2 sm:px-5 sm:py-2.5 bg-gradient-to-r from-[#10b981] to-[#059669] hover:brightness-105 hover:scale-103 active:scale-97 text-white font-black text-sm sm:text-base rounded-xl border-b-[4px] border-emerald-700 flex items-center gap-1 shadow-sm transition-all cursor-pointer"
           >
             <span>我的属性 🗡️</span>
             {unassignedPoints > 0 && (
@@ -361,10 +361,10 @@ const HomePage: React.FC<HomePageProps> = ({ stats, groups, reviewNeeded, onNavi
             )}
           </div>
           <div>
-            <h3 className="font-black text-white text-[16.5px] sm:text-[18.5px] leading-tight flex items-center gap-1 font-sans">
+            <h3 className="font-black text-white text-[18.5px] sm:text-[21.5px] leading-tight flex items-center gap-1 font-sans">
               <span>冒险深林密境</span>
             </h3>
-            <span className="text-[12.5px] sm:text-[14px] font-bold text-white/95 block mt-1 leading-tight">
+            <span className="text-[14.5px] sm:text-[16px] font-extrabold text-white/95 block mt-1.5 leading-tight">
               闯关收割星星币 ⚔️
             </span>
           </div>
@@ -388,10 +388,10 @@ const HomePage: React.FC<HomePageProps> = ({ stats, groups, reviewNeeded, onNavi
             <Gamepad2 className="text-amber-800 w-6 h-6 stroke-[3] group-hover:rotate-12" />
           </div>
           <div>
-            <h3 className="font-black text-white text-[16.5px] sm:text-[18.5px] leading-tight flex items-center gap-1 font-sans">
+            <h3 className="font-black text-white text-[18.5px] sm:text-[21.5px] leading-tight flex items-center gap-1 font-sans">
               <span>魔法演武乐园</span>
             </h3>
-            <span className="text-[12.5px] sm:text-[14px] font-bold text-white/95 block mt-1 leading-tight">
+            <span className="text-[14.5px] sm:text-[16px] font-extrabold text-white/95 block mt-1.5 leading-tight">
               超萌神兽对决游戏 🎮
             </span>
           </div>
@@ -414,10 +414,10 @@ const HomePage: React.FC<HomePageProps> = ({ stats, groups, reviewNeeded, onNavi
             <span className="text-xl select-none">🐾</span>
           </div>
           <div>
-            <h3 className="font-black text-white text-[16.5px] sm:text-[18.5px] leading-tight flex items-center gap-1 font-sans">
+            <h3 className="font-black text-white text-[18.5px] sm:text-[21.5px] leading-tight flex items-center gap-1 font-sans">
               <span>契约兽神域</span>
             </h3>
-            <span className="text-[12.5px] sm:text-[14px] font-bold text-white/95 block mt-1 leading-tight">
+            <span className="text-[14.5px] sm:text-[16px] font-extrabold text-white/95 block mt-1.5 leading-tight">
               特训喂养你的高分宠 🍔
             </span>
           </div>
@@ -440,10 +440,10 @@ const HomePage: React.FC<HomePageProps> = ({ stats, groups, reviewNeeded, onNavi
             <span className="text-lg select-none">💎</span>
           </div>
           <div>
-            <h3 className="font-black text-white text-[16.5px] sm:text-[18.5px] leading-tight flex items-center gap-1 font-sans">
+            <h3 className="font-black text-white text-[18.5px] sm:text-[21.5px] leading-tight flex items-center gap-1 font-sans">
               <span>魔法秘宝商店</span>
             </h3>
-            <span className="text-[12.5px] sm:text-[14px] font-bold text-white/95 block mt-1 leading-tight">
+            <span className="text-[14.5px] sm:text-[16px] font-extrabold text-white/95 block mt-1.5 leading-tight">
               星星币换高强法套 🪙
             </span>
           </div>
@@ -466,16 +466,16 @@ const HomePage: React.FC<HomePageProps> = ({ stats, groups, reviewNeeded, onNavi
               <Award className="text-emerald-950 w-6 h-6 stroke-[3]" />
             </div>
             <div className="min-w-0 text-left">
-              <h3 className="font-black text-emerald-900 text-base sm:text-[18.5px] leading-none flex items-center gap-2">
+              <h3 className="font-black text-emerald-990 text-lg sm:text-[21.5px] leading-none flex items-center gap-2">
                 <span>太古百神之森 · 魔法秘图鉴</span>
-                <span className="bg-emerald-100/90 text-emerald-700 text-xs sm:text-[13px] font-black px-1.5 py-0.5 rounded border border-emerald-200">秘阁</span>
+                <span className="bg-emerald-100/90 text-emerald-700 text-sm sm:text-base font-black px-2 py-0.5 rounded border border-emerald-250">秘阁</span>
               </h3>
-              <p className="text-sm sm:text-[15px] font-bold text-emerald-700/85 mt-2.5 leading-none">
-                已点亮魔法徽记卡 <span className="text-amber-600 font-black">{(stats.masteredWords || []).length}</span> 枚 🔮
+              <p className="text-base sm:text-[17px] font-bold text-emerald-800 mt-2.5 leading-none">
+                已点亮魔法徽记卡 <span className="text-amber-700 font-extrabold">{(stats.masteredWords || []).length}</span> 枚 🔮
               </p>
             </div>
           </div>
-          <span className="text-[13px] sm:text-[14.5px] bg-white border border-emerald-250 text-emerald-850 font-black px-4 py-2.5 rounded-2xl group-hover:bg-[#acd65c] group-hover:text-emerald-950 group-hover:border-transparent transition-all shrink-0 shadow-xs relative z-10">
+          <span className="text-sm sm:text-base bg-white border border-emerald-250 text-emerald-850 font-black px-4.5 py-3 rounded-2xl group-hover:bg-[#acd65c] group-hover:text-emerald-950 group-hover:border-transparent transition-all shrink-0 shadow-xs relative z-10">
             启阅秘卡 📖
           </span>
         </motion.button>
