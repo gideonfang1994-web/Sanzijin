@@ -11,6 +11,7 @@ interface DubbingItem {
   text: string;
   translation: string;
   imageUrl: string;
+  suffix?: string;
 }
 
 interface Props {
@@ -154,138 +155,245 @@ const VoiceDubbing: React.FC<Props> = ({ items, onFinish, onClose, language = 'z
 
     return (
       <div className="flex flex-col items-center justify-center h-full animate-in zoom-in-95 p-6">
-        <div className="bg-white rounded-[50px] p-10 shadow-2xl border-[8px] border-indigo-500 text-center w-full max-w-sm">
+        <div className="bg-white rounded-[40px] p-8 shadow-2xl border-[6px] border-emerald-500 text-center w-full max-w-sm">
           {overallPassed ? (
-            <Trophy className="w-16 h-16 text-amber-500 mx-auto mb-4" />
+            <Trophy className="w-16 h-16 text-amber-500 mx-auto mb-4 animate-bounce" />
           ) : (
             <Star className="w-16 h-16 text-slate-300 mx-auto mb-4" />
           )}
-          <h2 className="text-3xl font-black text-slate-800">
-            {overallPassed ? '配音挑战成功!' : '配音还需要练习!'}
+          <h2 className="text-2xl sm:text-3xl font-black text-emerald-950 font-cute">
+            {overallPassed ? '跟读挑战成功!' : '跟读还需要练习!'}
           </h2>
-          <div className="bg-indigo-50 rounded-3xl p-6 my-6 border-2 border-indigo-100">
-            <p className="text-[10px] font-black text-indigo-400 uppercase tracking-widest mb-1">平均得分</p>
-            <p className={`text-5xl font-black ${overallPassed ? 'text-indigo-600' : 'text-slate-400'}`}>
-              {averageScore} <span className="text-xl">分</span>
+          <div className="bg-emerald-50 rounded-3xl p-5 my-6 border-2 border-emerald-100 shadow-inner">
+            <p className="text-[11px] font-black text-emerald-600 uppercase tracking-widest mb-1 font-sans">测试结果</p>
+            <p className={`text-4xl font-black ${overallPassed ? 'text-emerald-700' : 'text-rose-500'}`}>
+              {overallPassed ? '✨ 顺利通过' : '⏰ 仍需练习'}
             </p>
-            <p className={`text-sm font-bold mt-2 ${overallPassed ? 'text-emerald-500' : 'text-rose-400'}`}>
-              {overallPassed ? '祝贺你顺利通过！' : '加油，再试一次就能通过了！'}
+            <p className={`text-xs font-bold mt-3 ${overallPassed ? 'text-emerald-800' : 'text-rose-600'}`}>
+              {overallPassed ? '祝贺你顺利通过了全部魔法跟读！' : '加油，再试一次就能全部通过了！'}
             </p>
           </div>
-          <button onClick={() => onFinish(totalScore)} className="w-full puffy-button bg-indigo-600 text-white py-5 rounded-3xl font-black text-xl shadow-lg">
-            {overallPassed ? '收获奖励' : '返回关卡'}
-          </button>
+          
+          <div className="flex flex-col gap-3 w-full">
+            <button 
+              onClick={() => {
+                try { audio.playClick(); } catch(e){}
+                setCurrentIdx(0);
+                setTotalScore(0);
+                setIsGameOver(false);
+                setRecognizedText('');
+                setScore(0);
+                setFeedback(null);
+              }} 
+              className="w-full puffy-button bg-gradient-to-r from-emerald-500 to-teal-600 border-b-[5px] border-emerald-700 hover:brightness-105 active:scale-98 text-white py-3.5 rounded-2xl font-black text-base sm:text-lg shadow-lg cursor-pointer transition-all"
+            >
+              继续练习 🔄
+            </button>
+            <button 
+              onClick={() => {
+                try { audio.playClick(); } catch(e){}
+                onFinish(overallPassed ? 100 : 0);
+              }} 
+              className="w-full py-2.5 rounded-2xl font-black text-sm transition-all border-b-[4px] border-slate-300 bg-slate-100 text-slate-700 hover:bg-slate-250 active:scale-[0.99] cursor-pointer"
+            >
+              {overallPassed ? '收下奥术魔力 ✨' : '返回奇妙地图 🗺️'}
+            </button>
+          </div>
         </div>
       </div>
     );
   }
 
+  const renderWordWithHighlight = (word: string, suffix?: string) => {
+    if (!suffix) {
+      return <span className="text-indigo-600 font-extrabold">{word}</span>;
+    }
+    const lowerW = word.toLowerCase();
+    const lowerS = suffix.toLowerCase();
+
+    if (lowerW.endsWith(lowerS)) {
+      const rootLen = word.length - suffix.length;
+      const root = word.substring(0, rootLen);
+      const suffPart = word.substring(rootLen);
+      return (
+        <span className="font-black text-indigo-600">
+          <span>{root}</span>
+          <span className="text-red-500 font-black animate-pulse">{suffPart}</span>
+        </span>
+      );
+    } else {
+      const idx = lowerW.indexOf(lowerS);
+      if (idx !== -1) {
+        const part1 = word.substring(0, idx);
+        const part2 = word.substring(idx, idx + suffix.length);
+        const part3 = word.substring(idx + suffix.length);
+        return (
+          <span className="font-black text-indigo-600">
+            <span>{part1}</span>
+            <span className="text-red-500 font-black animate-pulse">{part2}</span>
+            {part3 && <span>{part3}</span>}
+          </span>
+        );
+      }
+    }
+    return <span className="text-indigo-600 font-extrabold">{word}</span>;
+  };
+
   return (
-    <div className="flex flex-col h-full space-y-3 max-w-md mx-auto overflow-hidden">
-      <div className="flex items-center justify-between p-3 bg-white rounded-2xl border-2 border-slate-50 shadow-sm relative z-20">
-        <button onClick={onClose} className="p-2 hover:bg-slate-100 rounded-xl transition-colors">
-          <X size={20} className="text-slate-400" />
+    <div className="flex flex-col h-full space-y-2.5 max-w-md mx-auto overflow-hidden">
+      {/* Premium Colorful Header */}
+      <div className="flex items-center justify-between p-2.5 bg-gradient-to-r from-[#eef2f7] via-[#fdf6e2] to-[#fcecee] rounded-[20px] border-2 border-amber-300 shadow-sm relative z-20 shrink-0">
+        <button onClick={onClose} className="p-1.5 hover:bg-white rounded-xl transition-all shadow-xs active:scale-95 bg-white/70 border border-slate-200 cursor-pointer">
+          <X size={16} className="text-slate-600 stroke-[3]" />
         </button>
-        <div className="font-black text-indigo-600 text-lg flex items-center truncate px-2">
-          <Mic className="w-4 h-4 mr-1.5 text-indigo-500 shrink-0" /> <span className="truncate">{title}</span>
+        <div className="font-black text-slate-800 text-xs sm:text-xs flex items-center truncate px-1 gap-1 root-font">
+          <span className="text-sm animate-bounce select-none">🎙️</span>
+          <span className="truncate">{title}</span>
         </div>
-        <div className="font-black text-slate-400 text-sm whitespace-nowrap shrink-0">{currentIdx + 1} / {pool.length}</div>
+        <div className="font-black bg-emerald-100/90 text-emerald-800 px-2.5 py-0.5 rounded-full text-xs whitespace-nowrap shrink-0 border border-emerald-200/60 shadow-xs">{currentIdx + 1} / {pool.length}</div>
       </div>
 
-      <div className="flex-1 bg-white rounded-[40px] border-4 border-white shadow-puffy flex flex-col p-4 sm:p-6 relative overflow-hidden">
-        <div className="absolute top-0 left-0 w-full h-1.5 bg-slate-100">
-          <div className="h-full bg-indigo-500 transition-all duration-500" style={{ width: `${((currentIdx + 1) / pool.length) * 100}%` }}></div>
+      {/* Friendly Guide Banner */}
+      <div className="bg-gradient-to-r from-teal-50 via-amber-50 to-rose-50 border border-amber-200/85 rounded-[16px] py-1.5 px-3 shadow-inner text-center flex items-center justify-center gap-1.5 animate-in slide-in-from-top-1 duration-300 relative overflow-hidden shrink-0">
+        <div className="absolute top-0 right-0 w-8 h-8 bg-white/10 rounded-full blur-md" />
+        <span className="text-base shrink-0 block animate-bounce">🧙‍♂️</span>
+        <p className="text-[10.5px] font-bold text-slate-600 leading-none select-none">
+          点击左下 <span className="bg-sky-100 text-sky-700 font-extrabold px-1 rounded text-[10px]">▶ 示范</span>，再按中间 <span className="bg-rose-100 text-rose-700 font-extrabold px-1 rounded text-[10px]">🎙️ 话筒</span> 开始跟读
+        </p>
+      </div>
+
+      {/* Main Creative Card Box WITHOUT scrollbar */}
+      <div className="flex-1 bg-gradient-to-b from-white via-[#f7fdfa] to-[#f0faf5] rounded-[28px] border-3 border-emerald-350 shadow-puffy flex flex-col p-3 sm:p-4.5 relative overflow-hidden">
+        <div className="absolute top-0 left-0 w-full h-1 bg-slate-100">
+          <div className="h-full bg-gradient-to-r from-emerald-400 to-teal-400 transition-all duration-500" style={{ width: `${((currentIdx + 1) / pool.length) * 100}%` }}></div>
         </div>
 
-        <div className="flex-1 flex flex-col items-center justify-center space-y-4 overflow-y-auto py-2">
-          <div className="relative inline-block">
-            <div className="absolute inset-0 bg-indigo-100 blur-3xl opacity-20 rounded-full scale-125"></div>
-            <SafeImage 
-              src={currentItem.imageUrl} 
-              className="w-20 h-20 sm:w-28 sm:h-28 object-contain relative z-10" 
-              alt={currentItem.text} 
-              fallbackText={currentItem.text}
-              width="112"
-              height="112"
-            />
+        {/* Floating background glowing entities */}
+        <div className="absolute -top-12 -right-12 w-20 h-20 bg-rose-200/30 rounded-full blur-xl pointer-events-none" />
+        <div className="absolute -bottom-12 -left-12 w-24 h-24 bg-amber-200/40 rounded-full blur-xl pointer-events-none" />
+        <div className="absolute top-1/3 left-1/3 w-32 h-32 bg-emerald-250/20 rounded-full blur-2xl pointer-events-none" />
+
+        {/* Compact Content Area */}
+        <div className="flex-grow flex flex-col items-center justify-center space-y-2.5 py-1 sm:py-2 overflow-visible">
+          {/* Enhanced Image Presentation with Glow details - Sized down beautifully */}
+          <div className="relative inline-block hover:scale-105 transition-transform duration-300 shrink-0">
+            <div className="absolute inset-0 bg-gradient-to-br from-indigo-200 to-pink-200 blur-xl opacity-35 rounded-full scale-110 animate-pulse"></div>
+            <div className="bg-white/95 p-1 rounded-[14px] border border-amber-250 shadow-xs relative z-10 w-12 h-12 flex items-center justify-center">
+              <SafeImage 
+                src={currentItem.imageUrl} 
+                className="w-8.5 h-8.5 object-contain relative z-10" 
+                alt={currentItem.text} 
+                fallbackText={currentItem.text}
+                width="68"
+                height="68"
+              />
+            </div>
           </div>
-          <div className="bg-slate-50 p-4 sm:p-5 rounded-[28px] border-2 border-slate-100 w-full flex flex-col justify-center space-y-2">
-            <div className="text-lg sm:text-xl font-black text-slate-800 tracking-tight leading-relaxed text-center space-y-1">
+
+          {/* Suffix Colored Word Text Block - 1.5x larger font size and gorgeous layout */}
+          <div className="bg-white/95 backdrop-blur-md px-3 py-2.5 sm:px-5 sm:py-3.5 rounded-[20px] border-2 border-emerald-150 w-full flex flex-col justify-center space-y-1.5 shadow-xs relative z-10 animate-in fade-in duration-300">
+            <div className="text-lg sm:text-xl font-black text-slate-800 tracking-tight leading-relaxed text-center space-y-1 font-cute">
               {currentItem.text.split(/[,，.。!！?？]/).filter(s => s.trim()).map((line, idx) => {
                 const parts = line.split(/([a-zA-Z]+)/);
                 return (
-                  <p key={idx} className="whitespace-nowrap flex justify-center items-center gap-x-1">
+                  <p key={idx} className="whitespace-normal flex justify-center items-center flex-wrap gap-x-1 sm:gap-x-1.5">
                     {parts.map((p, i) => (
-                      <span key={i} className={/^[a-zA-Z]+$/.test(p) ? "text-indigo-600 font-extrabold" : "opacity-95"}>
-                        {p}
+                      <span key={i} className={/^[a-zA-Z]+$/.test(p) ? "" : "opacity-95 text-slate-600 font-cute"}>
+                        {/^[a-zA-Z]+$/.test(p) ? renderWordWithHighlight(p, currentItem.suffix) : p}
                       </span>
                     ))}
                   </p>
                 );
               })}
             </div>
-            <p className="text-[10px] font-bold text-slate-400 mt-1 text-center">{currentItem.translation}</p>
+            <div className="w-10 h-0.5 bg-gradient-to-r from-transparent via-emerald-300 to-transparent mx-auto rounded-full" />
+            <p className="text-[10px] sm:text-[11px] font-black text-emerald-800/80 text-center flex items-center justify-center gap-1 leading-none">
+              <span>🌟 口诀:</span> <span>{currentItem.translation}</span>
+            </p>
           </div>
 
-          <div className="h-12 flex flex-col items-center justify-center text-center w-full">
-            {feedback && (
-              <p className={`text-lg font-black ${feedback.color} ${feedback.status !== 'NEUTRAL' ? 'animate-bounce' : ''}`}>
-                {feedback.text}
+          {/* Combined compact feedback & Speech Recognizer line */}
+          <div className="min-h-7 flex flex-col items-center justify-center text-center w-full z-10 shrink-0">
+            {feedback ? (
+              <p className={`text-[11px] sm:text-xs font-black ${feedback.color} ${feedback.status === 'PASS' ? 'text-emerald-600' : 'text-rose-500'}`}>
+                {feedback.status === 'PASS' ? '✨ 完美契合 · 跟读通过！' : '⏰ 仍需磨砺 · 请重试！'}
               </p>
+            ) : (
+              <p className="text-[10px] font-bold text-slate-450">跟读魔法蓄势待发，点击话筒开始读吧 🪄</p>
             )}
             {recognizedText && (
-              <p className="text-slate-400 font-bold mt-0.5 italic text-[10px]">听起来像: "{recognizedText}"</p>
+              <p className="text-emerald-850 bg-white/70 border border-emerald-100 rounded-md px-1.5 py-0.5 font-bold mt-0.5 italic text-[8.5px] shadow-2xs leading-none">
+                听起来像: "{recognizedText}"
+              </p>
             )}
           </div>
-
-          {score > 0 && (
-            <div className={`w-full max-w-xs rounded-2xl p-3 border-2 flex items-center justify-between transition-colors ${score >= 60 ? 'bg-emerald-50 border-emerald-100' : 'bg-rose-50 border-rose-100'}`}>
-              <span className={`font-black text-sm ${score >= 60 ? 'text-emerald-600' : 'text-rose-400'}`}>
-                {score >= 60 ? '配音成功' : '配音失败'}
-              </span>
-              <div className="flex items-center">
-                <span className={`text-2xl font-black mr-2 ${score >= 60 ? 'text-emerald-500' : 'text-rose-500'}`}>{score}</span>
-                <Star className={`w-5 h-5 ${score >= 80 ? 'text-amber-400 fill-amber-400' : 'text-slate-200'}`} />
-              </div>
-            </div>
-          )}
         </div>
 
-        <div className="flex flex-col items-center space-y-4 w-full mt-4">
-          <div className="flex items-center justify-center space-x-4">
+        {/* Action Controls - Lifted up with absolute visibility and optimal layout */}
+        <div className="flex flex-col items-center space-y-2 w-full mt-1.5 z-10 shrink-0">
+          <div className="flex items-center justify-center space-x-6">
             <button 
-              onClick={() => audio.speak(currentItem.text)}
-              className="w-12 h-12 bg-blue-100 text-blue-600 rounded-2xl flex items-center justify-center hover:bg-blue-200 transition-all active:scale-90"
+              onClick={() => {
+                try { audio.playClick(); } catch(e){}
+                audio.speak(currentItem.text);
+              }}
+              className="w-11 h-11 sm:w-12 sm:h-12 bg-[#e0f2fe] hover:bg-sky-200 text-sky-600 border border-sky-300 rounded-[16px] flex items-center justify-center shadow-xs hover:scale-105 transition-all active:scale-95 cursor-pointer"
               title="播放示范"
             >
-              <Play size={24} fill="currentColor" />
+              <Play size={18} fill="currentColor" />
             </button>
             <button 
               onClick={startRecording}
               disabled={isRecording}
-              className={`w-16 h-16 rounded-full flex items-center justify-center transition-all shadow-xl active:scale-90 ${
-                isRecording ? 'bg-rose-500 animate-pulse' : 'bg-indigo-600 hover:bg-indigo-700'
+              className={`w-13 h-13 sm:w-14 sm:h-14 rounded-full flex items-center justify-center transition-all shadow-md active:scale-90 border-4 border-white cursor-pointer ${
+                isRecording ? 'bg-rose-500 animate-pulse ring-4 ring-rose-200' : 'bg-gradient-to-tr from-indigo-500 via-purple-500 to-pink-500 hover:brightness-105'
               }`}
             >
-              <Mic size={32} className="text-white" />
+              <Mic size={20} className="text-white" />
             </button>
             <button 
-              onClick={() => { setRecognizedText(''); setScore(0); setFeedback(null); }}
-              className="w-12 h-12 bg-slate-100 text-slate-600 rounded-2xl flex items-center justify-center hover:bg-slate-200 transition-all active:scale-90"
+              onClick={() => {
+                try { audio.playClick(); } catch(e){}
+                setRecognizedText('');
+                setScore(0);
+                setFeedback(null);
+              }}
+              className="w-11 h-11 sm:w-12 sm:h-12 bg-amber-50 hover:bg-amber-100 text-amber-600 border border-amber-300 rounded-[16px] flex items-center justify-center shadow-xs hover:scale-105 transition-all active:scale-95 cursor-pointer"
               title="重置"
             >
-              <RefreshCw size={24} />
+              <RefreshCw size={18} className="stroke-[2.5]" />
             </button>
           </div>
 
-          <button 
-            onClick={nextItem}
-            className={`w-full py-4 rounded-2xl font-black text-lg transition-all ${
-              score > 0 || feedback ? 'bg-indigo-600 text-white shadow-lg hover:bg-indigo-700' : 'bg-slate-100 text-slate-400 hover:bg-slate-200'
-            }`}
-          >
-            {currentIdx === pool.length - 1 ? '完成配音' : (score > 0 || feedback ? '下一个' : '跳过本题')}
-          </button>
+          <div className="w-full flex flex-col gap-1.5">
+            {(score > 0 || feedback) && (
+              <button 
+                onClick={() => {
+                  try { audio.playClick(); } catch(e){}
+                  nextItem();
+                }}
+                className="w-full py-2 sm:py-2.5 rounded-full font-black text-xs sm:text-sm bg-gradient-to-r from-emerald-400 to-teal-500 text-white shadow-md border-b-[3px] border-emerald-600 hover:brightness-105 transition-all cursor-pointer active:scale-95 select-none text-center flex items-center justify-center gap-1.5"
+              >
+                {currentIdx === pool.length - 1 ? (
+                  <span>完成跟读 ✨</span>
+                ) : (
+                  <span>下一个 ➡️</span>
+                )}
+              </button>
+            )}
+
+            {(!feedback || currentIdx < pool.length - 1) && (
+              <button 
+                onClick={() => {
+                  try { audio.playClick(); } catch(e){}
+                  nextItem();
+                }}
+                className="w-full py-1.5 sm:py-2 rounded-full font-black text-[11px] sm:text-xs bg-[#e6faf2] hover:bg-[#d1f7e5] text-emerald-800 border-2 border-emerald-350 shadow-puffy-xs active:scale-95 transition-all cursor-pointer select-none text-center flex items-center justify-center gap-1"
+              >
+                <span>跳过本题 ⏭️</span>
+              </button>
+            )}
+          </div>
         </div>
       </div>
     </div>

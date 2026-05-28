@@ -1723,12 +1723,13 @@ const AdventurePage: React.FC<AdventurePageProps> = ({
             <div className="py-2 h-[80vh] min-h-[450px] flex flex-col">
               <VoiceDubbing 
                 language="zh-CN"
-                title={`${currentActiveLevel.name} • 魔法配音`}
+                title={`${currentActiveLevel.name} • 魔法跟读`}
                 items={currentActiveLevel.cards.map((card, i) => ({
                   id: `dub-${currentActiveLevel.id}-${i}`,
                   text: card.rhyme,
                   translation: '大声读出你的魔法口诀吧！',
-                  imageUrl: card.words[0]?.imageUrl || 'https://img.icons8.com/clouds/200/microphone.png'
+                  imageUrl: card.words[0]?.imageUrl || 'https://img.icons8.com/clouds/200/microphone.png',
+                  suffix: card.suffix
                 }))}
                 onFinish={(score) => {
                   try {
