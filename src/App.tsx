@@ -999,15 +999,7 @@ const App: React.FC = () => {
             )}
             <span className="text-[10px] font-black text-slate-600 truncate max-w-[60px]">退出</span>
           </button>
-        ) : (
-          <button 
-            onClick={handleLogin}
-            className="flex items-center space-x-2 bg-indigo-600 text-white px-4 py-2 rounded-full shadow-lg shadow-indigo-200 hover:bg-indigo-700 transition-all text-xs font-black"
-          >
-            <Award size={14} />
-            <span>登录同步</span>
-          </button>
-        )}
+        ) : null}
       </div>
 
       <main className="w-full flex-1 flex flex-col pt-4">

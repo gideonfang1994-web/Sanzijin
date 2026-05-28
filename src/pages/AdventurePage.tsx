@@ -1216,7 +1216,7 @@ const AdventurePage: React.FC<AdventurePageProps> = ({
           </div>
         </div>
 
-      <div className="max-w-md mx-auto p-6 relative z-10">
+      <div className={`max-w-md mx-auto ${step === 'DUBBING' ? 'px-2 pb-2 pt-1 xs:p-4 sm:p-6' : 'p-6'} relative z-10 w-full`}>
       <AnimatePresence>
           {step === 'SETUP' && (
             <motion.div key="setup" initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -20 }} className="space-y-8 py-10">
@@ -1720,7 +1720,7 @@ const AdventurePage: React.FC<AdventurePageProps> = ({
           )}
 
           {step === 'DUBBING' && currentActiveLevel && (
-            <div className="py-2 h-[80vh] min-h-[450px] flex flex-col">
+            <div className="py-1 h-auto min-h-[500px] flex flex-col w-full pb-10">
               <VoiceDubbing 
                 language="zh-CN"
                 title={`${currentActiveLevel.name} • 魔法跟读`}

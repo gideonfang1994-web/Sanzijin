@@ -240,30 +240,30 @@ const VoiceDubbing: React.FC<Props> = ({ items, onFinish, onClose, language = 'z
   };
 
   return (
-    <div className="flex flex-col h-full space-y-2.5 max-w-md mx-auto overflow-hidden">
+    <div className="flex flex-col space-y-3 max-w-md mx-auto w-full">
       {/* Premium Colorful Header */}
-      <div className="flex items-center justify-between p-2.5 bg-gradient-to-r from-[#eef2f7] via-[#fdf6e2] to-[#fcecee] rounded-[20px] border-2 border-amber-300 shadow-sm relative z-20 shrink-0">
-        <button onClick={onClose} className="p-1.5 hover:bg-white rounded-xl transition-all shadow-xs active:scale-95 bg-white/70 border border-slate-200 cursor-pointer">
-          <X size={16} className="text-slate-600 stroke-[3]" />
+      <div className="flex items-center justify-between p-3.5 bg-gradient-to-r from-[#eef2f7] via-[#fdf6e2] to-[#fcecee] rounded-[24px] border-2 border-amber-300 shadow-sm relative z-20 shrink-0">
+        <button onClick={onClose} className="p-2 hover:bg-white rounded-xl transition-all shadow-xs active:scale-95 bg-white/70 border border-slate-200 cursor-pointer">
+          <X size={18} className="text-slate-600 stroke-[3]" />
         </button>
-        <div className="font-black text-slate-800 text-xs sm:text-xs flex items-center truncate px-1 gap-1 root-font">
-          <span className="text-sm animate-bounce select-none">🎙️</span>
+        <div className="font-black text-slate-800 text-sm sm:text-base flex items-center truncate px-1 gap-1.5 root-font">
+          <span className="text-base animate-bounce select-none">🎙️</span>
           <span className="truncate">{title}</span>
         </div>
-        <div className="font-black bg-emerald-100/90 text-emerald-800 px-2.5 py-0.5 rounded-full text-xs whitespace-nowrap shrink-0 border border-emerald-200/60 shadow-xs">{currentIdx + 1} / {pool.length}</div>
+        <div className="font-black bg-emerald-100/90 text-emerald-800 px-3 py-1 rounded-full text-xs sm:text-sm whitespace-nowrap shrink-0 border border-emerald-200/60 shadow-xs">{currentIdx + 1} / {pool.length}</div>
       </div>
 
       {/* Friendly Guide Banner */}
-      <div className="bg-gradient-to-r from-teal-50 via-amber-50 to-rose-50 border border-amber-200/85 rounded-[16px] py-1.5 px-3 shadow-inner text-center flex items-center justify-center gap-1.5 animate-in slide-in-from-top-1 duration-300 relative overflow-hidden shrink-0">
+      <div className="bg-gradient-to-r from-teal-50 via-amber-50 to-rose-50 border border-amber-200/85 rounded-[20px] py-1.5 px-4 shadow-inner text-center flex items-center justify-center gap-2 animate-in slide-in-from-top-1 duration-300 relative overflow-hidden shrink-0">
         <div className="absolute top-0 right-0 w-8 h-8 bg-white/10 rounded-full blur-md" />
-        <span className="text-base shrink-0 block animate-bounce">🧙‍♂️</span>
-        <p className="text-[10.5px] font-bold text-slate-600 leading-none select-none">
-          点击左下 <span className="bg-sky-100 text-sky-700 font-extrabold px-1 rounded text-[10px]">▶ 示范</span>，再按中间 <span className="bg-rose-100 text-rose-700 font-extrabold px-1 rounded text-[10px]">🎙️ 话筒</span> 开始跟读
+        <span className="text-lg shrink-0 block animate-bounce">🧙‍♂️</span>
+        <p className="text-xs sm:text-sm font-bold text-slate-600 leading-tight select-none">
+          点击左下 <span className="bg-sky-100 text-sky-700 font-extrabold px-1.5 py-0.5 rounded text-[11px] sm:text-xs">▶ 示范</span>，再按中间 <span className="bg-rose-100 text-rose-700 font-extrabold px-1.5 py-0.5 rounded text-[11px] sm:text-xs">🎙️ 话筒</span> 开始跟读
         </p>
       </div>
 
       {/* Main Creative Card Box WITHOUT scrollbar */}
-      <div className="flex-1 bg-gradient-to-b from-white via-[#f7fdfa] to-[#f0faf5] rounded-[28px] border-3 border-emerald-350 shadow-puffy flex flex-col p-3 sm:p-4.5 relative overflow-hidden">
+      <div className="bg-gradient-to-b from-white via-[#f7fdfa] to-[#f0faf5] rounded-[32px] border-3 border-emerald-350 shadow-puffy flex flex-col p-4 xs:p-5 sm:p-6 relative overflow-hidden w-full">
         <div className="absolute top-0 left-0 w-full h-1 bg-slate-100">
           <div className="h-full bg-gradient-to-r from-emerald-400 to-teal-400 transition-all duration-500" style={{ width: `${((currentIdx + 1) / pool.length) * 100}%` }}></div>
         </div>
@@ -274,29 +274,29 @@ const VoiceDubbing: React.FC<Props> = ({ items, onFinish, onClose, language = 'z
         <div className="absolute top-1/3 left-1/3 w-32 h-32 bg-emerald-250/20 rounded-full blur-2xl pointer-events-none" />
 
         {/* Compact Content Area */}
-        <div className="flex-grow flex flex-col items-center justify-center space-y-2.5 py-1 sm:py-2 overflow-visible">
+        <div className="flex-grow flex flex-col items-center justify-center space-y-3.5 py-2 sm:py-3 overflow-visible">
           {/* Enhanced Image Presentation with Glow details - Sized down beautifully */}
           <div className="relative inline-block hover:scale-105 transition-transform duration-300 shrink-0">
             <div className="absolute inset-0 bg-gradient-to-br from-indigo-200 to-pink-200 blur-xl opacity-35 rounded-full scale-110 animate-pulse"></div>
-            <div className="bg-white/95 p-1 rounded-[14px] border border-amber-250 shadow-xs relative z-10 w-12 h-12 flex items-center justify-center">
+            <div className="bg-white/95 p-1 rounded-[16px] border border-amber-250 shadow-xs relative z-10 w-16 h-16 flex items-center justify-center">
               <SafeImage 
                 src={currentItem.imageUrl} 
-                className="w-8.5 h-8.5 object-contain relative z-10" 
+                className="w-12 h-12 object-contain relative z-10" 
                 alt={currentItem.text} 
                 fallbackText={currentItem.text}
-                width="68"
-                height="68"
+                width="80"
+                height="80"
               />
             </div>
           </div>
 
           {/* Suffix Colored Word Text Block - 1.5x larger font size and gorgeous layout */}
-          <div className="bg-white/95 backdrop-blur-md px-3 py-2.5 sm:px-5 sm:py-3.5 rounded-[20px] border-2 border-emerald-150 w-full flex flex-col justify-center space-y-1.5 shadow-xs relative z-10 animate-in fade-in duration-300">
-            <div className="text-lg sm:text-xl font-black text-slate-800 tracking-tight leading-relaxed text-center space-y-1 font-cute">
+          <div className="bg-white/95 backdrop-blur-md px-4 py-4 sm:px-6 sm:py-5 rounded-[24px] border-2 border-emerald-150 w-full flex flex-col justify-center space-y-2.5 shadow-xs relative z-10 animate-in fade-in duration-300">
+            <div className="text-xl sm:text-2xl font-black text-slate-800 tracking-tight leading-relaxed text-center space-y-2 font-cute">
               {currentItem.text.split(/[,，.。!！?？]/).filter(s => s.trim()).map((line, idx) => {
                 const parts = line.split(/([a-zA-Z]+)/);
                 return (
-                  <p key={idx} className="whitespace-normal flex justify-center items-center flex-wrap gap-x-1 sm:gap-x-1.5">
+                  <p key={idx} className="whitespace-normal flex justify-center items-center flex-wrap gap-x-1.5 sm:gap-x-2">
                     {parts.map((p, i) => (
                       <span key={i} className={/^[a-zA-Z]+$/.test(p) ? "" : "opacity-95 text-slate-600 font-cute"}>
                         {/^[a-zA-Z]+$/.test(p) ? renderWordWithHighlight(p, currentItem.suffix) : p}
@@ -306,23 +306,23 @@ const VoiceDubbing: React.FC<Props> = ({ items, onFinish, onClose, language = 'z
                 );
               })}
             </div>
-            <div className="w-10 h-0.5 bg-gradient-to-r from-transparent via-emerald-300 to-transparent mx-auto rounded-full" />
-            <p className="text-[10px] sm:text-[11px] font-black text-emerald-800/80 text-center flex items-center justify-center gap-1 leading-none">
+            <div className="w-12 h-0.5 bg-gradient-to-r from-transparent via-emerald-300 to-transparent mx-auto rounded-full" />
+            <p className="text-xs sm:text-sm font-black text-emerald-800/80 text-center flex items-center justify-center gap-1.5 leading-none">
               <span>🌟 口诀:</span> <span>{currentItem.translation}</span>
             </p>
           </div>
 
           {/* Combined compact feedback & Speech Recognizer line */}
-          <div className="min-h-7 flex flex-col items-center justify-center text-center w-full z-10 shrink-0">
+          <div className="min-h-9 flex flex-col items-center justify-center text-center w-full z-10 shrink-0">
             {feedback ? (
-              <p className={`text-[11px] sm:text-xs font-black ${feedback.color} ${feedback.status === 'PASS' ? 'text-emerald-600' : 'text-rose-500'}`}>
+              <p className={`text-xs sm:text-sm font-black ${feedback.color} ${feedback.status === 'PASS' ? 'text-emerald-600' : 'text-rose-500'}`}>
                 {feedback.status === 'PASS' ? '✨ 完美契合 · 跟读通过！' : '⏰ 仍需磨砺 · 请重试！'}
               </p>
             ) : (
-              <p className="text-[10px] font-bold text-slate-450">跟读魔法蓄势待发，点击话筒开始读吧 🪄</p>
+              <p className="text-xs font-bold text-slate-450">跟读魔法蓄势待发，点击话筒开始读吧 🪄</p>
             )}
             {recognizedText && (
-              <p className="text-emerald-850 bg-white/70 border border-emerald-100 rounded-md px-1.5 py-0.5 font-bold mt-0.5 italic text-[8.5px] shadow-2xs leading-none">
+              <p className="text-emerald-850 bg-white/70 border border-emerald-100 rounded-md px-2 py-0.5 font-bold mt-1 italic text-[10px] sm:text-xs shadow-2xs leading-none">
                 听起来像: "{recognizedText}"
               </p>
             )}
@@ -330,26 +330,26 @@ const VoiceDubbing: React.FC<Props> = ({ items, onFinish, onClose, language = 'z
         </div>
 
         {/* Action Controls - Lifted up with absolute visibility and optimal layout */}
-        <div className="flex flex-col items-center space-y-2 w-full mt-1.5 z-10 shrink-0">
+        <div className="flex flex-col items-center space-y-3 w-full mt-2 z-10 shrink-0">
           <div className="flex items-center justify-center space-x-6">
             <button 
               onClick={() => {
                 try { audio.playClick(); } catch(e){}
                 audio.speak(currentItem.text);
               }}
-              className="w-11 h-11 sm:w-12 sm:h-12 bg-[#e0f2fe] hover:bg-sky-200 text-sky-600 border border-sky-300 rounded-[16px] flex items-center justify-center shadow-xs hover:scale-105 transition-all active:scale-95 cursor-pointer"
+              className="w-12 h-12 sm:w-14 sm:h-14 bg-[#e0f2fe] hover:bg-sky-200 text-sky-600 border border-sky-300 rounded-[20px] flex items-center justify-center shadow-xs hover:scale-105 transition-all active:scale-95 cursor-pointer"
               title="播放示范"
             >
-              <Play size={18} fill="currentColor" />
+              <Play size={22} fill="currentColor" />
             </button>
             <button 
               onClick={startRecording}
               disabled={isRecording}
-              className={`w-13 h-13 sm:w-14 sm:h-14 rounded-full flex items-center justify-center transition-all shadow-md active:scale-90 border-4 border-white cursor-pointer ${
+              className={`w-14 h-14 sm:w-16 sm:h-16 rounded-full flex items-center justify-center transition-all shadow-md active:scale-90 border-4 border-white cursor-pointer ${
                 isRecording ? 'bg-rose-500 animate-pulse ring-4 ring-rose-200' : 'bg-gradient-to-tr from-indigo-500 via-purple-500 to-pink-500 hover:brightness-105'
               }`}
             >
-              <Mic size={20} className="text-white" />
+              <Mic size={24} className="text-white" />
             </button>
             <button 
               onClick={() => {
@@ -358,21 +358,21 @@ const VoiceDubbing: React.FC<Props> = ({ items, onFinish, onClose, language = 'z
                 setScore(0);
                 setFeedback(null);
               }}
-              className="w-11 h-11 sm:w-12 sm:h-12 bg-amber-50 hover:bg-amber-100 text-amber-600 border border-amber-300 rounded-[16px] flex items-center justify-center shadow-xs hover:scale-105 transition-all active:scale-95 cursor-pointer"
+              className="w-12 h-12 sm:w-14 sm:h-14 bg-amber-50 hover:bg-amber-100 text-amber-600 border border-amber-300 rounded-[20px] flex items-center justify-center shadow-xs hover:scale-105 transition-all active:scale-95 cursor-pointer"
               title="重置"
             >
-              <RefreshCw size={18} className="stroke-[2.5]" />
+              <RefreshCw size={20} className="stroke-[2.5]" />
             </button>
           </div>
 
-          <div className="w-full flex flex-col gap-1.5">
+          <div className="w-full flex flex-col gap-2">
             {(score > 0 || feedback) && (
               <button 
                 onClick={() => {
                   try { audio.playClick(); } catch(e){}
                   nextItem();
                 }}
-                className="w-full py-2 sm:py-2.5 rounded-full font-black text-xs sm:text-sm bg-gradient-to-r from-emerald-400 to-teal-500 text-white shadow-md border-b-[3px] border-emerald-600 hover:brightness-105 transition-all cursor-pointer active:scale-95 select-none text-center flex items-center justify-center gap-1.5"
+                className="w-full py-2.5 sm:py-3.5 rounded-full font-black text-sm sm:text-base bg-gradient-to-r from-emerald-400 to-teal-500 text-white shadow-md border-b-[3px] border-emerald-600 hover:brightness-105 transition-all cursor-pointer active:scale-95 select-none text-center flex items-center justify-center gap-1.5"
               >
                 {currentIdx === pool.length - 1 ? (
                   <span>完成跟读 ✨</span>
@@ -388,7 +388,7 @@ const VoiceDubbing: React.FC<Props> = ({ items, onFinish, onClose, language = 'z
                   try { audio.playClick(); } catch(e){}
                   nextItem();
                 }}
-                className="w-full py-1.5 sm:py-2 rounded-full font-black text-[11px] sm:text-xs bg-[#e6faf2] hover:bg-[#d1f7e5] text-emerald-800 border-2 border-emerald-350 shadow-puffy-xs active:scale-95 transition-all cursor-pointer select-none text-center flex items-center justify-center gap-1"
+                className="w-full py-2.5 sm:py-3 rounded-full font-black text-xs sm:text-sm bg-white hover:bg-emerald-50 text-emerald-800 border-2 border-emerald-600 shadow-sm active:scale-95 transition-all cursor-pointer select-none text-center flex items-center justify-center gap-1"
               >
                 <span>跳过本题 ⏭️</span>
               </button>

@@ -74,7 +74,7 @@ export const audio = {
     try {
       const audioObj = new Audio(url);
       audioObj.loop = true;
-      audioObj.volume = 0.12; // Balanced background volume
+      audioObj.volume = 0.08; // Balanced background volume (reduced by 30%)
       currentBgm = audioObj;
       audioObj.play().catch(err => {
         console.log('[BGM] Failed to autoplay:', err);
