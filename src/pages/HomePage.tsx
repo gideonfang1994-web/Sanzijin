@@ -31,38 +31,6 @@ const HomePage: React.FC<HomePageProps> = ({ stats, groups, reviewNeeded, onNavi
   const [searchResults, setSearchResults] = React.useState<WordGroup[]>([]);
   const [isProfileExpanded, setIsProfileExpanded] = React.useState(false);
   const [activeProfileTab, setActiveProfileTab] = React.useState<'HERO' | 'PETS'>('HERO');
-  const [isMascotVisible, setIsMascotVisible] = React.useState(true);
-
-  React.useEffect(() => {
-    const timer = setTimeout(() => {
-      setIsMascotVisible(false);
-    }, 30000);
-    return () => clearTimeout(timer);
-  }, []);
-
-  // Interactive Mascot dialogues to engage children
-  const MASCOT_DIALOGUES = React.useMemo(() => [
-    "哈罗！我是魔法学院小向导波波！今天要去哪里探险呢？🧙‍♀️",
-    "哇！大勇者你今天的奥术魔力值非常饱满，感觉拼词可以发挥超群！✨",
-    "开拓视野的秘诀：去【冒险深林密境】关卡挑战，能得到好多星星币和经验奖励哦！🌲",
-    "要是有点累了，就去【魔法演武乐园】跟萌宠玩会儿双音拼写、打地鼠，可好玩啦！🎮",
-    "在【契约符文】里，你可以分配升级属性点，提升力量以斩落更高级的单词魔王！🗡️",
-    "悄悄和你说，商店老板最近新上架了超酷炫的剑帽和守护兽龙蛋，快往秘宝商店看看吧！🪙",
-    "摸摸我的小卷卷，好运气加倍！今天背诵的三字口诀全都牢牢印在脑海里！💖",
-    "听！太古魔法林里的仙鸟在唱歌，说明你今天非常有奥语拼写的天赋哦！🦉"
-  ], []);
-
-  const [mascotDialogueIdx, setMascotDialogueIdx] = React.useState(0);
-  const [mascotBounce, setMascotBounce] = React.useState(false);
-
-  const handleMascotClick = () => {
-    try {
-      audio.playPop();
-    } catch (e) {}
-    setMascotBounce(true);
-    setTimeout(() => setMascotBounce(false), 500);
-    setMascotDialogueIdx((prev) => (prev + 1) % MASCOT_DIALOGUES.length);
-  };
 
   const handleSearch = (e: React.ChangeEvent<HTMLInputElement>) => {
     const query = e.target.value.toLowerCase();
@@ -239,47 +207,48 @@ const HomePage: React.FC<HomePageProps> = ({ stats, groups, reviewNeeded, onNavi
           ))
         ))}
       </div>
-             {/* COMPACT INTEGRATED MAGICAL ACADEMY DASHBOARD HEADER */}
-      <div className="bg-gradient-to-b from-white via-[#f3fbf6] to-[#ebfaf0] border-2 border-emerald-300 border-b-[5px] border-emerald-400 rounded-3xl p-3.5 shadow-sm flex flex-col xs:flex-row gap-3 xs:items-center justify-between text-emerald-950 relative overflow-hidden">
+
+      {/* COMPACT INTEGRATED MAGICAL ACADEMY DASHBOARD HEADER */}
+      <div className="bg-gradient-to-b from-white via-[#f3fbf6] to-[#ebfaf0] border-3 border-emerald-300 border-b-[8px] border-emerald-450 rounded-[32px] p-5.5 sm:p-7 shadow-md flex flex-col sm:flex-row gap-5 sm:items-center justify-between text-emerald-950 relative overflow-hidden">
         {/* Soft glowing line at top */}
-        <div className="absolute top-0 inset-x-0 h-0.5 bg-gradient-to-r from-transparent via-amber-400/60 to-transparent animate-pulse" />
+        <div className="absolute top-0 inset-x-0 h-1.5 bg-gradient-to-r from-transparent via-amber-400 to-transparent animate-pulse" />
 
         {/* Left: Branding Identity & Level / XP Bar combined for perfect coordination */}
-        <div className="flex items-center space-x-3">
+        <div className="flex items-center space-x-5">
           <motion.div 
-            whileHover={{ scale: 1.15, rotate: [0, -10, 10, 0] }}
-            whileTap={{ scale: 0.95 }}
-            transition={{ type: "spring", stiffness: 300, damping: 12 }}
+            whileHover={{ scale: 1.2, rotate: [0, -15, 15, -5, 0] }}
+            whileTap={{ scale: 0.9 }}
+            transition={{ type: "spring", stiffness: 350, damping: 10 }}
             className="cursor-pointer select-none shrink-0"
             onClick={() => {
               try { audio.playCheer(); } catch(e){}
             }}
           >
-            <span className="text-4.5xl block filter drop-shadow-[0_2.5px_10px_rgba(52,211,153,0.5)]">🐯</span>
+            <span className="text-6xl block filter drop-shadow-[0_4px_12px_rgba(52,211,153,0.6)]">🐯</span>
           </motion.div>
           <div className="text-left">
-            <h1 className="text-base sm:text-lg font-black text-emerald-900 tracking-wide leading-none flex items-center gap-1.5">
+            <h1 className="text-2xl sm:text-3xl font-extrabold text-emerald-950 tracking-wide leading-none flex items-center gap-2.5">
               <span>单词奇旅</span>
-              <span className="text-[10px] sm:text-[11px] bg-amber-400 text-amber-950 font-black px-1.5 py-0.5 rounded shadow-xs">v2.5</span>
+              <span className="text-xs sm:text-sm bg-gradient-to-r from-amber-400 to-amber-500 text-amber-955 font-black px-2.5 py-1.2 rounded-xl shadow-md border-b-2 border-amber-600">v2.5</span>
             </h1>
-            <div className="flex items-center gap-2 mt-1 flex-wrap">
-              <span className="text-xs font-black text-emerald-850 whitespace-nowrap">🌟 LV.{stats.level}</span>
-              <div className="w-16 h-2 bg-emerald-100 rounded-full overflow-hidden border border-emerald-250 relative">
+            <div className="flex items-center gap-4 mt-2.5 flex-wrap">
+              <span className="text-sm sm:text-lg font-black text-emerald-900 bg-white/70 border border-emerald-200 px-3 py-1 rounded-full whitespace-nowrap shadow-xs">🌟 魔力 LV.{stats.level}</span>
+              <div className="w-28 h-4 bg-emerald-100 rounded-full overflow-hidden border-2 border-emerald-300 relative shadow-inner">
                 <div className="bg-gradient-to-r from-emerald-400 via-amber-400 to-teal-400 h-full" style={{ width: `${(stats.xp % 1000) / 10}%` }} />
-                <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,_rgba(255,255,255,0.4)_1px,_transparent_1px)] bg-[length:6px_6px] animate-pulse" />
+                <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,_rgba(255,255,255,0.5)_1px,_transparent_1px)] bg-[length:6px_6px] animate-pulse" />
               </div>
             </div>
           </div>
         </div>
 
         {/* Right: Gold and Attributes Character book trigger */}
-        <div className="flex items-center justify-end gap-2 shrink-0">
+        <div className="flex items-center justify-between sm:justify-end gap-4 shrink-0 w-full sm:w-auto border-t-2 border-dashed border-emerald-200/50 sm:border-0 pt-4 sm:pt-0">
           <motion.div 
             whileHover={{ scale: 1.05 }}
-            className="bg-white border-2 border-amber-300 px-2.5 py-1 rounded-2xl flex items-center space-x-1 shadow-sm cursor-default"
+            className="bg-white border-2 border-b-[5px] border-amber-300 px-4 py-2 rounded-2xl flex items-center space-x-2 shadow-sm cursor-default"
           >
-            <CircleDollarSign size={15} className="text-amber-500 fill-amber-250 shrink-0" />
-            <span className="font-extrabold text-amber-705 text-sm sm:text-base tabular-nums leading-none">{stats.starCoins}</span>
+            <CircleDollarSign size={22} className="text-amber-500 fill-amber-250 shrink-0" />
+            <span className="font-black text-amber-800 text-base sm:text-lg tabular-nums leading-none">{stats.starCoins} 星星币</span>
           </motion.div>
 
           <button 
@@ -288,121 +257,34 @@ const HomePage: React.FC<HomePageProps> = ({ stats, groups, reviewNeeded, onNavi
               try { audio.playClick(); } catch(e){}
               setIsProfileExpanded(true);
             }}
-            className="px-3 py-1.5 bg-gradient-to-r from-[#10b981] to-[#059669] hover:brightness-105 hover:scale-103 active:scale-97 text-white font-black text-[12.5px] sm:text-[13.5px] rounded-2xl border-b-3 border-emerald-700 flex items-center gap-1 shadow-sm transition-all cursor-pointer"
+            className="px-5 py-2.5 bg-gradient-to-r from-[#10b981] to-[#059669] hover:brightness-105 hover:scale-103 active:scale-97 text-white font-black text-sm sm:text-lg rounded-2xl border-b-[5px] border-emerald-700 flex items-center gap-2 shadow-md transition-all cursor-pointer hover:shadow-lg"
           >
-            <span>属性 🗡️</span>
+            <span>我的属性 🗡️</span>
             {unassignedPoints > 0 && (
-              <span className="h-1.5 w-1.5 rounded-full bg-rose-500 animate-pulse shrink-0" />
+              <span className="h-2.5 w-2.5 rounded-full bg-rose-500 animate-pulse shrink-0" />
             )}
           </button>
         </div>
       </div>
 
-      {/* INTERACTIVE ELFIN MASCOT Companion (波波 speech bubble layout) with 30s auto-hide and summon */}
-      <AnimatePresence mode="wait">
-        {isMascotVisible ? (
-          <motion.div
-            key="mascot-full"
-            initial={{ opacity: 0, height: 0, y: -20 }}
-            animate={{ opacity: 1, height: "auto", y: 0 }}
-            exit={{ opacity: 0, height: 0, y: -20 }}
-            transition={{ duration: 0.4 }}
-            className="overflow-hidden"
-          >
-            <div className="flex items-end space-x-3.5 relative px-1 pb-1">
-              {/* Mascot Figure with wooden-tag label */}
-              <div className="flex flex-col items-center shrink-0">
-                <motion.div 
-                  animate={{ 
-                     y: [0, -6, 0],
-                     rotate: [-2, 2, -2]
-                  }}
-                  transition={{ 
-                     repeat: Infinity, 
-                     duration: 2.2, 
-                     ease: "easeInOut" 
-                  }}
-                  whileHover={{ scale: 1.15 }}
-                  onClick={handleMascotClick}
-                  className="w-16 h-16 bg-gradient-to-b from-[#eefcf4] via-emerald-100 to-[#d1fae5] border-2 border-emerald-300 rounded-full flex items-center justify-center text-5xl shadow-md cursor-pointer select-none filter drop-shadow-[0_4px_10px_rgba(16,185,129,0.25)] relative"
-                >
-                  🧚‍♀️
-                  <div className="absolute -bottom-1 -right-1 bg-amber-450 text-emerald-950 font-black text-[10px] w-5.5 h-5.5 flex items-center justify-center rounded-full border border-emerald-600 shadow animate-bounce">
-                    💬
-                  </div>
-                </motion.div>
-                
-                {/* Wooden style small label tag */}
-                <div className="bg-[#b45309] text-[#fef3c7] text-xs sm:text-[13.5px] font-black px-3 py-1.2 rounded-xl mt-1.5 border border-[#92400e] text-center shadow-sm select-none leading-none">
-                  精灵教官·波波
-                </div>
-              </div>
-
-              {/* Real Game dialogue Speech Bubble next to Bobo */}
-              <motion.div 
-                animate={mascotBounce ? { scale: [1, 1.04, 0.97, 1.02, 1] } : {}}
-                onClick={handleMascotClick}
-                className="relative bg-white border-2 border-emerald-250 p-4 rounded-3xl shadow-sm text-left flex-1 min-w-0 cursor-pointer hover:bg-emerald-50/20 active:scale-99 transition-all"
-              >
-                {/* Bubble Arrow pointing left to Bobo */}
-                <div className="absolute left-[-8px] top-6 w-0 h-0 border-y-[6px] border-y-transparent border-r-[8px] border-r-white z-10" />
-                <div className="absolute left-[-10px] top-[23px] w-0 h-0 border-y-[7px] border-y-transparent border-r-[9px] border-r-emerald-250" />
-
-                <div className="flex items-center justify-between border-b border-emerald-100/50 pb-2 mb-2 relative z-10">
-                  <span className="text-sm sm:text-[15px] font-black text-emerald-800 tracking-wider">🌟 训练场密教导师</span>
-                  <span className="text-xs sm:text-[13.5px] text-amber-600 font-extrabold animate-pulse">✨ 戳我有魔法秘语！</span>
-                </div>
-
-                <p className="text-base sm:text-[18.5px] font-black text-emerald-950 leading-relaxed min-h-[30px] flex items-center select-none relative z-10 pr-2">
-                  {MASCOT_DIALOGUES[mascotDialogueIdx]}
-                </p>
-
-                <div className="absolute bottom-1.5 right-2 w-4 h-4 bg-emerald-100/50 rounded-full flex items-center justify-center text-[9px] text-emerald-600 font-black opacity-0 group-hover:opacity-100">
-                  ➔
-                </div>
-              </motion.div>
-            </div>
-          </motion.div>
-        ) : (
-          <motion.div
-            key="mascot-summon"
-            initial={{ opacity: 0, scale: 0.8 }}
-            animate={{ opacity: 1, scale: 1 }}
-            exit={{ opacity: 0, scale: 0.8 }}
-            className="flex justify-end px-2"
-          >
-            <button
-              onClick={() => {
-                try { audio.playClick(); } catch(e){}
-                setIsMascotVisible(true);
-              }}
-              className="px-4 py-2 bg-[#f0fdf4] hover:bg-[#e6f9ed] border-2 border-emerald-250 text-emerald-850 font-black text-xs sm:text-xs rounded-2xl flex items-center gap-1.5 shadow-sm cursor-pointer transition-all active:scale-95 animate-bounce"
-            >
-              <span>🧚‍♀️ 呼唤微缩精灵导师波波</span>
-              <Sparkles size={13} className="text-amber-500" />
-            </button>
-          </motion.div>
-        )}
-      </AnimatePresence>
-
       {/* COMPACT WORD SEARCH SECTION */}
       <div className="relative group px-1">
-        <div className="absolute inset-y-0 left-5 flex items-center pointer-events-none">
-          <Search className="text-emerald-500 w-5 h-5 group-focus-within:text-amber-500 transition-colors shrink-0" />
+        <div className="absolute inset-y-0 left-6 flex items-center pointer-events-none">
+          <Search className="text-emerald-500 w-6 h-6 group-focus-within:text-amber-500 transition-colors shrink-0 stroke-[2.5]" />
         </div>
         <input
           type="text"
           value={searchQuery}
           onChange={handleSearch}
-          placeholder="🧙‍♂️ 寻觅隐藏的太古奥术词 (比如 dad, van, class)..."
-          className="w-full bg-white/95 backdrop-blur-md py-4 pl-12 pr-10 rounded-2xl border-2 border-emerald-350 shadow-sm focus:ring-2 focus:ring-emerald-400/20 focus:border-amber-500 outline-none transition-all text-base sm:text-lg text-emerald-950 placeholder:text-emerald-700/50 font-black animate-in slide-in-from-top-2 duration-300 border-b-[4px] border-emerald-400"
+          placeholder="🧙‍♂️ 寻觅隐藏的太古魔法词 (比如 dad, class)..."
+          className="w-full bg-white/95 backdrop-blur-md py-5 pl-14 pr-12 rounded-[24px] border-3 border-emerald-350 shadow-md focus:ring-4 focus:ring-emerald-400/20 focus:border-amber-500 outline-none transition-all text-lg sm:text-2xl text-emerald-955 placeholder:text-emerald-700/60 font-black animate-in slide-in-from-top-2 duration-305 border-b-[6px] border-emerald-450"
         />
         {searchQuery && (
           <button
             onClick={clearSearch}
-            className="absolute inset-y-0 right-4 flex items-center px-1 text-emerald-600 hover:text-emerald-800 transition-colors cursor-pointer"
+            className="absolute inset-y-0 right-5 flex items-center px-1 text-emerald-600 hover:text-emerald-800 transition-colors cursor-pointer"
           >
-            <X className="w-4 h-4" />
+            <X className="w-6 h-6 stroke-[3]" />
           </button>
         )}
       </div>
@@ -613,114 +495,127 @@ const HomePage: React.FC<HomePageProps> = ({ stats, groups, reviewNeeded, onNavi
               initial={{ scale: 0.95, y: 15 }}
               animate={{ scale: 1, y: 0 }}
               exit={{ scale: 0.95, y: 15 }}
-              className="w-full max-w-sm bg-gradient-to-b from-[#fbfcf3] via-[#f7faf0] to-[#edf3e8] border-2 border-emerald-405/85 rounded-3xl p-5 text-emerald-950 shadow-2xl relative overflow-hidden max-h-[92vh] flex flex-col"
+              className="w-full max-w-md bg-gradient-to-b from-[#fbfcf3] via-[#f7faf0] to-[#edf3e8] border-3 border-emerald-400 rounded-3xl p-6 text-emerald-950 shadow-2xl relative overflow-hidden max-h-[92vh] flex flex-col"
             >
               {/* Magical Header scroll effect */}
-              <div className="absolute top-0 inset-x-0 h-1 bg-gradient-to-r from-emerald-500 via-amber-400 to-emerald-500" />
+              <div className="absolute top-0 inset-x-0 h-1.5 bg-gradient-to-r from-emerald-500 via-amber-400 to-emerald-500 animate-pulse" />
               
-              <div className="flex items-center justify-between mb-4 border-b border-emerald-200 pb-3">
-                <div className="flex items-center space-x-2">
-                  <span className="text-xl">🗡️</span>
+              <div className="flex items-center justify-between mb-5 border-b-2 border-emerald-200 pb-4">
+                <div className="flex items-center space-x-3.5">
+                  <span className="text-3xl animate-bounce">🗡️</span>
                   <div className="text-left">
-                    <h4 className="font-serif font-black text-sm text-emerald-900 tracking-wide">大勇者奥术契约书</h4>
-                    <span className="text-[9.5px] text-emerald-700 font-bold">主神圣域总战斗力: <span className="text-amber-600 font-extrabold">{totalCombatPower} CP</span></span>
+                    <h4 className="font-sans font-black text-lg sm:text-2xl text-emerald-900 tracking-wide">我的英雄魔法契约书</h4>
+                    <span className="text-xs sm:text-sm text-emerald-800 font-extrabold block mt-1">主神圣域总战斗力: <span className="text-amber-600 font-black text-sm sm:text-lg">{totalCombatPower} CP ⚔️</span></span>
                   </div>
                 </div>
 
                 <button 
-                  onClick={() => setIsProfileExpanded(false)}
-                  className="p-1.5 hover:bg-emerald-100 bg-white border border-emerald-300 rounded-lg text-emerald-700 hover:text-emerald-950 transition-colors cursor-pointer"
+                  onClick={() => {
+                    try { audio.playClick(); } catch(e){}
+                    setIsProfileExpanded(false);
+                  }}
+                  className="p-2 hover:bg-emerald-100 bg-white border-2 border-emerald-300 rounded-xl text-emerald-700 hover:text-emerald-950 transition-colors cursor-pointer"
                 >
-                  <X size={15} />
+                  <X size={20} className="stroke-[2.5]" />
                 </button>
               </div>
 
               {/* Scrollable Panel Area */}
-              <div className="flex-1 overflow-y-auto space-y-4 pr-1 custom-scrollbar">
+              <div className="flex-1 overflow-y-auto space-y-5 pr-1 custom-scrollbar">
                 
                 {/* Visual Tab Selector inside stats overlay */}
-                <div className="flex bg-emerald-50/80 border border-emerald-250 p-1 rounded-xl">
+                <div className="flex bg-emerald-100/60 border-2 border-emerald-250 p-1 rounded-2xl">
                   <button 
-                    onClick={() => setActiveProfileTab('HERO')}
-                    className={`flex-1 py-1.5 text-[10px] font-black rounded-lg transition-all ${activeProfileTab === 'HERO' ? 'bg-gradient-to-r from-emerald-600 to-teal-600 text-white shadow-sm' : 'text-emerald-700 hover:text-emerald-900'}`}
+                    onClick={() => {
+                      try { audio.playClick(); } catch(e){}
+                      setActiveProfileTab('HERO');
+                    }}
+                    className={`flex-1 py-3 text-sm sm:text-lg font-black rounded-xl transition-all ${activeProfileTab === 'HERO' ? 'bg-gradient-to-r from-emerald-600 to-teal-500 text-white shadow-md' : 'text-emerald-800 hover:text-emerald-900'}`}
                   >
-                    🗡️ 勇者奥术属性
+                    🗡️ 勇者魔法属性
                   </button>
                   <button 
-                    onClick={() => setActiveProfileTab('PETS')}
-                    className={`flex-1 py-1.5 text-[10px] font-black rounded-lg transition-all ${activeProfileTab === 'PETS' ? 'bg-gradient-to-r from-emerald-600 to-teal-600 text-white shadow-sm' : 'text-emerald-700 hover:text-emerald-900'}`}
+                    onClick={() => {
+                      try { audio.playClick(); } catch(e){}
+                      setActiveProfileTab('PETS');
+                    }}
+                    className={`flex-1 py-3 text-sm sm:text-lg font-black rounded-xl transition-all ${activeProfileTab === 'PETS' ? 'bg-gradient-to-r from-emerald-600 to-teal-500 text-white shadow-md' : 'text-emerald-800 hover:text-emerald-950'}`}
                   >
                     🐾 契约守护兽 ({stats.pets?.length || 0})
                   </button>
                 </div>
 
                 {activeProfileTab === 'HERO' ? (
-                  <div className="space-y-4">
+                  <div className="space-y-4.5">
                     {/* Character Card Info */}
-                    <div className="bg-white border border-emerald-200 shadow-sm rounded-2xl p-4 flex items-center space-x-3.5 relative overflow-hidden">
-                      <div className="absolute top-0 right-0 opacity-[0.04] select-none pointer-events-none text-9xl">
+                    <div className="bg-white border-2 border-emerald-250 shadow-md rounded-2xl p-4.5 flex items-center space-x-4 relative overflow-hidden">
+                      <div className="absolute top-0 right-0 opacity-[0.05] select-none pointer-events-none text-9xl">
                         {selectedChar.avatar}
                       </div>
-                      <div className="w-12 h-12 bg-emerald-50 rounded-xl border border-emerald-250 flex items-center justify-center text-2xl shrink-0">
+                      <div className="w-16 h-16 bg-emerald-50 rounded-2xl border-2 border-emerald-355 flex items-center justify-center text-4xl shrink-0">
                         {selectedChar.avatar}
                       </div>
-                      <div className="min-w-0">
-                        <div className="flex items-center gap-1.5">
-                          <h5 className="font-serif font-black text-emerald-950 text-sm truncate">{selectedChar.name}</h5>
-                          <span className="text-[8px] bg-emerald-100 text-emerald-800 font-extrabold px-1.5 py-0.5 rounded leading-none shrink-0 border border-emerald-250">
+                      <div className="min-w-0 flex-1">
+                        <div className="flex items-center gap-2 flex-wrap">
+                          <h5 className="font-sans font-black text-emerald-955 text-lg sm:text-xl truncate">{selectedChar.name}</h5>
+                          <span className="text-[11px] bg-emerald-150 text-emerald-900 font-extrabold px-2.5 py-0.5 rounded-full border border-emerald-300">
                             英雄 LV.{charStats.level}
                           </span>
                         </div>
-                        <p className="text-[9px] font-semibold text-emerald-700/65 mt-1 italic leading-none truncate">{selectedChar.title}</p>
-                        <p className="text-[10px] font-extrabold text-[#115e59] leading-normal mt-1.5 line-clamp-2">
+                        <p className="text-xs font-bold text-amber-700 mt-1 italic block leading-none truncate">★ {selectedChar.title}</p>
+                        <p className="text-xs sm:text-[14px] font-bold text-emerald-800 leading-normal mt-2">
                           {selectedChar.description}
                         </p>
                       </div>
                     </div>
 
                     {/* Compact rating pills */}
-                    <div className="grid grid-cols-3 gap-2 bg-white/70 p-2 rounded-2xl border border-emerald-200 shadow-sm">
+                    <div className="grid grid-cols-3 gap-2.5 bg-white border-2 border-emerald-200 p-3.5 rounded-3xl shadow-sm">
                       <div className="text-center">
-                        <span className="text-[8px] font-black text-emerald-600/60 block mb-0.5 uppercase tracking-wide">基础战力</span>
-                        <span className="font-extrabold text-rose-600 text-xs tabular-nums">{characterCombatPower}</span>
+                        <span className="text-[11px] sm:text-xs font-black text-emerald-700 block mb-1 uppercase tracking-wide">基础战力</span>
+                        <span className="font-black text-rose-600 text-sm sm:text-xl tabular-nums">{characterCombatPower}</span>
                       </div>
-                      <div className="text-center border-x border-emerald-200/60">
-                        <span className="text-[8px] font-black text-emerald-600/60 block mb-0.5 uppercase tracking-wide">守护加功</span>
-                        <span className="font-extrabold text-teal-600 text-xs tabular-nums">+{activePetPower}</span>
+                      <div className="text-center border-x-2 border-emerald-100">
+                        <span className="text-[11px] sm:text-xs font-black text-emerald-700 block mb-1 uppercase tracking-wide">契约守护</span>
+                        <span className="font-black text-teal-600 text-sm sm:text-lxl tabular-nums">+{activePetPower}</span>
                       </div>
                       <div className="text-center">
-                        <span className="text-[8px] font-black text-emerald-600/60 block mb-0.5 uppercase tracking-wide">契约评分</span>
-                        <span className="font-black text-amber-600 text-xs tabular-nums">{totalCombatPower}</span>
+                        <span className="text-[11px] sm:text-xs font-black text-emerald-700 block mb-1 uppercase tracking-wide">总神威力</span>
+                        <span className="font-black text-amber-600 text-sm sm:text-xl tabular-nums">{totalCombatPower}</span>
                       </div>
                     </div>
 
                     {/* Attributes Distribution */}
-                    <div className="space-y-3 bg-white/40 border border-emerald-200 p-4 rounded-2xl">
-                      <div className="flex items-center justify-between border-b border-emerald-200 pb-2 mb-1">
-                        <span className="text-xs font-serif font-extrabold text-emerald-900">分配奥术神力属性</span>
-                        <span className="bg-amber-100 text-amber-800 border border-amber-300 px-2 py-0.5 rounded-lg text-[9px] font-black shadow-sm">
-                          剩余 {unassignedPoints} 点
+                    <div className="space-y-3.5 bg-gradient-to-b from-emerald-50/50 to-white border-2 border-emerald-250 p-4.5 rounded-3xl shadow-sm">
+                      <div className="flex items-center justify-between border-b-2 border-emerald-150 pb-2.5 mb-1.5 flex-wrap gap-2">
+                        <span className="text-base font-black text-emerald-950">分配神力属性点</span>
+                        <span className="bg-amber-400 text-amber-950 border-2 border-amber-500 px-3 py-1 rounded-full text-xs font-black shadow-sm">
+                          剩余 {unassignedPoints} 点 🔑
                         </span>
                       </div>
 
                       {/* Attribute Row strength */}
-                      <div className="flex items-center justify-between bg-white/90 p-2 border border-emerald-200 rounded-xl shadow-sm">
-                        <div className="flex items-center space-x-2">
-                          <Sword size={12} className="text-red-500 animate-pulse" />
+                      <div className="flex items-center justify-between bg-white p-3 border-2 border-emerald-200 rounded-2xl shadow-sm hover:border-emerald-300 transition-colors">
+                        <div className="flex items-center space-x-3">
+                          <Sword size={20} className="text-red-500 animate-pulse shrink-0" />
                           <div>
-                            <span className="font-black text-emerald-950 text-xs block leading-none">力量</span>
-                            <span className="text-[8px] text-emerald-600/60 font-bold block mt-0.5">提高扫尾和词怪击落度</span>
+                            <span className="font-black text-emerald-955 text-sm sm:text-base block leading-none">力量 (Strength)</span>
+                            <span className="text-xs text-emerald-700 font-bold block mt-1">提高扫尾和词怪击落度 🗡️</span>
                           </div>
                         </div>
-                        <div className="flex items-center space-x-2">
-                          <span className="font-black text-xs text-emerald-950 tabular-nums">
+                        <div className="flex items-center space-x-3">
+                          <span className="font-black text-base sm:text-lg text-emerald-950 tabular-nums">
                             {charStats.strength}
-                            {bonusStrength > 0 && <span className="text-emerald-600 text-[10px] font-bold ml-1">+{bonusStrength}</span>}
+                            {bonusStrength > 0 && <span className="text-emerald-600 text-xs font-extrabold ml-1">+{bonusStrength}</span>}
                           </span>
                           <button
+                            type="button"
                             disabled={unassignedPoints <= 0}
-                            onClick={() => handleAddAttributePoint('strength')}
-                            className={`w-5 h-5 rounded flex items-center justify-center font-bold text-xs ${unassignedPoints > 0 ? 'bg-emerald-605 hover:bg-emerald-500 bg-gradient-to-r from-emerald-600 to-teal-600 cursor-pointer text-white shadow-sm' : 'bg-emerald-100 text-emerald-400'}`}
+                            onClick={() => {
+                              try { audio.playClick(); } catch(e){}
+                              handleAddAttributePoint('strength');
+                            }}
+                            className={`w-8 h-8 rounded-xl flex items-center justify-center font-black text-lg shadow-sm border ${unassignedPoints > 0 ? 'bg-gradient-to-r from-emerald-500 to-teal-500 border-emerald-400 cursor-pointer text-white hover:scale-105 active:scale-95' : 'bg-emerald-100 text-emerald-400 border-emerald-200'}`}
                           >
                             +
                           </button>
@@ -728,23 +623,27 @@ const HomePage: React.FC<HomePageProps> = ({ stats, groups, reviewNeeded, onNavi
                       </div>
 
                       {/* Attribute Row magic */}
-                      <div className="flex items-center justify-between bg-white/90 p-2 border border-emerald-200 rounded-xl shadow-sm">
-                        <div className="flex items-center space-x-2">
-                          <Zap size={12} className="text-purple-500 animate-pulse" />
+                      <div className="flex items-center justify-between bg-white p-3 border-2 border-emerald-200 rounded-2xl shadow-sm hover:border-emerald-300 transition-colors">
+                        <div className="flex items-center space-x-3">
+                          <Zap size={20} className="text-purple-500 animate-pulse shrink-0" />
                           <div>
-                            <span className="font-black text-emerald-950 text-xs block leading-none">魔力</span>
-                            <span className="text-[8px] text-emerald-600/60 font-bold block mt-0.5">净化音标及闪避护盾</span>
+                            <span className="font-black text-emerald-955 text-sm sm:text-base block leading-none">魔力 (Magic)</span>
+                            <span className="text-xs text-emerald-700 font-bold block mt-1">提供魔法拼读闪避护盾 ⚡</span>
                           </div>
                         </div>
-                        <div className="flex items-center space-x-2">
-                          <span className="font-black text-xs text-emerald-950 tabular-nums">
+                        <div className="flex items-center space-x-3">
+                          <span className="font-black text-base sm:text-lg text-emerald-950 tabular-nums">
                             {charStats.magic}
-                            {bonusMagic > 0 && <span className="text-emerald-600 text-[10px] font-bold ml-1">+{bonusMagic}</span>}
+                            {bonusMagic > 0 && <span className="text-emerald-600 text-xs font-extrabold ml-1">+{bonusMagic}</span>}
                           </span>
                           <button
+                            type="button"
                             disabled={unassignedPoints <= 0}
-                            onClick={() => handleAddAttributePoint('magic')}
-                            className={`w-5 h-5 rounded flex items-center justify-center font-bold text-xs ${unassignedPoints > 0 ? 'bg-purple-650 hover:bg-purple-500 bg-gradient-to-r from-purple-600 to-indigo-600 cursor-pointer text-white shadow-sm' : 'bg-emerald-100 text-emerald-400'}`}
+                            onClick={() => {
+                              try { audio.playClick(); } catch(e){}
+                              handleAddAttributePoint('magic');
+                            }}
+                            className={`w-8 h-8 rounded-xl flex items-center justify-center font-black text-lg shadow-sm border ${unassignedPoints > 0 ? 'bg-gradient-to-r from-purple-500 to-indigo-500 border-purple-400 cursor-pointer text-white hover:scale-105 active:scale-95' : 'bg-emerald-100 text-emerald-400 border-emerald-200'}`}
                           >
                             +
                           </button>
@@ -752,23 +651,27 @@ const HomePage: React.FC<HomePageProps> = ({ stats, groups, reviewNeeded, onNavi
                       </div>
 
                       {/* Attribute Row defense */}
-                      <div className="flex items-center justify-between bg-white/90 p-2 border border-emerald-200 rounded-xl shadow-sm">
-                        <div className="flex items-center space-x-2">
-                          <Shield size={12} className="text-blue-500 animate-pulse" />
+                      <div className="flex items-center justify-between bg-white p-3 border-2 border-emerald-200 rounded-2xl shadow-sm hover:border-emerald-300 transition-colors">
+                        <div className="flex items-center space-x-3">
+                          <Shield size={20} className="text-blue-500 animate-pulse shrink-0" />
                           <div>
-                            <span className="font-black text-emerald-950 text-xs block leading-none">防御</span>
-                            <span className="text-[8px] text-emerald-600/60 font-bold block mt-0.5">提供更高的拼读防守度</span>
+                            <span className="font-black text-emerald-955 text-sm sm:text-base block leading-none">防御 (Defense)</span>
+                            <span className="text-xs text-emerald-700 font-bold block mt-1">大幅增强护盾防御系数 🛡️</span>
                           </div>
                         </div>
-                        <div className="flex items-center space-x-2">
-                          <span className="font-black text-xs text-emerald-950 tabular-nums">
+                        <div className="flex items-center space-x-3">
+                          <span className="font-black text-base sm:text-lg text-emerald-950 tabular-nums">
                             {charStats.defense}
-                            {bonusDefense > 0 && <span className="text-emerald-600 text-[10px] font-bold ml-1">+{bonusDefense}</span>}
+                            {bonusDefense > 0 && <span className="text-emerald-600 text-xs font-extrabold ml-1">+{bonusDefense}</span>}
                           </span>
                           <button
+                            type="button"
                             disabled={unassignedPoints <= 0}
-                            onClick={() => handleAddAttributePoint('defense')}
-                            className={`w-5 h-5 rounded flex items-center justify-center font-bold text-xs ${unassignedPoints > 0 ? 'bg-blue-650 hover:bg-blue-500 bg-gradient-to-r from-blue-600 to-sky-600 cursor-pointer text-white shadow-sm' : 'bg-emerald-100 text-emerald-400'}`}
+                            onClick={() => {
+                              try { audio.playClick(); } catch(e){}
+                              handleAddAttributePoint('defense');
+                            }}
+                            className={`w-8 h-8 rounded-xl flex items-center justify-center font-black text-lg shadow-sm border ${unassignedPoints > 0 ? 'bg-gradient-to-r from-blue-500 to-sky-500 border-blue-400 cursor-pointer text-white hover:scale-105 active:scale-95' : 'bg-emerald-100 text-emerald-400 border-emerald-200'}`}
                           >
                             +
                           </button>
@@ -776,23 +679,27 @@ const HomePage: React.FC<HomePageProps> = ({ stats, groups, reviewNeeded, onNavi
                       </div>
 
                       {/* Attribute Row agility */}
-                      <div className="flex items-center justify-between bg-white/90 p-2 border border-emerald-200 rounded-xl shadow-sm">
-                        <div className="flex items-center space-x-2">
-                          <Activity size={12} className="text-emerald-500 animate-pulse" />
+                      <div className="flex items-center justify-between bg-white p-3 border-2 border-emerald-200 rounded-2xl shadow-sm hover:border-emerald-300 transition-colors">
+                        <div className="flex items-center space-x-3">
+                          <Activity size={20} className="text-emerald-500 animate-pulse shrink-0" />
                           <div>
-                            <span className="font-black text-emerald-950 text-xs block leading-none">敏捷</span>
-                            <span className="text-[8px] text-emerald-600/60 font-bold block mt-0.5">提升连击爆伤倍率</span>
+                            <span className="font-black text-emerald-955 text-sm sm:text-base block leading-none">敏捷 (Agility)</span>
+                            <span className="text-xs text-emerald-700 font-bold block mt-1">提升暴击倍率与身手速度 👣</span>
                           </div>
                         </div>
-                        <div className="flex items-center space-x-2">
-                          <span className="font-black text-xs text-emerald-950 tabular-nums">
+                        <div className="flex items-center space-x-3">
+                          <span className="font-black text-base sm:text-lg text-emerald-950 tabular-nums">
                             {charStats.agility}
-                            {bonusAgility > 0 && <span className="text-emerald-600 text-[10px] font-bold ml-1">+{bonusAgility}</span>}
+                            {bonusAgility > 0 && <span className="text-emerald-600 text-xs font-extrabold ml-1">+{bonusAgility}</span>}
                           </span>
                           <button
+                            type="button"
                             disabled={unassignedPoints <= 0}
-                            onClick={() => handleAddAttributePoint('agility')}
-                            className={`w-5 h-5 rounded flex items-center justify-center font-bold text-xs ${unassignedPoints > 0 ? 'bg-emerald-605 hover:bg-emerald-500 bg-gradient-to-r from-emerald-600 to-teal-600 cursor-pointer text-white shadow-sm' : 'bg-emerald-100 text-emerald-400'}`}
+                            onClick={() => {
+                              try { audio.playClick(); } catch(e){}
+                              handleAddAttributePoint('agility');
+                            }}
+                            className={`w-8 h-8 rounded-xl flex items-center justify-center font-black text-lg shadow-sm border ${unassignedPoints > 0 ? 'bg-gradient-to-r from-emerald-500 to-teal-500 border-emerald-400 cursor-pointer text-white hover:scale-105 active:scale-95' : 'bg-emerald-100 text-emerald-400 border-emerald-200'}`}
                           >
                             +
                           </button>
@@ -802,10 +709,14 @@ const HomePage: React.FC<HomePageProps> = ({ stats, groups, reviewNeeded, onNavi
                       {spentPoints > 0 && (
                         <div className="flex justify-end pt-1">
                           <button 
-                            onClick={handleResetAttributePoints}
-                            className="bg-red-50 hover:bg-red-100 text-rose-700 font-extrabold text-[9px] px-2.5 py-1.5 rounded-lg border border-red-200 focus:outline-none transition-all cursor-pointer shadow-sm"
+                            type="button"
+                            onClick={() => {
+                              try { audio.playClick(); } catch(e){}
+                              handleResetAttributePoints();
+                            }}
+                            className="bg-red-50 hover:bg-red-100 text-rose-700 font-extrabold text-[12.5px] px-3.5 py-2.5 rounded-xl border border-red-250 focus:outline-none transition-all cursor-pointer shadow-sm hover:scale-101 select-none flex items-center gap-1.5"
                           >
-                            🔄 重置大奥术潜能点
+                            🔄 一键重置我的属性点
                           </button>
                         </div>
                       )}
@@ -813,16 +724,16 @@ const HomePage: React.FC<HomePageProps> = ({ stats, groups, reviewNeeded, onNavi
 
                     {/* Active Equipments List */}
                     {equippedItems.length > 0 && (
-                      <div className="bg-white/40 border border-emerald-200 p-3 rounded-2xl">
-                        <span className="text-[9px] font-black text-emerald-800 block mb-2 uppercase px-1 font-mono tracking-wider">正在装备魔法圣护具</span>
-                        <div className="grid grid-cols-2 gap-2">
+                      <div className="bg-white/40 border-2 border-emerald-200 p-3.5 rounded-2xl">
+                        <span className="text-sm font-black text-emerald-800 block mb-2 px-1 tracking-wider">正在穿着的魔法圣护具 🛡️</span>
+                        <div className="grid grid-cols-2 gap-2.5">
                           {equippedItems.map(item => (
-                            <div key={item.id} className="flex items-center space-x-2 p-2 bg-white border border-emerald-250 shadow-sm rounded-xl">
-                              <div className="w-6 h-6 bg-amber-50 text-xs flex items-center justify-center rounded-lg border border-amber-200 shrink-0">🛡️</div>
+                            <div key={item.id} className="flex items-center space-x-2.5 p-2 bg-white border border-emerald-250 shadow-sm rounded-xl">
+                              <div className="w-8 h-8 bg-amber-50 text-base flex items-center justify-center rounded-lg border border-amber-200 shrink-0">🛡️</div>
                               <div className="min-w-0">
-                                <span className="text-[10px] font-extrabold text-emerald-950 block truncate leading-none">{item.name}</span>
-                                <span className="text-[8px] font-bold text-[#0f766e] block mt-0.5 truncate leading-none">
-                                  {Object.entries(item.stats || {}).map(([key, value]) => `${key === 'strength' ? '力' : key === 'magic' ? '魔' : key === 'defense' ? '防' : '敏'}+${value}`).join(',')}
+                                <span className="text-xs sm:text-sm font-black text-emerald-950 block truncate leading-none">{item.name}</span>
+                                <span className="text-[10px] sm:text-xs font-bold text-[#0f766e] block mt-1 truncate leading-none">
+                                  {Object.entries(item.stats || {}).map(([key, value]) => `${key === 'strength' ? '力' : key === 'magic' ? '魔' : key === 'defense' ? '防' : '敏'}+${value}`).join(', ')}
                                 </span>
                               </div>
                             </div>
@@ -832,64 +743,66 @@ const HomePage: React.FC<HomePageProps> = ({ stats, groups, reviewNeeded, onNavi
                     )}
                   </div>
                 ) : (
-                  <div className="space-y-3.5">
+                  <div className="space-y-4">
                     {stats.pets && stats.pets.length > 0 ? (
-                      <div className="space-y-2.5">
+                      <div className="space-y-3">
                         {stats.pets.map((pet, idx) => {
                           const cp = Math.floor(pet.level * 50 + pet.happiness * 1.5 + pet.health * 1);
                           return (
-                            <div key={pet.id || idx} className="bg-white border border-emerald-200 shadow-sm rounded-2xl p-3 flex justify-between items-center relative overflow-hidden">
-                              <div className="absolute top-0 right-0 p-1 opacity-[0.03] select-none pointer-events-none text-7xl">
+                            <div key={pet.id || idx} className="bg-white border-2 border-emerald-200 shadow-sm rounded-3xl p-4 flex justify-between items-center relative overflow-hidden">
+                              <div className="absolute top-0 right-0 p-1 opacity-[0.04] select-none pointer-events-none text-8xl">
                                 {PET_EMOJIS[pet.type] || '🐾'}
                               </div>
-                              <div className="flex items-center space-x-3 relative z-10 min-w-0">
-                                <span className="text-3xl p-1.5 bg-emerald-50 rounded-xl border border-emerald-200 shrink-0">
+                              <div className="flex items-center space-x-4 relative z-10 min-w-0">
+                                <span className="text-4xl p-2 bg-emerald-50 rounded-2xl border-2 border-emerald-200 shrink-0">
                                   {PET_EMOJIS[pet.type] || '🐾'}
                                 </span>
                                 <div className="text-left min-w-0">
-                                  <div className="flex items-center gap-1">
-                                    <h5 className="font-extrabold text-emerald-950 text-xs truncate">{pet.name}</h5>
-                                    <span className="text-[7.5px] bg-[#10b981]/15 text-emerald-700 font-extrabold px-1 rounded uppercase border border-emerald-200">
+                                  <div className="flex items-center gap-2">
+                                    <h5 className="font-sans font-black text-emerald-950 text-base sm:text-lg truncate">{pet.name}</h5>
+                                    <span className="text-xs bg-[#10b981]/15 text-emerald-800 font-extrabold px-2 py-0.5 rounded-full uppercase border border-emerald-200">
                                       LV.{pet.level}
                                     </span>
                                   </div>
-                                  <div className="flex items-center space-x-2 text-[8.5px] font-bold text-[#14532d] mt-1">
-                                    <span>❤️生命 {pet.health}/100</span>
-                                    <span>⭐快乐 {pet.happiness}/100</span>
+                                  <div className="flex items-center space-x-3 text-xs font-black text-[#14532d] mt-2">
+                                    <span className="flex items-center gap-1">❤️生命: {pet.health}/100</span>
+                                    <span className="flex items-center gap-1">⭐快乐: {pet.happiness}/100</span>
                                   </div>
                                 </div>
                               </div>
                               <div className="text-right flex flex-col justify-center relative z-10 shrink-0 select-none">
-                                <span className="text-[7.5px] font-black text-emerald-600 block">守护力</span>
-                                <span className="font-black text-emerald-700 text-xs tabular-nums">+{cp} CP</span>
+                                <span className="text-[10px] sm:text-xs font-black text-emerald-600 block">守护力</span>
+                                <span className="font-black text-emerald-700 text-sm sm:text-base tabular-nums">+{cp} CP</span>
                               </div>
                             </div>
                           );
                         })}
                         <button
                           onClick={() => {
+                            try { audio.playClick(); } catch(e){}
                             setIsProfileExpanded(false);
                             onNavigate('PETS');
                           }}
-                          className="w-full bg-gradient-to-r from-emerald-600 to-teal-600 hover:brightness-110 text-white font-black text-[10px] py-3 rounded-xl transition-all flex items-center justify-center space-x-1 border border-emerald-500 shadow-md cursor-pointer mt-2"
+                          className="w-full bg-gradient-to-r from-emerald-600 to-teal-600 hover:brightness-110 text-white font-black text-sm sm:text-base py-4 rounded-2xl transition-all flex items-center justify-center space-x-2 border-2 border-emerald-500 shadow-md cursor-pointer mt-3 hover:scale-[1.02] active:scale-98"
                         >
                           <span>进入契约兽神域进行特训 ⚔️</span>
-                          <ArrowRight size={11} />
+                          <ArrowRight size={16} className="stroke-[2.5]" />
                         </button>
                       </div>
                     ) : (
-                      <div className="bg-white rounded-2xl p-6 border border-emerald-200 text-center py-8">
-                        <span className="text-4xl block mb-2 pointer-events-none select-none">🥚</span>
-                        <h6 className="font-extrabold text-[#115e59] text-xs">暂无在役宠兽</h6>
-                        <p className="text-[10px] font-bold text-emerald-600/60 max-w-xs mx-auto mb-4 leading-normal mt-1.5">
+                      <div className="bg-white rounded-3xl p-8 border-2 border-emerald-200 text-center py-10">
+                        <span className="text-6xl block mb-3 pointer-events-none select-none animate-bounce">🥚</span>
+                        <h6 className="font-black text-[#115e59] text-base sm:text-lg">暂无在役宠兽</h6>
+                        <p className="text-xs sm:text-sm font-bold text-emerald-700 max-w-xs mx-auto mb-6 leading-relaxed mt-3">
                           可累积符文金币前往魔法商店购买雷光雏龙/萌兔之卵！在背词挑战中展现奥术魔法吧！
                         </p>
                         <button
                           onClick={() => {
+                            try { audio.playClick(); } catch(e){}
                             setIsProfileExpanded(false);
                             onNavigate('SHOP');
                           }}
-                          className="w-full bg-gradient-to-r from-emerald-600 to-teal-600 text-white font-extrabold text-[10px] py-3 rounded-xl transition-all shadow-md cursor-pointer focus:outline-none"
+                          className="w-full bg-gradient-to-r from-emerald-600 to-teal-600 text-white font-black text-sm py-4 rounded-2xl transition-all shadow-md cursor-pointer focus:outline-none hover:brightness-110 hover:scale-[1.02] active:scale-98"
                         >
                           前往魔法秘宝商店 🪙
                         </button>
@@ -900,9 +813,9 @@ const HomePage: React.FC<HomePageProps> = ({ stats, groups, reviewNeeded, onNavi
               </div>
 
               {/* Close attributes footer info */}
-              <div className="bg-emerald-50 rounded-xl p-2.5 border border-emerald-200 text-center mt-4 justify-center shadow-inner">
-                <span className="text-[8px] font-bold text-emerald-800/80 block">
-                  得到的奥术金币可以前往 [魔法商店] 购买神兽与圣域护甲
+              <div className="bg-emerald-100/80 rounded-2xl p-3 border-2 border-emerald-300 text-center mt-5 justify-center shadow-inner">
+                <span className="text-xs sm:text-sm font-black text-emerald-900 block">
+                  得到的奥术金币可以前往 [魔法商店] 购买神兽与圣域护甲 ✨
                 </span>
               </div>
             </motion.div>

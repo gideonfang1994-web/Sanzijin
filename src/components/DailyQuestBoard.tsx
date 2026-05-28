@@ -45,13 +45,13 @@ const DailyQuestBoard: React.FC<Props> = ({ quests = [], onQuestClick }) => {
       
       <div className="flex items-center justify-between mb-4 border-b border-emerald-200/60 pb-3">
         <div className="flex items-center space-x-2 relative z-10">
-          <span className="text-2xl select-none animate-bounce block">📜</span>
-          <h3 className="text-base sm:text-[17.5px] font-black text-emerald-900 tracking-wide flex items-center gap-1.5">
+          <span className="text-3xl select-none animate-bounce block">📜</span>
+          <h3 className="text-lg sm:text-2xl font-black text-emerald-900 tracking-wide flex items-center gap-1.5 leading-tight">
             <span>森林魔法书 · 今日奥术任务</span>
-            <Sparkles size={15} className="text-amber-500 animate-pulse shrink-0" />
+            <Sparkles size={18} className="text-amber-500 animate-pulse shrink-0" />
           </h3>
         </div>
-        <div className="text-xs sm:text-[13px] font-black text-emerald-800 bg-white border border-emerald-250 shadow-sm px-3.5 py-1.2 rounded-full select-none tracking-wider relative z-10">
+        <div className="text-xs sm:text-base font-black text-emerald-800 bg-white border border-emerald-250 shadow-md px-4 py-1.5 rounded-full select-none tracking-wider relative z-10">
            任务完成 {safeQuests.filter(q => q.completed).length} / {safeQuests.length} 🔑
          </div>
       </div>
@@ -65,38 +65,38 @@ const DailyQuestBoard: React.FC<Props> = ({ quests = [], onQuestClick }) => {
               whileHover={quest.completed ? {} : { scale: 1.015, y: -0.5 }}
               whileTap={quest.completed ? {} : { scale: 0.985 }}
               onClick={() => onQuestClick(quest.targetView, quest.isReviewType, quest.levelId)}
-              className={`w-full flex flex-col p-3.5 rounded-2xl border transition-all relative overflow-hidden text-left cursor-pointer ${
+              className={`w-full flex flex-col p-4.5 rounded-2xl border transition-all relative overflow-hidden text-left cursor-pointer ${
                 quest.completed 
                 ? 'bg-emerald-50/50 border-emerald-250/50 opacity-60 text-emerald-600' 
                 : `${style.bg} border-2 shadow-sm hover:shadow-md`
               }`}
             >
               <div className="flex items-center w-full justify-between">
-                <div className="flex items-center space-x-3.5">
-                  <div className={`shrink-0 w-9 h-9 rounded-xl flex items-center justify-center shadow-sm ${
+                <div className="flex items-center space-x-4">
+                  <div className={`shrink-0 w-11 h-11 rounded-2xl flex items-center justify-center shadow-sm ${
                     quest.completed ? 'bg-emerald-200 text-emerald-800 border border-emerald-300' : style.accent
                   }`}>
-                    {quest.completed ? <CheckCircle2 size={15} strokeWidth={3} /> : 
-                     quest.id === 'q1' ? <BookOpen size={15} strokeWidth={2.5} /> : 
-                     quest.id === 'q2' ? <Swords size={15} strokeWidth={2.5} /> : <Gamepad2 size={15} strokeWidth={2.5} />}
+                    {quest.completed ? <CheckCircle2 size={18} strokeWidth={3} /> : 
+                     quest.id === 'q1' ? <BookOpen size={18} strokeWidth={2.5} /> : 
+                     quest.id === 'q2' ? <Swords size={18} strokeWidth={2.5} /> : <Gamepad2 size={18} strokeWidth={2.5} />}
                   </div>
                   
                   <div>
-                    <div className={`text-base sm:text-[17.5px] font-black tracking-wide leading-tight ${quest.completed ? 'text-emerald-500/80 line-through' : style.text}`}>
+                    <div className={`text-lg sm:text-[21px] font-black tracking-wide leading-tight ${quest.completed ? 'text-emerald-500/80 line-through' : style.text}`}>
                       {quest.label}
                     </div>
-                    <div className={`text-xs sm:text-[14px] font-bold mt-1.5 ${quest.completed ? 'text-emerald-500/70' : 'text-emerald-700/75'}`}>
+                    <div className={`text-[13px] sm:text-[15.5px] font-bold mt-1.5 leading-relaxed ${quest.completed ? 'text-emerald-500/70' : 'text-emerald-700/75'}`}>
                       {quest.completed ? '✨ 魔法已完美修成！' : quest.id === 'q1' ? '闯关深林密境，收获亮闪闪金币' : quest.id === 'q2' ? '和小萌兽快乐拼字斗法' : '战胜忘却，淬炼核心拼音魔法'}
                     </div>
                   </div>
                 </div>
 
-                {!quest.completed && <ChevronRight size={15} className="text-emerald-400 group-hover:text-emerald-600 transition-colors shrink-0" />}
+                {!quest.completed && <ChevronRight size={18} className="text-emerald-400 group-hover:text-emerald-600 transition-colors shrink-0" />}
               </div>
 
               {/* Polished progress segment */}
-              <div className="w-full mt-3">
-                <div className="flex justify-between items-center text-xs sm:text-[13px] font-black uppercase mb-1" style={{ color: quest.completed ? '#10b981' : '#047857' }}>
+              <div className="w-full mt-3.5">
+                <div className="flex justify-between items-center text-xs sm:text-sm font-black uppercase mb-1" style={{ color: quest.completed ? '#10b981' : '#047857' }}>
                   <span>魔法潜能开发度</span>
                   <span className="font-extrabold">{quest.completed ? '100% 已连通' : `${quest.current} / ${quest.target}`}</span>
                 </div>
