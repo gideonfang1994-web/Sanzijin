@@ -207,48 +207,47 @@ const HomePage: React.FC<HomePageProps> = ({ stats, groups, reviewNeeded, onNavi
           ))
         ))}
       </div>
-
       {/* COMPACT INTEGRATED MAGICAL ACADEMY DASHBOARD HEADER */}
-      <div className="bg-gradient-to-b from-white via-[#f3fbf6] to-[#ebfaf0] border-3 border-emerald-300 border-b-[8px] border-emerald-450 rounded-[32px] p-5.5 sm:p-7 shadow-md flex flex-col sm:flex-row gap-5 sm:items-center justify-between text-emerald-950 relative overflow-hidden">
+      <div className="bg-gradient-to-b from-white via-[#f3fbf6] to-[#e8faf0] border-2 border-emerald-300 border-b-[6px] border-emerald-400 rounded-[24px] p-3.5 sm:p-5 shadow-sm flex flex-col xs:flex-row gap-3 items-center justify-between text-emerald-950 relative overflow-hidden">
         {/* Soft glowing line at top */}
-        <div className="absolute top-0 inset-x-0 h-1.5 bg-gradient-to-r from-transparent via-amber-400 to-transparent animate-pulse" />
+        <div className="absolute top-0 inset-x-0 h-1 bg-gradient-to-r from-transparent via-amber-400 to-transparent animate-pulse" />
 
         {/* Left: Branding Identity & Level / XP Bar combined for perfect coordination */}
-        <div className="flex items-center space-x-5">
+        <div className="flex items-center space-x-3.5">
           <motion.div 
-            whileHover={{ scale: 1.2, rotate: [0, -15, 15, -5, 0] }}
-            whileTap={{ scale: 0.9 }}
+            whileHover={{ scale: 1.15, rotate: [0, -10, 10, -5, 0] }}
+            whileTap={{ scale: 0.92 }}
             transition={{ type: "spring", stiffness: 350, damping: 10 }}
             className="cursor-pointer select-none shrink-0"
             onClick={() => {
               try { audio.playCheer(); } catch(e){}
             }}
           >
-            <span className="text-6xl block filter drop-shadow-[0_4px_12px_rgba(52,211,153,0.6)]">🐯</span>
+            <span className="text-4xl sm:text-5xl block filter drop-shadow-[0_3px_8px_rgba(52,211,153,0.5)]">🐯</span>
           </motion.div>
           <div className="text-left">
-            <h1 className="text-2xl sm:text-3xl font-extrabold text-emerald-950 tracking-wide leading-none flex items-center gap-2.5">
+            <h1 className="text-lg sm:text-2xl font-black text-emerald-900 tracking-wide leading-none flex items-center gap-1.5">
               <span>单词奇旅</span>
-              <span className="text-xs sm:text-sm bg-gradient-to-r from-amber-400 to-amber-500 text-amber-955 font-black px-2.5 py-1.2 rounded-xl shadow-md border-b-2 border-amber-600">v2.5</span>
+              <span className="text-[10px] bg-gradient-to-r from-amber-400 to-amber-500 text-amber-950 font-black px-1.5 py-0.5 rounded-md shadow-sm border-b border-amber-600">v2.5</span>
             </h1>
-            <div className="flex items-center gap-4 mt-2.5 flex-wrap">
-              <span className="text-sm sm:text-lg font-black text-emerald-900 bg-white/70 border border-emerald-200 px-3 py-1 rounded-full whitespace-nowrap shadow-xs">🌟 魔力 LV.{stats.level}</span>
-              <div className="w-28 h-4 bg-emerald-100 rounded-full overflow-hidden border-2 border-emerald-300 relative shadow-inner">
-                <div className="bg-gradient-to-r from-emerald-400 via-amber-400 to-teal-400 h-full" style={{ width: `${(stats.xp % 1000) / 10}%` }} />
-                <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,_rgba(255,255,255,0.5)_1px,_transparent_1px)] bg-[length:6px_6px] animate-pulse" />
+            <div className="flex items-center gap-2 mt-1.5">
+              <span className="text-[11px] sm:text-sm font-black text-emerald-850 whitespace-nowrap bg-white/85 px-2 py-0.5 rounded-md border border-emerald-200">🌟 LV.{stats.level}</span>
+              <div className="w-16 sm:w-24 h-2.5 bg-emerald-100 rounded-full overflow-hidden border border-emerald-250 relative shadow-inner">
+                <div className="bg-gradient-to-r from-emerald-400 to-teal-400 h-full" style={{ width: `${(stats.xp % 1000) / 10}%` }} />
+                <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,_rgba(255,255,255,0.5)_1px,_transparent_1px)] bg-[length:4px_4px] animate-pulse" />
               </div>
             </div>
           </div>
         </div>
 
         {/* Right: Gold and Attributes Character book trigger */}
-        <div className="flex items-center justify-between sm:justify-end gap-4 shrink-0 w-full sm:w-auto border-t-2 border-dashed border-emerald-200/50 sm:border-0 pt-4 sm:pt-0">
+        <div className="flex items-center gap-2.5 shrink-0 w-full xs:w-auto justify-end border-t border-dashed border-emerald-250/40 xs:border-0 pt-2.5 xs:pt-0">
           <motion.div 
             whileHover={{ scale: 1.05 }}
-            className="bg-white border-2 border-b-[5px] border-amber-300 px-4 py-2 rounded-2xl flex items-center space-x-2 shadow-sm cursor-default"
+            className="bg-white border-2 border-b-[4px] border-amber-300 px-3 py-1 rounded-xl flex items-center space-x-1 shadow-sm cursor-default"
           >
-            <CircleDollarSign size={22} className="text-amber-500 fill-amber-250 shrink-0" />
-            <span className="font-black text-amber-800 text-base sm:text-lg tabular-nums leading-none">{stats.starCoins} 星星币</span>
+            <CircleDollarSign size={16} className="text-amber-500 fill-amber-200 shrink-0" />
+            <span className="font-black text-amber-800 text-xs sm:text-sm tabular-nums leading-none">{stats.starCoins} 星星币</span>
           </motion.div>
 
           <button 
@@ -257,11 +256,11 @@ const HomePage: React.FC<HomePageProps> = ({ stats, groups, reviewNeeded, onNavi
               try { audio.playClick(); } catch(e){}
               setIsProfileExpanded(true);
             }}
-            className="px-5 py-2.5 bg-gradient-to-r from-[#10b981] to-[#059669] hover:brightness-105 hover:scale-103 active:scale-97 text-white font-black text-sm sm:text-lg rounded-2xl border-b-[5px] border-emerald-700 flex items-center gap-2 shadow-md transition-all cursor-pointer hover:shadow-lg"
+            className="px-3.5 py-1.5 sm:px-4 sm:py-2 bg-gradient-to-r from-[#10b981] to-[#059669] hover:brightness-105 hover:scale-103 active:scale-97 text-white font-black text-xs sm:text-sm rounded-xl border-b-[4px] border-emerald-700 flex items-center gap-1 shadow-sm transition-all cursor-pointer"
           >
             <span>我的属性 🗡️</span>
             {unassignedPoints > 0 && (
-              <span className="h-2.5 w-2.5 rounded-full bg-rose-500 animate-pulse shrink-0" />
+              <span className="h-2 w-2 rounded-full bg-rose-500 animate-pulse shrink-0" />
             )}
           </button>
         </div>
@@ -269,22 +268,22 @@ const HomePage: React.FC<HomePageProps> = ({ stats, groups, reviewNeeded, onNavi
 
       {/* COMPACT WORD SEARCH SECTION */}
       <div className="relative group px-1">
-        <div className="absolute inset-y-0 left-6 flex items-center pointer-events-none">
-          <Search className="text-emerald-500 w-6 h-6 group-focus-within:text-amber-500 transition-colors shrink-0 stroke-[2.5]" />
+        <div className="absolute inset-y-0 left-5 flex items-center pointer-events-none">
+          <Search className="text-emerald-500 w-5 h-5 group-focus-within:text-amber-500 transition-colors shrink-0 stroke-[2.5]" />
         </div>
         <input
           type="text"
           value={searchQuery}
           onChange={handleSearch}
-          placeholder="🧙‍♂️ 寻觅隐藏的太古魔法词 (比如 dad, class)..."
-          className="w-full bg-white/95 backdrop-blur-md py-5 pl-14 pr-12 rounded-[24px] border-3 border-emerald-350 shadow-md focus:ring-4 focus:ring-emerald-400/20 focus:border-amber-500 outline-none transition-all text-lg sm:text-2xl text-emerald-955 placeholder:text-emerald-700/60 font-black animate-in slide-in-from-top-2 duration-305 border-b-[6px] border-emerald-450"
+          placeholder="🧙‍♂️ 搜索三字经魔法词 (比如 cat, dad, man)..."
+          className="w-full bg-white/95 backdrop-blur-md py-3.5 pl-12 pr-10 rounded-[18px] border-2 border-emerald-300 shadow-sm focus:ring-2 focus:ring-emerald-400/20 focus:border-amber-500 outline-none transition-all text-sm sm:text-base text-emerald-950 placeholder:text-emerald-700/50 font-black animate-in slide-in-from-top-2 duration-200 border-b-[4px] border-emerald-400"
         />
         {searchQuery && (
           <button
             onClick={clearSearch}
-            className="absolute inset-y-0 right-5 flex items-center px-1 text-emerald-600 hover:text-emerald-800 transition-colors cursor-pointer"
+            className="absolute inset-y-0 right-4 flex items-center px-1 text-emerald-600 hover:text-emerald-800 transition-colors cursor-pointer"
           >
-            <X className="w-6 h-6 stroke-[3]" />
+            <X className="w-5 h-5 stroke-[2.5]" />
           </button>
         )}
       </div>
