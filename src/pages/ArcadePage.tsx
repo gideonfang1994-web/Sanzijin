@@ -224,23 +224,21 @@ const ArcadePage: React.FC<ArcadePageProps> = ({ groups, stats, lastLearnedWords
       </div>
 
       {/* 3D Magical Winding Road Map Container */}
-      <div className="relative px-2 py-4 space-y-4">
+      <div className="relative px-2 py-6 space-y-6">
         {/* Decorative Map Title */}
-        <div className="text-center pb-2">
-          <span className="text-[10px] font-black text-emerald-600/60 uppercase tracking-[0.2em] bg-emerald-50 border border-emerald-100/60 px-3 py-1 rounded-full animate-pulse select-none">
-            ✨ 点击关卡小岛，开始单词特训魔法仪式 ✨
+        <div className="text-center pb-4">
+          <span className="text-[11px] sm:text-xs font-black text-emerald-850 uppercase tracking-[0.2em] bg-emerald-100/60 border-2 border-emerald-300/40 px-4 py-2 rounded-full shadow-xs animate-pulse select-none inline-flex items-center gap-1.5">
+            <span>✨ 点击神奇关卡小岛，释放你的词灵魔力！ ✨</span>
           </span>
         </div>
 
         {games.map((game, idx) => {
           const mapLayouts = [
-            { align: 'justify-start', decor: 'right-[4%] top-4', decorIcon: '🌲' },
-            { align: 'justify-center', decor: 'left-[10%] top-2', decorIcon: '🍄' },
-            { align: 'justify-end', decor: 'left-[4%] top-5', decorIcon: '☁️' },
-            { align: 'justify-center', decor: 'right-[12%] top-3 animate-pulse', decorIcon: '🦋' },
-            { align: 'justify-start', decor: 'right-[8%] top-1 rotate-12', decorIcon: '🌺' },
-            { align: 'justify-center', decor: 'left-[15%] top-4 animate-bounce', decorIcon: '🎁' },
-            { align: 'justify-end', decor: 'left-[6%] top-2', decorIcon: '🧙⭐' },
+            { align: 'justify-start', rotate: -2, decor: 'right-[2%] -top-4', decorIcon: '🌲', cardBg: 'from-[#fef2f2] to-[#fff1f2] border-rose-300 border-b-rose-400 text-rose-950', badgeBg: 'bg-rose-450 text-white' },
+            { align: 'justify-center', rotate: 1.5, decor: 'left-[4%] -top-2', decorIcon: '🍄', cardBg: 'from-[#fffbeb] to-[#fef3c7] border-amber-300 border-b-amber-400 text-amber-950', badgeBg: 'bg-amber-400 text-amber-950' },
+            { align: 'justify-end', rotate: 3, decor: 'left-[2%] -top-4', decorIcon: '☁️', cardBg: 'from-[#f0f9ff] to-[#e0f2fe] border-sky-300 border-b-sky-400 text-sky-950', badgeBg: 'bg-sky-450 text-white' },
+            { align: 'justify-center', rotate: -1.5, decor: 'right-[6%] -top-3 animate-pulse', decorIcon: '🦋', cardBg: 'from-[#ecfdf5] to-[#d1fae5] border-emerald-300 border-b-emerald-400 text-emerald-950', badgeBg: 'bg-emerald-500 text-white' },
+            { align: 'justify-start', rotate: 2, decor: 'right-[8%] -top-2 rotate-12', cardBg: 'from-[#fdf4ff] to-[#fae8ff] border-purple-300 border-b-purple-400 text-purple-950', badgeBg: 'bg-purple-500 text-white', decorIcon: '🌺' },
           ];
 
           const gameMapEmojis: Record<string, string> = {
@@ -272,56 +270,62 @@ const ArcadePage: React.FC<ArcadePageProps> = ({ groups, stats, lastLearnedWords
           return (
             <div key={game.id} className="relative z-10 flex flex-col items-center">
               {/* Outer Alignment Box */}
-              <div className={`w-full flex ${layout.align} items-center relative py-1`}>
+              <div className={`w-full flex ${layout.align} items-center relative py-2`}>
                 
                 {/* Visual Scenic Decoration Floating on empty spaces */}
-                <span className={`absolute ${layout.decor} text-3xl select-none pointer-events-none filter drop-shadow-md transition-all duration-300 z-0`}>
+                <span className={`absolute ${layout.decor} text-4xl select-none pointer-events-none filter drop-shadow-md transition-all duration-300 z-0`}>
                   {layout.decorIcon}
                 </span>
 
-                {/* Magical Stage Button/Island Card */}
+                {/* Magical Stage Button/Island Card - Layout arranged beautifully with alternating rotation */}
                 <motion.button
-                  initial={{ opacity: 0, scale: 0.9, y: 15 }}
+                  initial={{ opacity: 0, scale: 0.85, y: 25 }}
                   animate={{ opacity: 1, scale: 1, y: 0 }}
-                  transition={{ delay: idx * 0.08 + 0.1, type: 'spring', stiffness: 100 }}
-                  whileHover={{ scale: 1.03 }}
-                  whileTap={{ scale: 0.97 }}
+                  transition={{ delay: idx * 0.08 + 0.1, type: 'spring', stiffness: 120, damping: 14 }}
+                  whileHover={{ scale: 1.05, rotate: layout.rotate * 1.5, y: -4 }}
+                  whileTap={{ scale: 0.96 }}
+                  style={{ rotate: layout.rotate }}
                   onClick={() => { audio.playClick(); onSelectGame(game.id, currentWords); }}
-                  className="w-[85%] bg-white rounded-[32px] p-4 border-2 border-slate-100 hover:border-emerald-200 transition-all shadow-[0_12px_24px_rgba(16,185,129,0.05)] hover:shadow-[0_20px_40px_rgba(16,185,129,0.12)] flex items-center relative overflow-hidden text-left border-b-[6px] border-b-slate-200 cursor-pointer active:border-b-2 active:translate-y-1"
+                  className={`w-[88%] bg-gradient-to-br ${layout.cardBg} rounded-[28px] p-5 border-2 border-b-[8px] transition-all shadow-md hover:shadow-xl flex items-center relative overflow-hidden text-left cursor-pointer`}
                 >
                   {/* Glowing Mini Platform Base under Emoji */}
-                  <div className={`w-14 h-14 rounded-2xl ${game.color} bg-gradient-to-br flex items-center justify-center text-white shrink-0 shadow-lg border-2 border-white/40 group-hover:rotate-6 transition-transform relative z-10`}>
-                    <span className="text-3xl filter drop-shadow-sm">{emoji}</span>
+                  <div className={`w-16 h-16 rounded-2xl ${game.color} bg-gradient-to-br flex items-center justify-center text-white shrink-0 shadow-lg border-2 border-white/40 group-hover:rotate-6 transition-transform relative z-10`}>
+                    <span className="text-4xl filter drop-shadow-sm select-none">{emoji}</span>
                     
                     {/* Stage Number Badge */}
-                    <div className="absolute -top-3.5 -left-3.5 bg-amber-400 text-amber-950 font-black text-[9px] px-2 py-0.5 rounded-full border border-white shadow-md uppercase tracking-wider scale-90">
-                      S.{idx + 1}
+                    <div className="absolute -top-3.5 -left-3.5 bg-amber-400 text-amber-950 font-black text-[10px] px-2 py-0.5 rounded-full border border-white shadow-md uppercase tracking-wider scale-95">
+                      关卡 {idx + 1}
                     </div>
                   </div>
 
+                  {/* Text Content Area with enlarged titles! */}
                   <div className="ml-4 flex-1 pr-1">
                     <div className="flex items-center gap-1.5 flex-wrap">
-                      <h3 className="font-extrabold text-[#064e3b] text-[15px] tracking-tight">{game.title}</h3>
-                      <span className="bg-amber-100 text-amber-700 font-extrabold px-1.5 py-0.5 rounded-md text-[8.5px]">
+                      <h3 className="font-extrabold text-2xl sm:text-[23px] tracking-tight text-emerald-950 drop-shadow-xs leading-none">
+                        {game.title}
+                      </h3>
+                      <span className={`font-black px-2 py-0.5 rounded-full text-[10px] tracking-wide shadow-xs uppercase ${layout.badgeBg}`}>
                         {game.xp} XP
                       </span>
                     </div>
-                    <p className="text-[10px] text-slate-400 mt-1 line-clamp-1 font-bold leading-normal uppercase select-none">{game.description}</p>
+                    <p className="text-[12.5px] sm:text-[13.5px] text-emerald-900/80 mt-1.5 font-bold leading-relaxed line-clamp-2 select-none">
+                      {game.description}
+                    </p>
                   </div>
 
-                  <div className="w-8 h-8 rounded-full bg-slate-50 hover:bg-emerald-50 text-slate-400 hover:text-emerald-600 flex items-center justify-center shrink-0">
-                    <ArrowRight size={16} />
+                  <div className="w-8 h-8 rounded-full bg-white/70 hover:bg-white text-emerald-900 flex items-center justify-center shrink-0 shadow-xs">
+                    <ArrowRight size={18} className="stroke-[3px]" />
                   </div>
                 </motion.button>
               </div>
 
               {/* Dotted Pathway Footprints Segment in between nodes */}
               {idx < games.length - 1 && (
-                <div className="py-2 flex items-center justify-center w-full relative h-7 select-none">
+                <div className="py-2 flex items-center justify-center w-full relative h-10 select-none">
                   <motion.div 
-                    animate={{ opacity: [0.4, 1, 0.4] }}
-                    transition={{ repeat: Infinity, duration: 2, delay: idx * 0.3 }}
-                    className="flex items-center gap-2.5 text-slate-300 font-extrabold text-sm"
+                    animate={{ opacity: [0.5, 1, 0.5], scale: [0.95, 1.05, 0.95] }}
+                    transition={{ repeat: Infinity, duration: 2.2, delay: idx * 0.3 }}
+                    className="flex items-center gap-3 text-emerald-400/70 font-black text-lg"
                   >
                     <span>🐾</span>
                     <span>•</span>
@@ -335,12 +339,15 @@ const ArcadePage: React.FC<ArcadePageProps> = ({ groups, stats, lastLearnedWords
         })}
       </div>
 
-      <button 
-        onClick={onClose} 
-        className="w-full py-6 text-sm font-black text-slate-400 hover:text-indigo-500 uppercase tracking-widest transition-colors flex items-center justify-center space-x-2"
-      >
-        <span>返回主页</span>
-      </button>
+      {/* Styled wood-tag visual for go-back button */}
+      <div className="pt-4 px-4">
+        <button 
+          onClick={onClose} 
+          className="w-full py-4.5 bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-450 hover:to-amber-550 text-white font-black text-lg rounded-2xl border-b-4 border-amber-700 hover:scale-102 active:scale-98 transition-all shadow-md flex items-center justify-center gap-2 cursor-pointer"
+        >
+          <span>返回主站魔法庭 🏠</span>
+        </button>
+      </div>
     </div>
   );
 };

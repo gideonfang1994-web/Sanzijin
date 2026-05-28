@@ -31,6 +31,14 @@ const HomePage: React.FC<HomePageProps> = ({ stats, groups, reviewNeeded, onNavi
   const [searchResults, setSearchResults] = React.useState<WordGroup[]>([]);
   const [isProfileExpanded, setIsProfileExpanded] = React.useState(false);
   const [activeProfileTab, setActiveProfileTab] = React.useState<'HERO' | 'PETS'>('HERO');
+  const [isMascotVisible, setIsMascotVisible] = React.useState(true);
+
+  React.useEffect(() => {
+    const timer = setTimeout(() => {
+      setIsMascotVisible(false);
+    }, 30000);
+    return () => clearTimeout(timer);
+  }, []);
 
   // Interactive Mascot dialogues to engage children
   const MASCOT_DIALOGUES = React.useMemo(() => [
@@ -231,62 +239,56 @@ const HomePage: React.FC<HomePageProps> = ({ stats, groups, reviewNeeded, onNavi
           ))
         ))}
       </div>
-
-      {/* COMPACT INTEGRATED MAGICAL ACADEMY DASHBOARD HEADER */}
-      <div className="bg-gradient-to-b from-white via-[#f3fbf6] to-[#ebfaf0] border-2 border-emerald-300 border-b-[5px] border-emerald-400 rounded-3xl p-3.5 shadow-sm flex items-center justify-between text-emerald-950 relative overflow-hidden">
+             {/* COMPACT INTEGRATED MAGICAL ACADEMY DASHBOARD HEADER */}
+      <div className="bg-gradient-to-b from-white via-[#f3fbf6] to-[#ebfaf0] border-2 border-emerald-300 border-b-[5px] border-emerald-400 rounded-3xl p-3.5 shadow-sm flex flex-col xs:flex-row gap-3 xs:items-center justify-between text-emerald-950 relative overflow-hidden">
         {/* Soft glowing line at top */}
         <div className="absolute top-0 inset-x-0 h-0.5 bg-gradient-to-r from-transparent via-amber-400/60 to-transparent animate-pulse" />
 
-        {/* Left: Branding Identity */}
-        <div className="flex items-center space-x-2">
+        {/* Left: Branding Identity & Level / XP Bar combined for perfect coordination */}
+        <div className="flex items-center space-x-3">
           <motion.div 
             whileHover={{ scale: 1.15, rotate: [0, -10, 10, 0] }}
             whileTap={{ scale: 0.95 }}
             transition={{ type: "spring", stiffness: 300, damping: 12 }}
-            className="cursor-pointer select-none"
+            className="cursor-pointer select-none shrink-0"
             onClick={() => {
               try { audio.playCheer(); } catch(e){}
             }}
           >
             <span className="text-4.5xl block filter drop-shadow-[0_2.5px_10px_rgba(52,211,153,0.5)]">🐯</span>
           </motion.div>
-          <div className="text-left shrink-0">
-            <h1 className="text-lg sm:text-xl font-black text-emerald-900 tracking-wide leading-none flex items-center gap-1.5">
+          <div className="text-left">
+            <h1 className="text-base sm:text-lg font-black text-emerald-900 tracking-wide leading-none flex items-center gap-1.5">
               <span>单词奇旅</span>
-              <span className="text-[11px] sm:text-xs bg-amber-400 text-amber-950 font-black px-1.5 py-0.5 rounded shadow-xs">v2.5</span>
+              <span className="text-[10px] sm:text-[11px] bg-amber-400 text-amber-950 font-black px-1.5 py-0.5 rounded shadow-xs">v2.5</span>
             </h1>
-            <span className="text-xs sm:text-[13px] text-emerald-600/70 font-bold block mt-1 tracking-wider font-mono">ENCHANTED FOREST</span>
-          </div>
-        </div>
-
-        {/* Middle: Integrated XP and Level Potion Bottle */}
-        <div className="flex flex-col items-start space-y-1 bg-white/60 border border-emerald-200/50 px-2.5 py-1 rounded-2xl">
-          <div className="flex items-center space-x-1 font-mono leading-none">
-            <span className="text-xs sm:text-[13.5px] font-black text-emerald-850">🌟 魔力 LV.{stats.level}</span>
-          </div>
-          <div className="w-20 h-3 bg-emerald-100 rounded-full overflow-hidden border border-emerald-250 relative">
-            <div className="bg-gradient-to-r from-emerald-400 via-amber-400 to-teal-400 h-full" style={{ width: `${(stats.xp % 1000) / 10}%` }} />
-            {/* Tiny stars sparkle inside HP bar */}
-            <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,_rgba(255,255,255,0.4)_1px,_transparent_1px)] bg-[length:6px_6px] animate-pulse" />
+            <div className="flex items-center gap-2 mt-1 flex-wrap">
+              <span className="text-xs font-black text-emerald-850 whitespace-nowrap">🌟 LV.{stats.level}</span>
+              <div className="w-16 h-2 bg-emerald-100 rounded-full overflow-hidden border border-emerald-250 relative">
+                <div className="bg-gradient-to-r from-emerald-400 via-amber-400 to-teal-400 h-full" style={{ width: `${(stats.xp % 1000) / 10}%` }} />
+                <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,_rgba(255,255,255,0.4)_1px,_transparent_1px)] bg-[length:6px_6px] animate-pulse" />
+              </div>
+            </div>
           </div>
         </div>
 
         {/* Right: Gold and Attributes Character book trigger */}
-        <div className="flex items-center space-x-2 relative">
+        <div className="flex items-center justify-end gap-2 shrink-0">
           <motion.div 
             whileHover={{ scale: 1.05 }}
-            className="bg-white border-2 border-amber-300 px-3 py-1.5 rounded-2xl flex items-center space-x-1 shadow-sm cursor-default"
+            className="bg-white border-2 border-amber-300 px-2.5 py-1 rounded-2xl flex items-center space-x-1 shadow-sm cursor-default"
           >
-            <CircleDollarSign size={16} className="text-amber-500 fill-amber-250 shrink-0" />
-            <span className="font-extrabold text-amber-705 text-base sm:text-[17px] tabular-nums leading-none">{stats.starCoins}</span>
+            <CircleDollarSign size={15} className="text-amber-500 fill-amber-250 shrink-0" />
+            <span className="font-extrabold text-amber-705 text-sm sm:text-base tabular-nums leading-none">{stats.starCoins}</span>
           </motion.div>
 
           <button 
+            type="button"
             onClick={() => {
               try { audio.playClick(); } catch(e){}
               setIsProfileExpanded(true);
             }}
-            className="px-3.5 py-2 bg-gradient-to-r from-[#10b981] to-[#059669] hover:brightness-105 hover:scale-103 active:scale-97 text-white font-black text-[13px] sm:text-[14px] rounded-2xl border-b-3 border-emerald-700 flex items-center gap-1 shadow-sm transition-all cursor-pointer"
+            className="px-3 py-1.5 bg-gradient-to-r from-[#10b981] to-[#059669] hover:brightness-105 hover:scale-103 active:scale-97 text-white font-black text-[12.5px] sm:text-[13.5px] rounded-2xl border-b-3 border-emerald-700 flex items-center gap-1 shadow-sm transition-all cursor-pointer"
           >
             <span>属性 🗡️</span>
             {unassignedPoints > 0 && (
@@ -296,60 +298,92 @@ const HomePage: React.FC<HomePageProps> = ({ stats, groups, reviewNeeded, onNavi
         </div>
       </div>
 
-      {/* INTERACTIVE ELFIN MASCOT Companion (波波 speech bubble layout) */}
-      <div className="flex items-end space-x-3.5 relative px-1">
-        {/* Mascot Figure with wooden-tag label */}
-        <div className="flex flex-col items-center shrink-0">
-          <motion.div 
-            animate={{ 
-               y: [0, -6, 0],
-               rotate: [-2, 2, -2]
-            }}
-            transition={{ 
-               repeat: Infinity, 
-               duration: 2.2, 
-               ease: "easeInOut" 
-            }}
-            whileHover={{ scale: 1.15 }}
-            onClick={handleMascotClick}
-            className="w-16 h-16 bg-gradient-to-b from-[#eefcf4] via-emerald-100 to-[#d1fae5] border-2 border-emerald-300 rounded-full flex items-center justify-center text-5xl shadow-md cursor-pointer select-none filter drop-shadow-[0_4px_10px_rgba(16,185,129,0.25)] relative"
+      {/* INTERACTIVE ELFIN MASCOT Companion (波波 speech bubble layout) with 30s auto-hide and summon */}
+      <AnimatePresence mode="wait">
+        {isMascotVisible ? (
+          <motion.div
+            key="mascot-full"
+            initial={{ opacity: 0, height: 0, y: -20 }}
+            animate={{ opacity: 1, height: "auto", y: 0 }}
+            exit={{ opacity: 0, height: 0, y: -20 }}
+            transition={{ duration: 0.4 }}
+            className="overflow-hidden"
           >
-            🧚‍♀️
-            <div className="absolute -bottom-1 -right-1 bg-amber-450 text-emerald-950 font-black text-[10px] w-5.5 h-5.5 flex items-center justify-center rounded-full border border-emerald-600 shadow animate-bounce">
-              💬
+            <div className="flex items-end space-x-3.5 relative px-1 pb-1">
+              {/* Mascot Figure with wooden-tag label */}
+              <div className="flex flex-col items-center shrink-0">
+                <motion.div 
+                  animate={{ 
+                     y: [0, -6, 0],
+                     rotate: [-2, 2, -2]
+                  }}
+                  transition={{ 
+                     repeat: Infinity, 
+                     duration: 2.2, 
+                     ease: "easeInOut" 
+                  }}
+                  whileHover={{ scale: 1.15 }}
+                  onClick={handleMascotClick}
+                  className="w-16 h-16 bg-gradient-to-b from-[#eefcf4] via-emerald-100 to-[#d1fae5] border-2 border-emerald-300 rounded-full flex items-center justify-center text-5xl shadow-md cursor-pointer select-none filter drop-shadow-[0_4px_10px_rgba(16,185,129,0.25)] relative"
+                >
+                  🧚‍♀️
+                  <div className="absolute -bottom-1 -right-1 bg-amber-450 text-emerald-950 font-black text-[10px] w-5.5 h-5.5 flex items-center justify-center rounded-full border border-emerald-600 shadow animate-bounce">
+                    💬
+                  </div>
+                </motion.div>
+                
+                {/* Wooden style small label tag */}
+                <div className="bg-[#b45309] text-[#fef3c7] text-xs sm:text-[13.5px] font-black px-3 py-1.2 rounded-xl mt-1.5 border border-[#92400e] text-center shadow-sm select-none leading-none">
+                  精灵教官·波波
+                </div>
+              </div>
+
+              {/* Real Game dialogue Speech Bubble next to Bobo */}
+              <motion.div 
+                animate={mascotBounce ? { scale: [1, 1.04, 0.97, 1.02, 1] } : {}}
+                onClick={handleMascotClick}
+                className="relative bg-white border-2 border-emerald-250 p-4 rounded-3xl shadow-sm text-left flex-1 min-w-0 cursor-pointer hover:bg-emerald-50/20 active:scale-99 transition-all"
+              >
+                {/* Bubble Arrow pointing left to Bobo */}
+                <div className="absolute left-[-8px] top-6 w-0 h-0 border-y-[6px] border-y-transparent border-r-[8px] border-r-white z-10" />
+                <div className="absolute left-[-10px] top-[23px] w-0 h-0 border-y-[7px] border-y-transparent border-r-[9px] border-r-emerald-250" />
+
+                <div className="flex items-center justify-between border-b border-emerald-100/50 pb-2 mb-2 relative z-10">
+                  <span className="text-sm sm:text-[15px] font-black text-emerald-800 tracking-wider">🌟 训练场密教导师</span>
+                  <span className="text-xs sm:text-[13.5px] text-amber-600 font-extrabold animate-pulse">✨ 戳我有魔法秘语！</span>
+                </div>
+
+                <p className="text-base sm:text-[18.5px] font-black text-emerald-950 leading-relaxed min-h-[30px] flex items-center select-none relative z-10 pr-2">
+                  {MASCOT_DIALOGUES[mascotDialogueIdx]}
+                </p>
+
+                <div className="absolute bottom-1.5 right-2 w-4 h-4 bg-emerald-100/50 rounded-full flex items-center justify-center text-[9px] text-emerald-600 font-black opacity-0 group-hover:opacity-100">
+                  ➔
+                </div>
+              </motion.div>
             </div>
           </motion.div>
-          
-          {/* Wooden style small label tag */}
-          <div className="bg-[#b45309] text-[#fef3c7] text-xs sm:text-[13.5px] font-black px-3 py-1.2 rounded-xl mt-1.5 border border-[#92400e] text-center shadow-sm select-none leading-none">
-            精灵教官·波波
-          </div>
-        </div>
-
-        {/* Real Game dialogue Speech Bubble next to Bobo */}
-        <motion.div 
-          animate={mascotBounce ? { scale: [1, 1.04, 0.97, 1.02, 1] } : {}}
-          onClick={handleMascotClick}
-          className="relative bg-white border-2 border-emerald-250 p-4 rounded-3xl shadow-sm text-left flex-1 min-w-0 cursor-pointer hover:bg-emerald-50/20 active:scale-99 transition-all"
-        >
-          {/* Bubble Arrow pointing left to Bobo */}
-          <div className="absolute left-[-8px] top-6 w-0 h-0 border-y-[6px] border-y-transparent border-r-[8px] border-r-white z-10" />
-          <div className="absolute left-[-10px] top-[23px] w-0 h-0 border-y-[7px] border-y-transparent border-r-[9px] border-r-emerald-250" />
-
-          <div className="flex items-center justify-between border-b border-emerald-100/50 pb-2 mb-2 relative z-10">
-            <span className="text-sm sm:text-[15px] font-black text-emerald-800 tracking-wider">🌟 训练场密教导师</span>
-            <span className="text-xs sm:text-[13.5px] text-amber-600 font-extrabold animate-pulse">✨ 戳我有魔法秘语！</span>
-          </div>
-
-          <p className="text-base sm:text-[18.5px] font-black text-emerald-950 leading-relaxed min-h-[30px] flex items-center select-none relative z-10 pr-2">
-            {MASCOT_DIALOGUES[mascotDialogueIdx]}
-          </p>
-
-          <div className="absolute bottom-1.5 right-2 w-4 h-4 bg-emerald-100/50 rounded-full flex items-center justify-center text-[9px] text-emerald-600 font-black opacity-0 group-hover:opacity-100">
-            ➔
-          </div>
-        </motion.div>
-      </div>
+        ) : (
+          <motion.div
+            key="mascot-summon"
+            initial={{ opacity: 0, scale: 0.8 }}
+            animate={{ opacity: 1, scale: 1 }}
+            exit={{ opacity: 0, scale: 0.8 }}
+            className="flex justify-end px-2"
+          >
+            <button
+              onClick={() => {
+                try { audio.playClick(); } catch(e){}
+                setIsMascotVisible(true);
+              }}
+              className="px-4 py-2 bg-[#f0fdf4] hover:bg-[#e6f9ed] border-2 border-emerald-250 text-emerald-850 font-black text-xs sm:text-xs rounded-2xl flex items-center gap-1.5 shadow-sm cursor-pointer transition-all active:scale-95 animate-bounce"
+            >
+              <span>🧚‍♀️ 呼唤微缩精灵导师波波</span>
+              <Sparkles size={13} className="text-amber-500" />
+            </button>
+          </motion.div>
+        )}
+      </AnimatePresence>
 
       {/* COMPACT WORD SEARCH SECTION */}
       <div className="relative group px-1">
