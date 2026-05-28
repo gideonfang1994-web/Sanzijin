@@ -248,23 +248,23 @@ const HomePage: React.FC<HomePageProps> = ({ stats, groups, reviewNeeded, onNavi
               try { audio.playCheer(); } catch(e){}
             }}
           >
-            <span className="text-3.5xl block filter drop-shadow-[0_2px_8px_rgba(52,211,153,0.5)]">🐯</span>
+            <span className="text-4xl block filter drop-shadow-[0_2.5px_10px_rgba(52,211,153,0.5)]">🐯</span>
           </motion.div>
           <div className="text-left shrink-0">
-            <h1 className="text-xs font-black text-emerald-900 tracking-wider leading-none flex items-center gap-1">
+            <h1 className="text-sm sm:text-base font-black text-emerald-900 tracking-wide leading-none flex items-center gap-1">
               <span>单词奇旅</span>
-              <span className="text-[7px] bg-amber-400 text-amber-950 font-black px-1 py-0.5 rounded shadow-sm">v2.5</span>
+              <span className="text-[9px] bg-amber-400 text-amber-950 font-black px-1.5 py-0.5 rounded shadow-xs">v2.5</span>
             </h1>
-            <span className="text-[8px] text-emerald-600/70 font-bold block mt-1 tracking-wider font-mono">ENCHANTED FOREST</span>
+            <span className="text-[10px] text-emerald-600/70 font-bold block mt-1 tracking-wider font-mono">ENCHANTED FOREST</span>
           </div>
         </div>
 
         {/* Middle: Integrated XP and Level Potion Bottle */}
-        <div className="flex flex-col items-start space-y-1 bg-white/60 border border-emerald-200/50 px-2 py-1 rounded-2xl">
+        <div className="flex flex-col items-start space-y-1 bg-white/60 border border-emerald-200/50 px-2.5 py-1 rounded-2xl">
           <div className="flex items-center space-x-1 font-mono leading-none">
-            <span className="text-[8.5px] font-black text-emerald-850">🌟 魔力 LV.{stats.level}</span>
+            <span className="text-[10.5px] font-black text-emerald-850">🌟 魔力 LV.{stats.level}</span>
           </div>
-          <div className="w-[64px] h-2 bg-emerald-100 rounded-full overflow-hidden border border-emerald-250 relative">
+          <div className="w-[72px] h-2.5 bg-emerald-100 rounded-full overflow-hidden border border-emerald-250 relative">
             <div className="bg-gradient-to-r from-emerald-400 via-amber-400 to-teal-400 h-full" style={{ width: `${(stats.xp % 1000) / 10}%` }} />
             {/* Tiny stars sparkle inside HP bar */}
             <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,_rgba(255,255,255,0.4)_1px,_transparent_1px)] bg-[length:6px_6px] animate-pulse" />
@@ -272,13 +272,13 @@ const HomePage: React.FC<HomePageProps> = ({ stats, groups, reviewNeeded, onNavi
         </div>
 
         {/* Right: Gold and Attributes Character book trigger */}
-        <div className="flex items-center space-x-1.5 relative">
+        <div className="flex items-center space-x-2 relative">
           <motion.div 
             whileHover={{ scale: 1.05 }}
-            className="bg-white border-2 border-amber-300 px-2 py-1 rounded-2xl flex items-center space-x-0.5 shadow-sm cursor-default"
+            className="bg-white border-2 border-amber-300 px-2.5 py-1 rounded-2xl flex items-center space-x-0.5 shadow-sm cursor-default"
           >
-            <CircleDollarSign size={12} className="text-amber-500 fill-amber-250 shrink-0" />
-            <span className="font-extrabold text-amber-705 text-xs tabular-nums">{stats.starCoins}</span>
+            <CircleDollarSign size={13} className="text-amber-500 fill-amber-250 shrink-0" />
+            <span className="font-extrabold text-amber-705 text-sm tabular-nums">{stats.starCoins}</span>
           </motion.div>
 
           <button 
@@ -286,7 +286,7 @@ const HomePage: React.FC<HomePageProps> = ({ stats, groups, reviewNeeded, onNavi
               try { audio.playClick(); } catch(e){}
               setIsProfileExpanded(true);
             }}
-            className="px-2.5 py-1.5 bg-gradient-to-r from-[#10b981] to-[#059669] hover:brightness-105 hover:scale-103 active:scale-97 text-white font-black text-[9px] rounded-2xl border-b-3 border-emerald-700 flex items-center gap-1 shadow-sm transition-all cursor-pointer"
+            className="px-3 py-1.5 bg-gradient-to-r from-[#10b981] to-[#059669] hover:brightness-105 hover:scale-103 active:scale-97 text-white font-black text-[11px] rounded-2xl border-b-3 border-emerald-700 flex items-center gap-1 shadow-sm transition-all cursor-pointer"
           >
             <span>属性 🗡️</span>
             {unassignedPoints > 0 && (
@@ -302,26 +302,26 @@ const HomePage: React.FC<HomePageProps> = ({ stats, groups, reviewNeeded, onNavi
         <div className="flex flex-col items-center shrink-0">
           <motion.div 
             animate={{ 
-              y: [0, -6, 0],
-              rotate: [-2, 2, -2]
+               y: [0, -6, 0],
+               rotate: [-2, 2, -2]
             }}
             transition={{ 
-              repeat: Infinity, 
-              duration: 2.2, 
-              ease: "easeInOut" 
+               repeat: Infinity, 
+               duration: 2.2, 
+               ease: "easeInOut" 
             }}
             whileHover={{ scale: 1.15 }}
             onClick={handleMascotClick}
             className="w-14 h-14 bg-gradient-to-b from-[#eefcf4] via-emerald-100 to-[#d1fae5] border-2 border-emerald-300 rounded-full flex items-center justify-center text-4xl shadow-md cursor-pointer select-none filter drop-shadow-[0_4px_10px_rgba(16,185,129,0.25)] relative"
           >
             🧚‍♀️
-            <div className="absolute -bottom-1 -right-1 bg-amber-450 text-emerald-950 font-black text-[7px] w-4.5 h-4.5 flex items-center justify-center rounded-full border border-emerald-600 shadow animate-bounce">
+            <div className="absolute -bottom-1 -right-1 bg-amber-450 text-emerald-950 font-black text-[9px] w-5 h-5 flex items-center justify-center rounded-full border border-emerald-600 shadow animate-bounce">
               💬
             </div>
           </motion.div>
           
           {/* Wooden style small label tag */}
-          <div className="bg-[#b45309] text-[#fef3c7] text-[8px] font-black px-1.5 py-0.5 rounded-md mt-1 border border-[#92400e] text-center shadow-sm select-none leading-none">
+          <div className="bg-[#b45309] text-[#fef3c7] text-[10px] sm:text-[10.5px] font-black px-2.5 py-1 rounded-lg mt-1 border border-[#92400e] text-center shadow-sm select-none leading-none">
             精灵教官·波波
           </div>
         </div>
@@ -336,12 +336,12 @@ const HomePage: React.FC<HomePageProps> = ({ stats, groups, reviewNeeded, onNavi
           <div className="absolute left-[-8px] top-6 w-0 h-0 border-y-[6px] border-y-transparent border-r-[8px] border-r-white z-10" />
           <div className="absolute left-[-10px] top-[23px] w-0 h-0 border-y-[7px] border-y-transparent border-r-[9px] border-r-emerald-250" />
 
-          <div className="flex items-center justify-between border-b border-emerald-100/50 pb-1 mb-1 relative z-10">
-            <span className="text-[8.5px] font-black text-emerald-800 tracking-wider">🌟 训练场密教导师</span>
-            <span className="text-[7.5px] text-amber-600 font-extrabold animate-pulse">✨ 戳我有魔法秘语！</span>
+          <div className="flex items-center justify-between border-b border-emerald-100/50 pb-1.5 mb-1.5 relative z-10">
+            <span className="text-[11px] sm:text-[11.5px] font-black text-emerald-800 tracking-wider">🌟 训练场密教导师</span>
+            <span className="text-[10px] sm:text-[10.5px] text-amber-600 font-extrabold animate-pulse">✨ 戳我有魔法秘语！</span>
           </div>
 
-          <p className="text-[11px] font-black text-emerald-950 leading-relaxed min-h-[30px] flex items-center select-none relative z-10 pr-2">
+          <p className="text-[13px] sm:text-[14px] font-black text-emerald-950 leading-relaxed min-h-[30px] flex items-center select-none relative z-10 pr-2">
             {MASCOT_DIALOGUES[mascotDialogueIdx]}
           </p>
 
@@ -361,7 +361,7 @@ const HomePage: React.FC<HomePageProps> = ({ stats, groups, reviewNeeded, onNavi
           value={searchQuery}
           onChange={handleSearch}
           placeholder="🧙‍♂️ 寻觅隐藏的太古奥术词 (比如 dad, van, class)..."
-          className="w-full bg-white/95 backdrop-blur-md py-3 pl-11 pr-10 rounded-2xl border-2 border-emerald-350 shadow-sm focus:ring-2 focus:ring-emerald-400/20 focus:border-amber-500 outline-none transition-all text-[11.5px] text-emerald-950 placeholder:text-emerald-700/50 font-black animate-in slide-in-from-top-2 duration-300 border-b-[4px] border-emerald-400"
+          className="w-full bg-white/95 backdrop-blur-md py-3.5 pl-11 pr-10 rounded-2xl border-2 border-emerald-350 shadow-sm focus:ring-2 focus:ring-emerald-400/20 focus:border-amber-500 outline-none transition-all text-[13px] sm:text-[13.5px] text-emerald-950 placeholder:text-emerald-700/50 font-black animate-in slide-in-from-top-2 duration-300 border-b-[4px] border-emerald-400"
         />
         {searchQuery && (
           <button
@@ -429,27 +429,27 @@ const HomePage: React.FC<HomePageProps> = ({ stats, groups, reviewNeeded, onNavi
             try { audio.playClick(); } catch(e){}
             onNavigate('ADVENTURE');
           }} 
-          className="p-3.5 bg-gradient-to-br from-[#acd65c] via-[#4caf50] to-[#15803d] border-2 border-emerald-200 border-b-[6px] border-emerald-700 hover:border-emerald-100 rounded-3xl text-left relative overflow-hidden group h-28 flex flex-col justify-between cursor-pointer shadow-md transition-all active:border-b-[2px] active:translate-y-[4px]"
+          className="p-4 bg-gradient-to-br from-[#acd65c] via-[#4caf50] to-[#15803d] border-2 border-emerald-200 border-b-[6px] border-emerald-700 hover:border-emerald-100 rounded-3xl text-left relative overflow-hidden group h-30 flex flex-col justify-between cursor-pointer shadow-md transition-all active:border-b-[2px] active:translate-y-[4px]"
         >
           {/* Animated leaf inside backdrop */}
           <div className="absolute top-[-20px] right-[-20px] w-18 h-18 bg-white/10 rounded-full blur-xl group-hover:scale-125 transition-transform" />
           <div className="absolute bottom-1 right-1 p-1 opacity-12 group-hover:opacity-30 group-hover:rotate-12 group-hover:scale-125 transition-all select-none pointer-events-none text-4xl">🌲</div>
           
           <div className="relative">
-            <div className="bg-white/80 w-8 h-8 rounded-xl flex items-center justify-center shadow">
-              <BookOpen className="text-emerald-800 w-4.5 h-4.5 stroke-[3] group-hover:animate-bounce" />
+            <div className="bg-white/80 w-8.5 h-8.5 rounded-xl flex items-center justify-center shadow">
+              <BookOpen className="text-emerald-800 w-5 h-5 stroke-[3] group-hover:animate-bounce" />
             </div>
             {reviewNeeded.length > 0 && (
-              <span className="absolute -top-1.5 -right-1.5 bg-rose-500 text-white text-[9px] font-black w-4.5 h-4.5 flex items-center justify-center rounded-full animate-pulse border border-white shadow-md">
+              <span className="absolute -top-1.5 -right-1.5 bg-rose-500 text-white text-[10px] font-black w-5 h-5 flex items-center justify-center rounded-full animate-pulse border border-white shadow-md">
                 {reviewNeeded.length}
               </span>
             )}
           </div>
           <div>
-            <h3 className="font-black text-white text-xs leading-none flex items-center gap-1">
+            <h3 className="font-black text-white text-[13.5px] sm:text-sm leading-none flex items-center gap-1">
               <span>冒险深林密境</span>
             </h3>
-            <span className="text-[7.5px] font-bold text-white/90 block mt-1 leading-none">
+            <span className="text-[10px] sm:text-[10.5px] font-bold text-white/90 block mt-1 leading-tight">
               闯关收割星星币 ⚔️
             </span>
           </div>
@@ -463,20 +463,20 @@ const HomePage: React.FC<HomePageProps> = ({ stats, groups, reviewNeeded, onNavi
             try { audio.playClick(); } catch(e){}
             onNavigate('ARCADE');
           }} 
-          className="p-3.5 bg-gradient-to-br from-[#fccf31] via-[#f69d3c] to-[#c2410c] border-2 border-amber-200 border-b-[6px] border-amber-700 hover:border-amber-100 rounded-3xl text-left relative overflow-hidden group h-28 flex flex-col justify-between cursor-pointer shadow-md transition-all active:border-b-[2px] active:translate-y-[4px]"
+          className="p-4 bg-gradient-to-br from-[#fccf31] via-[#f69d3c] to-[#c2410c] border-2 border-amber-200 border-b-[6px] border-amber-700 hover:border-amber-100 rounded-3xl text-left relative overflow-hidden group h-30 flex flex-col justify-between cursor-pointer shadow-md transition-all active:border-b-[2px] active:translate-y-[4px]"
         >
           {/* Interactive bubble behind banner */}
           <div className="absolute top-[-20px] right-[-20px] w-18 h-18 bg-white/10 rounded-full blur-xl group-hover:scale-125 transition-transform" />
           <div className="absolute bottom-1 right-1 p-1 opacity-12 group-hover:opacity-30 group-hover:-rotate-12 group-hover:scale-125 transition-all select-none pointer-events-none text-4xl">🔮</div>
           
-          <div className="bg-white/80 w-8 h-8 rounded-xl flex items-center justify-center shadow">
-            <Gamepad2 className="text-amber-800 w-4.5 h-4.5 stroke-[3] group-hover:rotate-12" />
+          <div className="bg-white/80 w-8.5 h-8.5 rounded-xl flex items-center justify-center shadow">
+            <Gamepad2 className="text-amber-800 w-5 h-5 stroke-[3] group-hover:rotate-12" />
           </div>
           <div>
-            <h3 className="font-black text-white text-xs leading-none flex items-center gap-1">
+            <h3 className="font-black text-white text-[13.5px] sm:text-sm leading-none flex items-center gap-1">
               <span>魔法演武乐园</span>
             </h3>
-            <span className="text-[7.5px] font-bold text-white/95 block mt-1 leading-none">
+            <span className="text-[10px] sm:text-[10.5px] font-bold text-white/95 block mt-1 leading-tight">
               超萌神兽对决游戏 🎮
             </span>
           </div>
@@ -490,19 +490,19 @@ const HomePage: React.FC<HomePageProps> = ({ stats, groups, reviewNeeded, onNavi
             try { audio.playClick(); } catch(e){}
             onNavigate('PETS');
           }} 
-          className="p-3.5 bg-gradient-to-br from-[#fda4af] via-[#f43f5e] to-[#be123c] border-2 border-rose-200 border-b-[6px] border-rose-700 hover:border-rose-100 rounded-3xl text-left relative overflow-hidden group h-28 flex flex-col justify-between cursor-pointer shadow-md transition-all active:border-b-[2px] active:translate-y-[4px]"
+          className="p-4 bg-gradient-to-br from-[#fda4af] via-[#f43f5e] to-[#be123c] border-2 border-rose-200 border-b-[6px] border-rose-700 hover:border-rose-100 rounded-3xl text-left relative overflow-hidden group h-30 flex flex-col justify-between cursor-pointer shadow-md transition-all active:border-b-[2px] active:translate-y-[4px]"
         >
           <div className="absolute top-[-20px] right-[-20px] w-18 h-18 bg-white/10 rounded-full blur-xl group-hover:scale-125 transition-transform" />
           <div className="absolute bottom-1 right-1 p-1 opacity-12 group-hover:opacity-30 group-hover:rotate-6 group-hover:scale-125 transition-all select-none pointer-events-none text-4xl">🐾</div>
           
-          <div className="bg-white/80 w-8 h-8 rounded-xl flex items-center justify-center shadow">
+          <div className="bg-white/80 w-8.5 h-8.5 rounded-xl flex items-center justify-center shadow">
             <span className="text-base select-none">🐾</span>
           </div>
           <div>
-            <h3 className="font-black text-white text-xs leading-none flex items-center gap-1">
+            <h3 className="font-black text-white text-[13.5px] sm:text-sm leading-none flex items-center gap-1">
               <span>契约兽神域</span>
             </h3>
-            <span className="text-[7.5px] font-bold text-white/95 block mt-1 leading-none">
+            <span className="text-[10px] sm:text-[10.5px] font-bold text-white/95 block mt-1 leading-tight">
               特训喂养你的高分宠 🍔
             </span>
           </div>
@@ -516,19 +516,19 @@ const HomePage: React.FC<HomePageProps> = ({ stats, groups, reviewNeeded, onNavi
             try { audio.playClick(); } catch(e){}
             onNavigate('SHOP');
           }} 
-          className="p-3.5 bg-gradient-to-br from-[#93c5fd] via-[#3b82f6] to-[#1d4ed8] border-2 border-blue-200 border-b-[6px] border-blue-700 hover:border-blue-100 rounded-3xl text-left relative overflow-hidden group h-28 flex flex-col justify-between cursor-pointer shadow-md transition-all active:border-b-[2px] active:translate-y-[4px]"
+          className="p-4 bg-gradient-to-br from-[#93c5fd] via-[#3b82f6] to-[#1d4ed8] border-2 border-blue-200 border-b-[6px] border-blue-700 hover:border-blue-100 rounded-3xl text-left relative overflow-hidden group h-30 flex flex-col justify-between cursor-pointer shadow-md transition-all active:border-b-[2px] active:translate-y-[4px]"
         >
           <div className="absolute top-[-20px] right-[-20px] w-18 h-18 bg-white/10 rounded-full blur-xl group-hover:scale-125 transition-transform" />
           <div className="absolute bottom-1 right-1 p-1 opacity-12 group-hover:opacity-30 group-hover:-rotate-6 group-hover:scale-125 transition-all select-none pointer-events-none text-4xl">🪙</div>
           
-          <div className="bg-white/80 w-8 h-8 rounded-xl flex items-center justify-center shadow">
+          <div className="bg-white/80 w-8.5 h-8.5 rounded-xl flex items-center justify-center shadow">
             <span className="text-sm select-none">💎</span>
           </div>
           <div>
-            <h3 className="font-black text-white text-xs leading-none flex items-center gap-1">
+            <h3 className="font-black text-white text-[13.5px] sm:text-sm leading-none flex items-center gap-1">
               <span>魔法秘宝商店</span>
             </h3>
-            <span className="text-[7.5px] font-bold text-white/95 block mt-1 leading-none">
+            <span className="text-[10px] sm:text-[10.5px] font-bold text-white/95 block mt-1 leading-tight">
               星星币换高强法套 🪙
             </span>
           </div>
@@ -542,25 +542,25 @@ const HomePage: React.FC<HomePageProps> = ({ stats, groups, reviewNeeded, onNavi
             try { audio.playClick(); } catch(e){}
             onNavigate('COLLECTION');
           }} 
-          className="col-span-2 p-3.5 bg-gradient-to-r from-[#eefaf2] via-white to-[#fffbe8] border-2 border-emerald-300 border-b-[6px] border-emerald-500 rounded-3xl text-left relative overflow-hidden group flex items-center justify-between cursor-pointer shadow-sm active:border-b-[2px] active:translate-y-[4px]"
+          className="col-span-2 p-4 bg-gradient-to-r from-[#eefaf2] via-white to-[#fffbe8] border-2 border-emerald-300 border-b-[6px] border-emerald-500 rounded-3xl text-left relative overflow-hidden group flex items-center justify-between cursor-pointer shadow-sm active:border-b-[2px] active:translate-y-[4px]"
         >
           <div className="absolute inset-y-0 right-0 w-[40%] bg-gradient-to-l from-emerald-500/5 to-transparent pointer-events-none" />
           
-          <div className="flex items-center space-x-3 relative z-10 min-w-0">
-            <div className="bg-gradient-to-r from-emerald-400 via-teal-300 to-amber-350 w-9 h-9 rounded-xl flex items-center justify-center shadow-sm">
-              <Award className="text-emerald-950 w-4.5 h-4.5 stroke-[3]" />
+          <div className="flex items-center space-x-3.5 relative z-10 min-w-0">
+            <div className="bg-gradient-to-r from-emerald-400 via-teal-300 to-amber-350 w-9.5 h-9.5 rounded-xl flex items-center justify-center shadow-sm">
+              <Award className="text-emerald-950 w-5 h-5 stroke-[3]" />
             </div>
             <div className="min-w-0 text-left">
-              <h3 className="font-black text-emerald-900 text-xs leading-none flex items-center gap-1">
+              <h3 className="font-black text-emerald-900 text-sm sm:text-[14.5px] leading-none flex items-center gap-1.5">
                 <span>太古百神之森 · 魔法秘图鉴</span>
-                <span className="bg-emerald-100/90 text-emerald-700 text-[8px] font-black px-1.5 py-0.5 rounded border border-emerald-200">秘阁</span>
+                <span className="bg-emerald-100/90 text-emerald-700 text-[10px] font-black px-1.5 py-0.5 rounded border border-emerald-200">秘阁</span>
               </h3>
-              <p className="text-[9.5px] font-bold text-emerald-700/85 mt-2 leading-none">
+              <p className="text-xs font-bold text-emerald-700/85 mt-2.5 leading-none">
                 已点亮魔法徽记卡 <span className="text-amber-600 font-black">{(stats.masteredWords || []).length}</span> 枚 🔮
               </p>
             </div>
           </div>
-          <span className="text-[9.5px] bg-white border border-emerald-250 text-emerald-850 font-black px-2.5 py-2 rounded-xl group-hover:bg-[#acd65c] group-hover:text-emerald-950 group-hover:border-transparent transition-all shrink-0 shadow-xs relative z-10">
+          <span className="text-[11px] bg-white border border-emerald-250 text-emerald-850 font-black px-3.5 py-2.2 rounded-2xl group-hover:bg-[#acd65c] group-hover:text-emerald-950 group-hover:border-transparent transition-all shrink-0 shadow-xs relative z-10">
             启阅秘卡 📖
           </span>
         </motion.button>

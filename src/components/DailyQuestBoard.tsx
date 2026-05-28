@@ -45,13 +45,13 @@ const DailyQuestBoard: React.FC<Props> = ({ quests = [], onQuestClick }) => {
       
       <div className="flex items-center justify-between mb-3.5 border-b border-emerald-200/60 pb-2.5">
         <div className="flex items-center space-x-2 relative z-10">
-          <span className="text-lg select-none animate-bounce block">📜</span>
-          <h3 className="text-xs font-black text-emerald-900 tracking-wider flex items-center gap-1">
+          <span className="text-xl select-none animate-bounce block">📜</span>
+          <h3 className="text-sm sm:text-[14.5px] font-black text-emerald-900 tracking-wide flex items-center gap-1">
             <span>森林魔法书 · 今日奥术任务</span>
-            <Sparkles size={11} className="text-amber-500 animate-pulse shrink-0" />
+            <Sparkles size={12} className="text-amber-500 animate-pulse shrink-0" />
           </h3>
         </div>
-        <div className="text-[9px] font-black text-emerald-800 bg-white border border-emerald-250 shadow-sm px-2.5 py-1 rounded-full select-none tracking-wider relative z-10">
+        <div className="text-[10px] sm:text-[11px] font-black text-emerald-800 bg-white border border-emerald-250 shadow-sm px-2.5 py-1 rounded-full select-none tracking-wider relative z-10">
            任务完成 {safeQuests.filter(q => q.completed).length} / {safeQuests.length} 🔑
          </div>
       </div>
@@ -82,10 +82,10 @@ const DailyQuestBoard: React.FC<Props> = ({ quests = [], onQuestClick }) => {
                   </div>
                   
                   <div>
-                    <div className={`text-xs font-black tracking-wide leading-tight ${quest.completed ? 'text-emerald-500/80 line-through' : style.text}`}>
+                    <div className={`text-[13.5px] sm:text-sm font-black tracking-wide leading-tight ${quest.completed ? 'text-emerald-500/80 line-through' : style.text}`}>
                       {quest.label}
                     </div>
-                    <div className={`text-[8.5px] font-bold mt-1 ${quest.completed ? 'text-emerald-500/70' : 'text-emerald-700/75'}`}>
+                    <div className={`text-[10.5px] sm:text-xs font-bold mt-1 ${quest.completed ? 'text-emerald-500/70' : 'text-emerald-700/75'}`}>
                       {quest.completed ? '✨ 魔法已完美修成！' : quest.id === 'q1' ? '闯关深林密境，收获亮闪闪金币' : quest.id === 'q2' ? '和小萌兽快乐拼字斗法' : '战胜忘却，淬炼核心拼音魔法'}
                     </div>
                   </div>
@@ -96,7 +96,7 @@ const DailyQuestBoard: React.FC<Props> = ({ quests = [], onQuestClick }) => {
 
               {/* Polished progress segment */}
               <div className="w-full mt-2.5">
-                <div className="flex justify-between items-center text-[7.5px] font-black uppercase mb-0.5" style={{ color: quest.completed ? '#10b981' : '#047857' }}>
+                <div className="flex justify-between items-center text-[9.5px] sm:text-[10px] font-black uppercase mb-0.5" style={{ color: quest.completed ? '#10b981' : '#047857' }}>
                   <span>魔法潜能开发度</span>
                   <span className="font-extrabold">{quest.completed ? '100% 已连通' : `${quest.current} / ${quest.target}`}</span>
                 </div>
