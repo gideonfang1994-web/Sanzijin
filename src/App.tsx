@@ -35,6 +35,7 @@ import UploadContent from './components/UploadContent';
 import MagicShop from './components/MagicShop';
 import PetPage from './pages/PetPage';
 import CollectionCenter from './components/CollectionCenter';
+import { PhonicsArena } from './components/PhonicsArena';
 import constants, { ALL_CARDS } from './constants';
 import { RepetitiveMagicStudyModal } from './components/RepetitiveMagicStudyModal';
 import { WordGroup, UserStats, ViewState, DailyQuest, Word, WordItem, ShopItem, Pet } from './types';
@@ -1172,6 +1173,20 @@ const App: React.FC = () => {
             <motion.div key="collection" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}>
               <CollectionCenter 
                 groups={groups} 
+                stats={stats} 
+                onUpdateStats={handleUpdateStats}
+                onReward={(xp, coins) => {
+                  handleReward(xp, coins);
+                  audio.playCoin();
+                }}
+                onClose={() => handleNavigate('HOME')} 
+              />
+            </motion.div>
+          )}
+
+          {view === 'PHONICS' && (
+            <motion.div key="phonics" initial={{ opacity: 0, y: 15 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: 15 }}>
+              <PhonicsArena 
                 stats={stats} 
                 onUpdateStats={handleUpdateStats}
                 onReward={(xp, coins) => {

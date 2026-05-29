@@ -479,6 +479,37 @@ const HomePage: React.FC<HomePageProps> = ({ stats, groups, reviewNeeded, onNavi
             启阅秘卡 📖
           </span>
         </motion.button>
+
+        {/* Portal F: Phonics Training Arena (Full Width / Epic Portal with gold trim) */}
+        <motion.button 
+          whileHover={{ scale: 1.015, y: -1 }}
+          whileTap={{ scale: 0.985 }}
+          onClick={() => {
+            try { audio.playClick(); } catch(e){}
+            onNavigate('PHONICS');
+          }} 
+          className="col-span-2 p-5 bg-gradient-to-r from-[#ffe4e6] via-white to-[#fff2e8] border-2 border-amber-300 border-b-[6px] border-amber-500 rounded-3xl text-left relative overflow-hidden group flex items-center justify-between cursor-pointer shadow-sm active:border-b-[2px] active:translate-y-[4px]"
+        >
+          <div className="absolute inset-y-0 right-0 w-[40%] bg-gradient-to-l from-amber-500/5 to-transparent pointer-events-none" />
+          
+          <div className="flex items-center space-x-4 relative z-10 min-w-0">
+            <div className="bg-gradient-to-r from-amber-400 via-rose-300 to-orange-350 w-12 h-12 rounded-2xl flex items-center justify-center shadow-sm">
+              <Zap className="text-amber-950 w-6 h-6 stroke-[3]" />
+            </div>
+            <div className="min-w-0 text-left">
+              <h3 className="font-black text-amber-950 text-lg sm:text-[21.5px] leading-none flex items-center gap-2">
+                <span>倍速自然拼读 · 声音修炼场</span>
+                <span className="bg-amber-100 text-amber-800 text-[11px] sm:text-xs font-black px-2 py-0.5 rounded border border-amber-200">特训</span>
+              </h3>
+              <p className="text-base sm:text-[17px] font-bold text-amber-800 mt-2.5 leading-none">
+                解锁经典发音口诀，和鸣大声唱 🗣️
+              </p>
+            </div>
+          </div>
+          <span className="text-sm sm:text-base bg-white border border-amber-250 text-amber-950 font-black px-4.5 py-3 rounded-2xl group-hover:bg-[#fca5a5] group-hover:text-amber-950 group-hover:border-transparent transition-all shrink-0 shadow-xs relative z-10">
+            进入特训 🛡️
+          </span>
+        </motion.button>
       </div>
 
       {/* IMMERSIVE RPG ATTRIBUTE / INVENTORY SHEET OVERLAY MODAL */}
