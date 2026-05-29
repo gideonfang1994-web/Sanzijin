@@ -42,7 +42,52 @@ const PetPage: React.FC<PetPageProps> = ({ stats, onUpdateStats, onNavigate, onC
   const [message, setMessage] = useState<string | null>(null);
   const [flyingFoods, setFlyingFoods] = useState<{ id: string; emoji: string; x: number; y: number }[]>([]);
 
+  // Selected training map state
+  const [selectedMapId, setSelectedMapId] = useState<'meadow' | 'canyon' | 'abyss'>('meadow');
+
+  // Interactive Rock-Paper-Scissors states for Play tab
+  const [playerChoice, setPlayerChoice] = useState<'ROCK' | 'PAPER' | 'SCISSORS' | null>(null);
+  const [petChoice, setPetChoice] = useState<'ROCK' | 'PAPER' | 'SCISSORS' | null>(null);
+  const [gameResult, setGameResult] = useState<string | null>(null);
+  const [isShaking, setIsShaking] = useState(false);
+  const [petSpeech, setPetSpeech] = useState<string | null>(null);
+
   const activePet = stats.pets[selectedPetIndex];
+
+  useEffect(() => {
+    if (activePet) {
+      const greets: Record<string, string> = {
+        DRAGON: "吼！我是尊贵的契约魔龙，快来和我探讨生词、提升战力吧！🔥",
+        CAT: "喵呜~ 愚蠢的人类... 噢不，亲爱的主人，快在背单词之余喂喂我！🐱",
+        OWL: "咕咕！学者，我的智慧之眼与你同在，准备好开启特训了吗？🦉",
+        SLIME: "咕噜咕噜~ 软萌的史莱姆向你问好，戳一戳我超解压！🍮"
+      };
+      setPetSpeech(greets[activePet.type] || "咕嘟咕嘟，准备好特训和喂食了吗？✨");
+    }
+  }, [selectedPetIndex, activePet?.type]);
+
+  const handlePetClick = () => {
+    if (!activePet || activePet.isDead) return;
+    try { audio.playClick(); } catch (e) {}
+    
+    const speechArray = PET_SPEECHES[activePet.type] || ["来和我玩儿吧~ ✨"];
+    const randomSpeech = speechArray[Math.floor(Math.random() * speechArray.length)];
+    setPetSpeech(randomSpeech);
+    
+    onUpdateStats(prev => {
+      const newPets = [...prev.pets];
+      const pet = { ...newPets[selectedPetIndex] };
+      pet.happiness = Math.min(100, pet.happiness + 3);
+      newPets[selectedPetIndex] = pet;
+      return { ...prev, pets: newPets };
+    });
+
+    confetti({
+      particleCount: 15,
+      spread: 40,
+      origin: { y: 0.6 }
+    });
+  };
 
   const petSizeMultiplier = activePet 
     ? (1 + (activePet.level - 1) * 0.05 + (activePet.health / activePet.maxHealth) * 0.12)
@@ -74,41 +119,11 @@ const PetPage: React.FC<PetPageProps> = ({ stats, onUpdateStats, onNavigate, onC
       "咕噜咕噜~ 戳我肚肚一下！Duangduang的冰凉十足！🍮",
       "主人听我唱歌：咕嘟咕嘟，七彩气泡升起咯！🫧",
       "我是全林最乖、最听话的可爱魔药史莱姆！💖",
-      "咕... 觉得疲惫的话，我能帮你做庄园净化spa哦！🧼",
-      "我的胃空荡荡的，想喝生命灵药啦，带人家去买买嘛！🧪"
+      "咕... 觉得疲惫的话，我能帮你做庄园净化哦！🧙‍♂️"
     ]
   };
 
-  const [petSpeech, setPetSpeech] = useState<string | null>(null);
-
-  // Set initial pet speech
-  useEffect(() => {
-    if (!activePet) return;
-    if (activePet.isDead) {
-      setPetSpeech("（回到了星空中，变成遥远灿烂的一颗星... 👻）");
-      return;
-    }
-    const speeches = PET_SPEECHES[activePet.type] || ["咕噜咕噜！今天一起冒险呀！"];
-    setPetSpeech(speeches[0]);
-  }, [selectedPetIndex, activePet?.id]);
-
-  // Handle clicking on pet
-  const handlePetClick = () => {
-    if (!activePet || activePet.isDead) return;
-    audio.playPop();
-    const speeches = PET_SPEECHES[activePet.type] || ["咕噜咕噜！今天一起冒险呀！"];
-    const rand = Math.floor(Math.random() * speeches.length);
-    setPetSpeech(speeches[rand]);
-    // heart effect
-    confetti({
-      particleCount: 15,
-      spread: 40,
-      origin: { y: 0.45, x: 0.5 },
-      colors: ['#FF6B6B', '#FF8E8E', '#FFB7B7']
-    });
-  };
-
-  // 1. Feeding Care Method
+  // 1. Feeding Care Method with Crit delicious bonus!
   const handleFeed = (food: ShopItem) => {
     if (!activePet || activePet.isDead || isFeeding || isTraining) return;
     if (stats.magicCoins < food.price) {
@@ -138,30 +153,40 @@ const PetPage: React.FC<PetPageProps> = ({ stats, onUpdateStats, onNavigate, onC
     setFlyingFoods(newFlyingFoods);
     
     setTimeout(() => {
+      const isCrit = Math.random() < 0.35; // 35% delicious crit!
+      const finalHeal = Math.round((food.foodValue || 0) * (isCrit ? 1.5 : 1.0));
+      const coinsBack = isCrit ? 15 : 0;
+
       onUpdateStats(prev => {
         const newPets = [...prev.pets];
         const pet = { ...newPets[selectedPetIndex] };
-        pet.health = Math.min(pet.maxHealth, pet.health + (food.foodValue || 0));
-        pet.happiness = Math.min(100, pet.happiness + 8);
+        pet.health = Math.min(pet.maxHealth, pet.health + finalHeal);
+        pet.happiness = Math.min(100, pet.happiness + (isCrit ? 16 : 8));
         pet.lastFed = Date.now();
         newPets[selectedPetIndex] = pet;
 
         return {
           ...prev,
-          magicCoins: prev.magicCoins - food.price,
+          magicCoins: prev.magicCoins - food.price + coinsBack,
           pets: newPets
         };
       });
       setIsFeeding(false);
       setFlyingFoods([]);
       audio.playSuccess();
+      
       confetti({
-        particleCount: 50,
-        spread: 60,
+        particleCount: isCrit ? 80 : 50,
+        spread: isCrit ? 90 : 60,
         origin: { y: 0.5, x: 0.5 },
-        colors: ['#FFD93D', '#6BCB77', '#FF8E8E']
+        colors: isCrit ? ['#FFD700', '#FF8E8E', '#4ADE80', '#F472B6'] : ['#FFD93D', '#6BCB77', '#FF8E8E']
       });
-      setPetSpeech("嗝~ 真香！我感觉又长大了一圈，元气和魔力源源不断！🍎💖");
+
+      if (isCrit) {
+        setPetSpeech(`🎉【神级美味暴击！】「${food.name}」绝顶美味，散发出契约魔法微光！体力超量恢复 +${finalHeal}！心情好爆！还在盘子底下刨出宠兽藏的 15 🪙 金币！✨😋💖`);
+      } else {
+        setPetSpeech(`嗝~ 真香！我感觉又长大了一圈，恢复了 ${finalHeal} 点生命，体力元气满满！🍎💖`);
+      }
     }, 1200);
   };
 
@@ -178,7 +203,7 @@ const PetPage: React.FC<PetPageProps> = ({ stats, onUpdateStats, onNavigate, onC
       return { ...prev, pets: newPets };
     });
     
-    setPetSpeech("哈哈！好痒呀，主人最疼我啦！快乐值瞬间拉满！🥰🎈");
+    setPetSpeech("哈哈！好痒呀，等一下要不要和我猜拳玩嘛？快乐瞬间上涨！🥰🎈");
     confetti({
       particleCount: 25,
       spread: 60,
@@ -187,12 +212,93 @@ const PetPage: React.FC<PetPageProps> = ({ stats, onUpdateStats, onNavigate, onC
     });
   };
 
-  // 3. Forest Special Training Game Simulation
+  // Interactive Rock-Paper-Scissors action
+  const handleRPS = (choice: 'ROCK' | 'PAPER' | 'SCISSORS') => {
+    if (!activePet || activePet.isDead || isShaking || isFeeding || isTraining) return;
+    audio.playClick();
+    setPlayerChoice(choice);
+    setIsShaking(true);
+    setGameResult(null);
+    setPetChoice(null);
+
+    const choices: ('ROCK' | 'PAPER' | 'SCISSORS')[] = ['ROCK', 'PAPER', 'SCISSORS'];
+    const pChoice = choices[Math.floor(Math.random() * 3)];
+
+    setTimeout(() => {
+      setPetChoice(pChoice);
+      setIsShaking(false);
+
+      let result: 'WIN' | 'DRAW' | 'LOSE';
+      if (choice === pChoice) {
+        result = 'DRAW';
+      } else if (
+        (choice === 'ROCK' && pChoice === 'SCISSORS') ||
+        (choice === 'PAPER' && pChoice === 'ROCK') ||
+        (choice === 'SCISSORS' && pChoice === 'PAPER')
+      ) {
+        result = 'WIN';
+      } else {
+        result = 'LOSE';
+      }
+
+      onUpdateStats(prev => {
+        const newPets = [...prev.pets];
+        const pet = { ...newPets[selectedPetIndex] };
+        
+        let coinsBonus = 0;
+        if (result === 'WIN') {
+          pet.happiness = Math.min(100, pet.happiness + 25);
+          coinsBonus = 10; // Pet rewards 10 coins!
+          setGameResult('WIN');
+          setPetSpeech(`🎉 哇！主人出了「${choice === 'ROCK' ? '✊ 石头' : choice === 'PAPER' ? '🖐️ 布' : '✌️ 剪刀'}」，我出了「${pChoice === 'ROCK' ? '✊ 石头' : pChoice === 'PAPER' ? '🖐️ 布' : '✌️ 剪刀'}」，猜拳完胜我！奉上 10 🪙 私房金币，主人赛高！💖🌟`);
+        } else if (result === 'DRAW') {
+          pet.happiness = Math.min(100, pet.happiness + 15);
+          setGameResult('DRAW');
+          setPetSpeech(`✨ 双生默契！我都出「${pChoice === 'ROCK' ? '✊ 石头' : pChoice === 'PAPER' ? '🖐️ 布' : '✌️ 剪刀'}」，这叫契约神兽的量子幽灵感应！🍎`);
+        } else {
+          pet.happiness = Math.min(100, pet.happiness + 12);
+          setGameResult('LOSE');
+          setPetSpeech(`🤪 耶~ 胜利啦！我出了「${pChoice === 'ROCK' ? '✊ 石头' : pChoice === 'PAPER' ? '🖐️ 布' : '✌️ 剪刀'}」，主人下次要看准哦，抱抱摸摸一下！✨`);
+        }
+
+        newPets[selectedPetIndex] = pet;
+        return {
+          ...prev,
+          magicCoins: prev.magicCoins + coinsBonus,
+          pets: newPets
+        };
+      });
+
+      audio.playSuccess();
+      confetti({
+        particleCount: result === 'WIN' ? 45 : 20,
+        spread: 50,
+        origin: { y: 0.6 }
+      });
+    }, 800);
+  };
+
+  // 3. Forest Special Training Game Simulation with chosen maps
   const handleTrainPet = () => {
     if (!activePet || activePet.isDead || isFeeding || isTraining) return;
-    if (stats.magicCoins < 15) {
+
+    // Define chosen map values
+    const mapConfig = {
+      meadow: { cost: 15, xp: 35, fatigue: 6, maxLoot: 42, name: '🌲 暮光单词草甸' },
+      canyon: { cost: 30, xp: 80, fatigue: 15, maxLoot: 85, name: '🌋 雷炎重难峡谷' },
+      abyss: { cost: 50, xp: 150, fatigue: 26, maxLoot: 145, name: '🌌 雅思托福深渊' }
+    }[selectedMapId];
+
+    if (stats.magicCoins < mapConfig.cost) {
       audio.playError();
-      setMessage('特训魔源金币不足 (需要 15 🪙)！');
+      setMessage(`金币不足！探索需要 ${mapConfig.cost} 🪙`);
+      setTimeout(() => setMessage(null), 2000);
+      return;
+    }
+
+    if (activePet.health <= mapConfig.fatigue) {
+      audio.playError();
+      setMessage(`宠兽体力过低！需要生命 HP > ${mapConfig.fatigue}`);
       setTimeout(() => setMessage(null), 2000);
       return;
     }
@@ -200,30 +306,35 @@ const PetPage: React.FC<PetPageProps> = ({ stats, onUpdateStats, onNavigate, onC
     setIsTraining(true);
     audio.playClick();
     
-    const logs = [
-      "正在带上行囊进入暮光单词森林... 🌲🦌",
-      "遇到野生重读小恶魔！正在进行音标法对抗... 💥",
-      "拼读狂飙！用连贯的拼法顺利破解了守护石碑！🔮",
-      "击溃怪物！正在搜括森林遗迹里的魔力黄金圣器... 🎁"
+    // Choose custom combat/adventure texts based on map and pet type
+    const battleLogs = [
+      `🤺【启程探索】携带能量干粮，带上行囊进入 「${mapConfig.name}」！`,
+      `🦁 契约兽 「${activePet.name}」 发现守护词兽，张口释放本源大招！`,
+      `💥 重难点拼写魔法激荡！疯狂抗衡英标、音调陷阱！`,
+      `🏆 怪物溃退！在落叶石碑底掏出金光闪闪的宝藏钱袋！`
     ];
 
-    setTrainingLog(logs[0]);
-    
-    setTimeout(() => setTrainingLog(logs[1]), 800);
-    setTimeout(() => setTrainingLog(logs[2]), 1600);
-    setTimeout(() => setTrainingLog(logs[3]), 2400);
+    setTrainingLog(battleLogs[0]);
+    setTimeout(() => setTrainingLog(battleLogs[1]), 800);
+    setTimeout(() => setTrainingLog(battleLogs[2]), 1600);
+    setTimeout(() => setTrainingLog(battleLogs[3]), 2450);
 
     setTimeout(() => {
+      // Calculate loot rewards
+      const costAmount = mapConfig.cost;
+      const minLoot = Math.floor(costAmount * 1.25);
+      const lootedCoins = minLoot + Math.floor(Math.random() * (mapConfig.maxLoot - minLoot + 1));
+
       onUpdateStats(prev => {
         const newPets = [...prev.pets];
         const pet = { ...newPets[selectedPetIndex] };
         
         let currentXp = (pet as any).xp || 0;
         let pLevel = pet.level;
-        let nextXp = currentXp + 35;
+        let nextXp = currentXp + mapConfig.xp;
         let didLeveledUp = false;
         
-        if (nextXp >= 100) {
+        while (nextXp >= 100) {
           pLevel += 1;
           nextXp -= 100;
           didLeveledUp = true;
@@ -231,18 +342,16 @@ const PetPage: React.FC<PetPageProps> = ({ stats, onUpdateStats, onNavigate, onC
         
         pet.level = pLevel;
         (pet as any).xp = nextXp;
-        pet.happiness = Math.min(100, pet.happiness + 10);
-        pet.health = Math.max(15, pet.health - 6); // consume fatigueness
+        pet.happiness = Math.min(100, pet.happiness + 12);
+        pet.health = Math.max(1, pet.health - mapConfig.fatigue); // consume weight
         newPets[selectedPetIndex] = pet;
-
-        const lootedCoins = 22 + Math.floor(Math.random() * 20); // random loot gold 22-42
 
         if (didLeveledUp) {
           setTimeout(() => {
             audio.playLevelUp();
             confetti({
               particleCount: 120,
-              spread: 80,
+              spread: 85,
               origin: { y: 0.45 },
               colors: ['#FFD93D', '#38BDF8', '#4ADE80', '#A855F7']
             });
@@ -251,7 +360,7 @@ const PetPage: React.FC<PetPageProps> = ({ stats, onUpdateStats, onNavigate, onC
 
         return {
           ...prev,
-          magicCoins: prev.magicCoins - 15 + lootedCoins,
+          magicCoins: prev.magicCoins - costAmount + lootedCoins,
           pets: newPets
         };
       });
@@ -259,45 +368,74 @@ const PetPage: React.FC<PetPageProps> = ({ stats, onUpdateStats, onNavigate, onC
       setIsTraining(false);
       audio.playCheer();
       confetti({
-        particleCount: 30,
+        particleCount: 40,
         spread: 60,
         origin: { y: 0.7 }
       });
       
-      const bootGolds = 22 + Math.floor(Math.random() * 20); // reference
-      setPetSpeech(`呼~ 历练打怪回来啦！等级经验狂升，还给主人捎回了魔法金币！⚔️💎`);
+      setPetSpeech(`呼~ 从「${mapConfig.name}」凯旋而退！我的历练等级暴增，还给主人捎回了 ${lootedCoins} 🪙 闪金！⚔️💎`);
     }, 3200);
   };
 
-  // 4. Clean Sanctuary Method
-  const handleCleanSanctuary = () => {
+  // 4. Clean Sanctuary Method using Pet active skills!
+  const handleCleanSanctuary = (isSkillClean: boolean) => {
     if (!activePet || activePet.isDead || isFeeding || isTraining) return;
-    if (stats.magicCoins < 10) {
+    
+    const cost = isSkillClean ? 20 : 10;
+    const healVal = isSkillClean ? 55 : 20;
+
+    if (stats.magicCoins < cost) {
       audio.playError();
-      setMessage('打扫资金不足 (需要 10 🪙)！');
+      setMessage(`金币不足！打扫费需要 ${cost} 🪙`);
       setTimeout(() => setMessage(null), 2000);
       return;
     }
 
     audio.playEquip();
+
+    const doubleBonusChance = Math.random() < 0.35; // 35% chance to find a bookmark
+    const bonusGold = doubleBonusChance ? 18 : 0;
+
     onUpdateStats(prev => {
       const newPets = [...prev.pets];
       const pet = { ...newPets[selectedPetIndex] };
-      pet.health = Math.min(pet.maxHealth, pet.health + 20);
+      pet.health = Math.min(pet.maxHealth, pet.health + healVal);
+      pet.happiness = Math.min(100, pet.happiness + (isSkillClean ? 15 : 6));
       newPets[selectedPetIndex] = pet;
       return {
         ...prev,
-        magicCoins: prev.magicCoins - 10,
+        magicCoins: prev.magicCoins - cost + bonusGold,
         pets: newPets
       };
     });
 
-    setPetSpeech("哗！好干净，异味和浮沉被清空啦！整个宠兽屋都充满了栀子花的香气！🍃🧼");
+    const skillNames = {
+      DRAGON: '🔥【羽翼圣星明炎火化】',
+      CAT: '🐾【梦幻肉垫粉红芳香踩奶】',
+      OWL: '🦉【智慧之眼龙卷风飓风净化】',
+      SLIME: '🧼【全浸润史莱姆吞噬微粒】'
+    };
+    const activeSkillName = skillNames[activePet.type] || '✨【宠兽净化气旋】';
+
+    if (isSkillClean) {
+      if (doubleBonusChance) {
+        setPetSpeech(`哇！施展净化奥义 ${activeSkillName}，房间一尘不染！生命恢复 +${healVal}！还在缝隙里找到一张遗忘金色书签，折现奖励 +${bonusGold} 🪙！🐾🧼✨`);
+      } else {
+        setPetSpeech(`哈！施发大招 ${activeSkillName} 卷走万千浮尘，连墙角也闪闪发亮了！魔力生命极其丰厚加持 +${healVal}！💨🌟`);
+      }
+    } else {
+      if (doubleBonusChance) {
+        setPetSpeech(`拂去几缕凡尘！宠兽屋干净了不少，体力 +${healVal}！打扫中意外捡到落叶古币袋，星星币增加 +18 🪙！🍒`);
+      } else {
+        setPetSpeech(`呼！简单拂尘清扫毕！浮灰退散，栀子花清风扑面而来，舒展舒适！🧼🍃`);
+      }
+    }
+
     confetti({
-      particleCount: 20,
-      angle: 60,
-      spread: 40,
-      colors: ['#34D399', '#6EE7B7']
+      particleCount: isSkillClean ? 45 : 20,
+      angle: 90,
+      spread: 50,
+      colors: isSkillClean ? ['#38BDF8', '#34D399', '#FB7185'] : ['#34D399', '#A7F3D0']
     });
   };
 
@@ -577,14 +715,14 @@ const PetPage: React.FC<PetPageProps> = ({ stats, onUpdateStats, onNavigate, onC
                 </div>
 
                 {/* Highly Polished Statistics Gauges */}
-                <div className="space-y-3 pt-2">
+                <div className="space-y-4 pt-4">
                   {/* Vitality (HP) Progress Gauge */}
-                  <div className="bg-[#fcfdfa] p-3 rounded-2xl border border-slate-100 shadow-sm">
-                    <div className="flex justify-between items-center text-[10px] font-black uppercase tracking-wider mb-1 px-1">
-                      <span className="text-rose-500 flex items-center font-bold">❤️ 生命魔元 (Vitality)</span>
+                  <div className="bg-[#fcfdfa] p-4 rounded-3xl border border-slate-150 shadow-sm">
+                    <div className="flex justify-between items-center text-[20px] font-black uppercase tracking-wider mb-2 px-1">
+                      <span className="text-rose-500 flex items-center font-black">❤️ 生命魔元 (VITALITY)</span>
                       <span className="text-rose-600 font-extrabold">{activePet.health}/{activePet.maxHealth}</span>
                     </div>
-                    <div className="h-3 bg-rose-50 rounded-full overflow-hidden p-0.5 border border-rose-100/50">
+                    <div className="h-6 bg-rose-50 rounded-full overflow-hidden p-1 border border-rose-100/50">
                       <motion.div 
                         initial={{ width: 0 }}
                         animate={{ width: `${(activePet.health / activePet.maxHealth) * 100}%` }}
@@ -594,12 +732,12 @@ const PetPage: React.FC<PetPageProps> = ({ stats, onUpdateStats, onNavigate, onC
                   </div>
 
                   {/* Aura (Happiness) Progress Gauge */}
-                  <div className="bg-[#fcfdfa] p-3 rounded-2xl border border-slate-100 shadow-sm">
-                    <div className="flex justify-between items-center text-[10px] font-black uppercase tracking-wider mb-1 px-1">
-                      <span className="text-amber-500 flex items-center font-bold">✨ 心灵愉悦 (Aura / SOL)</span>
+                  <div className="bg-[#fcfdfa] p-4 rounded-3xl border border-slate-150 shadow-sm">
+                    <div className="flex justify-between items-center text-[20px] font-black uppercase tracking-wider mb-2 px-1">
+                      <span className="text-amber-500 flex items-center font-black">✨ 心灵愉悦 (AURA / SOL)</span>
                       <span className="text-amber-600 font-extrabold">{activePet.happiness}/100</span>
                     </div>
-                    <div className="h-3 bg-amber-50 rounded-full overflow-hidden p-0.5 border border-amber-100/40">
+                    <div className="h-6 bg-amber-50 rounded-full overflow-hidden p-1 border border-amber-100/40">
                       <motion.div 
                         initial={{ width: 0 }}
                         animate={{ width: `${activePet.happiness}%` }}
@@ -609,12 +747,12 @@ const PetPage: React.FC<PetPageProps> = ({ stats, onUpdateStats, onNavigate, onC
                   </div>
 
                   {/* Level Progression (XP) Progress Gauge */}
-                  <div className="bg-[#fcfdfa] p-3 rounded-2xl border border-slate-100 shadow-sm">
-                    <div className="flex justify-between items-center text-[10px] font-black uppercase tracking-wider mb-1 px-1">
-                      <span className="text-[#3b82f6] flex items-center font-bold">🎓 特训经验 (Progression XP)</span>
+                  <div className="bg-[#fcfdfa] p-4 rounded-3xl border border-slate-150 shadow-sm">
+                    <div className="flex justify-between items-center text-[20px] font-black uppercase tracking-wider mb-2 px-1">
+                      <span className="text-[#3b82f6] flex items-center font-black">🎓 特训经验 (PROGRESSION XP)</span>
                       <span className="text-[#3b82f6] font-extrabold">{((activePet as any).xp || 0)}/100</span>
                     </div>
-                    <div className="h-3 bg-blue-50 rounded-full overflow-hidden p-0.5 border border-blue-100/40">
+                    <div className="h-6 bg-blue-50 rounded-full overflow-hidden p-1 border border-blue-100/40">
                       <motion.div 
                         initial={{ width: 0 }}
                         animate={{ width: `${((activePet as any).xp || 0)}%` }}
@@ -663,70 +801,71 @@ const PetPage: React.FC<PetPageProps> = ({ stats, onUpdateStats, onNavigate, onC
 
             {/* Interactive care console controller */}
             {!activePet.isDead && (
-              <div className="space-y-3">
+              <div className="space-y-4">
                 {/* Console controller header navigation tabs */}
-                <div className="flex bg-slate-100 p-1.5 rounded-2xl gap-1 border border-slate-250 shadow-inner">
+                <div className="flex bg-[#f1f5f9] p-2 rounded-[24px] gap-2 border border-slate-200/80 shadow-md">
                   <button 
                     onClick={() => { audio.playClick(); setActiveConsoleTab('FEED'); }}
-                    className={`flex-1 py-2 rounded-xl font-black text-[10px] transition-all flex flex-col items-center justify-center ${activeConsoleTab === 'FEED' ? 'bg-white text-[#115e59] shadow' : 'text-slate-500 hover:text-slate-800'}`}
+                    className={`flex-1 py-4 rounded-2xl font-black text-[18px] transition-all flex flex-col items-center justify-center ${activeConsoleTab === 'FEED' ? 'bg-white text-emerald-800 shadow-md border border-emerald-100' : 'text-slate-500 hover:text-slate-800'}`}
                   >
-                    <Utensils size={13} className="mb-0.5 text-emerald-600" />
+                    <Utensils size={26} className="mb-1 text-emerald-600 font-bold" />
                     <span>喂食滋养</span>
                   </button>
                   <button 
                     onClick={() => { audio.playClick(); setActiveConsoleTab('PLAY'); }}
-                    className={`flex-1 py-2 rounded-xl font-black text-[10px] transition-all flex flex-col items-center justify-center ${activeConsoleTab === 'PLAY' ? 'bg-white text-[#115e59] shadow' : 'text-slate-500 hover:text-slate-800'}`}
+                    className={`flex-1 py-4 rounded-2xl font-black text-[18px] transition-all flex flex-col items-center justify-center ${activeConsoleTab === 'PLAY' ? 'bg-white text-emerald-800 shadow-md border border-emerald-100' : 'text-slate-500 hover:text-slate-800'}`}
                   >
-                    <Gamepad2 size={13} className="mb-0.5 text-amber-500" />
+                    <Gamepad2 size={26} className="mb-1 text-amber-500 font-bold" />
                     <span>陪伴抚摸</span>
                   </button>
                   <button 
                     onClick={() => { audio.playClick(); setActiveConsoleTab('TRAIN'); }}
-                    className={`flex-1 py-2 rounded-xl font-black text-[10px] transition-all flex flex-col items-center justify-center ${activeConsoleTab === 'TRAIN' ? 'bg-white text-[#115e59] shadow' : 'text-slate-500 hover:text-slate-800'}`}
+                    className={`flex-1 py-4 rounded-2xl font-black text-[18px] transition-all flex flex-col items-center justify-center ${activeConsoleTab === 'TRAIN' ? 'bg-white text-emerald-800 shadow-md border border-emerald-100' : 'text-slate-500 hover:text-slate-800'}`}
                   >
-                    <Sword size={13} className="mb-0.5 text-[#3b82f6]" />
+                    <Sword size={26} className="mb-1 text-sky-500 font-bold" />
                     <span>特训战斗</span>
                   </button>
                   <button 
                     onClick={() => { audio.playClick(); setActiveConsoleTab('CLEAN'); }}
-                    className={`flex-1 py-2 rounded-xl font-black text-[10px] transition-all flex flex-col items-center justify-center ${activeConsoleTab === 'CLEAN' ? 'bg-white text-[#115e59] shadow' : 'text-slate-500 hover:text-slate-800'}`}
+                    className={`flex-1 py-4 rounded-2xl font-black text-[18px] transition-all flex flex-col items-center justify-center ${activeConsoleTab === 'CLEAN' ? 'bg-white text-emerald-800 shadow-md border border-emerald-100' : 'text-slate-500 hover:text-slate-800'}`}
                   >
-                    <Sparkles size={13} className="mb-0.5 text-emerald-500" />
+                    <Sparkles size={26} className="mb-1 text-teal-500 font-bold" />
                     <span>庄园清扫</span>
                   </button>
                 </div>
 
                 {/* Console display area */}
-                <div className="bg-white rounded-[32px] p-4 border border-slate-50 shadow-md">
+                <div className="bg-white rounded-[32px] p-5 border border-slate-100 shadow-lg">
                   {/* FEED TAB DISPLAY */}
                   {activeConsoleTab === 'FEED' && (
-                    <div className="space-y-3">
-                      <div className="flex items-center justify-between">
-                        <h4 className="font-extrabold text-emerald-950 text-xs flex items-center gap-1">
+                    <div className="space-y-4">
+                      <div className="flex items-center justify-between border-b pb-2.5 border-slate-100">
+                        <h4 className="font-extrabold text-emerald-950 text-[18px] flex items-center gap-2">
                           <span>🍔 魔法金币余额:</span>
-                          <span className="text-emerald-700 font-black">{stats.magicCoins} 🪙</span>
+                          <span className="text-amber-500 font-black text-[22px] drop-shadow-sm">{stats.magicCoins} 🪙</span>
                         </h4>
-                        <span className="text-[9px] font-bold text-slate-400 uppercase tracking-widest">Feed Pantry</span>
+                        <span className="text-[14px] font-black text-slate-400 uppercase tracking-widest">FEED PANTRY</span>
                       </div>
 
-                      <div className="grid grid-cols-1 gap-2.5">
+                      <div className="grid grid-cols-1 gap-3.5">
                         {FOOD_ITEMS.map(food => (
                           <button
                             key={food.id}
                             onClick={() => handleFeed(food)}
-                            className="w-full bg-slate-50 p-3 rounded-2xl border border-slate-100 hover:border-emerald-200 transition-all flex items-center justify-between group cursor-pointer active:bg-emerald-50/40"
+                            className="w-full bg-slate-50 p-4 rounded-3xl border border-slate-150 hover:border-emerald-300 transition-all flex items-center justify-between group cursor-pointer active:bg-emerald-100/30"
                           >
-                            <div className="flex items-center space-x-2.5 text-left">
-                              <div className="w-10 h-10 bg-white rounded-xl flex items-center justify-center text-lg border border-slate-100 shadow-sm shrink-0">
+                            <div className="flex items-center space-x-4 text-left">
+                              <div className="w-16 h-16 bg-white rounded-2xl flex items-center justify-center text-3xl border border-slate-100 shadow-sm shrink-0">
                                 {food.id === 'food_apple' ? '🍎' : food.id === 'food_meat' ? '🍖' : '🧪'}
                               </div>
                               <div>
-                                <p className="font-extrabold text-[#064e3b] text-xs">{food.name}</p>
-                                <p className="text-[9px] text-slate-400 font-semibold">{food.description}</p>
+                                <p className="font-black text-[#022c22] text-[20px]">{food.name}</p>
+                                <p className="text-[14px] text-slate-500 font-bold mt-0.5">{food.description}</p>
                               </div>
                             </div>
-                            <div className="bg-[#059669] text-white px-3 py-1.5 rounded-xl font-extrabold text-[11px] shadow">
-                              {food.price} 🪙
+                            <div className="bg-[#059669] text-white px-5 py-2.5 rounded-2xl font-black text-[18px] shadow-sm flex items-center gap-1 hover:bg-[#047857]">
+                              <span>{food.price}</span>
+                              <span className="text-[16px]">🪙</span>
                             </div>
                           </button>
                         ))}
@@ -736,58 +875,224 @@ const PetPage: React.FC<PetPageProps> = ({ stats, onUpdateStats, onNavigate, onC
 
                   {/* PLAY TAB DISPLAY */}
                   {activeConsoleTab === 'PLAY' && (
-                    <div className="text-center py-2 space-y-3">
-                      <p className="text-[11px] text-[#064e3b] leading-relaxed font-bold">
-                        不需要消耗金币！你可以拨弄抚摸它以使它开心。心灵愉悦值越高，战斗力增益越突出哦！💖
+                    <div className="text-center py-2 space-y-4">
+                      <p className="text-[15px] text-[#064e3b] leading-relaxed font-extrabold px-1">
+                        不需要消耗金币！你可以亲密抚摸它以使它开心。心灵愉悦值越高，契约兽的战斗力就越突出哦！💖
                       </p>
+                      
                       <button
                         onClick={handlePlayWithPet}
-                        className="w-full bg-gradient-to-r from-pink-400 to-rose-500 text-white font-extrabold py-3.5 rounded-2xl shadow flex items-center justify-center space-x-2 text-xs cursor-pointer border-b-4 border-rose-700 hover:scale-102 active:scale-97 transition-all"
+                        className="w-full bg-gradient-to-r from-pink-400 to-rose-500 text-white font-black py-4 rounded-2xl shadow-md flex items-center justify-center space-x-2 text-[18px] cursor-pointer border-b-4 border-rose-700 hover:scale-101 active:scale-98 transition-all"
                       >
-                        <span>🧸 亲密抚摸逗逗宠兽</span>
-                        <span>(+15 愉悦度)</span>
+                        <span>🧸 亲密抚摸逗逗宠兽 (+15 愉悦度)</span>
                       </button>
+
+                      <div className="border-t border-slate-100 pt-4 mt-2">
+                        <div className="text-left mb-2.5 px-1 flex justify-between items-center">
+                          <span className="font-extrabold text-[#022c22] text-[16px]">🎮 陪宠兽玩石头剪刀布</span>
+                          <span className="text-[12px] bg-amber-100 text-amber-800 px-2.5 py-0.5 rounded-full font-black">免费玩 • 赢 10 🪙</span>
+                        </div>
+                        
+                        {/* Choice Row */}
+                        <div className="grid grid-cols-3 gap-2">
+                          {(['ROCK', 'PAPER', 'SCISSORS'] as const).map(choice => {
+                            const icons = { ROCK: '✊ 石头', PAPER: '🖐️ 布', SCISSORS: '✌️ 剪刀' };
+                            return (
+                              <button
+                                key={choice}
+                                disabled={isShaking}
+                                onClick={() => handleRPS(choice)}
+                                className={`py-3.5 rounded-xl text-[16px] font-black border-2 transition-all cursor-pointer ${
+                                  playerChoice === choice 
+                                    ? 'bg-amber-500 border-amber-600 text-white shadow-md scale-105' 
+                                    : 'bg-white border-slate-200 text-slate-700 hover:border-amber-300 hover:bg-amber-50/20'
+                                }`}
+                              >
+                                {icons[choice]}
+                              </button>
+                            );
+                          })}
+                        </div>
+
+                        {/* Game Status Block */}
+                        <AnimatePresence mode="wait">
+                          {(isShaking || gameResult) && (
+                            <motion.div
+                              initial={{ opacity: 0, scale: 0.95 }}
+                              animate={{ opacity: 1, scale: 1 }}
+                              exit={{ opacity: 0, scale: 0.95 }}
+                              className="mt-3 bg-slate-50 border border-slate-150 p-4 rounded-2xl space-y-3"
+                            >
+                              {isShaking ? (
+                                <div className="flex flex-col items-center justify-center py-2 space-y-2">
+                                  <div className="text-3xl animate-bounce">✊🖐️✌️</div>
+                                  <p className="text-[14px] font-black text-amber-600 animate-pulse">宠兽咕噜咕噜蓄力猜拳中...</p>
+                                </div>
+                              ) : (
+                                <div className="space-y-2">
+                                  <div className="flex justify-around items-center py-1">
+                                    <div className="text-center">
+                                      <p className="text-[12px] text-slate-400 font-extrabold">你的出拳</p>
+                                      <p className="text-2xl mt-1">
+                                        {playerChoice === 'ROCK' ? '✊ 石头' : playerChoice === 'PAPER' ? '🖐️ 布' : '✌️ 剪刀'}
+                                      </p>
+                                    </div>
+                                    <span className="text-slate-300 font-black text-xs">VS</span>
+                                    <div className="text-center">
+                                      <p className="text-[12px] text-slate-400 font-extrabold">宠兽出拳</p>
+                                      <p className="text-2xl mt-1">
+                                        {petChoice === 'ROCK' ? '✊ 石头' : petChoice === 'PAPER' ? '🖐️ 布' : '✌️ 剪刀'}
+                                      </p>
+                                    </div>
+                                  </div>
+
+                                  <div className="border-t border-slate-200/60 pt-2 text-center">
+                                    {gameResult === 'WIN' && (
+                                      <span className="bg-emerald-100 text-emerald-800 font-black text-[14px] px-3.5 py-1 rounded-full border border-emerald-200">
+                                        🎉 胜出！好心情 +25，赢取了 10 魔法币！
+                                      </span>
+                                    )}
+                                    {gameResult === 'DRAW' && (
+                                      <span className="bg-amber-100 text-amber-800 font-black text-[14px] px-3.5 py-1 rounded-full border border-amber-200">
+                                        📊 平局！心灵默契感应，好心情 +15！
+                                      </span>
+                                    )}
+                                    {gameResult === 'LOSE' && (
+                                      <span className="bg-rose-100 text-rose-800 font-black text-[14px] px-3.5 py-1 rounded-full border border-rose-200">
+                                        😿 惜败！宠兽开心扭臀，好心情 +12！
+                                      </span>
+                                    )}
+                                  </div>
+                                </div>
+                              )}
+                            </motion.div>
+                          )}
+                        </AnimatePresence>
+                      </div>
                     </div>
                   )}
 
                   {/* TRAIN TAB DISPLAY */}
                   {activeConsoleTab === 'TRAIN' && (
-                    <div className="space-y-3 py-1">
-                      <p className="text-[10px] text-slate-500 leading-relaxed font-bold">
-                        开展单词历练。收获极其丰厚的特训经验并捡回巨额魔法金币！
-                      </p>
-                      <div className="bg-emerald-50 p-3 rounded-xl border border-emerald-100 text-[10px] text-[#064e3b] font-bold space-y-1 text-left leading-normal">
-                        <p>🔥 单次魔力特训资费: 15 金币</p>
-                        <p>🎁 特训历练奖励: +35 经验 + 随机 22~42 星星金币掉落</p>
-                        <p>⚠️ 体力消耗: 特训需额外消耗 6 点生命体力 HP</p>
+                    <div className="space-y-3.5 py-1 text-left animate-none">
+                      <div className="flex justify-between items-center mb-1">
+                        <span className="font-extrabold text-[#022c22] text-[16px]">🗺️ 请选择特训历练副本地图</span>
+                        <span className="text-[12px] font-black text-slate-400">SELECT FIELD PORTAL</span>
+                      </div>
+                      
+                      {/* Map Cards list */}
+                      <div className="grid grid-cols-1 gap-2.5">
+                        {(['meadow', 'canyon', 'abyss'] as const).map(mapId => {
+                          const config = {
+                            meadow: { cost: 15, xp: 35, fatigue: 6, rewards: '22~42', name: '🌲 暮光词汇草甸', desc: '微风轻拂，适合轻量词汇练兵与常规历练' },
+                            canyon: { cost: 30, xp: 80, fatigue: 15, rewards: '45~85', name: '🌋 雷炎重难峡谷', desc: '雷电交加，专克重难点和多级拼写陷阱' },
+                            abyss: { cost: 50, xp: 150, fatigue: 26, rewards: '75~145', name: '🌌 雅思托福深渊', desc: '星空旧道，爆肝进阶核心难词，暴增生命精元' }
+                          }[mapId];
+
+                          const isSelected = selectedMapId === mapId;
+
+                          return (
+                            <button
+                              key={mapId}
+                              type="button"
+                              onClick={() => { audio.playClick(); setSelectedMapId(mapId); }}
+                              className={`w-full p-3.5 rounded-2xl border-2 transition-all cursor-pointer text-left block flex flex-col justify-between ${
+                                isSelected 
+                                  ? 'bg-emerald-50/70 border-emerald-500 shadow-sm ring-1 ring-emerald-500/10' 
+                                  : 'bg-white border-slate-200 hover:border-slate-300'
+                              }`}
+                            >
+                              <div className="flex justify-between items-center w-full">
+                                <span className={`text-[16px] font-black ${isSelected ? 'text-emerald-800' : 'text-slate-800'}`}>
+                                  {config.name}
+                                </span>
+                                <span className={`text-[12px] font-black px-2.5 py-0.5 rounded-full ${isSelected ? 'bg-emerald-600 text-white' : 'bg-slate-100 text-slate-600'}`}>
+                                  消耗 {config.cost} 🪙
+                                </span>
+                              </div>
+                              <p className="text-[12px] text-slate-500 font-medium mt-1 leading-normal">{config.desc}</p>
+                              <div className="flex justify-between gap-2 items-center w-full mt-2.5 border-t border-slate-105 pt-2 text-[12px] font-black text-slate-600">
+                                <span className="text-emerald-600 shrink-0">🎓 XP: +{config.xp}</span>
+                                <span className="text-amber-600 shrink-0">🪙 星金: {config.rewards}</span>
+                                <span className="text-rose-500 shrink-0">❤️ 消耗: -{config.fatigue} HP</span>
+                              </div>
+                            </button>
+                          );
+                        })}
                       </div>
 
                       <button
                         onClick={handleTrainPet}
-                        className="w-full bg-gradient-to-r from-emerald-500 to-teal-600 text-white font-extrabold py-3.5 rounded-2xl shadow flex items-center justify-center gap-1 text-xs border-b-4 border-emerald-800 cursor-pointer hover:scale-102 active:scale-97 transition-all animate-none"
+                        className="w-full bg-gradient-to-r from-emerald-500 to-teal-600 text-white font-black py-4 rounded-2xl shadow-md flex items-center justify-center gap-1.5 text-[18px] border-b-4 border-emerald-800 cursor-pointer hover:scale-101 active:scale-98 transition-all animate-none"
                       >
-                        <span>⚔️ 支付 15 金币启动特训 ⚔️</span>
+                        <span>⚔️ 携契约伙伴启动特训 ⚔️</span>
                       </button>
                     </div>
                   )}
 
                   {/* CLEAN TAB DISPLAY */}
                   {activeConsoleTab === 'CLEAN' && (
-                    <div className="space-y-3 py-1">
-                      <p className="text-[10px] text-slate-500 leading-relaxed font-bold text-center">
-                        庄园尘埃可能诱发细菌，这能帮契约兽净化异常，快速补充精气生命值！
+                    <div className="space-y-4 py-1">
+                      <p className="text-[15px] text-slate-500 leading-relaxed font-extrabold text-center">
+                        庄园落灰可能增加异常病兆。打扫除旧可以极速补充生命魔元，消除宠兽疲惫感！
                       </p>
-                      <div className="bg-sky-50 p-3 rounded-xl border border-sky-100 text-[10px] text-sky-850 font-bold space-y-1 text-left leading-normal">
-                        <p>🧼 净化打扫资费: 10 金币</p>
-                        <p>❤️ 净化特享收益: 极速恢复 +20 点精气生命值 HP</p>
-                      </div>
 
-                      <button
-                        onClick={handleCleanSanctuary}
-                        className="w-full bg-gradient-to-r from-sky-400 to-blue-500 text-white font-extrabold py-3.5 rounded-2xl shadow flex items-center justify-center gap-1 text-xs border-b-4 border-blue-700 cursor-pointer hover:scale-102 active:scale-97 transition-all animate-none"
-                      >
-                        <span>🧹 支付 10 金币净化庄园 🧴</span>
-                      </button>
+                      <div className="grid grid-cols-1 gap-3.5">
+                        {/* Option 1: Basic Sweep */}
+                        <div className="bg-slate-50 p-4 rounded-3xl border border-slate-150 flex flex-col justify-between">
+                          <div className="flex justify-between items-center w-full">
+                            <div>
+                              <span className="font-extrabold text-[#022c22] text-[18px]">🧹 基础手动轻扫拂尘</span>
+                              <p className="text-[12px] text-slate-500 font-semibold mt-0.5">简单洗刮，消除污点和表面落叶</p>
+                            </div>
+                            <span className="text-[14px] font-black bg-slate-200 text-slate-700 px-3.5 py-1 rounded-xl shrink-0">10 🪙</span>
+                          </div>
+                          
+                          <div className="flex justify-between items-center text-[12px] font-black text-slate-500 mt-2.5 pb-2.5 border-b border-slate-200/50">
+                            <span className="text-rose-500">❤️ 生命精气恢复: +20 HP</span>
+                            <span className="text-amber-500">✨ 心灵共鸣: +6 愉悦度</span>
+                          </div>
+
+                          <button
+                            onClick={() => handleCleanSanctuary(false)}
+                            className="w-full bg-slate-200 hover:bg-slate-300 text-slate-800 font-extrabold py-3.5 rounded-xl text-[16px] cursor-pointer transition-all active:scale-98 mt-2.5"
+                          >
+                            <span>开始常规手动清扫</span>
+                          </button>
+                        </div>
+
+                        {/* Option 2: Pet Secret Skill Clean */}
+                        <div className="bg-sky-50 p-4 rounded-3xl border-2 border-sky-200 flex flex-col justify-between shadow-sm relative overflow-hidden">
+                          <div className="absolute top-0 right-0 bg-sky-500 text-white font-black text-[9px] px-2.5 py-0.5 rounded-bl-xl uppercase tracking-wider">
+                            宠师绝技
+                          </div>
+                          
+                          <div className="flex justify-between items-center w-full">
+                            <div>
+                              <div className="flex items-center gap-1.5">
+                                <span className="font-black text-sky-950 text-[18px]">🔮 契约奥义大扫除</span>
+                                <span className="text-sky-500 animate-pulse">⚡</span>
+                              </div>
+                              <p className="text-[12px] text-sky-700 font-extrabold mt-0.5">
+                                施展宠兽独特的 {activePet.type === 'DRAGON' ? '【明炎火化】' : activePet.type === 'CAT' ? '【梦幻肉垫踩奶】' : activePet.type === 'OWL' ? '【智慧眼卷风】' : '【全溶解净化】'} 奥义！
+                              </p>
+                            </div>
+                            <span className="text-[14px] font-black bg-sky-600 text-white px-3.5 py-1 rounded-xl shrink-0">20 🪙</span>
+                          </div>
+                          
+                          <div className="flex justify-between items-center text-[12px] font-black text-sky-850 mt-2.5 pb-2.5 border-b border-sky-100">
+                            <span className="text-rose-600">❤️ 极速大额恢复: +55 HP!</span>
+                            <span className="text-amber-600">✨ 心灵愉悦跃升: +15 愉悦度</span>
+                          </div>
+
+                          <button
+                            onClick={() => handleCleanSanctuary(true)}
+                            className="w-full bg-gradient-to-r from-sky-400 to-blue-500 hover:scale-101 text-white font-black py-3.5 rounded-xl text-[16px] cursor-pointer transition-all active:scale-98 border-b-4 border-blue-700 shadow-sm mt-3"
+                          >
+                            <span>释放契约奥义狂风狂洗 💫</span>
+                          </button>
+                        </div>
+                      </div>
                     </div>
                   )}
                 </div>
