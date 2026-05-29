@@ -32,6 +32,29 @@ const FOOD_ITEMS: ShopItem[] = [
   { id: 'food_elixir', name: '生命灵药', description: '恢复 50 点生命值', price: 200, type: 'FOOD', characterId: 'all', slot: 'NONE', foodValue: 50, imageUrl: getShopImageUrl('生命灵药') },
 ];
 
+const TALENT_WORDS: Record<string, { word: string; translation: string; sentence: string; trick: string }[]> = {
+  DRAGON: [
+    { word: "Blazing", translation: "炽热的，闪耀的", sentence: "My blazing fire will melt any vocabulary challenges!", trick: "🔥 喷出七彩魔力龙焰，在半空幻化出漂亮的字母彩虹" },
+    { word: "Majestic", translation: "雄伟的，庄严的", sentence: "Look at my majestic leather wings, ready to fly!", trick: "👑 傲娇地戴上纯金闪亮王冠，并向你威武致意" },
+    { word: "Fierce", translation: "凶猛的，狂热的", sentence: "I roar fiercely but only to protect my favorite master!", trick: "⚡ 震翼咆哮施展龙吟，为你震碎身边一切拼读阻碍" }
+  ],
+  CAT: [
+    { word: "Clandestine", translation: "秘密的，隐秘的", sentence: "I hide my clandestine catnip in your dictionary!", trick: "🐾 隐形瞬移并在沙发垫底下掏出一颗极品小鱼干" },
+    { word: "Mischievous", translation: "顽皮的，淘气的", sentence: "A mischievous little kitty stole your heart and gold!", trick: "🧶 光速扑滚动感大毛线球，最后把自己捆成了一个猫猫粽子" },
+    { word: "Adorable", translation: "可爱的，萌度爆表的", sentence: "They say cats are adorable protectors of memory!", trick: "💖 发起超能歪头粉红杀，用软糯糯的小温爪给你踩奶" }
+  ],
+  OWL: [
+    { word: "Sagacious", translation: "睿智的，敏锐的", sentence: "My sagacious eyes see through all complex prefix rules!", trick: "🦉 戴上古朴的黄金单片镜，睿智点头指引高级前缀词根" },
+    { word: "Erudite", translation: "博学的，饱学深思的", sentence: "An erudite owl who reads dictionaries during midnight!", trick: "📖 用小爪子麻利翻开星空牛皮魔法字典，倒背如流一整页" },
+    { word: "Vigilant", translation: "警觉的，警惕的", sentence: "Be vigilant! Spelling traps are everywhere around you!", trick: "🌀 召唤出一卷温暖的智慧之盾风暴，替你驱散书桌上的瞌睡虫" }
+  ],
+  SLIME: [
+    { word: "Malleable", translation: "可塑的，有弹性的", sentence: "I am completely malleable, squeeze me when you feel tired!", trick: "🍮 随心变身成粉嫩五角星，发出啵啵声，捏起来超级解压" },
+    { word: "Luminous", translation: "发光的，明亮的", sentence: "A luminous slime that guides you through dark study nights!", trick: "🫧 浑身亮起极光水球光泽，变身一盏梦幻的单词小夜灯" },
+    { word: "Vivacious", translation: "活泼的，神采奕奕的", sentence: "Stay vivacious! Word learning is a joyful adventure!", trick: "🌈 在空中搭建出一条蹦跳七彩粘液软虹，为你手舞足蹈" }
+  ]
+};
+
 const PetPage: React.FC<PetPageProps> = ({ stats, onUpdateStats, onNavigate, onClose }) => {
   const [selectedPetIndex, setSelectedPetIndex] = useState(0);
   const [isFeeding, setIsFeeding] = useState(false);
@@ -51,6 +74,8 @@ const PetPage: React.FC<PetPageProps> = ({ stats, onUpdateStats, onNavigate, onC
   const [gameResult, setGameResult] = useState<string | null>(null);
   const [isShaking, setIsShaking] = useState(false);
   const [petSpeech, setPetSpeech] = useState<string | null>(null);
+  const [isTalentedShow, setIsTalentedShow] = useState(false);
+  const [talentWordInfo, setTalentWordInfo] = useState<{ word: string; translation: string; sentence: string; trick: string } | null>(null);
 
   const activePet = stats.pets[selectedPetIndex];
 
@@ -192,7 +217,7 @@ const PetPage: React.FC<PetPageProps> = ({ stats, onUpdateStats, onNavigate, onC
 
   // 2. Playtime Interaction
   const handlePlayWithPet = () => {
-    if (!activePet || activePet.isDead || isFeeding || isTraining) return;
+    if (!activePet || activePet.isDead || isFeeding || isTraining || isTalentedShow) return;
     audio.playSuccess();
     
     onUpdateStats(prev => {
@@ -210,6 +235,56 @@ const PetPage: React.FC<PetPageProps> = ({ stats, onUpdateStats, onNavigate, onC
       origin: { y: 0.7 },
       colors: ['#FF8E8E', '#FFA8E2', '#FFD93D']
     });
+  };
+
+  // 2.5 Pet Talent Show / Inspirational Bilingual Growth Trick
+  const handlePetTalentShow = () => {
+    if (!activePet || activePet.isDead || isTalentedShow || isFeeding || isTraining) return;
+    setIsTalentedShow(true);
+    setTalentWordInfo(null);
+    try { audio.playClick(); } catch (e) {}
+
+    const list = TALENT_WORDS[activePet.type] || TALENT_WORDS.SLIME;
+    const picked = list[Math.floor(Math.random() * list.length)];
+    setTalentWordInfo(picked);
+
+    setPetSpeech(`✨「${activePet.name}」正在努力思索筹备，即将为你大展才艺：\n【${picked.trick}】... 🔮`);
+
+    setTimeout(() => {
+      setIsTalentedShow(false);
+      const coinsGift = Math.random() < 0.45 ? 8 : 0; // 45% chance pet drops 8 gold as gift!
+
+      onUpdateStats(prev => {
+        const newPets = [...prev.pets];
+        const pet = { ...newPets[selectedPetIndex] };
+        pet.happiness = Math.min(100, pet.happiness + 18);
+        newPets[selectedPetIndex] = pet;
+        return {
+          ...prev,
+          magicCoins: prev.magicCoins + coinsGift,
+          pets: newPets
+        };
+      });
+
+      try {
+        if (coinsGift > 0) {
+          audio.playPurchase();
+        } else {
+          audio.playCheer();
+        }
+      } catch (e) {}
+
+      const maybeGiftText = coinsGift > 0 ? ` 还超级大方地从百宝兜里塞给你 ${coinsGift} 🪙 金币作为学习奖励！` : "";
+      
+      setPetSpeech(`🎉【才艺大秀 · 单词启迪】\n「${activePet.name}」表演了：${picked.trick}！\n\n💡 互动启迪词：${picked.word}\n📖 词义译释：${picked.translation}\n📢 英文例句：\"${picked.sentence}\"\n${maybeGiftText}🐾💖`);
+      
+      confetti({
+        particleCount: 50,
+        spread: 80,
+        origin: { y: 0.6 },
+        colors: ['#A855F7', '#EC4899', '#3B82F6', '#10B981']
+      });
+    }, 1500);
   };
 
   // Interactive Rock-Paper-Scissors action
@@ -452,12 +527,12 @@ const PetPage: React.FC<PetPageProps> = ({ stats, onUpdateStats, onNavigate, onC
           <ChevronLeft size={22} />
         </button>
         <div className="text-center">
-          <h2 className="text-xl font-black text-emerald-950 tracking-tight flex items-center justify-center gap-1.5">
+          <h2 className="text-xl font-black text-emerald-950 tracking-tight flex items-center justify-center gap-1.5 flex-wrap">
             <span>🐾 宠兽守护神域</span>
           </h2>
-          <div className="flex items-center justify-center space-x-1">
-             <div className="w-1.5 h-1.5 bg-emerald-500 rounded-full animate-ping" />
-             <span className="text-[9px] font-black text-emerald-600 uppercase tracking-[0.2em]">Magical Pet Guardian Sphere</span>
+          <div className="flex items-center justify-center space-x-1 mt-0.5">
+             <div className="w-1.5 h-1.5 bg-emerald-500 rounded-full animate-ping shrink-0" />
+             <span className="text-[13px] font-black text-emerald-600 uppercase tracking-widest">Magical Pet Guardian Sphere</span>
           </div>
         </div>
         <button onClick={() => setShowRules(true)} className="p-2.5 hover:bg-emerald-100 rounded-2xl transition-all text-emerald-800">
@@ -597,11 +672,11 @@ const PetPage: React.FC<PetPageProps> = ({ stats, onUpdateStats, onNavigate, onC
                 {/* Battle Power and Size Scale Rating Header */}
                 {!activePet.isDead && (
                   <div className="flex justify-center items-center gap-3">
-                    <div className="bg-gradient-to-r from-amber-400 to-orange-500 text-amber-950 font-black text-[10px] px-3 py-1 rounded-full border border-white shadow-md uppercase tracking-wider flex items-center gap-1 scale-105">
+                    <div className="bg-gradient-to-r from-amber-400 to-orange-500 text-amber-950 font-black text-[13px] px-3.5 py-1.5 rounded-full border border-white shadow-md uppercase tracking-wider flex items-center gap-1 scale-105">
                      <span>⭐ 契约兽战力</span>
                      <span className="bg-white/80 text-orange-600 px-1.5 py-0.2 rounded-md font-extrabold">{combatPower}</span>
                     </div>
-                    <div className="bg-gradient-to-r from-emerald-400 to-teal-500 text-teal-900 font-black text-[10px] px-3 py-1 rounded-full border border-white shadow-md uppercase tracking-wider flex items-center gap-1 scale-105">
+                    <div className="bg-gradient-to-r from-emerald-400 to-teal-500 text-teal-900 font-black text-[13px] px-3.5 py-1.5 rounded-full border border-white shadow-md uppercase tracking-wider flex items-center gap-1 scale-105">
                      <span>⚖️ 萌宠体格</span>
                      <span className="bg-white/90 text-teal-700 px-1.5 py-0.2 rounded-md font-extrabold">x{petSizeMultiplier.toFixed(2)}</span>
                     </div>
@@ -612,9 +687,9 @@ const PetPage: React.FC<PetPageProps> = ({ stats, onUpdateStats, onNavigate, onC
                 <AnimatePresence mode="wait">
                   {petSpeech && (
                     <div 
-                      className="bg-[#eefcf5] text-emerald-950 font-black text-xs px-4 py-3 rounded-2xl border border-emerald-200/80 shadow-sm relative inline-block max-w-[85%] mx-auto font-sans leading-relaxed text-center filter drop-shadow-sm select-none"
+                      className="bg-[#eefcf5] text-emerald-950 font-black text-[14px] px-5 py-3.5 rounded-3xl border border-emerald-250/80 shadow-sm relative inline-block max-w-[90%] mx-auto font-sans leading-relaxed text-center filter drop-shadow-sm select-none"
                     >
-                      <span className="block">{petSpeech}</span>
+                      <span className="block whitespace-pre-line">{petSpeech}</span>
                       {/* Triangle Pointer */}
                       <div className="absolute bottom-[-6px] left-1/2 -translate-x-1/2 w-3 h-3 bg-[#eefcf5] border-r border-b border-emerald-200/80 rotate-45" />
                     </div>
@@ -693,7 +768,7 @@ const PetPage: React.FC<PetPageProps> = ({ stats, onUpdateStats, onNavigate, onC
                   
                   {/* Click Pointer Tag */}
                   {!activePet.isDead && (
-                    <div className="text-[9px] text-emerald-500 font-extrabold uppercase tracking-widest pointer-events-none mt-1 select-none animate-pulse">
+                    <div className="text-[13px] text-emerald-600 font-black uppercase tracking-widest pointer-events-none mt-1 select-none animate-pulse">
                       👈 点击宠兽互动摸摸 👈
                     </div>
                   )}
@@ -702,12 +777,12 @@ const PetPage: React.FC<PetPageProps> = ({ stats, onUpdateStats, onNavigate, onC
                 {/* Pet Title Profile */}
                 <div className="space-y-1">
                   <h3 className="text-3xl font-black text-emerald-950 tracking-tight leading-none">{activePet.name}</h3>
-                  <div className="flex items-center justify-center space-x-2">
-                    <span className="bg-emerald-100 text-emerald-800 px-3.5 py-1 rounded-full text-[9px] font-black uppercase tracking-wider">
+                  <div className="flex items-center justify-center space-x-2 mt-1.5 flex-wrap gap-1.5">
+                    <span className="bg-emerald-100 text-emerald-800 px-3.5 py-1.5 rounded-full text-[13px] font-black uppercase tracking-wider">
                       Rank.{activePet.level} • {activePet.type === 'DRAGON' ? '幻影巨龙' : activePet.type === 'CAT' ? '橘胖巫师' : activePet.type === 'OWL' ? '贤者雪鸮' : '晶透粘液兽'}
                     </span>
                     {activePet.happiness > 80 && (
-                      <span className="bg-amber-100 text-amber-700 font-extrabold px-3 py-1 rounded-full text-[9px] uppercase tracking-wide flex items-center gap-1 shadow-sm">
+                      <span className="bg-amber-100 text-amber-700 font-extrabold px-3.5 py-1.5 rounded-full text-[13px] uppercase tracking-wide flex items-center gap-1 shadow-sm">
                         ✨ 心灵共鸣
                       </span>
                     )}
@@ -718,11 +793,11 @@ const PetPage: React.FC<PetPageProps> = ({ stats, onUpdateStats, onNavigate, onC
                 <div className="space-y-4 pt-4">
                   {/* Vitality (HP) Progress Gauge */}
                   <div className="bg-[#fcfdfa] p-4 rounded-3xl border border-slate-150 shadow-sm">
-                    <div className="flex justify-between items-center text-[20px] font-black uppercase tracking-wider mb-2 px-1">
+                    <div className="flex justify-between items-center text-[15px] font-black uppercase tracking-wider mb-2 px-1">
                       <span className="text-rose-500 flex items-center font-black">❤️ 生命魔元 (VITALITY)</span>
                       <span className="text-rose-600 font-extrabold">{activePet.health}/{activePet.maxHealth}</span>
                     </div>
-                    <div className="h-6 bg-rose-50 rounded-full overflow-hidden p-1 border border-rose-100/50">
+                    <div className="h-5 bg-rose-50 rounded-full overflow-hidden p-0.5 border border-rose-100/50">
                       <motion.div 
                         initial={{ width: 0 }}
                         animate={{ width: `${(activePet.health / activePet.maxHealth) * 100}%` }}
@@ -733,11 +808,11 @@ const PetPage: React.FC<PetPageProps> = ({ stats, onUpdateStats, onNavigate, onC
 
                   {/* Aura (Happiness) Progress Gauge */}
                   <div className="bg-[#fcfdfa] p-4 rounded-3xl border border-slate-150 shadow-sm">
-                    <div className="flex justify-between items-center text-[20px] font-black uppercase tracking-wider mb-2 px-1">
+                    <div className="flex justify-between items-center text-[15px] font-black uppercase tracking-wider mb-2 px-1">
                       <span className="text-amber-500 flex items-center font-black">✨ 心灵愉悦 (AURA / SOL)</span>
                       <span className="text-amber-600 font-extrabold">{activePet.happiness}/100</span>
                     </div>
-                    <div className="h-6 bg-amber-50 rounded-full overflow-hidden p-1 border border-amber-100/40">
+                    <div className="h-5 bg-amber-50 rounded-full overflow-hidden p-0.5 border border-amber-100/40">
                       <motion.div 
                         initial={{ width: 0 }}
                         animate={{ width: `${activePet.happiness}%` }}
@@ -748,11 +823,11 @@ const PetPage: React.FC<PetPageProps> = ({ stats, onUpdateStats, onNavigate, onC
 
                   {/* Level Progression (XP) Progress Gauge */}
                   <div className="bg-[#fcfdfa] p-4 rounded-3xl border border-slate-150 shadow-sm">
-                    <div className="flex justify-between items-center text-[20px] font-black uppercase tracking-wider mb-2 px-1">
+                    <div className="flex justify-between items-center text-[15px] font-black uppercase tracking-wider mb-2 px-1">
                       <span className="text-[#3b82f6] flex items-center font-black">🎓 特训经验 (PROGRESSION XP)</span>
                       <span className="text-[#3b82f6] font-extrabold">{((activePet as any).xp || 0)}/100</span>
                     </div>
-                    <div className="h-6 bg-blue-50 rounded-full overflow-hidden p-1 border border-blue-100/40">
+                    <div className="h-5 bg-blue-50 rounded-full overflow-hidden p-0.5 border border-blue-100/40">
                       <motion.div 
                         initial={{ width: 0 }}
                         animate={{ width: `${((activePet as any).xp || 0)}%` }}
@@ -859,13 +934,13 @@ const PetPage: React.FC<PetPageProps> = ({ stats, onUpdateStats, onNavigate, onC
                                 {food.id === 'food_apple' ? '🍎' : food.id === 'food_meat' ? '🍖' : '🧪'}
                               </div>
                               <div>
-                                <p className="font-black text-[#022c22] text-[20px]">{food.name}</p>
+                                <p className="font-black text-[#022c22] text-[17px]">{food.name}</p>
                                 <p className="text-[14px] text-slate-500 font-bold mt-0.5">{food.description}</p>
                               </div>
                             </div>
-                            <div className="bg-[#059669] text-white px-5 py-2.5 rounded-2xl font-black text-[18px] shadow-sm flex items-center gap-1 hover:bg-[#047857]">
+                            <div className="bg-[#059669] text-white px-5 py-2.5 rounded-2xl font-black text-[15px] shadow-sm flex items-center gap-1 hover:bg-[#047857]">
                               <span>{food.price}</span>
-                              <span className="text-[16px]">🪙</span>
+                              <span className="text-[14px]">🪙</span>
                             </div>
                           </button>
                         ))}
@@ -877,15 +952,26 @@ const PetPage: React.FC<PetPageProps> = ({ stats, onUpdateStats, onNavigate, onC
                   {activeConsoleTab === 'PLAY' && (
                     <div className="text-center py-2 space-y-4">
                       <p className="text-[15px] text-[#064e3b] leading-relaxed font-extrabold px-1">
-                        不需要消耗金币！你可以亲密抚摸它以使它开心。心灵愉悦值越高，契约兽的战斗力就越突出哦！💖
+                        不需要消耗金币！你可以让契约兽亲密抚摸或表演词汇才艺，心灵愉悦更高其战力更强！💖
                       </p>
                       
-                      <button
-                        onClick={handlePlayWithPet}
-                        className="w-full bg-gradient-to-r from-pink-400 to-rose-500 text-white font-black py-4 rounded-2xl shadow-md flex items-center justify-center space-x-2 text-[18px] cursor-pointer border-b-4 border-rose-700 hover:scale-101 active:scale-98 transition-all"
-                      >
-                        <span>🧸 亲密抚摸逗逗宠兽 (+15 愉悦度)</span>
-                      </button>
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                        <button
+                          onClick={handlePlayWithPet}
+                          disabled={isTalentedShow}
+                          className="w-full bg-gradient-to-r from-pink-400 to-rose-500 text-white font-black py-4 px-3 rounded-2xl shadow-md flex items-center justify-center space-x-1.5 text-[15px] cursor-pointer border-b-4 border-rose-700 hover:scale-101 active:scale-98 transition-all disabled:opacity-50"
+                        >
+                          <span>🧸 亲密抚摸宠兽 (+15 愉悦)</span>
+                        </button>
+
+                        <button
+                          onClick={handlePetTalentShow}
+                          disabled={isTalentedShow}
+                          className="w-full bg-gradient-to-r from-purple-500 to-indigo-600 text-white font-black py-4 px-3 rounded-2xl shadow-md flex items-center justify-center space-x-1.5 text-[15px] cursor-pointer border-b-4 border-indigo-800 hover:scale-101 active:scale-98 transition-all disabled:opacity-50"
+                        >
+                          <span>{isTalentedShow ? '🔮 正在才艺表演中...' : '🔮 词汇才艺大Show (+18 愉悦)'}</span>
+                        </button>
+                      </div>
 
                       <div className="border-t border-slate-100 pt-4 mt-2">
                         <div className="text-left mb-2.5 px-1 flex justify-between items-center">
@@ -1023,7 +1109,7 @@ const PetPage: React.FC<PetPageProps> = ({ stats, onUpdateStats, onNavigate, onC
 
                       <button
                         onClick={handleTrainPet}
-                        className="w-full bg-gradient-to-r from-emerald-500 to-teal-600 text-white font-black py-4 rounded-2xl shadow-md flex items-center justify-center gap-1.5 text-[18px] border-b-4 border-emerald-800 cursor-pointer hover:scale-101 active:scale-98 transition-all animate-none"
+                        className="w-full bg-gradient-to-r from-emerald-500 to-teal-600 text-white font-black py-4 rounded-2xl shadow-md flex items-center justify-center gap-1.5 text-[15px] border-b-4 border-emerald-800 cursor-pointer hover:scale-101 active:scale-98 transition-all animate-none"
                       >
                         <span>⚔️ 携契约伙伴启动特训 ⚔️</span>
                       </button>
@@ -1042,7 +1128,7 @@ const PetPage: React.FC<PetPageProps> = ({ stats, onUpdateStats, onNavigate, onC
                         <div className="bg-slate-50 p-4 rounded-3xl border border-slate-150 flex flex-col justify-between">
                           <div className="flex justify-between items-center w-full">
                             <div>
-                              <span className="font-extrabold text-[#022c22] text-[18px]">🧹 基础手动轻扫拂尘</span>
+                              <span className="font-extrabold text-[#022c22] text-[16px]">🧹 基础手动轻扫拂尘</span>
                               <p className="text-[12px] text-slate-500 font-semibold mt-0.5">简单洗刮，消除污点和表面落叶</p>
                             </div>
                             <span className="text-[14px] font-black bg-slate-200 text-slate-700 px-3.5 py-1 rounded-xl shrink-0">10 🪙</span>
@@ -1055,7 +1141,7 @@ const PetPage: React.FC<PetPageProps> = ({ stats, onUpdateStats, onNavigate, onC
 
                           <button
                             onClick={() => handleCleanSanctuary(false)}
-                            className="w-full bg-slate-200 hover:bg-slate-300 text-slate-800 font-extrabold py-3.5 rounded-xl text-[16px] cursor-pointer transition-all active:scale-98 mt-2.5"
+                            className="w-full bg-slate-200 hover:bg-slate-300 text-slate-800 font-extrabold py-3.5 rounded-xl text-[15px] cursor-pointer transition-all active:scale-98 mt-2.5"
                           >
                             <span>开始常规手动清扫</span>
                           </button>
@@ -1070,7 +1156,7 @@ const PetPage: React.FC<PetPageProps> = ({ stats, onUpdateStats, onNavigate, onC
                           <div className="flex justify-between items-center w-full">
                             <div>
                               <div className="flex items-center gap-1.5">
-                                <span className="font-black text-sky-950 text-[18px]">🔮 契约奥义大扫除</span>
+                                <span className="font-black text-sky-950 text-[16px]">🔮 契约奥义大扫除</span>
                                 <span className="text-sky-500 animate-pulse">⚡</span>
                               </div>
                               <p className="text-[12px] text-sky-700 font-extrabold mt-0.5">
