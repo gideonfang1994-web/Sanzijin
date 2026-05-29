@@ -46,7 +46,7 @@ const DailyQuestBoard: React.FC<Props> = ({ quests = [], onQuestClick }) => {
       <div className="flex items-center justify-between mb-3 border-b border-emerald-200/60 pb-2.5">
         <div className="flex items-center space-x-2 relative z-10">
           <span className="text-2xl select-none animate-bounce block">📜</span>
-          <h3 className="text-base sm:text-lg font-black text-emerald-900 tracking-wide flex items-center gap-1.5 leading-tight">
+          <h3 className="text-[17px] sm:text-[18px] font-black text-emerald-900 tracking-wide flex items-center gap-1.5 leading-tight">
             <span>今日任务</span>
             <Sparkles size={14} className="text-amber-500 animate-pulse shrink-0" />
           </h3>
@@ -81,7 +81,7 @@ const DailyQuestBoard: React.FC<Props> = ({ quests = [], onQuestClick }) => {
                 </div>
                 
                 <div className="min-w-0">
-                  <div className={`text-sm sm:text-base font-black tracking-wide leading-tight ${quest.completed ? 'text-emerald-500/80 line-through' : style.text}`}>
+                  <div className={`text-[17px] sm:text-[18px] font-black tracking-wide leading-tight ${quest.completed ? 'text-emerald-500/80 line-through' : style.text}`}>
                     {quest.label}
                   </div>
                   <div className={`text-[11px] sm:text-xs font-bold leading-normal truncate mt-0.5 ${quest.completed ? 'text-emerald-500/70' : 'text-emerald-700/75'}`}>

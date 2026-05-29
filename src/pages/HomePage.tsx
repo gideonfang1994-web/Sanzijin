@@ -276,7 +276,7 @@ const HomePage: React.FC<HomePageProps> = ({ stats, groups, reviewNeeded, onNavi
           value={searchQuery}
           onChange={handleSearch}
           placeholder="🧙‍♂️ 搜索三字经魔法词 (比如 cat, dad, man)..."
-          className="w-full bg-white/95 backdrop-blur-md py-3.5 pl-12 pr-10 rounded-[18px] border-2 border-emerald-300 shadow-sm focus:ring-2 focus:ring-emerald-400/20 focus:border-amber-500 outline-none transition-all text-sm sm:text-base text-emerald-950 placeholder:text-emerald-700/50 font-black animate-in slide-in-from-top-2 duration-200 border-b-[4px] border-emerald-400"
+          className="w-full bg-white/95 backdrop-blur-md py-3.5 pl-12 pr-10 rounded-[18px] border-2 border-emerald-300 shadow-sm focus:ring-2 focus:ring-emerald-400/20 focus:border-amber-500 outline-none transition-all text-[17px] sm:text-[18px] text-emerald-950 placeholder:text-emerald-700/50 font-black animate-in slide-in-from-top-2 duration-200 border-b-[4px] border-emerald-400"
         />
         {searchQuery && (
           <button

@@ -540,18 +540,18 @@ const PetPage: React.FC<PetPageProps> = ({ stats, onUpdateStats, onNavigate, onC
         </button>
       </div>
 
-      <div className="max-w-md mx-auto p-5 space-y-6 relative z-10">
+      <div className="max-w-md mx-auto p-3 space-y-4 relative z-10">
         {stats.pets.length === 0 ? (
-          <div className="space-y-8 py-4">
+          <div className="space-y-6 py-2">
             {/* Summon empty state details (Already polished) */}
-            <div className="text-center space-y-3 px-4">
+            <div className="text-center space-y-2.5 px-4">
               <div className="relative inline-block">
                 <motion.div 
                   initial={{ scale: 0.5, rotate: -10 }}
                   animate={{ scale: 1, rotate: 0 }}
-                  className="w-32 h-32 bg-gradient-to-br from-amber-400 to-orange-500 rounded-[40px] flex items-center justify-center mx-auto shadow-2xl shadow-orange-200 relative z-10"
+                  className="w-28 h-28 bg-gradient-to-br from-amber-400 to-orange-500 rounded-[30px] flex items-center justify-center mx-auto shadow-2xl shadow-orange-200 relative z-10"
                 >
-                  <Sparkle size={56} className="text-white animate-pulse" />
+                  <Sparkle size={48} className="text-white animate-pulse" />
                 </motion.div>
                 <motion.div 
                   animate={{ scale: [1, 1.1, 1], opacity: [0.1, 0.2, 0.1] }}
@@ -559,53 +559,53 @@ const PetPage: React.FC<PetPageProps> = ({ stats, onUpdateStats, onNavigate, onC
                   className="absolute inset-0 bg-amber-500 rounded-full blur-3xl -z-10"
                 />
                 <motion.div 
-                   animate={{ y: [0, -15, 0], x: [0, 10, 0] }}
+                   animate={{ y: [0, -10, 0], x: [0, 8, 0] }}
                    transition={{ duration: 5, repeat: Infinity }}
-                   className="absolute -top-4 -right-4 text-4xl"
+                   className="absolute -top-3 -right-3 text-3xl"
                 >
                   ✨
                 </motion.div>
               </div>
-              <h3 className="text-5xl font-black text-emerald-950 tracking-tight leading-tight pt-4">契约召唤你的宠兽</h3>
-              <p className="text-emerald-700 font-extrabold text-xl leading-relaxed pt-2">在冒险森林中，拥有一位忠诚的伙伴能让你的单词探索效率暴涨！</p>
+              <h3 className="text-4xl font-black text-emerald-950 tracking-tight leading-tight pt-2">契约召唤你的宠兽</h3>
+              <p className="text-emerald-700 font-extrabold text-lg leading-relaxed pt-1">在冒险森林中，拥有一位忠诚的伙伴能让你的单词探索效率暴涨！</p>
             </div>
 
-            <div className="grid grid-cols-1 gap-4">
+            <div className="grid grid-cols-1 gap-3">
               {[
-                { icon: <Trophy className="text-amber-500" size={24} />, title: "荣耀历练", desc: "专属宠兽勋章，带在身边极具安全感。" },
-                { icon: <Gamepad2 className="text-sky-500" size={24} />, title: "特训探险", desc: "把金币分给宠兽特训，在野外可带回丰厚金币！" },
-                { icon: <Sword className="text-rose-500" size={24} />, title: "战力增益", desc: "宠兽拥有战斗力模块，伴随你在奇旅大杀四方。" },
+                { icon: <Trophy className="text-amber-500" size={20} />, title: "荣耀历练", desc: "专属宠兽勋章，带在身边极具安全感。" },
+                { icon: <Gamepad2 className="text-sky-500" size={20} />, title: "特训探险", desc: "把金币分给宠兽特训，在野外可带回丰厚金币！" },
+                { icon: <Sword className="text-rose-500" size={20} />, title: "战力增益", desc: "宠兽拥有战斗力模块，伴随你在奇旅大杀四方。" },
               ].map((benefit, i) => (
                 <motion.div 
                   key={i}
-                  initial={{ opacity: 0, x: -20 }}
+                  initial={{ opacity: 0, x: -25 }}
                   animate={{ opacity: 1, x: 0 }}
-                  transition={{ delay: i * 0.1 }}
-                  className="bg-white p-6 rounded-[28px] border-2 border-emerald-50 shadow-sm flex items-center space-x-5"
+                  transition={{ delay: i * 0.08 }}
+                  className="bg-white p-4 rounded-[20px] border-2 border-emerald-50 shadow-sm flex items-center space-x-4"
                 >
-                  <div className="w-16 h-16 bg-emerald-50 rounded-2xl flex items-center justify-center shrink-0">
+                  <div className="w-12 h-12 bg-emerald-50 rounded-xl flex items-center justify-center shrink-0">
                     {benefit.icon}
                   </div>
                   <div>
-                    <h4 className="font-black text-[20px] text-emerald-950">{benefit.title}</h4>
-                    <p className="text-[13.5px] text-slate-600 font-extrabold mt-1">{benefit.desc}</p>
+                    <h4 className="font-black text-[18px] text-emerald-950">{benefit.title}</h4>
+                    <p className="text-[13px] text-slate-600 font-extrabold mt-0.5">{benefit.desc}</p>
                   </div>
                 </motion.div>
               ))}
             </div>
 
             {/* Teaser Circle */}
-            <div className="relative h-48 flex items-center justify-center">
+            <div className="relative h-32 flex items-center justify-center">
               <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
-                <div className="w-48 h-48 border-2 border-emerald-200 rounded-full animate-magic-rotate flex items-center justify-center">
-                  <div className="w-40 h-40 border border-dashed border-emerald-300 rounded-full" />
+                <div className="w-32 h-32 border-2 border-emerald-200 rounded-full animate-magic-rotate flex items-center justify-center">
+                  <div className="w-24 h-24 border border-dashed border-emerald-300 rounded-full" />
                 </div>
               </div>
 
               <div className="flex justify-around items-end opacity-25 filter grayscale blur-[1px] relative z-10 w-full px-12">
-                <div className="text-6xl transform -rotate-12 translate-y-2">🐲</div>
-                <div className="text-7xl transform">🦉</div>
-                <div className="text-6xl transform rotate-12 translate-y-2">🐱</div>
+                <div className="text-5xl transform -rotate-12 translate-y-2">🐲</div>
+                <div className="text-6xl transform">🦉</div>
+                <div className="text-5xl transform rotate-12 translate-y-2">🐱</div>
               </div>
             </div>
 
@@ -613,9 +613,9 @@ const PetPage: React.FC<PetPageProps> = ({ stats, onUpdateStats, onNavigate, onC
               whileHover={{ scale: 1.02 }}
               whileTap={{ scale: 0.98 }}
               onClick={() => { audio.playClick(); onNavigate('SHOP'); }}
-              className="w-full bg-gradient-to-r from-emerald-500 to-teal-600 text-white p-6 rounded-[32px] font-black text-xl shadow-xl shadow-emerald-200 flex items-center justify-center space-x-3 cursor-pointer"
+              className="w-full bg-gradient-to-r from-emerald-500 to-teal-600 text-white p-4.5 rounded-[24px] font-black text-lg shadow-lg shadow-emerald-200 flex items-center justify-center space-x-2.5 cursor-pointer"
             >
-              <ShoppingBag size={24} />
+              <ShoppingBag size={22} />
               <span>前往魔法商店领养宠兽</span>
             </motion.button>
           </div>
@@ -623,12 +623,12 @@ const PetPage: React.FC<PetPageProps> = ({ stats, onUpdateStats, onNavigate, onC
           <>
             {/* Pet Selector Tab Menu */}
             {stats.pets.length > 1 && (
-              <div className="flex space-x-2 overflow-x-auto pb-1 px-1">
+              <div className="flex space-x-1.5 overflow-x-auto pb-0.5 px-0.5">
                 {stats.pets.map((pet, idx) => (
                   <button
                     key={pet.id}
                     onClick={() => setSelectedPetIndex(idx)}
-                    className={`flex-shrink-0 px-5 py-2.5 rounded-[20px] font-extrabold text-xs transition-all border-2 ${
+                    className={`flex-shrink-0 px-4 py-2 rounded-[16px] font-extrabold text-[#022c22] text-xs transition-all border-2 ${
                       selectedPetIndex === idx 
                         ? 'bg-emerald-600 border-emerald-700 text-white shadow-md' 
                         : 'bg-white text-[#0f766e] border-emerald-100 hover:bg-emerald-50'
@@ -641,7 +641,7 @@ const PetPage: React.FC<PetPageProps> = ({ stats, onUpdateStats, onNavigate, onC
             )}
 
             {/* Pet Live Playground Simulator */}
-            <div className="bg-white rounded-[50px] p-6 shadow-xl border-4 border-white relative overflow-hidden group">
+            <div className="bg-white rounded-[32px] p-4 shadow-lg border-2 border-white relative overflow-hidden group">
               {/* Meadow Backdrop Layer */}
               <div className="absolute inset-0 bg-gradient-to-b from-[#f2fdf7] to-[#ffffff] pointer-events-none" />
               
@@ -668,17 +668,17 @@ const PetPage: React.FC<PetPageProps> = ({ stats, onUpdateStats, onNavigate, onC
                 <span className="absolute top-1/2 right-12 text-sm opacity-20 rotate-12 select-none">🌱</span>
               </div>
 
-              <div className="relative z-10 text-center space-y-4 font-sans">
+              <div className="relative z-10 text-center space-y-3 font-sans">
                 {/* Battle Power and Size Scale Rating Header */}
                 {!activePet.isDead && (
-                  <div className="flex justify-center items-center gap-3">
-                    <div className="bg-gradient-to-r from-amber-400 to-orange-500 text-amber-950 font-black text-[13px] px-3.5 py-1.5 rounded-full border border-white shadow-md uppercase tracking-wider flex items-center gap-1 scale-105">
-                     <span>⭐ 契约兽战力</span>
-                     <span className="bg-white/80 text-orange-600 px-1.5 py-0.2 rounded-md font-extrabold">{combatPower}</span>
+                  <div className="flex justify-center items-center gap-2.5">
+                    <div className="bg-gradient-to-r from-amber-400 to-orange-500 text-amber-950 font-black text-[13px] px-2.5 py-1 rounded-full border border-white shadow-md uppercase tracking-wider flex items-center gap-1">
+                     <span>⭐ 战力</span>
+                     <span className="bg-white/85 text-orange-600 px-1.5 py-0.1 rounded-md font-extrabold">{combatPower}</span>
                     </div>
-                    <div className="bg-gradient-to-r from-emerald-400 to-teal-500 text-teal-900 font-black text-[13px] px-3.5 py-1.5 rounded-full border border-white shadow-md uppercase tracking-wider flex items-center gap-1 scale-105">
-                     <span>⚖️ 萌宠体格</span>
-                     <span className="bg-white/90 text-teal-700 px-1.5 py-0.2 rounded-md font-extrabold">x{petSizeMultiplier.toFixed(2)}</span>
+                    <div className="bg-gradient-to-r from-emerald-400 to-teal-500 text-teal-900 font-black text-[13px] px-2.5 py-1 rounded-full border border-white shadow-md uppercase tracking-wider flex items-center gap-1">
+                     <span>⚖️ 体格</span>
+                     <span className="bg-white/90 text-teal-700 px-1.5 py-0.1 rounded-md font-extrabold">x{petSizeMultiplier.toFixed(2)}</span>
                     </div>
                   </div>
                 )}
@@ -687,7 +687,7 @@ const PetPage: React.FC<PetPageProps> = ({ stats, onUpdateStats, onNavigate, onC
                 <AnimatePresence mode="wait">
                   {petSpeech && (
                     <div 
-                      className="bg-[#eefcf5] text-emerald-950 font-black text-[14px] px-5 py-3.5 rounded-3xl border border-emerald-250/80 shadow-sm relative inline-block max-w-[90%] mx-auto font-sans leading-relaxed text-center filter drop-shadow-sm select-none"
+                      className="bg-[#eefcf5] text-emerald-950 font-black text-[14px] px-4.5 py-2.5 rounded-2xl border border-emerald-250/80 shadow-sm relative inline-block max-w-[92%] mx-auto font-sans leading-relaxed text-center filter drop-shadow-sm select-none"
                     >
                       <span className="block whitespace-pre-line">{petSpeech}</span>
                       {/* Triangle Pointer */}
@@ -697,7 +697,7 @@ const PetPage: React.FC<PetPageProps> = ({ stats, onUpdateStats, onNavigate, onC
                 </AnimatePresence>
 
                 {/* Pet Animated Avatar Node */}
-                <div className="relative inline-block py-2">
+                <div className="relative inline-block py-1">
                   {/* Flying Food Particles Inside Playground */}
                   {flyingFoods.map(item => (
                     <motion.div
@@ -720,13 +720,13 @@ const PetPage: React.FC<PetPageProps> = ({ stats, onUpdateStats, onNavigate, onC
                   <motion.div
                     onClick={handlePetClick}
                     animate={activePet.isDead ? {} : (isTraining ? {
-                      y: [0, -25, 0, -15, 0],
-                      scale: [petSizeMultiplier, petSizeMultiplier * 1.08, petSizeMultiplier * 0.95, petSizeMultiplier * 1.05, petSizeMultiplier],
-                      rotate: [0, -10, 10, -5, 0]
+                      y: [0, -20, 0, -12, 0],
+                      scale: [petSizeMultiplier, petSizeMultiplier * 1.06, petSizeMultiplier * 0.96, petSizeMultiplier * 1.04, petSizeMultiplier],
+                      rotate: [0, -8, 8, -4, 0]
                     } : {
-                      y: [0, -12, 0],
+                      y: [0, -10, 0],
                       scale: isFeeding 
-                        ? [petSizeMultiplier, petSizeMultiplier * 1.35, petSizeMultiplier * 1.1, petSizeMultiplier * 1.25, petSizeMultiplier] 
+                        ? [petSizeMultiplier, petSizeMultiplier * 1.3, petSizeMultiplier * 1.1, petSizeMultiplier * 1.2, petSizeMultiplier] 
                         : [petSizeMultiplier, petSizeMultiplier * 1.03, petSizeMultiplier],
                       rotateY: [0, 8, -8, 0]
                     })}
@@ -735,7 +735,7 @@ const PetPage: React.FC<PetPageProps> = ({ stats, onUpdateStats, onNavigate, onC
                       repeat: isTraining || isFeeding ? Infinity : Infinity,
                       ease: "easeInOut" 
                     }}
-                    className="w-48 h-48 flex items-center justify-center drop-shadow-[0_20px_25px_rgba(5,150,105,0.18)] relative z-20 cursor-pointer animate-none"
+                    className="w-36 h-36 flex items-center justify-center drop-shadow-[0_15px_18px_rgba(5,150,105,0.15)] relative z-20 cursor-pointer animate-none"
                     style={{ 
                       filter: activePet.isDead ? 'grayscale(100%)' : 'none',
                     }}
@@ -746,11 +746,11 @@ const PetPage: React.FC<PetPageProps> = ({ stats, onUpdateStats, onNavigate, onC
                         alt={activePet.name}
                         className="w-full h-full object-contain"
                         fallbackText={activePet.name}
-                        width="192"
-                        height="192"
+                        width="144"
+                        height="144"
                       />
                     ) : (
-                      <span className="text-[130px] filter drop-shadow-md select-none">{PET_EMOJIS[activePet.type]}</span>
+                      <span className="text-[100px] filter drop-shadow-md select-none">{PET_EMOJIS[activePet.type]}</span>
                     )}
                     
                     {/* Glowing Aura Base */}
@@ -761,28 +761,28 @@ const PetPage: React.FC<PetPageProps> = ({ stats, onUpdateStats, onNavigate, onC
                           opacity: [0.15, 0.35, 0.15]
                         }}
                         transition={{ duration: 3, repeat: Infinity }}
-                        className="absolute inset-0 bg-emerald-400/20 blur-[50px] rounded-full -z-10 animate-none"
+                        className="absolute inset-0 bg-emerald-400/25 blur-[40px] rounded-full -z-10 animate-none"
                       />
                     )}
                   </motion.div>
                   
                   {/* Click Pointer Tag */}
                   {!activePet.isDead && (
-                    <div className="text-[13px] text-emerald-600 font-black uppercase tracking-widest pointer-events-none mt-1 select-none animate-pulse">
+                    <div className="text-[12px] text-emerald-600 font-black uppercase tracking-widest pointer-events-none mt-0.5 select-none animate-pulse">
                       👈 点击宠兽互动摸摸 👈
                     </div>
                   )}
                 </div>
 
                 {/* Pet Title Profile */}
-                <div className="space-y-1">
-                  <h3 className="text-3xl font-black text-emerald-950 tracking-tight leading-none">{activePet.name}</h3>
-                  <div className="flex items-center justify-center space-x-2 mt-1.5 flex-wrap gap-1.5">
-                    <span className="bg-emerald-100 text-emerald-800 px-3.5 py-1.5 rounded-full text-[13px] font-black uppercase tracking-wider">
+                <div className="space-y-0.5">
+                  <h3 className="text-2xl font-black text-emerald-950 tracking-tight leading-none">{activePet.name}</h3>
+                  <div className="flex items-center justify-center space-x-1.5 mt-1 flex-wrap gap-1">
+                    <span className="bg-emerald-100 text-emerald-800 px-3 py-1 rounded-full text-[12px] font-black uppercase tracking-wider">
                       Rank.{activePet.level} • {activePet.type === 'DRAGON' ? '幻影巨龙' : activePet.type === 'CAT' ? '橘胖巫师' : activePet.type === 'OWL' ? '贤者雪鸮' : '晶透粘液兽'}
                     </span>
                     {activePet.happiness > 80 && (
-                      <span className="bg-amber-100 text-amber-700 font-extrabold px-3.5 py-1.5 rounded-full text-[13px] uppercase tracking-wide flex items-center gap-1 shadow-sm">
+                      <span className="bg-amber-100 text-amber-700 font-extrabold px-3 py-1 rounded-full text-[12px] uppercase tracking-wide flex items-center gap-1 shadow-sm">
                         ✨ 心灵共鸣
                       </span>
                     )}
@@ -790,14 +790,14 @@ const PetPage: React.FC<PetPageProps> = ({ stats, onUpdateStats, onNavigate, onC
                 </div>
 
                 {/* Highly Polished Statistics Gauges */}
-                <div className="space-y-4 pt-4">
+                <div className="space-y-2.5 pt-2.5">
                   {/* Vitality (HP) Progress Gauge */}
-                  <div className="bg-[#fcfdfa] p-4 rounded-3xl border border-slate-150 shadow-sm">
-                    <div className="flex justify-between items-center text-[15px] font-black uppercase tracking-wider mb-2 px-1">
+                  <div className="bg-[#fcfdfa] p-3 rounded-2xl border border-slate-150 shadow-sm">
+                    <div className="flex justify-between items-center text-[13px] font-black uppercase tracking-wider mb-1.5 px-1">
                       <span className="text-rose-500 flex items-center font-black">❤️ 生命魔元 (VITALITY)</span>
                       <span className="text-rose-600 font-extrabold">{activePet.health}/{activePet.maxHealth}</span>
                     </div>
-                    <div className="h-5 bg-rose-50 rounded-full overflow-hidden p-0.5 border border-rose-100/50">
+                    <div className="h-4.5 bg-rose-50 rounded-full overflow-hidden p-0.5 border border-rose-100/50">
                       <motion.div 
                         initial={{ width: 0 }}
                         animate={{ width: `${(activePet.health / activePet.maxHealth) * 100}%` }}
@@ -807,12 +807,12 @@ const PetPage: React.FC<PetPageProps> = ({ stats, onUpdateStats, onNavigate, onC
                   </div>
 
                   {/* Aura (Happiness) Progress Gauge */}
-                  <div className="bg-[#fcfdfa] p-4 rounded-3xl border border-slate-150 shadow-sm">
-                    <div className="flex justify-between items-center text-[15px] font-black uppercase tracking-wider mb-2 px-1">
+                  <div className="bg-[#fcfdfa] p-3 rounded-2xl border border-slate-150 shadow-sm">
+                    <div className="flex justify-between items-center text-[13px] font-black uppercase tracking-wider mb-1.5 px-1">
                       <span className="text-amber-500 flex items-center font-black">✨ 心灵愉悦 (AURA / SOL)</span>
                       <span className="text-amber-600 font-extrabold">{activePet.happiness}/100</span>
                     </div>
-                    <div className="h-5 bg-amber-50 rounded-full overflow-hidden p-0.5 border border-amber-100/40">
+                    <div className="h-4.5 bg-amber-50 rounded-full overflow-hidden p-0.5 border border-amber-100/40">
                       <motion.div 
                         initial={{ width: 0 }}
                         animate={{ width: `${activePet.happiness}%` }}
@@ -822,12 +822,12 @@ const PetPage: React.FC<PetPageProps> = ({ stats, onUpdateStats, onNavigate, onC
                   </div>
 
                   {/* Level Progression (XP) Progress Gauge */}
-                  <div className="bg-[#fcfdfa] p-4 rounded-3xl border border-slate-150 shadow-sm">
-                    <div className="flex justify-between items-center text-[15px] font-black uppercase tracking-wider mb-2 px-1">
+                  <div className="bg-[#fcfdfa] p-3 rounded-2xl border border-slate-150 shadow-sm">
+                    <div className="flex justify-between items-center text-[13px] font-black uppercase tracking-wider mb-1.5 px-1">
                       <span className="text-[#3b82f6] flex items-center font-black">🎓 特训经验 (PROGRESSION XP)</span>
                       <span className="text-[#3b82f6] font-extrabold">{((activePet as any).xp || 0)}/100</span>
                     </div>
-                    <div className="h-5 bg-blue-50 rounded-full overflow-hidden p-0.5 border border-blue-100/40">
+                    <div className="h-4.5 bg-blue-50 rounded-full overflow-hidden p-0.5 border border-blue-100/40">
                       <motion.div 
                         initial={{ width: 0 }}
                         animate={{ width: `${((activePet as any).xp || 0)}%` }}
@@ -876,106 +876,115 @@ const PetPage: React.FC<PetPageProps> = ({ stats, onUpdateStats, onNavigate, onC
 
             {/* Interactive care console controller */}
             {!activePet.isDead && (
-              <div className="space-y-4">
+              <div className="space-y-3">
                 {/* Console controller header navigation tabs */}
-                <div className="flex bg-[#f1f5f9] p-2 rounded-[24px] gap-2 border border-slate-200/80 shadow-md">
+                <div className="flex bg-[#f1f5f9] p-1 bg-slate-100/90 rounded-2xl gap-1 border border-slate-200 shadow-sm">
                   <button 
                     onClick={() => { audio.playClick(); setActiveConsoleTab('FEED'); }}
-                    className={`flex-1 py-4 rounded-2xl font-black text-[18px] transition-all flex flex-col items-center justify-center ${activeConsoleTab === 'FEED' ? 'bg-white text-emerald-800 shadow-md border border-emerald-100' : 'text-slate-500 hover:text-slate-800'}`}
+                    className={`flex-1 py-1.5 px-1 rounded-xl font-black text-[15px] transition-all flex flex-col items-center justify-center ${activeConsoleTab === 'FEED' ? 'bg-white text-emerald-800 shadow-md border border-slate-100' : 'text-slate-500 hover:text-slate-800'}`}
                   >
-                    <Utensils size={26} className="mb-1 text-emerald-600 font-bold" />
+                    <Utensils size={20} className="mb-0.5 text-emerald-600 font-bold" />
                     <span>喂食滋养</span>
                   </button>
                   <button 
                     onClick={() => { audio.playClick(); setActiveConsoleTab('PLAY'); }}
-                    className={`flex-1 py-4 rounded-2xl font-black text-[18px] transition-all flex flex-col items-center justify-center ${activeConsoleTab === 'PLAY' ? 'bg-white text-emerald-800 shadow-md border border-emerald-100' : 'text-slate-500 hover:text-slate-800'}`}
+                    className={`flex-1 py-1.5 px-1 rounded-xl font-black text-[15px] transition-all flex flex-col items-center justify-center ${activeConsoleTab === 'PLAY' ? 'bg-white text-emerald-800 shadow-md border border-slate-100' : 'text-slate-500 hover:text-slate-800'}`}
                   >
-                    <Gamepad2 size={26} className="mb-1 text-amber-500 font-bold" />
+                    <Gamepad2 size={20} className="mb-0.5 text-amber-500 font-semibold" />
                     <span>陪伴抚摸</span>
                   </button>
                   <button 
                     onClick={() => { audio.playClick(); setActiveConsoleTab('TRAIN'); }}
-                    className={`flex-1 py-4 rounded-2xl font-black text-[18px] transition-all flex flex-col items-center justify-center ${activeConsoleTab === 'TRAIN' ? 'bg-white text-emerald-800 shadow-md border border-emerald-100' : 'text-slate-500 hover:text-slate-800'}`}
+                    className={`flex-1 py-1.5 px-1 rounded-xl font-black text-[15px] transition-all flex flex-col items-center justify-center ${activeConsoleTab === 'TRAIN' ? 'bg-white text-emerald-800 shadow-md border border-slate-100' : 'text-slate-500 hover:text-slate-800'}`}
                   >
-                    <Sword size={26} className="mb-1 text-sky-500 font-bold" />
+                    <Sword size={20} className="mb-0.5 text-sky-500 font-bold" />
                     <span>特训战斗</span>
                   </button>
                   <button 
                     onClick={() => { audio.playClick(); setActiveConsoleTab('CLEAN'); }}
-                    className={`flex-1 py-4 rounded-2xl font-black text-[18px] transition-all flex flex-col items-center justify-center ${activeConsoleTab === 'CLEAN' ? 'bg-white text-emerald-800 shadow-md border border-emerald-100' : 'text-slate-500 hover:text-slate-800'}`}
+                    className={`flex-1 py-1.5 px-1 rounded-xl font-black text-[15px] transition-all flex flex-col items-center justify-center ${activeConsoleTab === 'CLEAN' ? 'bg-white text-emerald-800 shadow-md border border-slate-100' : 'text-slate-500 hover:text-slate-800'}`}
                   >
-                    <Sparkles size={26} className="mb-1 text-teal-500 font-bold" />
+                    <Sparkles size={20} className="mb-0.5 text-teal-500 font-bold" />
                     <span>庄园清扫</span>
                   </button>
                 </div>
 
                 {/* Console display area */}
-                <div className="bg-white rounded-[32px] p-5 border border-slate-100 shadow-lg">
+                <div className="bg-white rounded-[24px] p-2.5 border border-slate-100 shadow-lg">
                   {/* FEED TAB DISPLAY */}
                   {activeConsoleTab === 'FEED' && (
-                    <div className="space-y-4">
-                      <div className="flex items-center justify-between border-b pb-2.5 border-slate-100">
-                        <h4 className="font-extrabold text-emerald-950 text-[18px] flex items-center gap-2">
-                          <span>🍔 魔法金币余额:</span>
-                          <span className="text-amber-500 font-black text-[22px] drop-shadow-sm">{stats.magicCoins} 🪙</span>
-                        </h4>
-                        <span className="text-[14px] font-black text-slate-400 uppercase tracking-widest">FEED PANTRY</span>
-                      </div>
-
-                      <div className="grid grid-cols-1 gap-3.5">
-                        {FOOD_ITEMS.map(food => (
-                          <button
-                            key={food.id}
-                            onClick={() => handleFeed(food)}
-                            className="w-full bg-slate-50 p-4 rounded-3xl border border-slate-150 hover:border-emerald-300 transition-all flex items-center justify-between group cursor-pointer active:bg-emerald-100/30"
-                          >
-                            <div className="flex items-center space-x-4 text-left">
-                              <div className="w-16 h-16 bg-white rounded-2xl flex items-center justify-center text-3xl border border-slate-100 shadow-sm shrink-0">
-                                {food.id === 'food_apple' ? '🍎' : food.id === 'food_meat' ? '🍖' : '🧪'}
+                    <div className="space-y-1.5 py-0.5 text-left">
+                      <p className="text-[12.5px] text-emerald-800 leading-tight font-extrabold text-center mb-1 bg-emerald-50/50 p-1.5 rounded-xl border border-emerald-150">
+                        喂养美味的魔法食材可以恢复生命魔元 HP，高几率触发美味暴击哦！🍖✨
+                      </p>
+                      <div className="grid grid-cols-1 gap-1">
+                        {FOOD_ITEMS.map(food => {
+                          const foodEmojis: Record<string, string> = {
+                            'food_apple': '🍎',
+                            'food_meat': '🍖',
+                            'food_elixir': '🧪'
+                          };
+                          const emoji = foodEmojis[food.id] || '🍎';
+                          return (
+                            <div 
+                              key={food.id} 
+                              className="bg-slate-50/50 hover:bg-slate-50 p-1.5 px-2 rounded-xl border border-slate-200/60 flex items-center justify-between gap-2 transition-all"
+                            >
+                              <div className="flex items-center gap-1.5 min-w-0">
+                                <span className="text-xl p-1 bg-white rounded-lg border border-slate-100 shadow-xs shrink-0 select-none">
+                                  {emoji}
+                                </span>
+                                <div className="min-w-0">
+                                  <div className="flex items-center gap-1">
+                                    <span className="font-extrabold text-[#022c22] text-[13px] leading-tight truncate">{food.name}</span>
+                                    <span className="text-[9.5px] font-black text-rose-500 bg-rose-50 border border-rose-100 px-1.5 py-0.2 rounded shrink-0">HP +{food.foodValue}</span>
+                                  </div>
+                                  <p className="text-[11px] text-slate-400 font-bold leading-none mt-0.5 truncate">{food.description}</p>
+                                </div>
                               </div>
-                              <div>
-                                <p className="font-black text-[#022c22] text-[17px]">{food.name}</p>
-                                <p className="text-[14px] text-slate-500 font-bold mt-0.5">{food.description}</p>
-                              </div>
+                              <button
+                                onClick={() => handleFeed(food)}
+                                disabled={isFeeding}
+                                className="px-2.5 py-1 bg-gradient-to-r from-emerald-500 to-teal-600 hover:scale-102 hover:brightness-105 active:scale-97 text-white font-black text-[12px] rounded-lg border-b-2 border-emerald-700 shadow-xs flex items-center gap-0.5 shrink-0 cursor-pointer transition-all disabled:opacity-50"
+                              >
+                                <span>喂食</span>
+                                <span className="bg-white/25 text-white px-1 py-0.1 rounded text-[9.5px] font-extrabold">{food.price}🪙</span>
+                              </button>
                             </div>
-                            <div className="bg-[#059669] text-white px-5 py-2.5 rounded-2xl font-black text-[15px] shadow-sm flex items-center gap-1 hover:bg-[#047857]">
-                              <span>{food.price}</span>
-                              <span className="text-[14px]">🪙</span>
-                            </div>
-                          </button>
-                        ))}
+                          );
+                        })}
                       </div>
                     </div>
                   )}
 
                   {/* PLAY TAB DISPLAY */}
                   {activeConsoleTab === 'PLAY' && (
-                    <div className="text-center py-2 space-y-4">
+                    <div className="text-center py-1 space-y-3">
                       <p className="text-[15px] text-[#064e3b] leading-relaxed font-extrabold px-1">
                         不需要消耗金币！你可以让契约兽亲密抚摸或表演词汇才艺，心灵愉悦更高其战力更强！💖
                       </p>
                       
-                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
                         <button
                           onClick={handlePlayWithPet}
                           disabled={isTalentedShow}
-                          className="w-full bg-gradient-to-r from-pink-400 to-rose-500 text-white font-black py-4 px-3 rounded-2xl shadow-md flex items-center justify-center space-x-1.5 text-[15px] cursor-pointer border-b-4 border-rose-700 hover:scale-101 active:scale-98 transition-all disabled:opacity-50"
+                          className="w-full bg-gradient-to-r from-pink-400 to-rose-500 text-white font-black py-3 px-3 rounded-xl shadow-md flex items-center justify-center space-x-1.5 text-[15px] cursor-pointer border-b-2 border-rose-700 hover:scale-101 active:scale-98 transition-all disabled:opacity-50"
                         >
-                          <span>🧸 亲密抚摸宠兽 (+15 愉悦)</span>
+                          <span>🧸 亲密抚摸宠兽 (+15 护灵)</span>
                         </button>
 
                         <button
                           onClick={handlePetTalentShow}
                           disabled={isTalentedShow}
-                          className="w-full bg-gradient-to-r from-purple-500 to-indigo-600 text-white font-black py-4 px-3 rounded-2xl shadow-md flex items-center justify-center space-x-1.5 text-[15px] cursor-pointer border-b-4 border-indigo-800 hover:scale-101 active:scale-98 transition-all disabled:opacity-50"
+                          className="w-full bg-gradient-to-r from-purple-500 to-indigo-600 text-white font-black py-3 px-3 rounded-xl shadow-md flex items-center justify-center space-x-1.5 text-[15px] cursor-pointer border-b-2 border-indigo-800 hover:scale-101 active:scale-98 transition-all disabled:opacity-50"
                         >
-                          <span>{isTalentedShow ? '🔮 正在才艺表演中...' : '🔮 词汇才艺大Show (+18 愉悦)'}</span>
+                          <span>{isTalentedShow ? '🔮 才艺表演中...' : '🔮 词汇才艺秀 (+18)'}</span>
                         </button>
                       </div>
 
-                      <div className="border-t border-slate-100 pt-4 mt-2">
-                        <div className="text-left mb-2.5 px-1 flex justify-between items-center">
-                          <span className="font-extrabold text-[#022c22] text-[16px]">🎮 陪宠兽玩石头剪刀布</span>
+                      <div className="border-t border-slate-100 pt-3 mt-1">
+                        <div className="text-left mb-1.5 px-1 flex justify-between items-center">
+                          <span className="font-extrabold text-[#022c22] text-[16px]">🎮 陪宠兽玩猜拳</span>
                           <span className="text-[12px] bg-amber-100 text-amber-800 px-2.5 py-0.5 rounded-full font-black">免费玩 • 赢 10 🪙</span>
                         </div>
                         
@@ -988,14 +997,15 @@ const PetPage: React.FC<PetPageProps> = ({ stats, onUpdateStats, onNavigate, onC
                                 key={choice}
                                 disabled={isShaking}
                                 onClick={() => handleRPS(choice)}
-                                className={`py-3.5 rounded-xl text-[16px] font-black border-2 transition-all cursor-pointer ${
+                                className={`py-2 rounded-xl text-[16px] font-black border-2 transition-all cursor-pointer ${
                                   playerChoice === choice 
-                                    ? 'bg-amber-500 border-amber-600 text-white shadow-md scale-105' 
+                                    ? 'bg-amber-500 border-amber-600 text-white shadow-md scale-103' 
                                     : 'bg-white border-slate-200 text-slate-700 hover:border-amber-300 hover:bg-amber-50/20'
-                                }`}
+                                  }`}
                               >
                                 {icons[choice]}
                               </button>
+ 
                             );
                           })}
                         </div>
@@ -1007,45 +1017,45 @@ const PetPage: React.FC<PetPageProps> = ({ stats, onUpdateStats, onNavigate, onC
                               initial={{ opacity: 0, scale: 0.95 }}
                               animate={{ opacity: 1, scale: 1 }}
                               exit={{ opacity: 0, scale: 0.95 }}
-                              className="mt-3 bg-slate-50 border border-slate-150 p-4 rounded-2xl space-y-3"
+                              className="mt-2.5 bg-slate-50 border border-slate-150 p-3 rounded-xl space-y-2"
                             >
                               {isShaking ? (
-                                <div className="flex flex-col items-center justify-center py-2 space-y-2">
-                                  <div className="text-3xl animate-bounce">✊🖐️✌️</div>
-                                  <p className="text-[14px] font-black text-amber-600 animate-pulse">宠兽咕噜咕噜蓄力猜拳中...</p>
+                                <div className="flex flex-col items-center justify-center py-1 space-y-1">
+                                  <div className="text-2xl animate-bounce">✊🖐️✌️</div>
+                                  <p className="text-[14px] font-black text-amber-600 animate-pulse">宠兽出手蓄力猜拳中...</p>
                                 </div>
                               ) : (
-                                <div className="space-y-2">
-                                  <div className="flex justify-around items-center py-1">
+                                <div className="space-y-1.5">
+                                  <div className="flex justify-around items-center py-0.5">
                                     <div className="text-center">
                                       <p className="text-[12px] text-slate-400 font-extrabold">你的出拳</p>
-                                      <p className="text-2xl mt-1">
+                                      <p className="text-xl mt-0.5">
                                         {playerChoice === 'ROCK' ? '✊ 石头' : playerChoice === 'PAPER' ? '🖐️ 布' : '✌️ 剪刀'}
                                       </p>
                                     </div>
                                     <span className="text-slate-300 font-black text-xs">VS</span>
                                     <div className="text-center">
                                       <p className="text-[12px] text-slate-400 font-extrabold">宠兽出拳</p>
-                                      <p className="text-2xl mt-1">
+                                      <p className="text-xl mt-0.5">
                                         {petChoice === 'ROCK' ? '✊ 石头' : petChoice === 'PAPER' ? '🖐️ 布' : '✌️ 剪刀'}
                                       </p>
                                     </div>
                                   </div>
 
-                                  <div className="border-t border-slate-200/60 pt-2 text-center">
+                                  <div className="border-t border-slate-200/60 pt-1.5 text-center">
                                     {gameResult === 'WIN' && (
-                                      <span className="bg-emerald-100 text-emerald-800 font-black text-[14px] px-3.5 py-1 rounded-full border border-emerald-200">
-                                        🎉 胜出！好心情 +25，赢取了 10 魔法币！
+                                      <span className="bg-emerald-100 text-emerald-800 font-black text-[13px] px-3 py-1 rounded-full border border-emerald-200">
+                                        🎉 胜出！好心情 +25，赢取 10 🪙
                                       </span>
                                     )}
                                     {gameResult === 'DRAW' && (
-                                      <span className="bg-amber-100 text-amber-800 font-black text-[14px] px-3.5 py-1 rounded-full border border-amber-200">
-                                        📊 平局！心灵默契感应，好心情 +15！
+                                      <span className="bg-amber-100 text-amber-800 font-black text-[13px] px-3 py-1 rounded-full border border-amber-200">
+                                        📊 平局！获得默契感应，好心情 +15
                                       </span>
                                     )}
                                     {gameResult === 'LOSE' && (
-                                      <span className="bg-rose-100 text-rose-800 font-black text-[14px] px-3.5 py-1 rounded-full border border-rose-200">
-                                        😿 惜败！宠兽开心扭臀，好心情 +12！
+                                      <span className="bg-rose-100 text-rose-800 font-black text-[13px] px-3 py-1 rounded-full border border-rose-200">
+                                        😿 惜败！宠兽开心扭臀，好心情 +12
                                       </span>
                                     )}
                                   </div>
@@ -1057,6 +1067,7 @@ const PetPage: React.FC<PetPageProps> = ({ stats, onUpdateStats, onNavigate, onC
                       </div>
                     </div>
                   )}
+
 
                   {/* TRAIN TAB DISPLAY */}
                   {activeConsoleTab === 'TRAIN' && (
