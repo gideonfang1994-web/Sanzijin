@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import { X, Volume2, Sparkles, Play, Star, Award, Heart } from 'lucide-react';
-import { splitWord, getPhonicsBreakdown } from '../utils/WordUtils';
+import { splitWord, getPhonicsBreakdown, getWordEmoji } from '../utils/WordUtils';
 import audio from '../utils/AudioUtils';
 
 interface PhonicsSpellingModalProps {
@@ -702,7 +702,13 @@ const PhonicsSpellingModal: React.FC<PhonicsSpellingModalProps> = ({
                 <Award size={18} fill="currentColor" />
               </div>
 
-              <img referrerPolicy="no-referrer" src={imageUrl} alt={word} className="w-full h-full object-contain relative z-10" />
+              {getWordEmoji(word) ? (
+                <span className="text-[72px] sm:text-[84px] select-none leading-none relative z-10 filter drop-shadow-md animate-bounce-slow">
+                  {getWordEmoji(word)}
+                </span>
+              ) : (
+                <img referrerPolicy="no-referrer" src={imageUrl} alt={word} className="w-full h-full object-contain relative z-10" />
+              )}
             </div>
           </motion.div>
         )}

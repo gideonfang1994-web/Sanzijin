@@ -6,6 +6,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import audio from '../utils/AudioUtils';
 import confetti from 'canvas-confetti';
 import SafeImage from './SafeImage';
+import { getWordEmoji } from '../utils/WordUtils';
 
 interface Props {
   groups: WordGroup[];
@@ -294,13 +295,21 @@ const WordChallenge: React.FC<Props> = ({ groups, isReviewMode, onFinish, onMist
             onClick={() => audio.speak(currentWord.text)}
             className="relative z-10 cursor-pointer"
           >
-            <SafeImage 
-              src={currentWord.imageUrl} 
-              className="w-56 h-56 object-contain drop-shadow-[0_20px_40px_rgba(0,0,0,0.2)]" 
-              fallbackText={currentWord.text}
-              width="224"
-              height="224"
-            />
+            {getWordEmoji(currentWord.text) ? (
+              <div className="w-56 h-56 flex items-center justify-center select-none filter drop-shadow-[0_15px_30px_rgba(0,0,0,0.15)] animate-bounce-slow">
+                <span className="text-[140px] leading-none select-none">
+                  {getWordEmoji(currentWord.text)}
+                </span>
+              </div>
+            ) : (
+              <SafeImage 
+                src={currentWord.imageUrl} 
+                className="w-56 h-56 object-contain drop-shadow-[0_20px_40px_rgba(0,0,0,0.2)]" 
+                fallbackText={currentWord.text}
+                width="224"
+                height="224"
+              />
+            )}
           </motion.div>
         </div>
 

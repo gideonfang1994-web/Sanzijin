@@ -6,6 +6,7 @@ import { X, Trophy, AlertCircle, RefreshCw, Zap, Star, Layers } from 'lucide-rea
 import audio from '../utils/AudioUtils';
 import confetti from 'canvas-confetti';
 import SafeImage from './SafeImage';
+import { getWordEmoji } from '../utils/WordUtils';
 
 interface Tile {
   id: string;
@@ -362,17 +363,23 @@ const SheepMatch: React.FC<Props> = ({ groups, onFinish, onClose }) => {
                 )}
                 <div className={`w-full h-full rounded-2xl flex items-center justify-center p-1 overflow-hidden ${tile.isBlocked ? 'bg-slate-50' : 'bg-emerald-50/30'}`}>
                   {tile.isImage ? (
-                    <SafeImage 
-                      src={syncedImages[tile.wordId] || tile.content} 
-                      alt="" 
-                      className="w-full h-full object-contain filter drop-shadow-sm"
-                      fallbackText={tile.wordId}
-                      width="96"
-                      height="96"
-                    />
+                    getWordEmoji(tile.wordId) ? (
+                      <span className="text-[32px] sm:text-[40px] select-none filter drop-shadow-md">
+                        {getWordEmoji(tile.wordId)}
+                      </span>
+                    ) : (
+                      <SafeImage 
+                        src={syncedImages[tile.wordId] || tile.content} 
+                        alt="" 
+                        className="w-full h-full object-contain filter drop-shadow-sm"
+                        fallbackText={tile.wordId}
+                        width="96"
+                        height="96"
+                      />
+                    )
                   ) : (
-                    <div className="flex flex-col items-center justify-center leading-none p-1">
-                      <span className={`font-black text-center break-words ${tile.type === 'text' ? 'text-emerald-800 text-xs sm:text-sm' : 'text-emerald-500 text-[9px] sm:text-[11px]'}`}>
+                    <div className="flex flex-col items-center justify-center leading-tight p-0.5">
+                      <span className={`font-black text-center break-words ${tile.type === 'text' ? 'text-emerald-900 text-[18px] sm:text-[20px]' : 'text-emerald-600 text-[16px] sm:text-[18px]'}`}>
                         {tile.content}
                       </span>
                     </div>
@@ -404,16 +411,22 @@ const SheepMatch: React.FC<Props> = ({ groups, onFinish, onClose }) => {
                     className="absolute inset-0 bg-white flex items-center justify-center p-1.5 shadow-lg z-10 border border-emerald-100"
                   >
                     {slots[i].isImage ? (
-                      <SafeImage 
-                        src={syncedImages[slots[i].wordId] || slots[i].content} 
-                        alt="" 
-                        className="w-full h-full object-contain"
-                        fallbackText={slots[i].wordId}
-                        width="64"
-                        height="64"
-                      />
+                      getWordEmoji(slots[i].wordId) ? (
+                        <span className="text-[24px] sm:text-[28px] select-none filter drop-shadow-[0_2px_4px_rgba(0,0,0,0.1)]">
+                          {getWordEmoji(slots[i].wordId)}
+                        </span>
+                      ) : (
+                        <SafeImage 
+                          src={syncedImages[slots[i].wordId] || slots[i].content} 
+                          alt="" 
+                          className="w-full h-full object-contain"
+                          fallbackText={slots[i].wordId}
+                          width="64"
+                          height="64"
+                        />
+                      )
                     ) : (
-                      <span className="text-[10px] sm:text-xs font-black text-emerald-800 text-center leading-tight break-words">{slots[i].content}</span>
+                      <span className="text-[12px] sm:text-[14px] font-black text-emerald-900 text-center leading-tight break-words">{slots[i].content}</span>
                     )}
                   </motion.div>
                 )}

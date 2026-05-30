@@ -568,3 +568,48 @@ export const getPhonicsBreakdown = (word: string): PhonicsSegment[] => {
   return graphemes.map(g => getSingleGraphemeSegment(g, w));
 };
 
+export const EMOJI_MAP: Record<string, string> = {
+  // CVC / Short vowels & Phonics Arena handout words
+  'apple': '🍎', 'ant': '🐜', 'cat': '🐱', 'bag': '🎒',
+  'elephant': '🐘', 'egg': '🥚', 'elf': '🧚', 'bed': '🛏️',
+  'in': '📥', 'itchy': '🦗', 'pig': '🐷', 'big': '🐘',
+  'on': '🔛', 'octopus': '🐙', 'sock': '🧦', 'hot': '🥵',
+  'up': '⬆️', 'under': '👇', 'jump': '🦘', 'cup': '🥛',
+  'boy': '👦', 'black': '⬛', 'crab': '🦀', 'car': '🚗',
+  'down': '⬇️', 'dog': '🐶', 'duck': '🦆',
+  'five': '5️⃣', 'fast': '⚡', 'fox': '🦊',
+  'girl': '👧', 'glass': '🥛', 'leg': '🦵',
+  'hug': '🤗', 'hit': '🎯', 'house': '🏠',
+  'jacket': '🧥', 'jet': '✈️', 'jam': '🍓',
+  'kiss': '💋', 'kick': '⚽', 'stinky': '🦨',
+  'loud': '📢', 'smell': '👃',
+  'moon': '🌙', 'man': '🧔',
+  'no': '❌', 'neck': '🧣', 'men': '👥', 'sun': '☀️',
+  'panda': '🐼', 'quiet': '🤫', 'quilt': '🛌', 'quack': '🦆', 'squid': '🦑',
+  'run': '🏃', 'red': '🔴', 'truck': '🚚', 'slow': '🐌',
+  'ten': '🔟', 'van': '🚐', 'vet': '🥼', 'vest': '🎽',
+  'watermelon': '🍉', 'wind': '💨', 'web': '🕸', 'swim': '🏊',
+  'six': '6️⃣', 'exit': '🚪', 't-rex': '🦖',
+  'yes': '👍', 'yogurt': '🥛', 'yell': '🗣️', 'yen': '💴',
+  'zero': '0️⃣', 'zip': '🤐', 'zigzag': '〰️', 'buzz': '🐝',
+
+  // Long vowels / other words
+  'sheep': '🐑', 'green': '🟢', 'train': '🚄', 'bread': '🍞', 'brush': '🖌️',
+  'clock': '⏰', 'frog': '🐸', 'grape': '🍇', 'plane': '✈️', 'snake': '🐍',
+  'spoon': '🥄', 'star': '⭐', 'sweet': '🍬', 'swing': '🎡', 'whale': '🐋',
+  'chair': '🪑', 'small': '🔎', 'dress': '👗', 'flower': '🌸', 'tiger': '🐯',
+  'rabbit': '🐰', 'candy': '🍬', 'balloon': '🎈', 'bad': '👎', 'dad': '🧔',
+  'sad': '😢', 'mad': '😠', 'rat': '🐀', 'fat': '🍔', 'sat': '🪑', 'bat': '🦇',
+  'tag': '🏷️', 'wag': '🐶', 'fan': '🪭', 'tan': '🔄', 'pan': '🍳',
+  'log': '🪵', 'map': '🗺️', 'tap': '🚰', 'ship': '🚢', 'fish': '🐟', 'this': '👉',
+  'that': '👈', 'with': '👥', 'back': '🔙', 'rock': '🪨', 'book': '📖', 'look': '👀',
+  'cook': '🧑‍🍳', 'food': '🍔', 'play': '🎮', 'stay': '🏠', 'day': '☀️', 'rain': '🌧️',
+  'mail': '✉️', 'cake': '🍰', 'bike': '🚲', 'nose': '👃', 'game': '🎮', 'late': '⏰',
+};
+
+export const getWordEmoji = (word: string): string | undefined => {
+  const w = word.toLowerCase().trim();
+  return EMOJI_MAP[w];
+};
+
+

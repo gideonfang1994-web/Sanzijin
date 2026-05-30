@@ -15,6 +15,7 @@ import VoiceDubbing from '../components/VoiceDubbing';
 import SafeImage from '../components/SafeImage';
 import PhonicsSpellingModal from '../components/PhonicsSpellingModal';
 import { addVocabularyError, removeVocabularyError } from '../utils/errorBookUtils';
+import { getWordEmoji } from '../utils/WordUtils';
 
 const getAi = () => {
   const apiKey = process.env.GEMINI_API_KEY || process.env.API_KEY;
@@ -1586,14 +1587,20 @@ const AdventurePage: React.FC<AdventurePageProps> = ({
                             }`}
                           >
                             <div className="w-full aspect-square bg-white rounded-2xl mb-2.5 flex items-center justify-center p-2 shadow-inner relative group/img overflow-hidden">
-                              <SafeImage 
-                                src={syncedImages[word.text] || word.imageUrl} 
-                                alt={word.text} 
-                                className="w-full h-full object-contain"
-                                fallbackText={word.text}
-                                width="72"
-                                height="72"
-                              />
+                              {getWordEmoji(word.text) ? (
+                                <span className="text-[36px] sm:text-[45px] select-none leading-none">
+                                  {getWordEmoji(word.text)}
+                                </span>
+                              ) : (
+                                <SafeImage 
+                                  src={syncedImages[word.text] || word.imageUrl} 
+                                  alt={word.text} 
+                                  className="w-full h-full object-contain"
+                                  fallbackText={word.text}
+                                  width="72"
+                                  height="72"
+                                />
+                              )}
                               <button 
                                 onClick={(e) => { e.stopPropagation(); syncImage(word.text); }}
                                 disabled={isSyncing}
