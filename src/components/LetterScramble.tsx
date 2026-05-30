@@ -11,10 +11,11 @@ interface Props {
   groups: WordGroup[];
   isReviewMode?: boolean;
   onFinish: (score: number, coins: number) => void;
+  onMistake?: (wordText: string) => void;
   onClose: () => void;
 }
 
-const LetterScramble: React.FC<Props> = ({ groups, isReviewMode, onFinish, onClose }) => {
+const LetterScramble: React.FC<Props> = ({ groups, isReviewMode, onFinish, onMistake, onClose }) => {
   const [currentIdx, setCurrentIdx] = useState(0);
   const [score, setScore] = useState(0);
   const [scrambled, setScrambled] = useState<{char: string, id: number}[]>([]);
@@ -154,6 +155,9 @@ const LetterScramble: React.FC<Props> = ({ groups, isReviewMode, onFinish, onClo
     audio.playError();
     setIsWrong(true);
     setCombo(0);
+    if (onMistake && currentWord) {
+      onMistake(currentWord.text);
+    }
     setTimeout(() => {
       setGuess([]);
       if (currentWord) {

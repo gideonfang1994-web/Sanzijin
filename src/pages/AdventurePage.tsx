@@ -4,7 +4,7 @@ import { motion, AnimatePresence } from 'motion/react';
 import { 
   ChevronLeft, ChevronRight, ChevronDown, Play, Gamepad2, RefreshCw, Star, Trophy,
   ArrowRight, Volume2, Lock, CheckCircle2, Zap, Trash2, Wand2,
-  BookOpen, Flame, Sparkles
+  BookOpen, Flame, Sparkles, Check
 } from 'lucide-react';
 import confetti from 'canvas-confetti';
 import { WordItem, WordCard, AdventureForestProps, DifficultyLevel } from '../types';
@@ -14,6 +14,7 @@ import { GoogleGenAI } from "@google/genai";
 import VoiceDubbing from '../components/VoiceDubbing';
 import SafeImage from '../components/SafeImage';
 import PhonicsSpellingModal from '../components/PhonicsSpellingModal';
+import { addVocabularyError, removeVocabularyError } from '../utils/errorBookUtils';
 
 const getAi = () => {
   const apiKey = process.env.GEMINI_API_KEY || process.env.API_KEY;
@@ -400,6 +401,7 @@ const AdventurePage: React.FC<AdventurePageProps> = ({
   const [testQuestions, setTestQuestions] = useState<{ word: WordItem, options?: string[], correct: string, type: 'CHOICE' | 'SPELLING' }[]>([]);
   const [testAnswers, setTestAnswers] = useState<boolean[]>([]);
   const [testResult, setTestResult] = useState<{ score: number, passed: boolean } | null>(null);
+  const [testMistakes, setTestMistakes] = useState<WordItem[]>([]);
   const [wrongOptions, setWrongOptions] = useState<string[]>([]);
   const [shuffledLetters, setShuffledLetters] = useState<string[]>([]);
   const [selectedLetters, setSelectedLetters] = useState<string[]>([]);
@@ -705,11 +707,18 @@ const AdventurePage: React.FC<AdventurePageProps> = ({
     startChallenge(freshLevel);
   };
 
-  const startChallenge = (level: Level) => {
-    console.log('[Adventure] Preparing Challenge Questions for level:', level.id);
-    setActiveLevel(level);
-    
-    const words = level.cards.flatMap(c => c.words);
+  const startChallenge = (level: Level | WordItem[]) => {
+    setTestMistakes([]);
+    let words: WordItem[] = [];
+    if (Array.isArray(level)) {
+      console.log('[Adventure] Preparing Challenge Questions for custom word list:', level);
+      words = level;
+      setActiveLevel(null); // Clear active level for custom mistake re-test
+    } else {
+      console.log('[Adventure] Preparing Challenge Questions for level:', level.id);
+      setActiveLevel(level);
+      words = level.cards.flatMap(c => c.words);
+    }
     const allWords = ALL_CARDS.flatMap(c => c.words);
     
     // Phase 1: Choice (English -> Chinese)
@@ -800,34 +809,47 @@ const AdventurePage: React.FC<AdventurePageProps> = ({
         setTestResult({ score, passed });
         
         if (passed) {
-          const currentId = currentActiveLevel!.id;
-          
-          const newMastered = [...new Set([...masteredLevels, currentId])];
-          const newCompleted = [...new Set([...completedLevels, currentId])];
-          
-          // SRS Logic updated to review yesterday (1 day later) and 3 days ago (3 days later) contents
-          const currentSchedule = reviewSchedules[currentId.toString()];
-          const currentInterval = currentSchedule ? currentSchedule.intervalDays : 1;
-          
-          let nextInterval = 3; 
-          if (currentInterval === 3) {
-            nextInterval = 14; // Fully mastered first curves, review extends to 14 days
-          } else if (currentInterval === 1) {
-            nextInterval = 3;
-          }
-          
-          const newSchedules = {
-            ...reviewSchedules,
-            [currentId.toString()]: {
-              levelId: currentId,
-              nextReviewAt: Date.now() + nextInterval * 24 * 60 * 60 * 1000,
-              intervalDays: nextInterval
+          if (currentActiveLevel) {
+            const currentId = currentActiveLevel.id;
+            
+            const newMastered = [...new Set([...masteredLevels, currentId])];
+            const newCompleted = [...new Set([...completedLevels, currentId])];
+            
+            // SRS Logic updated to review yesterday (1 day later) and 3 days ago (3 days later) contents
+            const currentSchedule = reviewSchedules[currentId.toString()];
+            const currentInterval = currentSchedule ? currentSchedule.intervalDays : 1;
+            
+            let nextInterval = 3; 
+            if (currentInterval === 3) {
+              nextInterval = 14; // Fully mastered first curves, review extends to 14 days
+            } else if (currentInterval === 1) {
+              nextInterval = 3;
             }
-          };
+            
+            const newSchedules = {
+              ...reviewSchedules,
+              [currentId.toString()]: {
+                levelId: currentId,
+                nextReviewAt: Date.now() + nextInterval * 24 * 60 * 60 * 1000,
+                intervalDays: nextInterval
+              }
+            };
 
-          setActiveLevel(levels.find(l => l.id === currentId) || null);
-          saveProgress(newCompleted, newMastered, cardsPerDay, newSchedules);
-          awardRewards(100, 50);
+            setActiveLevel(levels.find(l => l.id === currentId) || null);
+            saveProgress(newCompleted, newMastered, cardsPerDay, newSchedules);
+            awardRewards(100, 50);
+          } else {
+            // This is a custom mistake purging session!
+            awardRewards(45, 20);
+            
+            // Purge the tested words from the global error db index
+            testQuestions.forEach(q => {
+              removeVocabularyError(q.word.text);
+            });
+            
+            setFeedbackMessage('🕊️ 错词黑雾完全净化成功！词典已清零！');
+            setTimeout(() => setFeedbackMessage(null), 4000);
+          }
           
           audio.playCheer();
           confetti({ particleCount: 100, spread: 70, origin: { y: 0.6 } });
@@ -837,6 +859,18 @@ const AdventurePage: React.FC<AdventurePageProps> = ({
       audio.playError();
       setCombo(0);
       setShowCombo(false);
+      
+      // Automatically collect incorrect vocabulary word
+      if (currentQuestion && currentQuestion.word) {
+        addVocabularyError(currentQuestion.word, 'ADVENTURE');
+        setTestMistakes(prev => {
+          if (prev.some(w => w.text.toLowerCase() === currentQuestion.word.text.toLowerCase())) {
+            return prev;
+          }
+          return [...prev, currentQuestion.word];
+        });
+      }
+
       if (currentQuestion.type === 'CHOICE') {
         setWrongOptions(prev => [...prev, answer]);
       } else {
@@ -1882,15 +1916,72 @@ const AdventurePage: React.FC<AdventurePageProps> = ({
                   )}
                 </div>
               ) : (
-                <div className="bg-white rounded-[48px] p-10 shadow-2xl border-4 border-white text-center space-y-8">
+                <div className="bg-white rounded-[48px] p-8 sm:p-10 shadow-2xl border-4 border-white text-center space-y-6">
                   <div className="text-8xl">{testResult.passed ? '🏅' : '😅'}</div>
                   <div className="space-y-2">
                     <h3 className="text-3xl font-black text-slate-800">{testResult.passed ? '测试通过！' : '还需努力！'}</h3>
                     <p className="text-slate-400 font-bold">你的得分：<span className={testResult.passed ? 'text-emerald-500' : 'text-rose-500'}>{testResult.score}%</span></p>
                   </div>
                   
+                  {/* Detailed Interactive Mistaken Words Summary Section */}
+                  {testMistakes.length > 0 && (
+                    <div className="bg-purple-50/50 border border-purple-100 rounded-[32px] p-5 text-left space-y-3">
+                      <div className="flex items-center justify-between">
+                        <p className="text-sm font-black text-purple-950 flex items-center gap-2">
+                          <span className="text-base">🛡️</span> 本轮未一次答对的词灵 ({testMistakes.length})
+                        </p>
+                        <span className="text-[10px] bg-purple-100 text-purple-700 font-bold px-2 py-0.5 rounded-full uppercase tracking-wider">Mistakes</span>
+                      </div>
+                      
+                      <div className="max-h-40 overflow-y-auto space-y-1.5 pr-1 scrollbar-hide">
+                        {testMistakes.map((word, idx) => (
+                          <div key={idx} className="flex items-center justify-between bg-white/70 hover:bg-white p-2.5 rounded-2xl border border-purple-50 shadow-xs transition-colors">
+                            <div className="min-w-0 pr-2">
+                              <p className="font-extrabold text-[#0f172a] text-base leading-none tracking-tight">{word.text}</p>
+                              <p className="text-xs text-slate-400 font-semibold mt-1 leading-none">{word.translation}</p>
+                            </div>
+                            <button 
+                              onClick={() => {
+                                try { audio.speak(word.text); } catch(e){}
+                              }}
+                              className="p-2 hover:bg-purple-50 text-purple-600 rounded-xl active:scale-90 transition-all shrink-0"
+                              title="播放发音"
+                            >
+                              <Volume2 size={16} />
+                            </button>
+                          </div>
+                        ))}
+                      </div>
+                      
+                      <div className="pt-2 grid grid-cols-2 gap-2 text-center">
+                        <button
+                          onClick={() => {
+                            audio.playClick();
+                            startChallenge(testMistakes);
+                          }}
+                          className="py-3 px-3.5 bg-purple-600 hover:bg-purple-700 text-white rounded-2xl font-black text-xs flex items-center justify-center gap-1.5 shadow-md shadow-purple-200 active:translate-y-0.5 transition-all text-center"
+                        >
+                          <RefreshCw size={12} className="shrink-0" />
+                          <span>再次特训这些词</span>
+                        </button>
+                        <button
+                          onClick={() => {
+                            audio.playSuccess();
+                            testMistakes.forEach(w => addVocabularyError(w, 'ADVENTURE'));
+                            setFeedbackMessage('⚡️ 错词已全数存入净化阁汇总！');
+                            setTimeout(() => setFeedbackMessage(null), 3500);
+                          }}
+                          className="py-3 px-3.5 bg-emerald-500 hover:bg-emerald-600 text-white rounded-2xl font-black text-xs flex items-center justify-center gap-1.5 active:translate-y-0.5 transition-all text-center"
+                        >
+                          <Check size={12} className="shrink-0" />
+                          <span>安排后续复习</span>
+                        </button>
+                      </div>
+                    </div>
+                  )}
+
                   {testResult.passed ? (
-                    <div className="grid gap-3">
+                    <div className="grid gap-3 pt-2">
                       <button 
                         onClick={handleNextLevel}
                         className="w-full py-5 bg-emerald-500 text-white rounded-[32px] font-black text-xl shadow-lg shadow-emerald-200"
@@ -1905,7 +1996,7 @@ const AdventurePage: React.FC<AdventurePageProps> = ({
                       </button>
                     </div>
                   ) : (
-                    <div className="grid gap-3">
+                    <div className="grid gap-3 pt-2">
                       <button 
                         onClick={startReview}
                         className="w-full py-5 bg-rose-500 text-white rounded-[32px] font-black text-xl shadow-lg shadow-rose-200"

@@ -5,6 +5,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { ViewState, WordGroup, WordItem, UserStats } from '../types';
 import { ALL_CARDS } from '../constants';
 import audio from '../utils/AudioUtils';
+import { getVocabularyErrors } from '../utils/errorBookUtils';
 
 interface GameInfo {
   id: ViewState;
@@ -86,7 +87,7 @@ const ArcadePage: React.FC<ArcadePageProps> = ({ groups, stats, lastLearnedWords
 
   const games: GameInfo[] = [
     { id: 'SCRAMBLE', title: '拼词大师', icon: <Zap />, color: 'bg-rose-500', xp: '+250', description: '释放字母能量，拼出正确的咒语。', category: 'CHALLENGE' },
-    { id: 'HAMSTER', title: '萌兽地鼠锤释义', icon: <Hammer />, color: 'bg-amber-500', xp: '+380', description: '仓鼠背着翻译牌出洞！看准正确翻译，一气呵成锤击它！', category: 'ARCADE' },
+    { id: 'HAMSTER', title: '疯狂打地鼠', icon: <Hammer />, color: 'bg-amber-500', xp: '+380', description: '仓鼠背着翻译牌出洞！看准正确翻译，一气呵成锤击它！', category: 'ARCADE' },
     { id: 'FISHING', title: '冰川吊词翁', icon: <Star />, color: 'bg-sky-500', xp: '+400', description: '控制悬挂的吊钩，钓起正确翻译的冰湖群鱼！', category: 'ARCADE' },
     { id: 'PLANTS', title: '植物守卫战', icon: <Zap />, color: 'bg-emerald-600', xp: '+450', description: '召唤绿植词灵射手，击退单词僵尸！', category: 'ARCADE' },
     { id: 'SHEEP', title: '洋洋消消乐', icon: <Layers />, color: 'bg-emerald-500', xp: '+400', description: '消除3个相同魔法，清空法阵！', category: 'ARCADE' },
@@ -95,7 +96,24 @@ const ArcadePage: React.FC<ArcadePageProps> = ({ groups, stats, lastLearnedWords
   const dueLevels = useMemo(() => levels.filter(l => l.isDue), [levels]);
   const dueWords = useMemo(() => dueLevels.flatMap(l => l.words), [dueLevels]);
 
+  const errorWords = useMemo(() => {
+    try {
+      const errs = getVocabularyErrors();
+      return errs.map((item, idx) => ({
+        id: `err-${idx}`,
+        text: item.text,
+        translation: item.translation,
+        imageUrl: item.imageUrl,
+        syllables: item.syllables || [],
+        learned: true
+      }));
+    } catch (e) {
+      return [];
+    }
+  }, [showLevelSelector]);
+
   const currentWords = useMemo(() => {
+    if (selectedLevelId === -1) return errorWords;
     if (selectedLevelId === 0 && dueWords.length > 0) return dueWords; // 0 for SRS filter
     if (selectedLevelId) {
       return levels.find(l => l.id === selectedLevelId)?.words || [];
@@ -104,14 +122,16 @@ const ArcadePage: React.FC<ArcadePageProps> = ({ groups, stats, lastLearnedWords
     if (lastLearnedWords.length > 0) return lastLearnedWords;
     if (learnedGroups.length > 0) return learnedGroups.flatMap(g => g.words);
     return groups.flatMap(g => g.words);
-  }, [selectedLevelId, levels, lastLearnedWords, groups, dueWords]);
+  }, [selectedLevelId, levels, lastLearnedWords, groups, dueWords, errorWords]);
 
   const targetLevel = levels.find(l => l.id === selectedLevelId);
-  const displayText = selectedLevelId === 0
-    ? '待复习的魔法'
-    : selectedLevelId 
-      ? `${targetLevel?.name || `关卡 ${selectedLevelId}`} 的魔法` 
-      : lastLearnedWords.length > 0 ? '刚刚学过的魔法' : '全部已解锁魔法';
+  const displayText = selectedLevelId === -1
+    ? '个人神识净化阁 · 错词净化库'
+    : selectedLevelId === 0
+      ? '待复习的魔法'
+      : selectedLevelId 
+        ? `${targetLevel?.name || `关卡 ${selectedLevelId}`} 的魔法` 
+        : lastLearnedWords.length > 0 ? '刚刚学过的魔法' : '全部已解锁魔法';
 
   return (
     <div className="space-y-8 pb-32 max-w-md mx-auto">
@@ -187,7 +207,7 @@ const ArcadePage: React.FC<ArcadePageProps> = ({ groups, stats, lastLearnedWords
                     {selectedLevelId === null && <CheckCircle2 size={18} />}
                   </button>
 
-                  {dueWords.length > 0 && (
+                   {dueWords.length > 0 && (
                     <button 
                       onClick={() => { setSelectedLevelId(0); setShowLevelSelector(false); audio.playClick(); }}
                       className={`p-5 rounded-[24px] text-sm font-black text-left flex items-center justify-between group transition-all border-2 ${selectedLevelId === 0 ? 'bg-rose-500 border-rose-600 text-white shadow-lg' : 'bg-rose-50 border-rose-100/50 text-rose-500 hover:bg-rose-100'}`}
@@ -197,6 +217,19 @@ const ArcadePage: React.FC<ArcadePageProps> = ({ groups, stats, lastLearnedWords
                         <span>急需复习 (Review) · {dueWords.length}</span>
                       </div>
                       {selectedLevelId === 0 && <CheckCircle2 size={18} />}
+                    </button>
+                  )}
+
+                  {errorWords.length > 0 && (
+                    <button 
+                      onClick={() => { setSelectedLevelId(-1); setShowLevelSelector(false); audio.playClick(); }}
+                      className={`p-5 rounded-[24px] text-sm font-black text-left flex items-center justify-between group transition-all border-2 ${selectedLevelId === -1 ? 'bg-amber-500 border-amber-600 text-slate-950 shadow-lg' : 'bg-amber-50 border-amber-100/50 text-amber-500 hover:bg-amber-100'}`}
+                    >
+                      <div className="flex items-center space-x-3">
+                        <Smile size={18} className={selectedLevelId === -1 ? 'text-slate-950' : 'text-amber-500'} />
+                        <span>个人错词净化库 ({errorWords.length})</span>
+                      </div>
+                      {selectedLevelId === -1 && <CheckCircle2 size={18} />}
                     </button>
                   )}
                   

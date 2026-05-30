@@ -167,6 +167,9 @@ export const WhackAMole: React.FC<Props> = ({ groups, isReviewMode, onFinish, on
     } else {
       audio.playError();
       setCombo(0);
+      if (onMistake && targetWord) {
+        onMistake(targetWord.text);
+      }
       setHearts(prev => {
         if (prev <= 1) {
           endGame();

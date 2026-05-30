@@ -36,10 +36,12 @@ import MagicShop from './components/MagicShop';
 import PetPage from './pages/PetPage';
 import CollectionCenter from './components/CollectionCenter';
 import { PhonicsArena } from './components/PhonicsArena';
+import { ErrorBookDashboard } from './components/ErrorBookDashboard';
+import { addVocabularyError } from './utils/errorBookUtils';
 import constants, { ALL_CARDS } from './constants';
 import { RepetitiveMagicStudyModal } from './components/RepetitiveMagicStudyModal';
 import { WordGroup, UserStats, ViewState, DailyQuest, Word, WordItem, ShopItem, Pet } from './types';
-import { Home, BookOpen, Gamepad2, BarChart3, Award, ShoppingBag, Heart, Compass, AlertCircle, X, ShieldAlert, Globe, Sparkles, ExternalLink } from 'lucide-react';
+import { Home, BookOpen, Gamepad2, BarChart3, Award, ShoppingBag, Heart, Compass, AlertCircle, X, ShieldAlert, Globe, Sparkles, ExternalLink, Volume2, Check, RefreshCw, Trophy } from 'lucide-react';
 import audio from './utils/AudioUtils';
 import confetti from 'canvas-confetti';
 import { generateCharacterPortrait } from './services/portraitService';
@@ -70,6 +72,19 @@ const App: React.FC = () => {
   ];
 
   const [showReviewModal, setShowReviewModal] = useState(false);
+  const [showErrorDashboard, setShowErrorDashboard] = useState(false);
+  
+  const [currentGameMistakes, setCurrentGameMistakes] = useState<WordItem[]>([]);
+  const currentGameMistakesRef = React.useRef<WordItem[]>([]);
+  const [showArcadeSummary, setShowArcadeSummary] = useState(false);
+  const [customSessionRetestWords, setCustomSessionRetestWords] = useState<WordItem[]>([]);
+  const [arcadeSummaryData, setArcadeSummaryData] = useState<{
+    gameId: string;
+    score: number;
+    coins: number;
+    mistakes: WordItem[];
+    allSessionWords: WordItem[];
+  } | null>(null);
 
   const initialCharacterStats = useMemo(() => {
     const stats: Record<string, any> = {};
@@ -398,6 +413,18 @@ const App: React.FC = () => {
         setPendingLevelId(levelId);
       }
       
+      // Clear game session mistake tracking upon initiating any arcade game view
+      const gameViews = [
+        'CHALLENGE', 'SCRAMBLE', 'SHEEP', 'BALLOON', 'WHACK', 'DUBBING', 'SPELLING', 'PLANTS', 
+        'RAIDEN', 'FISHING', 'ALCHEMIST', 'MINER', 'SLASHER', 'SONAR', 'COOKING', 'FEEDING', 
+        'HAMSTER', 'SHOOTER', 'ICECREAM', 'DINO', 'DJ', 'ROCKET', 'POPIT', 'POTION', 'PARROT'
+      ];
+      if (gameViews.includes(newView)) {
+        setCurrentGameMistakes([]);
+        currentGameMistakesRef.current = [];
+      }
+      setShowArcadeSummary(false);
+      
       setView(newView);
       audio.playClick();
     } catch (error) {
@@ -521,6 +548,18 @@ const App: React.FC = () => {
   }, [stats.quests, stats.completedLevelIds, stats.cardsPerDay, dueReviews]);
 
   const activeGroups = useMemo(() => {
+    if (customSessionRetestWords.length > 0) {
+      return [{
+        id: 'session-retest',
+        title: '错词即时特训',
+        suffix: '',
+        words: customSessionRetestWords,
+        rhyme: '',
+        learned: true,
+        srsLevel: 0,
+        nextReview: 0
+      }];
+    }
     if (lastLearnedWords.length > 0) {
       return [{
         id: 'last-learned',
@@ -536,7 +575,7 @@ const App: React.FC = () => {
     if (challengeGroupId) return groups.filter(g => g.id === challengeGroupId);
     if (selectedDayId) return groups.filter(g => g.id === selectedDayId);
     return groups;
-  }, [groups, challengeGroupId, selectedDayId, lastLearnedWords]);
+  }, [groups, challengeGroupId, selectedDayId, lastLearnedWords, customSessionRetestWords]);
 
   const handleGameSuccess = (wordText: string) => {
     setStats(prev => {
@@ -552,6 +591,17 @@ const App: React.FC = () => {
       return newStats;
     });
   };
+
+  const handleGameMistake = useCallback((wordText: string) => {
+    const wordItem = ALL_CARDS.flatMap(c => c.words).find(w => w.text.toLowerCase() === wordText.toLowerCase());
+    if (wordItem) {
+      addVocabularyError(wordItem, 'ARCADE');
+      if (!currentGameMistakesRef.current.some(w => w.text.toLowerCase() === wordItem.text.toLowerCase())) {
+        currentGameMistakesRef.current.push(wordItem);
+      }
+      setCurrentGameMistakes([...currentGameMistakesRef.current]);
+    }
+  }, []);
 
   const handleGameFinish = useCallback((score: number, coins: number) => {
     setStats(prev => {
@@ -583,10 +633,20 @@ const App: React.FC = () => {
         bestChallengeScore: Math.max(prev.bestChallengeScore, score)
       };
     });
-    handleNavigate('ARCADE');
+
+    const sessionWords = activeGroups.flatMap(g => g.words);
+    setArcadeSummaryData({
+      gameId: view,
+      score,
+      coins,
+      mistakes: [...currentGameMistakesRef.current],
+      allSessionWords: sessionWords
+    });
+    setShowArcadeSummary(true);
+    
     updateQuest('q2');
     audio.playCheer();
-  }, [handleNavigate]);
+  }, [handleNavigate, view, activeGroups]);
 
   const handlePurchase = (item: ShopItem) => {
     setStats(prev => {
@@ -1038,6 +1098,7 @@ const App: React.FC = () => {
                   }
                 }} 
                 onUpdateStats={handleUpdateStats}
+                onOpenErrorCabinet={() => setShowErrorDashboard(true)}
               />
             </motion.div>
           )}
@@ -1129,13 +1190,13 @@ const App: React.FC = () => {
           {/* Game Views - Smooth Scale Entrance */}
           {['CHALLENGE', 'SCRAMBLE', 'SHEEP', 'BALLOON', 'WHACK', 'DUBBING', 'SPELLING', 'PLANTS', 'RAIDEN', 'FISHING', 'ALCHEMIST', 'MINER', 'SLASHER', 'SONAR', 'COOKING', 'FEEDING', 'HAMSTER', 'SHOOTER', 'ICECREAM', 'DINO', 'DJ', 'ROCKET', 'POPIT', 'POTION', 'PARROT'].includes(view) && (
             <motion.div key="game" initial={{ scale: 0.9, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} exit={{ scale: 1.1, opacity: 0 }} transition={{ type: "spring", damping: 20 }}>
-              {view === 'CHALLENGE' && <WordChallenge groups={activeGroups} isReviewMode={isReviewChallenge} onFinish={handleGameFinish} onMistake={() => {}} onSuccess={handleGameSuccess} onClose={() => handleNavigate('ARCADE')} />}
-              {view === 'SCRAMBLE' && <LetterScramble groups={activeGroups} onFinish={handleGameFinish} onClose={() => handleNavigate('ARCADE')} />}
+              {view === 'CHALLENGE' && <WordChallenge groups={activeGroups} isReviewMode={isReviewChallenge} onFinish={handleGameFinish} onMistake={handleGameMistake} onSuccess={handleGameSuccess} onClose={() => handleNavigate('ARCADE')} />}
+              {view === 'SCRAMBLE' && <LetterScramble groups={activeGroups} onFinish={handleGameFinish} onMistake={handleGameMistake} onClose={() => handleNavigate('ARCADE')} />}
               {view === 'SHEEP' && <SheepMatch groups={activeGroups} onFinish={handleGameFinish} onClose={() => handleNavigate('ARCADE')} />}
-              {view === 'BALLOON' && <FlyingDagger groups={activeGroups} onFinish={handleGameFinish} onMistake={() => {}} onSuccess={handleGameSuccess} onClose={() => handleNavigate('ARCADE')} />}
-              {view === 'WHACK' && <WhackAMole groups={activeGroups} onFinish={handleGameFinish} onMistake={() => {}} onSuccess={handleGameSuccess} onClose={() => handleNavigate('ARCADE')} />}
+              {view === 'BALLOON' && <FlyingDagger groups={activeGroups} onFinish={handleGameFinish} onMistake={handleGameMistake} onSuccess={handleGameSuccess} onClose={() => handleNavigate('ARCADE')} />}
+              {view === 'WHACK' && <WhackAMole groups={activeGroups} onFinish={handleGameFinish} onMistake={handleGameMistake} onSuccess={handleGameSuccess} onClose={() => handleNavigate('ARCADE')} />}
               {view === 'DUBBING' && <VoiceDubbing items={activeGroups.flatMap(g => g.words.map((w, idx) => ({ id: `${g.id}-${idx}`, ...w })))} onFinish={handleGameFinish} onClose={() => handleNavigate('ARCADE')} />}
-              {view === 'SPELLING' && <SpellingBee groups={activeGroups} onFinish={handleGameFinish} onClose={() => handleNavigate('ARCADE')} />}
+              {view === 'SPELLING' && <SpellingBee groups={activeGroups} onFinish={handleGameFinish} onMistake={handleGameMistake} onClose={() => handleNavigate('ARCADE')} />}
               {view === 'PLANTS' && <PlantsVsMonsters groups={activeGroups} stats={stats} onFinish={handleGameFinish} onClose={() => handleNavigate('ARCADE')} />}
               {view === 'RAIDEN' && <SpaceWordRaider groups={activeGroups} stats={stats} onFinish={handleGameFinish} onClose={() => handleNavigate('ARCADE')} />}
               {view === 'FISHING' && <PolarWordFishing groups={activeGroups} stats={stats} onFinish={handleGameFinish} onClose={() => handleNavigate('ARCADE')} />}
@@ -1147,11 +1208,11 @@ const App: React.FC = () => {
               {view === 'FEEDING' && <WordMonsterFeeding groups={activeGroups} stats={stats} onFinish={handleGameFinish} onClose={() => handleNavigate('ARCADE')} />}
               {view === 'HAMSTER' && <WordHamsterWhack groups={activeGroups} stats={stats} onFinish={handleGameFinish} onClose={() => handleNavigate('ARCADE')} />}
               {view === 'SHOOTER' && <WordBubbleShooter groups={activeGroups} stats={stats} onFinish={handleGameFinish} onClose={() => handleNavigate('ARCADE')} />}
-              {view === 'ICECREAM' && <IceCreamSpelling groups={activeGroups} stats={stats} onFinish={handleGameFinish} onClose={() => handleNavigate('ARCADE')} />}
+              {view === 'ICECREAM' && <IceCreamSpelling groups={activeGroups} stats={stats} onFinish={handleGameFinish} onMistake={handleGameMistake} onClose={() => handleNavigate('ARCADE')} />}
               {view === 'DINO' && <DinoRockJumper groups={activeGroups} stats={stats} onFinish={handleGameFinish} onClose={() => handleNavigate('ARCADE')} />}
               {view === 'DJ' && <WordDJBeat groups={activeGroups} stats={stats} onFinish={handleGameFinish} onClose={() => handleNavigate('ARCADE')} />}
               {view === 'ROCKET' && <WordMagnetRocket groups={activeGroups} stats={stats} onFinish={handleGameFinish} onClose={() => handleNavigate('ARCADE')} />}
-              {view === 'POPIT' && <WordSpellingPopit groups={activeGroups} stats={stats} onFinish={handleGameFinish} onClose={() => handleNavigate('ARCADE')} />}
+              {view === 'POPIT' && <WordSpellingPopit groups={activeGroups} stats={stats} onFinish={handleGameFinish} onMistake={handleGameMistake} onClose={() => handleNavigate('ARCADE')} />}
               {view === 'POTION' && <WordPotionLab groups={activeGroups} stats={stats} onFinish={handleGameFinish} onClose={() => handleNavigate('ARCADE')} />}
               {view === 'PARROT' && <WordParrotDubbing groups={activeGroups} stats={stats} onFinish={handleGameFinish} onClose={() => handleNavigate('ARCADE')} />}
             </motion.div>
@@ -1352,14 +1413,204 @@ const App: React.FC = () => {
         )}
       </AnimatePresence>
 
-      <nav className="fixed bottom-8 left-1/2 -translate-x-1/2 w-[95%] glass-pill h-20 rounded-[32px] flex items-center justify-around px-4 z-50 border-white/80 shadow-2xl">
-        <NavButton icon={<Home />} label="主页" active={view === 'HOME'} onClick={() => handleNavigate('HOME')} color="text-indigo-600" />
-        <NavButton icon={<BookOpen />} label="冒险" active={view === 'ADVENTURE'} onClick={() => handleNavigate('ADVENTURE')} color="text-rose-500" />
-        <NavButton icon={<Gamepad2 />} label="游玩" active={view === 'ARCADE' || ['CHALLENGE', 'SCRAMBLE', 'SHEEP', 'BALLOON', 'WHACK', 'DUBBING', 'SPELLING', 'PLANTS', 'RAIDEN', 'FISHING', 'ALCHEMIST', 'MINER', 'SLASHER', 'SONAR', 'COOKING', 'FEEDING', 'HAMSTER', 'SHOOTER', 'ICECREAM', 'DINO', 'DJ', 'ROCKET', 'POPIT', 'POTION', 'PARROT'].includes(view)} onClick={() => handleNavigate('ARCADE')} color="text-sky-500" />
-        <NavButton icon={<Heart />} label="宠兽" active={view === 'PETS'} onClick={() => handleNavigate('PETS')} color="text-rose-400" />
-        <NavButton icon={<ShoppingBag />} label="商店" active={view === 'SHOP'} onClick={() => handleNavigate('SHOP')} color="text-purple-500" />
-        <NavButton icon={<BarChart3 />} label="排行" active={view === 'RANKING'} onClick={() => handleNavigate('RANKING')} color="text-amber-500" />
-      </nav>
+      <AnimatePresence>
+        {showErrorDashboard && (
+          <ErrorBookDashboard 
+            stats={stats} 
+            onReward={handleReward} 
+            onClose={() => {
+              setShowErrorDashboard(false);
+              audio.playClick();
+            }} 
+          />
+        )}
+      </AnimatePresence>
+
+      {/* 森林奇乐园 - 游戏特训战役大胜利结算汇总 */}
+      <AnimatePresence>
+        {showArcadeSummary && arcadeSummaryData && (
+          <motion.div 
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 z-50 bg-slate-950/80 backdrop-blur-md flex items-center justify-center p-4 overflow-y-auto"
+          >
+            <motion.div 
+              initial={{ scale: 0.95, y: 15 }}
+              animate={{ scale: 1, y: 0 }}
+              exit={{ scale: 0.95, y: 15 }}
+              className="w-full max-w-lg bg-gradient-to-b from-[#022c22]/95 to-slate-900 border-4 border-emerald-500 shadow-2xl rounded-[40px] overflow-hidden flex flex-col p-6 sm:p-8 space-y-6 text-slate-100"
+            >
+              {/* Header Title Section */}
+              <div className="text-center relative">
+                <div className="inline-flex items-center px-4 py-1 bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 font-extrabold text-xs tracking-widest rounded-full uppercase mb-2 select-none">
+                  🛡️ 战役胜利汇报 SUMMARY 🛡️
+                </div>
+                <h3 className="text-3xl font-black text-white mt-1 leading-none">
+                  {(() => {
+                    const GAME_NAMES: Record<string, string> = {
+                      CHALLENGE: '词灵对战挑战',
+                      SCRAMBLE: '字母秘境拼词',
+                      SHEEP: '词灵牧场对对碰',
+                      BALLOON: '飞刀破空击词',
+                      WHACK: '地鼠音律敲击',
+                      DUBBING: '原声幻化配音',
+                      SPELLING: '拼写蜂王争霸',
+                      PLANTS: '植物魔灵防线',
+                      RAIDEN: '雷电空战御剑',
+                      FISHING: '极地冰川垂钓',
+                      ALCHEMIST: '女巫坩埚提炼',
+                      MINER: '魔矿掘金大师',
+                      SLASHER: '忍者音刃切词',
+                      SONAR: '深海声纳捕影',
+                      COOKING: '炭烤料理厨房',
+                      FEEDING: '喂养贪吃怪兽',
+                      HAMSTER: '仓鼠连环敲打',
+                      SHOOTER: '词灵泡泡射手',
+                      ICECREAM: '缤纷冰淇淋拼叠',
+                      DINO: '恐龙乱石跳跃',
+                      DJ: '音轨混音大师',
+                      ROCKET: '磁力火箭喷射',
+                      POPIT: '减压单词泡泡乐',
+                      POTION: '魔药配方实验室',
+                      PARROT: '鹦鹉学舌模仿秀'
+                    };
+                    return GAME_NAMES[arcadeSummaryData.gameId] || '乐园神兽特训';
+                  })()}
+                </h3>
+                <p className="text-sm font-semibold mt-2 text-emerald-400/95 leading-relaxed">
+                  你勇敢完成了奇乐园特训！以下是本次特训单词状态汇报：
+                </p>
+              </div>
+
+              {/* Metrics Display Rows */}
+              <div className="bg-slate-950/60 p-4 border border-emerald-900/40 rounded-2xl flex items-center justify-around text-center">
+                <div>
+                  <p className="text-[10px] text-slate-400 font-black uppercase tracking-wider mb-0.5">得分</p>
+                  <p className="text-2xl font-mono font-black text-emerald-400">{arcadeSummaryData.score}</p>
+                </div>
+                <div className="h-8 w-px bg-slate-800" />
+                <div>
+                  <p className="text-[10px] text-slate-400 font-black uppercase tracking-wider mb-0.5">收益</p>
+                  <p className="text-2xl font-mono font-black text-amber-400">+{arcadeSummaryData.coins} 🪙</p>
+                </div>
+                <div className="h-8 w-px bg-slate-800" />
+                <div>
+                  <p className="text-[10px] text-slate-400 font-black uppercase tracking-wider mb-0.5">错词率</p>
+                  <p className={`text-2xl font-mono font-black ${arcadeSummaryData.mistakes.length > 0 ? 'text-rose-400' : 'text-emerald-400'}`}>
+                    {arcadeSummaryData.allSessionWords.length > 0 
+                      ? `${Math.round((arcadeSummaryData.mistakes.length / arcadeSummaryData.allSessionWords.length) * 100)}%` 
+                      : '0%'}
+                  </p>
+                </div>
+              </div>
+
+              {/* Mistakes & Session Word List */}
+              <div className="space-y-2.5">
+                <div className="flex items-center justify-between">
+                  <p className="text-[11px] text-slate-400 font-black tracking-wider uppercase">本次词项状态细则 ({arcadeSummaryData.allSessionWords.length}):</p>
+                  <span className="text-[11px] text-teal-400 font-bold select-none">点击 🔊 可播放真人古音</span>
+                </div>
+                
+                <div className="bg-slate-950/40 border border-slate-800 rounded-3xl p-3 max-h-44 overflow-y-auto space-y-1.5 scrollbar-thin">
+                  {arcadeSummaryData.allSessionWords.length > 0 ? (
+                    arcadeSummaryData.allSessionWords.map((word, idx) => {
+                      const isMistake = arcadeSummaryData.mistakes.some(m => m.text.toLowerCase() === word.text.toLowerCase());
+                      return (
+                        <div 
+                          key={word.text + '-' + idx} 
+                          className={`flex items-center justify-between p-2.5 rounded-2xl border transition-all ${
+                            isMistake 
+                              ? 'bg-rose-500/10 border-rose-500/30 text-rose-300' 
+                              : 'bg-emerald-500/5 border-emerald-500/15 text-slate-200'
+                          }`}
+                        >
+                          <div className="min-w-0 pr-3">
+                            <div className="flex items-center gap-2">
+                              <span className="text-sm font-black tracking-wide font-mono uppercase">{word.text}</span>
+                              {isMistake ? (
+                                <span className="bg-rose-500/20 text-rose-400 text-[9px] font-black tracking-widest uppercase px-1.5 py-0.5 rounded-lg border border-rose-500/30">错词</span>
+                              ) : (
+                                <span className="bg-emerald-500/20 text-emerald-400 text-[9px] font-black tracking-widest uppercase px-1.5 py-0.5 rounded-lg border border-emerald-500/30">正确</span>
+                              )}
+                            </div>
+                            <p className="text-xs text-slate-400 font-bold mt-1 leading-none">{word.translation}</p>
+                          </div>
+                          
+                          <button 
+                            onClick={() => {
+                              try { audio.speak(word.text); } catch (e) {}
+                            }}
+                            className={`p-2 rounded-xl transition-all ${isMistake ? 'hover:bg-rose-500/10 text-rose-400' : 'hover:bg-emerald-500/10 text-emerald-400'}`}
+                          >
+                            <Volume2 size={13} className="stroke-[3]" />
+                          </button>
+                        </div>
+                      );
+                    })
+                  ) : (
+                    <p className="text-center py-6 text-xs text-slate-500 font-semibold">本次未获取到游戏词灵明细</p>
+                  )}
+                </div>
+              </div>
+
+              {/* Action grid layout */}
+              <div className="grid grid-cols-2 gap-3 pt-2">
+                <button
+                  onClick={() => {
+                    audio.playClick();
+                    const retestList = arcadeSummaryData.mistakes.length > 0 
+                      ? arcadeSummaryData.mistakes 
+                      : arcadeSummaryData.allSessionWords;
+                    if (retestList.length === 0) return;
+                    
+                    setCustomSessionRetestWords(retestList);
+                    setIsReviewChallenge(true);
+                    setShowArcadeSummary(false);
+                    setCurrentGameMistakes([]);
+                    setView('CHALLENGE');
+                  }}
+                  disabled={arcadeSummaryData.allSessionWords.length === 0}
+                  className="w-full py-4 bg-gradient-to-r from-amber-500 to-orange-500 hover:scale-[1.02] hover:from-amber-600 hover:to-orange-600 text-slate-950 font-black text-sm rounded-2xl active:scale-[0.98] cursor-pointer shadow-lg shadow-amber-950/20 transition-all text-center flex items-center justify-center gap-1.5 border-b-4 border-amber-700 active:border-b-0"
+                >
+                  <RefreshCw size={13} className="stroke-[3]" />
+                  <span>再次测试这批词</span>
+                </button>
+
+                <button
+                  onClick={() => {
+                    audio.playClick();
+                    // Ensure all session mistakes are collected in global error book
+                    if (arcadeSummaryData.mistakes.length > 0) {
+                      arcadeSummaryData.mistakes.forEach(w => addVocabularyError(w, 'ARCADE'));
+                    }
+                    setShowArcadeSummary(false);
+                    setArcadeSummaryData(null);
+                    setCurrentGameMistakes([]);
+                    handleNavigate('ARCADE');
+                  }}
+                  className="w-full py-4 bg-slate-800 hover:bg-slate-700 hover:scale-[1.02] text-white font-black text-sm rounded-2xl active:scale-[0.98] cursor-pointer transition-all border-b-4 border-slate-950 active:border-b-0 text-center flex items-center justify-center gap-1.5"
+                >
+                  <Check size={13} className="stroke-[3]" />
+                  <span>凯旋回奇乐园</span>
+                </button>
+              </div>
+
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      {['HOME', 'ADVENTURE', 'CARDS', 'ARCADE', 'SHOP', 'PETS', 'RANKING'].includes(view) && (
+        <nav className="fixed bottom-6 left-1/2 -translate-x-1/2 w-[92%] max-w-md glass-pill h-20 rounded-[32px] flex items-center justify-around px-4 z-50 border-white/80 shadow-2xl">
+          <NavButton icon={<Home />} label="主页" active={view === 'HOME'} onClick={() => handleNavigate('HOME')} color="text-indigo-600" />
+          <NavButton icon={<BookOpen />} label="冒险" active={view === 'ADVENTURE'} onClick={() => handleNavigate('ADVENTURE')} color="text-rose-500" />
+          <NavButton icon={<Gamepad2 />} label="游玩" active={view === 'ARCADE'} onClick={() => handleNavigate('ARCADE')} color="text-sky-500" />
+          <NavButton icon={<Heart />} label="宠兽" active={view === 'PETS'} onClick={() => handleNavigate('PETS')} color="text-rose-400" />
+          <NavButton icon={<ShoppingBag />} label="商店" active={view === 'SHOP'} onClick={() => handleNavigate('SHOP')} color="text-purple-500" />
+          <NavButton icon={<BarChart3 />} label="排行" active={view === 'RANKING'} onClick={() => handleNavigate('RANKING')} color="text-amber-500" />
+        </nav>
+      )}
     </div>
   );
 };

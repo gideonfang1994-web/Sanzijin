@@ -10,10 +10,11 @@ import SafeImage from './SafeImage';
 interface Props {
   groups: WordGroup[];
   onFinish: (score: number, coins: number) => void;
+  onMistake?: (wordText: string) => void;
   onClose: () => void;
 }
 
-const SpellingBee: React.FC<Props> = ({ groups, onFinish, onClose }) => {
+const SpellingBee: React.FC<Props> = ({ groups, onFinish, onMistake, onClose }) => {
   const [pool, setPool] = useState<WordItem[]>([]);
   const [currentIdx, setCurrentIdx] = useState(0);
   const [score, setScore] = useState(0);
@@ -104,6 +105,9 @@ const SpellingBee: React.FC<Props> = ({ groups, onFinish, onClose }) => {
     audio.playError();
     setShake(true);
     setCombo(0);
+    if (onMistake && currentWord) {
+      onMistake(currentWord.text);
+    }
     setHearts(prev => {
       const next = prev - 1;
       if (next <= 0) {

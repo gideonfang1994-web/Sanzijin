@@ -11,10 +11,11 @@ interface WordSpellingPopitProps {
   groups: WordGroup[];
   stats: UserStats;
   onFinish: (score: number, coins: number) => void;
+  onMistake?: (wordText: string) => void;
   onClose: () => void;
 }
 
-export const WordSpellingPopit: React.FC<WordSpellingPopitProps> = ({ groups, stats, onFinish, onClose }) => {
+export const WordSpellingPopit: React.FC<WordSpellingPopitProps> = ({ groups, stats, onFinish, onMistake, onClose }) => {
   const allWords = useMemo(() => {
     let list: WordItem[] = [];
     groups.forEach(g => {
@@ -127,6 +128,9 @@ export const WordSpellingPopit: React.FC<WordSpellingPopitProps> = ({ groups, st
     } else {
       // WRONG POP!
       audio.playError();
+      if (onMistake && activeWord) {
+        onMistake(activeWord.text);
+      }
       setHealth(h => {
         const next = h - 1;
         if (next <= 0) {

@@ -185,11 +185,11 @@ export const WordHamsterWhack: React.FC<WordHamsterWhackProps> = ({ groups, stat
             <ArrowLeft size={18} />
           </button>
           <div>
-            <h4 id="hamster-game-title" className="font-extrabold text-[#fef3c7] text-sm leading-none flex items-center gap-1.5">
-              <span>萌兽地鼠锤释义</span>
-              <span className="text-[9px] bg-amber-500/35 text-amber-200 font-extrabold px-1.5 py-0.5 rounded">Whack</span>
+            <h4 id="hamster-game-title" className="font-extrabold text-[#fef3c7] text-[18px] leading-tight flex items-center gap-1.5">
+              <span>疯狂打地鼠</span>
+              <span className="text-[10px] bg-amber-500/35 text-amber-200 font-extrabold px-1.5 py-0.5 rounded">Whack</span>
             </h4>
-            <span className="text-[10px] text-amber-100 block font-bold mt-1">小松鼠探出了脑袋！砸中装载着正确翻译汉字的松鼠牌子</span>
+            <span className="text-[14px] text-amber-100 block font-bold mt-1">小松鼠爬出了脑袋！砸中装载着正确翻译汉字的松鼠牌子</span>
           </div>
         </div>
 
@@ -208,16 +208,16 @@ export const WordHamsterWhack: React.FC<WordHamsterWhackProps> = ({ groups, stat
             className="p-8 py-16 text-center space-y-6 bg-gradient-to-b from-[#fef3c7] to-[#fcd34d]"
           >
             <div className="text-6xl animate-bounce">🔨🐹</div>
-            <div className="space-y-2">
-              <h4 className="text-2xl font-black text-amber-800 tracking-tight">丛林仓鼠大乱斗：敲击金牌</h4>
-              <p className="text-xs text-amber-950 font-extrabold leading-relaxed uppercase">
-                小仓鼠们躲藏在深秋原野地洞。顶端将发布英文单词探视镜。仓鼠探头时分别背着不同汉字。快速发现正确的词灵并【挥锤砸中它】，收获炫目星星！中错牌扣减铁锤耐久生命噢。
+            <div className="space-y-4">
+              <h4 className="text-[28px] font-black text-amber-800 tracking-tight leading-snug">丛林仓鼠大乱斗：敲击金牌</h4>
+              <p className="text-[18px] text-amber-950 font-extrabold leading-relaxed">
+                小仓鼠们躲藏在深秋原野地洞。顶端将发布英文单词和视控。仓鼠探头时分别背着不同汉字。快速发现正确的词灵并【挥锤砸中它】，收获炫目星星！中错牌扣减铁锤耐久生命噢。
               </p>
             </div>
 
             <button 
               onClick={startGame}
-              className="w-full max-w-xs bg-gradient-to-r from-amber-500 to-orange-500 hover:brightness-110 border-b-4 border-amber-700 py-3.5 rounded-[24px] text-white font-black text-sm transition-all cursor-pointer shadow-lg"
+              className="w-full max-w-xs bg-gradient-to-r from-amber-500 to-orange-500 hover:brightness-110 border-b-4 border-amber-700 py-4 rounded-[24px] text-white font-black text-[18px] transition-all cursor-pointer shadow-lg"
             >
               扛起充气锤 开敲 🔨
             </button>
@@ -228,38 +228,38 @@ export const WordHamsterWhack: React.FC<WordHamsterWhackProps> = ({ groups, stat
           <motion.div key="playing" className="flex flex-col relative bg-[#fffae6]">
             
             {/* HUD */}
-            <div className="bg-[#451a03] px-4 py-2 flex items-center justify-between text-white text-xs">
+            <div className="bg-[#451a03] px-4 py-3 flex items-center justify-between text-white text-[14px]">
               <div className="flex items-center space-x-2">
-                <span className="font-extrabold text-[#fde68a]">铁锤气血:</span>
+                <span className="font-extrabold text-[#fde68a] text-[15px]">铁锤气血:</span>
                 <div className="flex space-x-1">
                   {[...Array(5)].map((_, i) => (
-                    <span key={i} className="text-sm">
+                    <span key={i} className="text-[15px]">
                       {i < hearts ? '🔨' : '❌'}
                     </span>
                   ))}
                 </div>
               </div>
 
-              <div className="bg-[#78350f] px-2.5 py-0.5 rounded text-[10px] font-black uppercase text-amber-200">
+              <div className="bg-[#78350f] px-2.5 py-1 rounded text-[12px] font-black uppercase text-amber-200">
                 出击进度: {wordPointer.current - 1}/6 锤
               </div>
             </div>
 
             {/* MOUND FIELDS SCREEN (2x2 bending grids) */}
-            <div className="w-full aspect-[1.8/1] min-h-[260px] bg-gradient-to-b from-[#d97706] to-[#78350f] p-4 relative overflow-hidden flex flex-col justify-around rounded-b-lg">
+            <div className="w-full min-h-[340px] bg-gradient-to-b from-[#d97706] to-[#78350f] p-4 relative overflow-hidden flex flex-col justify-around rounded-b-lg">
               
               {/* Target Word banner floating above */}
-              <div className="bg-white/95 border-2 border-amber-300 rounded-2xl p-2 max-w-xs mx-auto text-center flex items-center justify-center space-x-2.5 shadow-lg relative z-20">
+              <div className="bg-white/95 border-2 border-amber-300 rounded-2xl p-2.5 max-w-xs mx-auto text-center flex items-center justify-center space-x-2.5 shadow-lg relative z-20">
                 <CompassIcon />
                 <div className="space-y-0.5">
-                  <span className="text-[9px] font-black text-amber-600 block leading-none">TARGET ENG WORD</span>
+                  <span className="text-[10px] font-black text-amber-600 block leading-none">TARGET ENG WORD</span>
                   <div className="flex items-center space-x-1.5 justify-center leading-none">
-                    <span className="font-extrabold text-lg text-amber-950">{targetWord?.text}</span>
+                    <span className="font-extrabold text-[22px] text-amber-950">{targetWord?.text}</span>
                     <button 
                       onClick={() => { if(targetWord) audio.speak(targetWord.text); }}
-                      className="p-0.5 hover:bg-amber-100 rounded text-amber-600 cursor-pointer"
+                      className="p-1 hover:bg-amber-100 rounded text-amber-600 cursor-pointer"
                     >
-                      <Volume2 size={13} />
+                      <Volume2 size={16} />
                     </button>
                   </div>
                 </div>
@@ -270,7 +270,7 @@ export const WordHamsterWhack: React.FC<WordHamsterWhackProps> = ({ groups, stat
                 {holes.map(hole => (
                   <div 
                     key={hole.id}
-                    className="relative aspect-[2.4/1] bg-[#451a03] border-t-4 border-[#351502] rounded-full flex flex-col items-center justify-end shadow-[inset_0_8px_16px_rgba(0,0,0,0.6)] group cursor-crosshair pb-0.5 h-[62px]"
+                    className="relative aspect-[2/1] bg-[#451a03] border-t-4 border-[#351502] rounded-full flex flex-col items-center justify-end shadow-[inset_0_8px_16px_rgba(0,0,0,0.6)] group cursor-crosshair pb-1.5 h-[95px]"
                     onClick={() => whackHamster(hole.id)}
                   >
                     {/* Grassy dirt visual mound around the rim */}
@@ -280,7 +280,7 @@ export const WordHamsterWhack: React.FC<WordHamsterWhackProps> = ({ groups, stat
                     <AnimatePresence>
                       {hole.isPopped && (
                         <motion.div
-                          initial={{ y: 22, opacity: 0 }}
+                          initial={{ y: 32, opacity: 0 }}
                           animate={hole.isHit ? {
                             y: [0, 8, 2],
                             scale: [1, 0.85, 1],
@@ -289,16 +289,16 @@ export const WordHamsterWhack: React.FC<WordHamsterWhackProps> = ({ groups, stat
                             y: 0,
                             opacity: 1
                           }}
-                          exit={{ y: 22, opacity: 0 }}
+                          exit={{ y: 32, opacity: 0 }}
                           className="absolute bottom-1 w-full flex flex-col items-center z-10"
                         >
                           {/* Hamster Character Face */}
-                          <div className="text-3xl select-none leading-none relative">
+                          <div className="text-4xl select-none leading-none relative mb-0.5">
                             {hole.isHit ? (hole.isCorrect ? '😵💫✨' : '💥💨') : hole.emoji}
                           </div>
 
                           {/* Wooden translation sign name placard */}
-                          <div className={`mt-0.5 p-1 px-2.5 border rounded-lg text-[9px] font-black text-center shadow-md select-none pointer-events-none whitespace-nowrap min-w-[70px] ${
+                          <div className={`mt-0.5 p-1 px-3 border rounded-lg text-[18px] font-black text-center shadow-md select-none pointer-events-none whitespace-nowrap min-w-[75px] ${
                             hole.isHit 
                               ? (hole.isCorrect ? 'bg-amber-400 border-yellow-200 text-[#451a03]' : 'bg-rose-500 border-rose-300 text-white line-through opacity-70')
                               : 'bg-amber-100 border-amber-300 text-[#78350f] uppercase'
@@ -315,12 +315,12 @@ export const WordHamsterWhack: React.FC<WordHamsterWhackProps> = ({ groups, stat
             </div>
 
             {/* LOWER SPELL CONTROLLER COGNITION */}
-            <div className="p-4 bg-[#fff9eb] border-t border-amber-100 text-center space-y-1">
-              <span className="text-[10px] font-black uppercase tracking-wider text-amber-700 block">
+            <div className="p-4 bg-[#fff9eb] border-t border-amber-100 text-center space-y-2.5">
+              <span className="text-[14px] font-black uppercase tracking-wider text-amber-700 block">
                 🔨 萌鼠抢字大冒险 🔨
               </span>
-              <p className="text-[11px] text-slate-500 leading-normal max-w-xs mx-auto">
-                仓鼠会带上干扰翻译。唯有砸中真正能表达「 <span className="font-black text-amber-800">{targetWord?.text}</span> 」的那只，才能过关斩将！
+              <p className="text-[18px] text-slate-700 font-bold leading-normal max-w-sm mx-auto">
+                仓鼠会带上干扰翻译。唯有砸中真正能表达「 <span className="font-extrabold text-[#78350f] underline">{targetWord?.text}</span> 」的那只，才能过关斩将！
               </p>
             </div>
 

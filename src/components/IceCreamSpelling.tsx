@@ -10,6 +10,7 @@ interface IceCreamSpellingProps {
   groups: WordGroup[];
   stats: UserStats;
   onFinish: (score: number, coins: number) => void;
+  onMistake?: (wordText: string) => void;
   onClose: () => void;
 }
 
@@ -23,7 +24,7 @@ interface SkyScoop {
   emoji: string;
 }
 
-export const IceCreamSpelling: React.FC<IceCreamSpellingProps> = ({ groups, stats, onFinish, onClose }) => {
+export const IceCreamSpelling: React.FC<IceCreamSpellingProps> = ({ groups, stats, onFinish, onMistake, onClose }) => {
   const allWords = useMemo(() => {
     let list: WordItem[] = [];
     groups.forEach(g => {
@@ -173,6 +174,9 @@ export const IceCreamSpelling: React.FC<IceCreamSpellingProps> = ({ groups, stat
         const missedCorrect = moved.some(s => s.letter === nextRequired && s.y > 90);
         if (missedCorrect) {
           audio.playError();
+          if (onMistake && targetWord) {
+            onMistake(targetWord.text);
+          }
           setHearts(h => {
             const nextH = h - 1;
             if (nextH <= 0) setGameState('LOST');
@@ -240,6 +244,9 @@ export const IceCreamSpelling: React.FC<IceCreamSpellingProps> = ({ groups, stat
     } else {
       // Melted SPLAT! Caught wrong letter
       audio.playError();
+      if (onMistake && targetWord) {
+        onMistake(targetWord.text);
+      }
       setHearts(h => {
         const nextH = h - 1;
         if (nextH <= 0) setGameState('LOST');

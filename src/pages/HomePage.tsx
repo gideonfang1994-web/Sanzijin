@@ -9,6 +9,7 @@ import DailyQuestBoard from '../components/DailyQuestBoard';
 import { CHARACTERS, SHOP_ITEMS } from '../constants';
 import SafeImage from '../components/SafeImage';
 import audio from '../utils/AudioUtils';
+import { getVocabularyErrors } from '../utils/errorBookUtils';
 
 const PET_EMOJIS: Record<string, string> = {
   DRAGON: '🐲',
@@ -24,9 +25,18 @@ interface HomePageProps {
   onNavigate: (view: ViewState) => void;
   onQuestClick: (view: ViewState, isReview?: boolean, levelId?: number) => void;
   onUpdateStats?: (newStats: Partial<UserStats>) => void;
+  onOpenErrorCabinet?: () => void;
 }
 
-const HomePage: React.FC<HomePageProps> = ({ stats, groups, reviewNeeded, onNavigate, onQuestClick, onUpdateStats }) => {
+const HomePage: React.FC<HomePageProps> = ({ stats, groups, reviewNeeded, onNavigate, onQuestClick, onUpdateStats, onOpenErrorCabinet }) => {
+  const incorrectCount = React.useMemo(() => {
+    try {
+      return getVocabularyErrors().length;
+    } catch (e) {
+      return 0;
+    }
+  }, [stats]);
+
   const [searchQuery, setSearchQuery] = React.useState('');
   const [searchResults, setSearchResults] = React.useState<WordGroup[]>([]);
   const [isProfileExpanded, setIsProfileExpanded] = React.useState(false);
@@ -508,6 +518,49 @@ const HomePage: React.FC<HomePageProps> = ({ stats, groups, reviewNeeded, onNavi
           </div>
           <span className="text-sm sm:text-base bg-white border border-amber-250 text-amber-950 font-black px-4.5 py-3 rounded-2xl group-hover:bg-[#fca5a5] group-hover:text-amber-950 group-hover:border-transparent transition-all shrink-0 shadow-xs relative z-10">
             进入特训 🛡️
+          </span>
+        </motion.button>
+
+        {/* Portal G: Mistake Purification Chamber (Error Book & Reports Dashboard - Full Width / Epic Portal with deep emerald-purple gradient) */}
+        <motion.button 
+          whileHover={{ scale: 1.015, y: -1 }}
+          whileTap={{ scale: 0.985 }}
+          onClick={() => {
+            try { audio.playClick(); } catch(e){}
+            onOpenErrorCabinet?.();
+          }} 
+          className="col-span-2 p-5 bg-gradient-to-r from-[#faf5ff] via-white to-[#fdf2f8] border-2 border-purple-300 border-b-[6px] border-purple-500 rounded-3xl text-left relative overflow-hidden group flex items-center justify-between cursor-pointer shadow-sm active:border-b-[2px] active:translate-y-[4px]"
+        >
+          <div className="absolute inset-y-0 right-0 w-[40%] bg-gradient-to-l from-purple-500/5 to-transparent pointer-events-none" />
+          
+          <div className="flex items-center space-x-4 relative z-10 min-w-0">
+            <div className="bg-gradient-to-r from-purple-500 via-pink-400 to-indigo-500 w-12 h-12 rounded-2xl flex items-center justify-center shadow-sm relative shrink-0">
+              <span className="text-xl">🛡️</span>
+              {incorrectCount > 0 && (
+                <span className="absolute -top-1.5 -right-1.5 bg-rose-500 border-2 border-white text-white text-[9.5px] font-black w-5.5 h-5.5 flex items-center justify-center rounded-full animate-bounce">
+                  {incorrectCount}
+                </span>
+              )}
+            </div>
+            <div className="min-w-0 text-left font-sans">
+              <h3 className="font-black text-purple-950 text-lg sm:text-[21.5px] leading-none flex items-center gap-2">
+                <span>个人神识净化阁 · 错词汇报汇总</span>
+                {incorrectCount > 0 ? (
+                  <span className="bg-rose-100 text-rose-700 text-[10px] sm:text-xs font-black px-2 py-0.5 rounded border border-rose-200 animate-pulse">有黑雾</span>
+                ) : (
+                  <span className="bg-emerald-100 text-emerald-850 text-[10px] sm:text-xs font-black px-2 py-0.5 rounded border border-emerald-250">已清空</span>
+                )}
+              </h3>
+              <p className="text-base sm:text-[17px] font-bold text-purple-800 mt-2.5 leading-none">
+                {incorrectCount > 0 
+                  ? `发现 ${incorrectCount} 个致错法术印记，速速开启限时挑战净化 ⚡`
+                  : '太完美了！神识无漏，错词魔法雾气已完全消散 🕊️'
+                }
+              </p>
+            </div>
+          </div>
+          <span className="text-sm sm:text-base bg-white border border-purple-250 text-purple-950 font-black px-4.5 py-3 rounded-2xl group-hover:bg-[#d8b4fe] group-hover:text-purple-950 group-hover:border-transparent transition-all shrink-0 shadow-xs relative z-10">
+            开启净化 🪐
           </span>
         </motion.button>
       </div>
