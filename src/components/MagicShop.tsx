@@ -1,7 +1,7 @@
 
 import React, { useState } from 'react';
 import { UserStats, ShopItem, Character } from '../types';
-import { CHARACTERS, SHOP_ITEMS } from '../constants';
+import { CHARACTERS, SHOP_ITEMS, getShopImageUrl } from '../constants';
 import { Sparkles, ShoppingBag, Check, Lock, User, Shield, Sword, Wand2, Book, ArrowUp, Zap, BookOpen, ArrowRight, ChevronLeft } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import SafeImage from './SafeImage';
@@ -187,12 +187,14 @@ const CharacterVisual: React.FC<{
           {['RIGHT_HAND', 'LEFT_HAND', 'BODY'].map(slot => {
             const equipped = items.find(i => i.slot === slot);
             return (
-              <div key={slot} className={`w-12 h-12 rounded-xl border-2 flex items-center justify-center transition-all duration-300 ${equipped ? 'bg-white/10 border-white/40 shadow-[0_0_15px_rgba(255,255,255,0.2)]' : 'bg-black/40 border-white/5'}`}>
+              <div key={slot} className={`w-12 h-12 rounded-xl border-2 flex items-center justify-center overflow-hidden transition-all duration-300 ${equipped ? 'bg-white/10 border-white/40 shadow-[0_0_15px_rgba(255,255,255,0.2)]' : 'bg-black/40 border-white/5'}`}>
                 {equipped ? (
-                  <motion.div initial={{ scale: 0 }} animate={{ scale: 1 }}>
-                    <span className="text-2xl filter drop-shadow select-none">
-                      {getShopEmoji(equipped.name)}
-                    </span>
+                  <motion.div initial={{ scale: 0 }} animate={{ scale: 1 }} className="w-8 h-8 flex items-center justify-center">
+                    <SafeImage 
+                      src={getShopImageUrl(equipped.name)} 
+                      alt={equipped.name} 
+                      className="w-full h-full object-contain filter drop-shadow select-none"
+                    />
                   </motion.div>
                 ) : (
                   <div className="w-5 h-5 bg-white/5 rounded-full" />
@@ -245,12 +247,14 @@ const CharacterVisual: React.FC<{
             if (!hasItemForSlot) return null;
 
             return (
-              <div key={slot} className={`w-12 h-12 rounded-xl border-2 flex items-center justify-center transition-all duration-300 ${equipped ? 'bg-white/10 border-white/40 shadow-[0_0_15px_rgba(255,255,255,0.2)]' : 'bg-black/40 border-white/5'}`}>
+              <div key={slot} className={`w-12 h-12 rounded-xl border-2 flex items-center justify-center overflow-hidden transition-all duration-300 ${equipped ? 'bg-white/10 border-white/40 shadow-[0_0_15px_rgba(255,255,255,0.2)]' : 'bg-black/40 border-white/5'}`}>
                 {equipped ? (
-                  <motion.div initial={{ scale: 0 }} animate={{ scale: 1 }}>
-                    <span className="text-2xl filter drop-shadow select-none">
-                      {getShopEmoji(equipped.name)}
-                    </span>
+                  <motion.div initial={{ scale: 0 }} animate={{ scale: 1 }} className="w-8 h-8 flex items-center justify-center">
+                    <SafeImage 
+                      src={getShopImageUrl(equipped.name)} 
+                      alt={equipped.name} 
+                      className="w-full h-full object-contain filter drop-shadow select-none"
+                    />
                   </motion.div>
                 ) : (
                   <div className="w-5 h-5 bg-white/5 rounded-full" />
@@ -439,9 +443,13 @@ const MagicShop: React.FC<MagicShopProps> = ({ stats, onPurchase, onEquip, onSel
                       }`}>
                         <div className="relative flex items-center justify-center w-16 h-16 bg-slate-50/80 rounded-2xl border border-slate-100 shadow-inner hover:scale-110 transition-transform duration-300">
                           <div className="absolute inset-0 bg-gradient-to-br from-indigo-500/5 to-purple-500/5 rounded-2xl blur-md" />
-                          <span className="text-[38px] select-none filter drop-shadow-md z-10 leading-none">
-                            {getShopEmoji(item.name)}
-                          </span>
+                          <div className="w-12 h-12 flex items-center justify-center z-10">
+                            <SafeImage 
+                              src={getShopImageUrl(item.name)} 
+                              alt={item.name} 
+                              className="w-full h-full object-contain filter drop-shadow-md select-none"
+                            />
+                          </div>
                         </div>
                       </div>
 
@@ -480,9 +488,13 @@ const MagicShop: React.FC<MagicShopProps> = ({ stats, onPurchase, onEquip, onSel
                 
                 <div className="relative flex items-center justify-center w-24 h-24 bg-white rounded-3xl border border-slate-200/60 shadow-xl z-10">
                   <div className="absolute inset-0 bg-gradient-to-br from-indigo-500/10 to-purple-500/10 rounded-3xl blur-md animate-pulse" />
-                  <span className="text-[64px] select-none filter drop-shadow-lg z-10 leading-none">
-                    {getShopEmoji(selectedItem.name)}
-                  </span>
+                  <div className="w-16 h-16 flex items-center justify-center z-10">
+                    <SafeImage 
+                      src={getShopImageUrl(selectedItem.name)} 
+                      alt={selectedItem.name} 
+                      className="w-full h-full object-contain filter drop-shadow-lg select-none"
+                    />
+                  </div>
                 </div>
               </div>
 

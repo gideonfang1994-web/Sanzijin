@@ -6,7 +6,7 @@ import {
 } from 'lucide-react';
 import { UserStats, WordGroup, ViewState } from '../types';
 import DailyQuestBoard from '../components/DailyQuestBoard';
-import { CHARACTERS, SHOP_ITEMS, getShopEmoji } from '../constants';
+import { CHARACTERS, SHOP_ITEMS, getShopEmoji, getShopImageUrl } from '../constants';
 import SafeImage from '../components/SafeImage';
 import audio from '../utils/AudioUtils';
 import { getVocabularyErrors } from '../utils/errorBookUtils';
@@ -815,8 +815,12 @@ const HomePage: React.FC<HomePageProps> = ({ stats, groups, reviewNeeded, onNavi
                         <div className="grid grid-cols-2 gap-2.5">
                           {equippedItems.map(item => (
                             <div key={item.id} className="flex items-center space-x-2.5 p-2 bg-white border border-emerald-250 shadow-sm rounded-xl">
-                              <div className="w-8 h-8 bg-amber-50 text-base flex items-center justify-center rounded-lg border border-amber-200 shrink-0">
-                                {getShopEmoji(item.name)}
+                              <div className="w-8 h-8 bg-amber-50 flex items-center justify-center rounded-lg border border-amber-200 shrink-0 p-0.5">
+                                <SafeImage 
+                                  src={getShopImageUrl(item.name)} 
+                                  alt={item.name} 
+                                  className="w-full h-full object-contain filter drop-shadow select-none"
+                                />
                               </div>
                               <div className="min-w-0">
                                 <span className="text-xs sm:text-sm font-black text-emerald-950 block truncate leading-none">{item.name}</span>

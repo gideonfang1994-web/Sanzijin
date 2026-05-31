@@ -8,6 +8,10 @@ import { INTERMEDIATE_TEXTBOOK_CARDS_PART5 } from './intermediateCards5';
 import { INTERMEDIATE_TEXTBOOK_CARDS_PART6 } from './intermediateCards6';
 import { INTERMEDIATE_TEXTBOOK_CARDS_PART7 } from './intermediateCards7';
 import wordPlaceholder from './assets/word_placeholder.png';
+import knightAethelred from './assets/images/knight_aethelred_1780235368291.png';
+import witchElara from './assets/images/witch_elara_1780235388581.png';
+import rangerFinn from './assets/images/ranger_finn_1780235407692.png';
+import assassinShadow from './assets/images/assassin_shadow_1780235432735.png';
 
 const ICON_BASE = "https://img.icons8.com/clouds/200/";
 
@@ -1045,7 +1049,7 @@ export const CHARACTERS: Character[] = [
     description: '身披重甲的皇家卫士，坚毅前行。擅长使用巨剑和重盾，用钢铁意志抗衡一切魔物之潮。',
     avatar: '🛡️',
     color: '#38bdf8',
-    portraitUrl: 'https://picsum.photos/seed/aethelred_cel/400/600',
+    portraitUrl: knightAethelred,
     baseStats: { strength: 18, magic: 5, defense: 14, agility: 8 }
   },
   {
@@ -1055,7 +1059,7 @@ export const CHARACTERS: Character[] = [
     description: '掌握洪荒魔法真理之眼的大贤者之徒，能够操纵星辰神力。掌握超高魔力爆发，顷刻间焚烧战场。',
     avatar: '🔮',
     color: '#a855f7',
-    portraitUrl: 'https://picsum.photos/seed/elara_cel/400/600',
+    portraitUrl: witchElara,
     baseStats: { strength: 6, magic: 20, defense: 6, agility: 10 }
   },
   {
@@ -1065,7 +1069,7 @@ export const CHARACTERS: Character[] = [
     description: '世代在世界树之下潜心守望林野长风的半兽狐族，敏锐无双。擅长轻盈腾挪，在奔走中连射诛箭。',
     avatar: '🦊',
     color: '#22c55e',
-    portraitUrl: 'https://picsum.photos/seed/finn_cel/400/600',
+    portraitUrl: rangerFinn,
     baseStats: { strength: 10, magic: 8, defense: 8, agility: 20 }
   },
   {
@@ -1075,7 +1079,7 @@ export const CHARACTERS: Character[] = [
     description: '隐袭在黑夜微茫阴影边缘的无声索命刺客，拥有瞬间暴击强袭瞬闪的能力，刃光所至毫无声息。',
     avatar: '🥷',
     color: '#f43f5e',
-    portraitUrl: 'https://picsum.photos/seed/shadow_cel/400/600',
+    portraitUrl: assassinShadow,
     baseStats: { strength: 15, magic: 5, defense: 6, agility: 18 }
   }
 ];

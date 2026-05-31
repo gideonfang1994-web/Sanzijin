@@ -11,6 +11,11 @@ const getAi = () => {
   return aiInstance;
 };
 
+import knightAethelred from '../assets/images/knight_aethelred_1780235368291.png';
+import witchElara from '../assets/images/witch_elara_1780235388581.png';
+import rangerFinn from '../assets/images/ranger_finn_1780235407692.png';
+import assassinShadow from '../assets/images/assassin_shadow_1780235432735.png';
+
 export const PORTRAIT_PROMPTS: Record<string, string> = {
   c1: "High-end 2D Cel-shaded digital painting of a brave young male knight named Aethelred. He has spiky blue-tinted hair, silver-blue plate armor with gold lion emblems. Chibi-proportioned, vibrant colors, clean line art, white background.",
   c2: "High-end 2D Cel-shaded digital painting of a cute young female sorceress named Elara. She has pink hair and a purple wizard hat with gold stars. She wears purple and gold robes. Chibi-proportioned, magical glow effects, clean line art, white background.",
@@ -19,10 +24,10 @@ export const PORTRAIT_PROMPTS: Record<string, string> = {
 };
 
 export const PORTRAIT_FALLBACKS: Record<string, string> = {
-  c1: "https://picsum.photos/seed/aethelred_cel/400/600",
-  c2: "https://picsum.photos/seed/elara_cel/400/600",
-  c3: "https://picsum.photos/seed/finn_cel/400/600",
-  c4: "https://picsum.photos/seed/shadow_cel/400/600"
+  c1: knightAethelred,
+  c2: witchElara,
+  c3: rangerFinn,
+  c4: assassinShadow
 };
 
 export async function generateCharacterPortrait(characterId: string, equippedItems: string[] = []): Promise<string | null> {
