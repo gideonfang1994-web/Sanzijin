@@ -40,6 +40,8 @@ export const ErrorBookDashboard: React.FC<ErrorBookDashboardProps> = ({ stats, o
     wordsPurified: string[];
     xpEarned: number;
     coinsEarned: number;
+    totalAttempted: number;
+    correctCount: number;
   } | null>(null);
 
   // Initialize and reload collected incorrect words list
@@ -255,7 +257,9 @@ export const ErrorBookDashboard: React.FC<ErrorBookDashboardProps> = ({ stats, o
     setChallengeResult({
       wordsPurified: purifiedWordsList,
       xpEarned: xpReward,
-      coinsEarned: coinsReward
+      coinsEarned: coinsReward,
+      totalAttempted: processedWords.length,
+      correctCount: correctItems.length
     });
 
     // Refresh remaining error items listing
@@ -353,12 +357,46 @@ export const ErrorBookDashboard: React.FC<ErrorBookDashboardProps> = ({ stats, o
                   </div>
                 </div>
 
-                <button 
-                  onClick={handleExitChallenge}
-                  className="w-full py-4.5 bg-emerald-500 border border-emerald-400 hover:bg-emerald-600 text-emerald-950 font-black text-md rounded-2xl border-b-[5px] border-emerald-700 active:border-b-2 active:translate-y-0.5 shadow-md shadow-emerald-950 transition-all cursor-pointer"
-                >
-                  凯旋出关 📜
-                </button>
+                {/* Accuracy percentage gauge/widget */}
+                <div className="bg-slate-950/40 p-4.5 border border-emerald-800/30 rounded-2xl flex items-center justify-between">
+                  <div className="text-left">
+                    <p className="text-xs text-slate-400 font-bold uppercase tracking-wider">本次净化正确率</p>
+                    <p className="text-[11px] text-emerald-500/80 mt-1">（第二次/当前次专属结算）</p>
+                  </div>
+                  <div className="text-right">
+                    <span className={`text-2xl font-black ${
+                      (challengeResult.correctCount / Math.max(1, challengeResult.totalAttempted)) >= 0.8 ? 'text-emerald-400' :
+                      (challengeResult.correctCount / Math.max(1, challengeResult.totalAttempted)) >= 0.5 ? 'text-amber-400' : 'text-rose-400'
+                    }`}>
+                      {challengeResult.totalAttempted > 0 ? Math.round((challengeResult.correctCount / challengeResult.totalAttempted) * 100) : 0}%
+                    </span>
+                    <p className="text-[10px] text-slate-400 font-mono mt-0.5">
+                      {challengeResult.correctCount} / {challengeResult.totalAttempted} 答对
+                    </p>
+                  </div>
+                </div>
+
+                <div className="flex flex-col gap-2.5">
+                  {/* If there are still mistakes, or remaining errors in the vocabulary list, allow continuing/re-challenging */}
+                  {(challengeResult.correctCount < challengeResult.totalAttempted || getVocabularyErrors().length > 0) ? (
+                    <button 
+                      onClick={() => {
+                        audio.playClick();
+                        startTimedChallenge();
+                      }}
+                      className="w-full py-4 bg-gradient-to-r from-amber-400 to-orange-500 hover:from-amber-350 hover:to-orange-450 text-slate-950 font-black text-md rounded-2xl border-b-[5px] border-amber-700 active:border-b-2 active:translate-y-0.5 shadow-md transition-all cursor-pointer"
+                    >
+                      再次尝试/继续挑战 ⚡
+                    </button>
+                  ) : null}
+
+                  <button 
+                    onClick={handleExitChallenge}
+                    className="w-full py-4 bg-emerald-500 border border-emerald-400 hover:bg-emerald-600 text-emerald-950 font-black text-sm rounded-2xl border-b-[5px] border-emerald-700 active:border-b-2 active:translate-y-0.5 shadow-md transition-all cursor-pointer"
+                  >
+                    凯旋出关 📜
+                  </button>
+                </div>
               </motion.div>
             ) : (
               /* Active timed quiz session gameplay */

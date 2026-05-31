@@ -14,6 +14,64 @@ interface MagicShopProps {
   onClose?: () => void;
 }
 
+const getShopEmoji = (name: string): string => {
+  const map: Record<string, string> = {
+    '破魔者之剑': '🗡️',
+    '狮心盾': '🛡️',
+    '皇家卫队蓝甲': '👕',
+    '勇气头盔': '🪖',
+    '星辰法杖': '🪄',
+    '法术魔典': '📖',
+    '高阶法袍': '👘',
+    '星光法帽': '🧙‍♂️',
+    '星光披风': '🧥',
+    '森之弓': '🏹',
+    '鹰眼箭袋': '🎒',
+    '游侠皮甲套装': '🎽',
+    '森林兜帽': '👒',
+    '疾风靴': '🥾',
+    '刺客短刃': '🗡️',
+    '毒蝎手里剑': '🥏',
+    '暗影斗篷': '🧥',
+    '影杀面具': '🎭',
+    '潜行长靴': '👟',
+    '经验药水': '🧪',
+    '魔法苹果': '🍎',
+    '小蓝龙': '🐉',
+    '蓝龙宠兽': '🐉',
+    '波利史莱姆': '🧊',
+    '史莱姆': '🧊',
+    '招财猫': '🐱',
+    '智慧之鸮': '🦉',
+    '优质肉块': '🥩',
+    '生命灵药': '🍷'
+  };
+  if (map[name]) return map[name];
+
+  const nameL = name.toLowerCase();
+  if (nameL.includes('剑') || nameL.includes('刃') || nameL.includes('刀')) return '🗡️';
+  if (nameL.includes('盾')) return '🛡️';
+  if (nameL.includes('甲') || nameL.includes('衣')) return '👕';
+  if (nameL.includes('头盔') || nameL.includes('帽')) return '🪖';
+  if (nameL.includes('杖')) return '🪄';
+  if (nameL.includes('书') || nameL.includes('典')) return '📖';
+  if (nameL.includes('披风') || nameL.includes('斗篷')) return '🧥';
+  if (nameL.includes('弓')) return '🏹';
+  if (nameL.includes('袋')) return '🎒';
+  if (nameL.includes('靴') || nameL.includes('鞋')) return '🥾';
+  if (nameL.includes('手里剑')) return '🥏';
+  if (nameL.includes('面具')) return '🎭';
+  if (nameL.includes('药水') || nameL.includes('灵药')) return '🧪';
+  if (nameL.includes('苹果')) return '🍎';
+  if (nameL.includes('龙')) return '🐉';
+  if (nameL.includes('史莱姆')) return '🧊';
+  if (nameL.includes('猫')) return '🐱';
+  if (nameL.includes('鸮') || nameL.includes('鹰')) return '🦉';
+  if (nameL.includes('肉')) return '🥩';
+
+  return '🎁';
+};
+
 const ParticleEffect: React.FC<{ color: string }> = ({ color }) => {
   return (
     <div className="absolute inset-0 pointer-events-none">
@@ -132,7 +190,9 @@ const CharacterVisual: React.FC<{
               <div key={slot} className={`w-12 h-12 rounded-xl border-2 flex items-center justify-center transition-all duration-300 ${equipped ? 'bg-white/10 border-white/40 shadow-[0_0_15px_rgba(255,255,255,0.2)]' : 'bg-black/40 border-white/5'}`}>
                 {equipped ? (
                   <motion.div initial={{ scale: 0 }} animate={{ scale: 1 }}>
-                    {getEquipIcon(slot)}
+                    <span className="text-2xl filter drop-shadow select-none">
+                      {getShopEmoji(equipped.name)}
+                    </span>
                   </motion.div>
                 ) : (
                   <div className="w-5 h-5 bg-white/5 rounded-full" />
@@ -188,7 +248,9 @@ const CharacterVisual: React.FC<{
               <div key={slot} className={`w-12 h-12 rounded-xl border-2 flex items-center justify-center transition-all duration-300 ${equipped ? 'bg-white/10 border-white/40 shadow-[0_0_15px_rgba(255,255,255,0.2)]' : 'bg-black/40 border-white/5'}`}>
                 {equipped ? (
                   <motion.div initial={{ scale: 0 }} animate={{ scale: 1 }}>
-                    {getEquipIcon(slot)}
+                    <span className="text-2xl filter drop-shadow select-none">
+                      {getShopEmoji(equipped.name)}
+                    </span>
                   </motion.div>
                 ) : (
                   <div className="w-5 h-5 bg-white/5 rounded-full" />
@@ -375,18 +437,12 @@ const MagicShop: React.FC<MagicShopProps> = ({ stats, onPurchase, onEquip, onSel
                       <div className={`flex-1 flex items-center justify-center w-full mb-3 ${
                         (isUnlocked || isConsumable) && !isLevelLocked ? '' : 'grayscale opacity-50'
                       }`}>
-                        {item.imageUrl ? (
-                          <SafeImage 
-                            src={item.imageUrl} 
-                            alt={item.name} 
-                            className="w-16 h-16 object-contain drop-shadow-xl"
-                            fallbackText={item.name}
-                            width="64"
-                            height="64"
-                          />
-                        ) : (
-                          <Sparkles className="text-slate-200" size={32} />
-                        )}
+                        <div className="relative flex items-center justify-center w-16 h-16 bg-slate-50/80 rounded-2xl border border-slate-100 shadow-inner hover:scale-110 transition-transform duration-300">
+                          <div className="absolute inset-0 bg-gradient-to-br from-indigo-500/5 to-purple-500/5 rounded-2xl blur-md" />
+                          <span className="text-[38px] select-none filter drop-shadow-md z-10 leading-none">
+                            {getShopEmoji(item.name)}
+                          </span>
+                        </div>
                       </div>
 
                       <div className="flex items-center space-x-1.5 bg-indigo-50 px-4 py-1.5 rounded-2xl border border-indigo-100/50">
@@ -415,22 +471,19 @@ const MagicShop: React.FC<MagicShopProps> = ({ stats, onPurchase, onEquip, onSel
               <div className="relative h-48 bg-slate-50 flex items-center justify-center">
                 <button 
                   onClick={() => setSelectedItem(null)}
-                  className="absolute top-6 right-6 w-10 h-10 bg-white rounded-full shadow-lg flex items-center justify-center text-slate-400 hover:text-slate-600 z-10"
+                  className="absolute top-6 right-6 w-10 h-10 bg-white rounded-full shadow-lg flex items-center justify-center text-slate-400 hover:text-slate-600 z-10 font-black text-lg"
                 >
-                  <Lock size={20} />
+                  ×
                 </button>
                 
                 <div className="absolute inset-0 bg-gradient-to-b from-transparent to-white/50" />
                 
-                <SafeImage 
-                  layoutId={`item-img-${selectedItem.id}`}
-                  src={selectedItem.imageUrl} 
-                  alt={selectedItem.name}
-                  className="w-32 h-32 object-contain relative z-10 drop-shadow-2xl"
-                  fallbackText={selectedItem.name}
-                  width="128"
-                  height="128"
-                />
+                <div className="relative flex items-center justify-center w-24 h-24 bg-white rounded-3xl border border-slate-200/60 shadow-xl z-10">
+                  <div className="absolute inset-0 bg-gradient-to-br from-indigo-500/10 to-purple-500/10 rounded-3xl blur-md animate-pulse" />
+                  <span className="text-[64px] select-none filter drop-shadow-lg z-10 leading-none">
+                    {getShopEmoji(selectedItem.name)}
+                  </span>
+                </div>
               </div>
 
               <div className="p-8 space-y-6 text-left">

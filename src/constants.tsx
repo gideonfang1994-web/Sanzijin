@@ -458,115 +458,191 @@ export const getShopImageUrl = (name: string) => {
     '灵动狐仙': 'fox',
     '潜行暗影': 'ninja',
     '破魔者之剑': 'sword',
+    '炎龙重剑': 'broadsword',
+    '钢铁护肩': 'pauldrons',
     '狮心盾': 'shield',
+    '不屈誓言巨盾': 'vanguard-shield',
+    '弑神圣光巨剑': 'excalibur',
     '皇家卫队蓝甲': 'armor',
+    '泰坦神域重甲': 'body-armor',
     '勇气头盔': 'helmet',
     '高级经验药水': 'potion',
     '魔法咒语书': 'book',
+    
     '星辰法杖': 'magic-wand',
-    '法术魔典': 'spellbook',
-    '高阶法袍': 'robe',
     '星光法帽': 'wizard-hat',
     '星光披风': 'cape',
+    '法术魔典': 'spellbook',
+    '虚空秘典': 'open-book',
+    '潮汐圣歌法杖': 'crystal-wand',
+    '混沌天演魔杖': 'scepter',
+    '高阶法袍': 'robe',
+    '星界不灭神袍': 'monk-robe',
+
     '森之弓': 'bow',
-    '鹰眼箭袋': 'quiver',
-    '游侠皮甲套装': 'leather-armor',
     '森林兜帽': 'hood',
+    '鹰眼箭袋': 'arrow-quiver',
     '疾风靴': 'boots',
+    '秘银轻弩': 'crossbow',
+    '游侠皮甲套装': 'leather-armor',
+    '月影追风长弓': 'bow-and-arrow',
+    '神树万物长弓': 'tree-structure',
+    '疾风虚空轻甲': 'armor',
+
     '刺客短刃': 'dagger',
-    '毒蝎手里剑': 'shuriken',
-    '暗影斗篷': 'cloak',
     '影杀面具': 'mask',
-    '潜行长靴': 'stealth-boots',
+    '毒蝎手里剑': 'shuriken',
+    '潜行长靴': 'shoes',
+    '血月暗黑双刃': 'saber',
+    '暗影斗篷': 'cloak',
+    '夜行隐杀轻装': 'ninja',
+    '天诛无影神刃': 'katana',
+    '寂灭影流神装': 'ninja-costume',
+
     '经验药水': 'potion',
     '魔法苹果': 'apple',
     '蓝龙宠兽': 'dragon',
-    '史莱姆': 'slime'
+    '史莱姆': 'slime',
+    '小蓝龙': 'dragon',
+    '波利史莱姆': 'slime',
+    '招财猫': 'cat',
+    '智慧之鸮': 'owl',
+    '优质肉块': 'steak',
+    '生命灵药': 'potion'
   };
   const keyword = nameMap[name] || name.toLowerCase().replace(/\s+/g, '-');
-  return `https://img.icons8.com/clouds/200/${keyword}.png`;
+  return `https://img.icons8.com/fluency/200/${keyword}.png`;
 };
 
-export const CHARACTERS: Character[] = [
-  { 
-    id: 'c1', 
-    name: '无畏剑士', 
-    title: 'Aethelred The Brave', 
-    description: '身着湛蓝重甲的热血少年，佩戴标志性防风镜与鲜红围巾，眼神坚定。', 
-    avatar: '⚔️', 
-    color: '#3B82F6',
-    portraitUrl: getShopImageUrl('无畏剑士'),
-    baseStats: { strength: 15, magic: 5, defense: 12, agility: 8 }
-  },
-  { 
-    id: 'c2', 
-    name: '奇幻女巫', 
-    title: 'Elara The Enchantress', 
-    description: '粉发灵动的少女法师，头戴缀满星辰的宽檐巫师帽，周身环绕奥术流光。', 
-    avatar: '🧙‍♀️', 
-    color: '#A855F7',
-    portraitUrl: getShopImageUrl('奇幻女巫'),
-    baseStats: { strength: 5, magic: 18, defense: 6, agility: 10 }
-  },
-  { 
-    id: 'c3', 
-    name: '灵动狐仙', 
-    title: 'Inari The Swift', 
-    description: '白发狐耳的丛林守护者，身背巨大的木弓，在林间穿梭如电。', 
-    avatar: '🦊', 
-    color: '#10B981',
-    portraitUrl: getShopImageUrl('灵动狐仙'),
-    baseStats: { strength: 10, magic: 7, defense: 8, agility: 18 }
-  },
-  { 
-    id: 'c4', 
-    name: '潜行暗影', 
-    title: 'Kage The Shadow', 
-    description: '沉静冷峻的黑衣忍者，擅长使用暗器与忍术，在黑暗中执行任务。', 
-    avatar: '🥷', 
-    color: '#EF4444',
-    portraitUrl: getShopImageUrl('潜行暗影'),
-    baseStats: { strength: 12, magic: 6, defense: 7, agility: 20 }
-  },
-];
+export const getShopEmoji = (name: string): string => {
+  const map: Record<string, string> = {
+    '破魔者之剑': '🗡️',
+    '炎龙重剑': '🔥',
+    '弑神圣光巨剑': '⚔️',
+    '钢铁护肩': '🛡️',
+    '狮心盾': '🛡️',
+    '不屈誓言巨盾': '🧱',
+    '泰坦神域重甲': '🪙',
+    '皇家卫队蓝甲': '👕',
+    '勇气头盔': '🪖',
+    '星辰法杖': '🪄',
+    '法术魔典': '📖',
+    '虚空秘典': '📚',
+    '潮汐圣歌法杖': '🔱',
+    '混沌天演魔杖': '🔮',
+    '高阶法袍': '👘',
+    '星界不灭神袍': '👚',
+    '星光法帽': '🧙‍♂️',
+    '星光披风': '🧥',
+    '森之弓': '🏹',
+    '鹰眼箭袋': '🎒',
+    '游侠皮甲套装': '🎽',
+    '森林兜帽': '👒',
+    '疾风靴': '🥾',
+    '秘银轻弩': '🏹',
+    '月影追风长弓': '🏹',
+    '神树万物长弓': '🎋',
+    '疾风虚空轻甲': '🥋',
+    '刺客短刃': '🗡️',
+    '毒蝎手里剑': '🥏',
+    '暗影斗篷': '🧥',
+    '影杀面具': '🎭',
+    '潜行长靴': '👟',
+    '血月暗黑双刃': '⚔️',
+    '夜行隐杀轻装': '🥷',
+    '天诛无影神刃': '⚔️',
+    '寂灭影流神装': '👕',
+    '经验药水': '🧪',
+    '魔法苹果': '🍎',
+    '小蓝龙': '🐉',
+    '蓝龙宠兽': '🐉',
+    '波利史莱姆': '🧊',
+    '史莱姆': '🧊',
+    '招财猫': '🐱',
+    '智慧之鸮': '🦉',
+    '优质肉块': '🥩',
+    '生命灵药': '🍷'
+  };
+  if (map[name]) return map[name];
+
+  const nameL = name.toLowerCase();
+  if (nameL.includes('剑') || nameL.includes('刃') || nameL.includes('刀')) return '🗡️';
+  if (nameL.includes('盾')) return '🛡️';
+  if (nameL.includes('甲') || nameL.includes('衣') || nameL.includes('装')) return '👕';
+  if (nameL.includes('头盔') || nameL.includes('帽')) return '🪖';
+  if (nameL.includes('杖')) return '🪄';
+  if (nameL.includes('书') || nameL.includes('典')) return '📖';
+  if (nameL.includes('披风') || nameL.includes('斗篷')) return '🧥';
+  if (nameL.includes('弓') || nameL.includes('弩')) return '🏹';
+  if (nameL.includes('袋')) return '🎒';
+  if (nameL.includes('靴') || nameL.includes('鞋')) return '🥾';
+  if (nameL.includes('手里剑')) return '🥏';
+  if (nameL.includes('面具')) return '🎭';
+  if (nameL.includes('药水') || nameL.includes('灵药')) return '🧪';
+  if (nameL.includes('苹果')) return '🍎';
+  if (nameL.includes('龙')) return '🐉';
+  if (nameL.includes('史莱姆')) return '🧊';
+  if (nameL.includes('猫')) return '🐱';
+  if (nameL.includes('鸮') || nameL.includes('鹰')) return '🦉';
+  if (nameL.includes('肉')) return '🥩';
+
+  return '🎁';
+};
 
 export const SHOP_ITEMS: ShopItem[] = [
-  // Aethelred's Gear
+  // Aethelred's Gear (Warrior)
   { id: 'i1_1', name: '破魔者之剑', description: '虽然有些锈迹，但依然锋利无比的铁剑。', price: 1000, type: 'WEAPON', characterId: 'c1', slot: 'RIGHT_HAND', stats: { strength: 10 }, imageUrl: getShopImageUrl('破魔者之剑'), requiredLevel: 1 },
-  { id: 'i1_2', name: '狮心盾', description: '刻有狮子图案的黄铜护盾，给人十足的安全感。', price: 1500, type: 'OFFHAND', characterId: 'c1', slot: 'LEFT_HAND', stats: { defense: 12 }, imageUrl: getShopImageUrl('狮心盾'), requiredLevel: 2 },
-  { id: 'i1_3', name: '皇家卫队蓝甲', description: '做工考究的蓝色半身甲，象征着勇气与荣耀。', price: 2500, type: 'OUTFIT', characterId: 'c1', slot: 'BODY', stats: { defense: 20 }, imageUrl: getShopImageUrl('皇家卫队蓝甲'), requiredLevel: 4 },
   { id: 'i1_4', name: '勇气头盔', description: '坚固的铁制头盔，保护头部不受伤害。', price: 1200, type: 'ARMOR', characterId: 'c1', slot: 'HEAD', stats: { defense: 8 }, imageUrl: getShopImageUrl('勇气头盔'), requiredLevel: 1 },
+  { id: 'i1_2', name: '狮心盾', description: '刻有狮子图案的黄铜护盾，给人十足的安全感。', price: 1500, type: 'OFFHAND', characterId: 'c1', slot: 'LEFT_HAND', stats: { defense: 12 }, imageUrl: getShopImageUrl('狮心盾'), requiredLevel: 2 },
+  { id: 'i1_5', name: '钢铁护肩', description: '用精钢铸造的沉重护肩，能削减巨大的冲击力。', price: 1800, type: 'ARMOR', characterId: 'c1', slot: 'HEAD', stats: { defense: 12, strength: 3 }, imageUrl: getShopImageUrl('钢铁护肩'), requiredLevel: 3 },
+  { id: 'i1_6', name: '炎龙重剑', description: '熔铸了地底炎龙结晶的双手巨剑，挥舞时带有滚滚热浪。', price: 2300, type: 'WEAPON', characterId: 'c1', slot: 'RIGHT_HAND', stats: { strength: 22 }, imageUrl: getShopImageUrl('炎龙重剑'), requiredLevel: 3 },
+  { id: 'i1_3', name: '皇家卫队蓝甲', description: '皇家御用裁缝精心制作的宝蓝色半身铠甲，威风凛凛。', price: 2500, type: 'OUTFIT', characterId: 'c1', slot: 'BODY', stats: { defense: 20 }, imageUrl: getShopImageUrl('皇家卫队蓝甲'), requiredLevel: 4 },
+  { id: 'i1_7', name: '不屈誓言巨盾', description: '神圣骑士发誓守护国境所用的参天铁盾，重如磐石。', price: 3400, type: 'OFFHAND', characterId: 'c1', slot: 'LEFT_HAND', stats: { defense: 28, strength: 5 }, imageUrl: getShopImageUrl('不屈誓言巨盾'), requiredLevel: 5 },
+  { id: 'i1_8', name: '弑神圣光巨剑', description: '传说中曾经贯穿过神明羽翼的极光巨剑，蕴含无休止的圣光。', price: 5000, type: 'WEAPON', characterId: 'c1', slot: 'RIGHT_HAND', stats: { strength: 40, defense: 10 }, imageUrl: getShopImageUrl('弑神圣光巨剑'), requiredLevel: 6 },
+  { id: 'i1_9', name: '泰坦神域重甲', description: '由太古泰坦巨神之皮骨与神铁锻造的圣甲，防御趋近完美。', price: 6200, type: 'OUTFIT', characterId: 'c1', slot: 'BODY', stats: { defense: 45, strength: 15 }, imageUrl: getShopImageUrl('泰坦神域重甲'), requiredLevel: 6 },
 
-  // Elara's Gear
+  // Elara's Gear (Mage)
   { id: 'i2_1', name: '星辰法杖', description: '镶嵌着蓝色水晶的木质法杖，蕴含星辰之力。', price: 1200, type: 'WEAPON', characterId: 'c2', slot: 'RIGHT_HAND', stats: { magic: 12 }, imageUrl: getShopImageUrl('星辰法杖'), requiredLevel: 1 },
-  { id: 'i2_2', name: '法术魔典', description: '记载着基础元素法术的古朴厚书。', price: 1800, type: 'OFFHAND', characterId: 'c2', slot: 'LEFT_HAND', stats: { magic: 8, strength: 2 }, imageUrl: getShopImageUrl('法术魔典'), requiredLevel: 3 },
-  { id: 'i2_3', name: '高阶法袍', description: '缀满银色刺绣的紫色法袍，提升魔力感知。', price: 2800, type: 'OUTFIT', characterId: 'c2', slot: 'BODY', stats: { magic: 20, defense: 5 }, imageUrl: getShopImageUrl('高阶法袍'), requiredLevel: 5 },
   { id: 'i2_4', name: '星光法帽', description: '带有夸张帽檐的紫色尖帽，点缀着闪烁的星星。', price: 1400, type: 'ARMOR', characterId: 'c2', slot: 'HEAD', stats: { magic: 10 }, imageUrl: getShopImageUrl('星光法帽'), requiredLevel: 1 },
   { id: 'i2_5', name: '星光披风', description: '随风飘动的深紫色长披风，显得优雅而神秘。', price: 2200, type: 'OUTFIT', characterId: 'c2', slot: 'NONE', stats: { magic: 15, agility: 5 }, imageUrl: getShopImageUrl('星光披风'), requiredLevel: 2 },
+  { id: 'i2_2', name: '法术魔典', description: '记载着基础元素法术的古朴厚书。', price: 1800, type: 'OFFHAND', characterId: 'c2', slot: 'LEFT_HAND', stats: { magic: 8, strength: 2 }, imageUrl: getShopImageUrl('法术魔典'), requiredLevel: 3 },
+  { id: 'i2_6', name: '虚空秘典', description: '书写在虚无之面上的残缺法卷，凝视久了令人发自内心的战栗。', price: 2400, type: 'OFFHAND', characterId: 'c2', slot: 'LEFT_HAND', stats: { magic: 20 }, imageUrl: getShopImageUrl('虚空秘典'), requiredLevel: 4 },
+  { id: 'i2_3', name: '高阶法袍', description: '缀满银色刺绣的紫色法袍，提升魔力感知。', price: 2800, type: 'OUTFIT', characterId: 'c2', slot: 'BODY', stats: { magic: 20, defense: 5 }, imageUrl: getShopImageUrl('高阶法袍'), requiredLevel: 4 },
+  { id: 'i2_7', name: '潮汐圣歌法杖', description: '杖头嵌有远古洋流结晶的白金色魔杖，随水波起舞。', price: 4200, type: 'WEAPON', characterId: 'c2', slot: 'RIGHT_HAND', stats: { magic: 32 }, imageUrl: getShopImageUrl('潮汐圣歌法杖'), requiredLevel: 5 },
+  { id: 'i2_8', name: '混沌天演魔杖', description: '法师议会首席大贤者所持的神杖，蕴含着崩裂空间的虚空中枢。', price: 5600, type: 'WEAPON', characterId: 'c2', slot: 'RIGHT_HAND', stats: { magic: 52, agility: 8 }, imageUrl: getShopImageUrl('混沌天演魔杖'), requiredLevel: 6 },
+  { id: 'i2_9', name: '星界不灭神袍', description: '在星界虚空中漂浮千万载而纤尘不染的华贵神袍，能吸收游离的未知射流。', price: 6400, type: 'OUTFIT', characterId: 'c2', slot: 'BODY', stats: { magic: 42, defense: 15 }, imageUrl: getShopImageUrl('星界不灭神袍'), requiredLevel: 6 },
 
-  // Inari's Gear
+  // Inari's Gear (Ranger)
   { id: 'i3_1', name: '森之弓', description: '由千年灵木打造的长弓，能自动凝聚自然气息。', price: 1100, type: 'WEAPON', characterId: 'c3', slot: 'RIGHT_HAND', stats: { agility: 10 }, imageUrl: getShopImageUrl('森之弓'), requiredLevel: 1 },
-  { id: 'i3_2', name: '鹰眼箭袋', description: '附带追踪魔法的箭袋，箭矢永远充足。', price: 1600, type: 'OFFHAND', characterId: 'c3', slot: 'LEFT_HAND', stats: { agility: 12 }, imageUrl: getShopImageUrl('鹰眼箭袋'), requiredLevel: 2 },
-  { id: 'i3_3', name: '游侠皮甲套装', description: '轻便贴身的绿色皮甲，特别适合丛林作战。', price: 2600, type: 'OUTFIT', characterId: 'c3', slot: 'BODY', stats: { agility: 18, defense: 8 }, imageUrl: getShopImageUrl('游侠皮甲套装'), requiredLevel: 4 },
   { id: 'i3_4', name: '森林兜帽', description: '带有叶片装饰的绿色斗篷式兜帽，完美伪装。', price: 1300, type: 'ARMOR', characterId: 'c3', slot: 'HEAD', stats: { agility: 8 }, imageUrl: getShopImageUrl('森林兜帽'), requiredLevel: 1 },
+  { id: 'i3_2', name: '鹰眼箭袋', description: '附带追踪魔法的箭袋，箭矢永远充足。', price: 1600, type: 'OFFHAND', characterId: 'c3', slot: 'LEFT_HAND', stats: { agility: 12 }, imageUrl: getShopImageUrl('鹰眼箭袋'), requiredLevel: 2 },
   { id: 'i3_5', name: '疾风靴', description: '镶嵌羽毛装饰皮靴，大幅提升移动速度。', price: 2400, type: 'OUTFIT', characterId: 'c3', slot: 'NONE', stats: { agility: 20 }, imageUrl: getShopImageUrl('疾风靴'), requiredLevel: 3 },
+  { id: 'i3_6', name: '秘银轻弩', description: '用极度轻飘却有极强柔韧性的秘银打造而成的机弩，射速极快。', price: 2100, type: 'WEAPON', characterId: 'c3', slot: 'RIGHT_HAND', stats: { agility: 18, strength: 5 }, imageUrl: getShopImageUrl('秘银轻弩'), requiredLevel: 3 },
+  { id: 'i3_3', name: '游侠皮甲套装', description: '轻便贴身的绿色皮甲，特别适合丛林作战。', price: 2600, type: 'OUTFIT', characterId: 'c3', slot: 'BODY', stats: { agility: 18, defense: 8 }, imageUrl: getShopImageUrl('游侠皮甲套装'), requiredLevel: 4 },
+  { id: 'i3_7', name: '月影追风长弓', description: '在月色圆满之夜采集灵犀木雕刻成的战弓，射出的箭矢无声无息。', price: 3800, type: 'WEAPON', characterId: 'c3', slot: 'RIGHT_HAND', stats: { agility: 30, defense: 5 }, imageUrl: getShopImageUrl('月影追风长弓'), requiredLevel: 5 },
+  { id: 'i3_8', name: '神树万物长弓', description: '世界之树衍生枝丫长成的神弓，附带无可匹敌的森林震慑力。', price: 5800, type: 'WEAPON', characterId: 'c3', slot: 'RIGHT_HAND', stats: { agility: 50, strength: 10 }, imageUrl: getShopImageUrl('神树万物长弓'), requiredLevel: 6 },
+  { id: 'i3_9', name: '疾风虚空轻甲', description: '用虚空幻兽皮鞣制的游侠秘衣，在林间穿梭时会呈现半透明的伪装效果。', price: 6500, type: 'OUTFIT', characterId: 'c3', slot: 'BODY', stats: { agility: 35, defense: 18 }, imageUrl: getShopImageUrl('疾风虚空轻甲'), requiredLevel: 6 },
 
-  // Kage's Gear
-  { id: 'i4_1', name: '刺客短刃', description: '锋利的黑色短剑，剑柄镶有红宝石，散发着杀气。', price: 1000, type: 'WEAPON', characterId: 'c4', slot: 'RIGHT_HAND', stats: { strength: 15 }, imageUrl: getShopImageUrl('刺客短刃'), requiredLevel: 1 },
-  { id: 'i4_2', name: '毒蝎手里剑', description: '涂有剧毒的黑色金属手里剑，见血封喉。', price: 2000, type: 'OFFHAND', characterId: 'c4', slot: 'LEFT_HAND', stats: { agility: 15 }, imageUrl: getShopImageUrl('毒蝎手里剑'), requiredLevel: 3 },
-  { id: 'i4_3', name: '暗影斗篷', description: '带有红色点缀的深灰色兜帽斗篷，融入阴影。', price: 3000, type: 'OUTFIT', characterId: 'c4', slot: 'BODY', stats: { agility: 20, defense: 10 }, imageUrl: getShopImageUrl('暗影斗篷'), requiredLevel: 5 },
-  { id: 'i4_4', name: '影杀面具', description: '遮住下半张脸的黑色布面具，冷酷无情。', price: 1500, type: 'ARMOR', characterId: 'c4', slot: 'HEAD', stats: { agility: 12 }, imageUrl: getShopImageUrl('影杀面具'), requiredLevel: 2 },
-  { id: 'i4_5', name: '潜行长靴', description: '走路悄无声息的深灰色靴子，如影随形。', price: 2500, type: 'OUTFIT', characterId: 'c4', slot: 'NONE', stats: { agility: 25 }, imageUrl: getShopImageUrl('潜行长靴'), requiredLevel: 4 },
+  // Kage's Gear (Assassin)
+  { id: 'i4_1', name: '刺客短刃', description: '锋利的黑色短剑，散发着夺命的杀气。', price: 1000, type: 'WEAPON', characterId: 'c4', slot: 'RIGHT_HAND', stats: { strength: 15 }, imageUrl: getShopImageUrl('刺客短刃'), requiredLevel: 1 },
+  { id: 'i4_4', name: '影杀面具', description: '遮住面容的玄色面罩，让人无法捉摸你的表情。', price: 1500, type: 'ARMOR', characterId: 'c4', slot: 'HEAD', stats: { agility: 12 }, imageUrl: getShopImageUrl('影杀面具'), requiredLevel: 2 },
+  { id: 'i4_2', name: '毒蝎手里剑', description: '涂抹了深海巨蝎猛毒的精钢射刃，见血封喉。', price: 2000, type: 'OFFHAND', characterId: 'c4', slot: 'LEFT_HAND', stats: { agility: 15 }, imageUrl: getShopImageUrl('毒蝎手里剑'), requiredLevel: 3 },
+  { id: 'i4_6', name: '血月暗黑双刃', description: '暗夜刺客大师曾用的弧形双刀，在血色月光下折射出猩红微茫。', price: 2400, type: 'WEAPON', characterId: 'c4', slot: 'RIGHT_HAND', stats: { strength: 26, agility: 8 }, imageUrl: getShopImageUrl('血月暗黑双刃'), requiredLevel: 3 },
+  { id: 'i4_5', name: '潜行长靴', description: '使用幽灵狼皮革特制的靴子，踩在石板上亦落页无声。', price: 2500, type: 'OUTFIT', characterId: 'c4', slot: 'NONE', stats: { agility: 25 }, imageUrl: getShopImageUrl('潜行长靴'), requiredLevel: 4 },
+  { id: 'i4_7', name: '夜行隐杀轻装', description: '采用暗夜蚕丝精织的紧身作战服，可以完美融入一切阴影之中。', price: 2800, type: 'OUTFIT', characterId: 'c4', slot: 'BODY', stats: { defense: 14, agility: 20 }, imageUrl: getShopImageUrl('夜行隐杀轻装'), requiredLevel: 4 },
+  { id: 'i4_3', name: '暗影斗篷', description: '随微风而流转波动的魔力斗篷，能完全隔绝外界的温度与气味感知。', price: 3000, type: 'OUTFIT', characterId: 'c4', slot: 'BODY', stats: { agility: 20, defense: 10 }, imageUrl: getShopImageUrl('暗影斗篷'), requiredLevel: 5 },
+  { id: 'i4_8', name: '天诛无影神刃', description: '据说能在敌人察觉前瞬间挥出百次的极致神匕，甚至可以将风割裂。', price: 5400, type: 'WEAPON', characterId: 'c4', slot: 'RIGHT_HAND', stats: { strength: 48, agility: 16 }, imageUrl: getShopImageUrl('天诛无影神刃'), requiredLevel: 6 },
+  { id: 'i4_9', name: '寂灭影流神装', description: '相传源自远古东方隐秘流派掌门的极致宝铠，穿上即可化身为风与影。', price: 6500, type: 'OUTFIT', characterId: 'c4', slot: 'BODY', stats: { defense: 30, agility: 38 }, imageUrl: getShopImageUrl('寂灭影流神装'), requiredLevel: 6 },
 
   // General Items
   { id: 'gen_1', name: '经验药水', description: '散发着绿色荧光的药水，能瞬间提升英雄等级。', price: 500, type: 'CONSUMABLE', characterId: 'all', slot: 'NONE', stats: {}, imageUrl: getShopImageUrl('经验药水') },
   { id: 'gen_2', name: '魔法苹果', description: '咬一口就能恢复大量体力的神奇苹果。', price: 100, type: 'FOOD', characterId: 'all', slot: 'NONE', foodValue: 10, imageUrl: getShopImageUrl('魔法苹果') },
-  { id: 'pet_dragon', name: '小蓝龙', description: '忠诚的龙族伙伴，虽然还很小，但能喷出微弱的火焰。', price: 5000, type: 'PET', characterId: 'all', slot: 'NONE', petType: 'DRAGON', imageUrl: getShopImageUrl('蓝龙宠兽') },
-  { id: 'pet_slime', name: '波利史莱姆', description: '软绵绵的宠物，虽然看起来很弱，但意外地耐打。', price: 2000, type: 'PET', characterId: 'all', slot: 'NONE', petType: 'SLIME', imageUrl: getShopImageUrl('史莱姆') },
-  { id: 'pet_cat', name: '招财猫', description: '能带来好运的小猫，非常贪吃。', price: 3000, type: 'PET', characterId: 'all', slot: 'NONE', petType: 'CAT', imageUrl: getShopImageUrl('cat') },
-  { id: 'pet_owl', name: '智慧之鸮', description: '博学多才的猫头鹰，喜欢在夜晚出没。', price: 4000, type: 'PET', characterId: 'all', slot: 'NONE', petType: 'OWL', imageUrl: getShopImageUrl('owl') },
-  { id: 'food_meat', name: '优质肉块', description: '恢复 25 点生命值', price: 100, type: 'FOOD', characterId: 'all', slot: 'NONE', foodValue: 25, imageUrl: getShopImageUrl('meat') },
-  { id: 'food_elixir', name: '生命灵药', description: '恢复 50 点生命值', price: 200, type: 'FOOD', characterId: 'all', slot: 'NONE', foodValue: 50, imageUrl: getShopImageUrl('potion') },
+  { id: 'pet_dragon', name: '小蓝龙', description: '忠诚的龙族伙伴，虽然还很小，本领却很大，能喷出微弱的火焰。', price: 5000, type: 'PET', characterId: 'all', slot: 'NONE', petType: 'DRAGON', imageUrl: getShopImageUrl('小蓝龙') },
+  { id: 'pet_slime', name: '波利史莱姆', description: '软绵绵的宠物，虽然看起来很弱，但意外地耐打。', price: 2000, type: 'PET', characterId: 'all', slot: 'NONE', petType: 'SLIME', imageUrl: getShopImageUrl('波利史莱姆') },
+  { id: 'pet_cat', name: '招财猫', description: '能带来好运的小猫，非常贪吃。', price: 3000, type: 'PET', characterId: 'all', slot: 'NONE', petType: 'CAT', imageUrl: getShopImageUrl('招财猫') },
+  { id: 'pet_owl', name: '智慧之鸮', description: '博学多才的猫头鹰，喜欢在夜晚出没。', price: 4000, type: 'PET', characterId: 'all', slot: 'NONE', petType: 'OWL', imageUrl: getShopImageUrl('智慧之鸮') },
+  { id: 'food_meat', name: '优质肉块', description: '恢复 25 点生命值', price: 100, type: 'FOOD', characterId: 'all', slot: 'NONE', foodValue: 25, imageUrl: getShopImageUrl('优质肉块') },
+  { id: 'food_elixir', name: '生命灵药', description: '恢复 50 点生命值', price: 200, type: 'FOOD', characterId: 'all', slot: 'NONE', foodValue: 50, imageUrl: getShopImageUrl('生命灵药') }
 ];
 
 const ORIGINAL_CARDS_LIST: WordCard[] = [
@@ -958,6 +1034,49 @@ export const INITIAL_VIDEOS: VideoLesson[] = [
     title: 'Phonics 精选视频：元音学习', 
     url: 'https://www.youtube.com/embed/HQ3G_O_YPrY', 
     thumbnail: 'https://picsum.photos/seed/vid1/400/225' 
+  }
+];
+
+export const CHARACTERS: Character[] = [
+  {
+    id: 'c1',
+    name: '无畏剑士',
+    title: '圣光骑士',
+    description: '身披重甲的皇家卫士，坚毅前行。擅长使用巨剑和重盾，用钢铁意志抗衡一切魔物之潮。',
+    avatar: '🛡️',
+    color: '#38bdf8',
+    portraitUrl: 'https://picsum.photos/seed/aethelred_cel/400/600',
+    baseStats: { strength: 18, magic: 5, defense: 14, agility: 8 }
+  },
+  {
+    id: 'c2',
+    name: '奇幻女巫',
+    title: '首席大法师',
+    description: '掌握洪荒魔法真理之眼的大贤者之徒，能够操纵星辰神力。掌握超高魔力爆发，顷刻间焚烧战场。',
+    avatar: '🔮',
+    color: '#a855f7',
+    portraitUrl: 'https://picsum.photos/seed/elara_cel/400/600',
+    baseStats: { strength: 6, magic: 20, defense: 6, agility: 10 }
+  },
+  {
+    id: 'c3',
+    name: '灵动狐仙',
+    title: '幻林守望游侠',
+    description: '世代在世界树之下潜心守望林野长风的半兽狐族，敏锐无双。擅长轻盈腾挪，在奔走中连射诛箭。',
+    avatar: '🦊',
+    color: '#22c55e',
+    portraitUrl: 'https://picsum.photos/seed/finn_cel/400/600',
+    baseStats: { strength: 10, magic: 8, defense: 8, agility: 20 }
+  },
+  {
+    id: 'c4',
+    name: '潜行暗影',
+    title: '影杀大师',
+    description: '隐袭在黑夜微茫阴影边缘的无声索命刺客，拥有瞬间暴击强袭瞬闪的能力，刃光所至毫无声息。',
+    avatar: '🥷',
+    color: '#f43f5e',
+    portraitUrl: 'https://picsum.photos/seed/shadow_cel/400/600',
+    baseStats: { strength: 15, magic: 5, defense: 6, agility: 18 }
   }
 ];
 

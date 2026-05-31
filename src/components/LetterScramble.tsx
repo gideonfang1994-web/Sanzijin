@@ -6,6 +6,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import audio from '../utils/AudioUtils';
 import confetti from 'canvas-confetti';
 import SafeImage from './SafeImage';
+import { getWordEmoji } from '../utils/WordUtils';
 
 interface Props {
   groups: WordGroup[];
@@ -331,14 +332,20 @@ const LetterScramble: React.FC<Props> = ({ groups, isReviewMode, onFinish, onMis
             onClick={() => speak(currentWord?.text || '')}
           >
             <div className="absolute inset-[-20px] bg-indigo-400 blur-3xl opacity-10 rounded-full animate-pulse" />
-            <SafeImage 
-              src={currentWord?.imageUrl || `https://api.dicebear.com/7.x/pixel-art/svg?seed=${currentWord?.text}`} 
-              className={`w-44 h-44 object-contain relative z-10 drop-shadow-[0_20px_40px_rgba(0,0,0,0.1)] transition-all ${isWrong ? 'grayscale opacity-50 px-4' : ''}`} 
-              alt="word" 
-              fallbackText={currentWord?.text}
-              width="176"
-              height="176"
-            />
+            {getWordEmoji(currentWord?.text || '') ? (
+              <span className="text-[110px] select-none filter drop-shadow-lg relative z-10 block text-center leading-none">
+                {getWordEmoji(currentWord?.text || '')}
+              </span>
+            ) : (
+              <SafeImage 
+                src={currentWord?.imageUrl || `https://api.dicebear.com/7.x/pixel-art/svg?seed=${currentWord?.text}`} 
+                className={`w-44 h-44 object-contain relative z-10 drop-shadow-[0_20px_40px_rgba(0,0,0,0.1)] transition-all ${isWrong ? 'grayscale opacity-50 px-4' : ''}`} 
+                alt="word" 
+                fallbackText={currentWord?.text}
+                width="176"
+                height="176"
+              />
+            )}
           </motion.div>
         </div>
 

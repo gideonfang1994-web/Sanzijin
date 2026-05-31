@@ -6,7 +6,7 @@ import {
 } from 'lucide-react';
 import { UserStats, WordGroup, ViewState } from '../types';
 import DailyQuestBoard from '../components/DailyQuestBoard';
-import { CHARACTERS, SHOP_ITEMS } from '../constants';
+import { CHARACTERS, SHOP_ITEMS, getShopEmoji } from '../constants';
 import SafeImage from '../components/SafeImage';
 import audio from '../utils/AudioUtils';
 import { getVocabularyErrors } from '../utils/errorBookUtils';
@@ -228,9 +228,10 @@ const HomePage: React.FC<HomePageProps> = ({ stats, groups, reviewNeeded, onNavi
             whileHover={{ scale: 1.15, rotate: [0, -10, 10, -5, 0] }}
             whileTap={{ scale: 0.92 }}
             transition={{ type: "spring", stiffness: 350, damping: 10 }}
-            className="cursor-pointer select-none shrink-0"
+            className="cursor-pointer select-none shrink-0 border-2 border-emerald-400 bg-white p-1 rounded-2xl shadow-sm"
             onClick={() => {
               try { audio.playCheer(); } catch(e){}
+              onNavigate('TUTOR');
             }}
           >
             <span className="text-4xl sm:text-5xl block filter drop-shadow-[0_3px_8px_rgba(52,211,153,0.5)]">🐯</span>
@@ -344,119 +345,87 @@ const HomePage: React.FC<HomePageProps> = ({ stats, groups, reviewNeeded, onNavi
         <DailyQuestBoard quests={stats.quests} onQuestClick={onQuestClick} />
       </div>
 
-      {/* COMPACT INTERACTIVE NAVIGATION PORTALS GRID - RATIONAL GAME MAP BENTO LAYOUT */}
-      <div className="grid grid-cols-2 gap-3.5 px-1 pb-1">
+      {/* COMPACT INTERACTIVE NAVIGATION PORTALS - RATIONAL GAME MAP BENTO LAYOUT */}
+      <div className="grid grid-cols-4 gap-2 sm:gap-3.5 px-1 pb-1">
         {/* Portal A: Adventure Forest (Major game mode - Green 3D Toy Button) */}
         <motion.button 
-          whileHover={{ scale: 1.03, y: -2 }}
-          whileTap={{ scale: 0.97 }}
+          whileHover={{ scale: 1.05, y: -2 }}
+          whileTap={{ scale: 0.95 }}
           onClick={() => {
             try { audio.playClick(); } catch(e){}
             onNavigate('ADVENTURE');
           }} 
-          className="p-4.5 bg-gradient-to-br from-[#acd65c] via-[#4caf50] to-[#15803d] border-2 border-emerald-200 border-b-[6px] border-emerald-700 hover:border-emerald-100 rounded-3xl text-left relative overflow-hidden group h-34 flex flex-col justify-between cursor-pointer shadow-md transition-all active:border-b-[2px] active:translate-y-[4px]"
+          className="p-2 sm:p-3 bg-gradient-to-br from-[#acd65c] via-[#4caf50] to-[#15803d] border-2 border-emerald-250 border-b-[5px] border-emerald-700 hover:border-emerald-100 rounded-2xl sm:rounded-3xl flex flex-col items-center justify-center text-center relative overflow-hidden group h-24 sm:h-28 cursor-pointer shadow-sm transition-all active:border-b-[1px] active:translate-y-[4px]"
         >
-          {/* Animated leaf inside backdrop */}
-          <div className="absolute top-[-20px] right-[-20px] w-18 h-18 bg-white/10 rounded-full blur-xl group-hover:scale-125 transition-transform" />
-          <div className="absolute bottom-1 right-1 p-1 opacity-12 group-hover:opacity-30 group-hover:rotate-12 group-hover:scale-125 transition-all select-none pointer-events-none text-4.5xl">🌲</div>
-          
-          <div className="relative">
-            <div className="bg-white/80 w-10 h-10 rounded-xl flex items-center justify-center shadow">
-              <BookOpen className="text-emerald-800 w-6 h-6 stroke-[3] group-hover:animate-bounce" />
-            </div>
+          <div className="absolute top-[-10px] right-[-10px] w-10 h-10 bg-white/10 rounded-full blur-md group-hover:scale-125 transition-transform" />
+          <div className="bg-white/80 w-8 h-8 sm:w-10 sm:h-10 rounded-xl flex items-center justify-center shadow-xs mb-1.5 relative shrink-0">
+            <BookOpen className="text-emerald-800 w-4.5 h-4.5 sm:w-5 sm:h-5 stroke-[3] group-hover:animate-bounce" />
             {reviewNeeded.length > 0 && (
-              <span className="absolute -top-1.5 -right-1.5 bg-rose-500 text-white text-[11px] font-black w-5.5 h-5.5 flex items-center justify-center rounded-full animate-pulse border border-white shadow-md">
+              <span className="absolute -top-1 -right-1 bg-rose-500 text-white text-[9px] sm:text-[10px] font-black w-4.5 h-4.5 flex items-center justify-center rounded-full animate-pulse border border-white">
                 {reviewNeeded.length}
               </span>
             )}
           </div>
-          <div>
-            <h3 className="font-black text-white text-[18.5px] sm:text-[21.5px] leading-tight flex items-center gap-1 font-sans">
-              <span>冒险深林密境</span>
-            </h3>
-            <span className="text-[14.5px] sm:text-[16px] font-extrabold text-white/95 block mt-1.5 leading-tight">
-              闯关收割星星币 ⚔️
-            </span>
-          </div>
+          <span className="font-black text-white text-[11px] sm:text-[13px] tracking-tight leading-tight">
+            冒险深林
+          </span>
         </motion.button>
         
         {/* Portal B: Magic Playground (Major game mode - Orange 3D Toy Button) */}
         <motion.button 
-          whileHover={{ scale: 1.03, y: -2 }}
-          whileTap={{ scale: 0.97 }}
+          whileHover={{ scale: 1.05, y: -2 }}
+          whileTap={{ scale: 0.95 }}
           onClick={() => {
             try { audio.playClick(); } catch(e){}
             onNavigate('ARCADE');
           }} 
-          className="p-4.5 bg-gradient-to-br from-[#fccf31] via-[#f69d3c] to-[#c2410c] border-2 border-amber-200 border-b-[6px] border-amber-700 hover:border-amber-100 rounded-3xl text-left relative overflow-hidden group h-34 flex flex-col justify-between cursor-pointer shadow-md transition-all active:border-b-[2px] active:translate-y-[4px]"
+          className="p-2 sm:p-3 bg-gradient-to-br from-[#fccf31] via-[#f69d3c] to-[#c2410c] border-2 border-amber-250 border-b-[5px] border-amber-700 hover:border-amber-100 rounded-2xl sm:rounded-3xl flex flex-col items-center justify-center text-center relative overflow-hidden group h-24 sm:h-28 cursor-pointer shadow-sm transition-all active:border-b-[1px] active:translate-y-[4px]"
         >
-          {/* Interactive bubble behind banner */}
-          <div className="absolute top-[-20px] right-[-20px] w-18 h-18 bg-white/10 rounded-full blur-xl group-hover:scale-125 transition-transform" />
-          <div className="absolute bottom-1 right-1 p-1 opacity-12 group-hover:opacity-30 group-hover:-rotate-12 group-hover:scale-125 transition-all select-none pointer-events-none text-4.5xl">🔮</div>
-          
-          <div className="bg-white/80 w-10 h-10 rounded-xl flex items-center justify-center shadow">
-            <Gamepad2 className="text-amber-800 w-6 h-6 stroke-[3] group-hover:rotate-12" />
+          <div className="absolute top-[-10px] right-[-10px] w-10 h-10 bg-white/10 rounded-full blur-md group-hover:scale-125 transition-transform" />
+          <div className="bg-white/80 w-8 h-8 sm:w-10 sm:h-10 rounded-xl flex items-center justify-center shadow-xs mb-1.5 shrink-0">
+            <Gamepad2 className="text-amber-800 w-4.5 h-4.5 sm:w-5 sm:h-5 stroke-[3] group-hover:rotate-12" />
           </div>
-          <div>
-            <h3 className="font-black text-white text-[18.5px] sm:text-[21.5px] leading-tight flex items-center gap-1 font-sans">
-              <span>魔法演武乐园</span>
-            </h3>
-            <span className="text-[14.5px] sm:text-[16px] font-extrabold text-white/95 block mt-1.5 leading-tight">
-              超萌神兽对决游戏 🎮
-            </span>
-          </div>
+          <span className="font-black text-white text-[11px] sm:text-[13px] tracking-tight leading-tight">
+            演武乐园
+          </span>
         </motion.button>
 
         {/* Portal C: Pet Sanctuary (Direct access to Pets - Pink 3D Toy Button) */}
         <motion.button 
-          whileHover={{ scale: 1.03, y: -2 }}
-          whileTap={{ scale: 0.97 }}
+          whileHover={{ scale: 1.05, y: -2 }}
+          whileTap={{ scale: 0.95 }}
           onClick={() => {
             try { audio.playClick(); } catch(e){}
             onNavigate('PETS');
           }} 
-          className="p-4.5 bg-gradient-to-br from-[#fda4af] via-[#f43f5e] to-[#be123c] border-2 border-rose-200 border-b-[6px] border-rose-700 hover:border-rose-100 rounded-3xl text-left relative overflow-hidden group h-34 flex flex-col justify-between cursor-pointer shadow-md transition-all active:border-b-[2px] active:translate-y-[4px]"
+          className="p-2 sm:p-3 bg-gradient-to-br from-[#fda4af] via-[#f43f5e] to-[#be123c] border-2 border-rose-250 border-b-[5px] border-rose-700 hover:border-rose-100 rounded-2xl sm:rounded-3xl flex flex-col items-center justify-center text-center relative overflow-hidden group h-24 sm:h-28 cursor-pointer shadow-sm transition-all active:border-b-[1px] active:translate-y-[4px]"
         >
-          <div className="absolute top-[-20px] right-[-20px] w-18 h-18 bg-white/10 rounded-full blur-xl group-hover:scale-125 transition-transform" />
-          <div className="absolute bottom-1 right-1 p-1 opacity-12 group-hover:opacity-30 group-hover:rotate-6 group-hover:scale-125 transition-all select-none pointer-events-none text-4.5xl">🐾</div>
-          
-          <div className="bg-white/80 w-10 h-10 rounded-xl flex items-center justify-center shadow">
-            <span className="text-xl select-none">🐾</span>
+          <div className="absolute top-[-10px] right-[-10px] w-10 h-10 bg-white/10 rounded-full blur-md group-hover:scale-125 transition-transform" />
+          <div className="bg-white/80 w-8 h-8 sm:w-10 sm:h-10 rounded-xl flex items-center justify-center shadow-xs mb-1.5 shrink-0">
+            <span className="text-sm sm:text-base select-none">🐾</span>
           </div>
-          <div>
-            <h3 className="font-black text-white text-[18.5px] sm:text-[21.5px] leading-tight flex items-center gap-1 font-sans">
-              <span>契约兽神域</span>
-            </h3>
-            <span className="text-[14.5px] sm:text-[16px] font-extrabold text-white/95 block mt-1.5 leading-tight">
-              特训喂养你的高分宠 🍔
-            </span>
-          </div>
+          <span className="font-black text-white text-[11px] sm:text-[13px] tracking-tight leading-tight">
+            兽神域
+          </span>
         </motion.button>
 
         {/* Portal D: Enchanted Shop (Direct access to Shop - Blue 3D Toy Button) */}
         <motion.button 
-          whileHover={{ scale: 1.03, y: -2 }}
-          whileTap={{ scale: 0.97 }}
+          whileHover={{ scale: 1.05, y: -2 }}
+          whileTap={{ scale: 0.95 }}
           onClick={() => {
             try { audio.playClick(); } catch(e){}
             onNavigate('SHOP');
           }} 
-          className="p-4.5 bg-gradient-[#93c5fd] bg-gradient-to-br from-[#93c5fd] via-[#3b82f6] to-[#1d4ed8] border-2 border-blue-200 border-b-[6px] border-blue-700 hover:border-blue-100 rounded-3xl text-left relative overflow-hidden group h-34 flex flex-col justify-between cursor-pointer shadow-md transition-all active:border-b-[2px] active:translate-y-[4px]"
+          className="p-2 sm:p-3 bg-gradient-to-br from-[#93c5fd] via-[#3b82f6] to-[#1d4ed8] border-2 border-blue-250 border-b-[5px] border-blue-700 hover:border-blue-100 rounded-2xl sm:rounded-3xl flex flex-col items-center justify-center text-center relative overflow-hidden group h-24 sm:h-28 cursor-pointer shadow-sm transition-all active:border-b-[1px] active:translate-y-[4px]"
         >
-          <div className="absolute top-[-20px] right-[-20px] w-18 h-18 bg-white/10 rounded-full blur-xl group-hover:scale-125 transition-transform" />
-          <div className="absolute bottom-1 right-1 p-1 opacity-12 group-hover:opacity-30 group-hover:-rotate-6 group-hover:scale-125 transition-all select-none pointer-events-none text-4.5xl">🪙</div>
-          
-          <div className="bg-white/80 w-10 h-10 rounded-xl flex items-center justify-center shadow">
-            <span className="text-lg select-none">💎</span>
+          <div className="absolute top-[-10px] right-[-10px] w-10 h-10 bg-white/10 rounded-full blur-md group-hover:scale-125 transition-transform" />
+          <div className="bg-white/80 w-8 h-8 sm:w-10 sm:h-10 rounded-xl flex items-center justify-center shadow-xs mb-1.5 shrink-0">
+            <span className="text-sm sm:text-base select-none">💎</span>
           </div>
-          <div>
-            <h3 className="font-black text-white text-[18.5px] sm:text-[21.5px] leading-tight flex items-center gap-1 font-sans">
-              <span>魔法秘宝商店</span>
-            </h3>
-            <span className="text-[14.5px] sm:text-[16px] font-extrabold text-white/95 block mt-1.5 leading-tight">
-              星星币换高强法套 🪙
-            </span>
-          </div>
+          <span className="font-black text-white text-[11px] sm:text-[13px] tracking-tight leading-tight">
+            秘宝商店
+          </span>
         </motion.button>
 
         {/* Portal E: Word Classic Album (Full Width / Epic Scroll Portal with golden trim) */}
@@ -467,13 +436,13 @@ const HomePage: React.FC<HomePageProps> = ({ stats, groups, reviewNeeded, onNavi
             try { audio.playClick(); } catch(e){}
             onNavigate('COLLECTION');
           }} 
-          className="col-span-2 p-5 bg-gradient-to-r from-[#eefaf2] via-white to-[#fffbe8] border-2 border-emerald-300 border-b-[6px] border-emerald-500 rounded-3xl text-left relative overflow-hidden group flex items-center justify-between cursor-pointer shadow-sm active:border-b-[2px] active:translate-y-[4px]"
+          className="col-span-4 p-5 bg-gradient-to-r from-[#eefaf2] via-white to-[#fffbe8] border-2 border-emerald-300 border-b-[6px] border-emerald-500 rounded-3xl text-left relative overflow-hidden group flex items-center justify-between cursor-pointer shadow-sm active:border-b-[2px] active:translate-y-[4px]"
         >
           <div className="absolute inset-y-0 right-0 w-[40%] bg-gradient-to-l from-emerald-500/5 to-transparent pointer-events-none" />
           
           <div className="flex items-center space-x-4 relative z-10 min-w-0">
-            <div className="bg-gradient-to-r from-emerald-400 via-teal-300 to-amber-350 w-12 h-12 rounded-2xl flex items-center justify-center shadow-sm">
-              <Award className="text-emerald-950 w-6 h-6 stroke-[3]" />
+            <div className="bg-gradient-to-r from-emerald-500 via-green-400 to-teal-500 w-12 h-12 rounded-2xl flex items-center justify-center shadow-sm shrink-0">
+              <span className="text-xl">📖</span>
             </div>
             <div className="min-w-0 text-left">
               <h3 className="font-black text-emerald-990 text-lg sm:text-[21.5px] leading-none flex items-center gap-2">
@@ -498,12 +467,12 @@ const HomePage: React.FC<HomePageProps> = ({ stats, groups, reviewNeeded, onNavi
             try { audio.playClick(); } catch(e){}
             onNavigate('PHONICS');
           }} 
-          className="col-span-2 p-5 bg-gradient-to-r from-[#ffe4e6] via-white to-[#fff2e8] border-2 border-amber-300 border-b-[6px] border-amber-500 rounded-3xl text-left relative overflow-hidden group flex items-center justify-between cursor-pointer shadow-sm active:border-b-[2px] active:translate-y-[4px]"
+          className="col-span-4 p-5 bg-gradient-to-r from-[#ffe4e6] via-white to-[#fff2e8] border-2 border-amber-300 border-b-[6px] border-amber-500 rounded-3xl text-left relative overflow-hidden group flex items-center justify-between cursor-pointer shadow-sm active:border-b-[2px] active:translate-y-[4px]"
         >
           <div className="absolute inset-y-0 right-0 w-[40%] bg-gradient-to-l from-amber-500/5 to-transparent pointer-events-none" />
           
           <div className="flex items-center space-x-4 relative z-10 min-w-0">
-            <div className="bg-gradient-to-r from-amber-400 via-rose-300 to-orange-350 w-12 h-12 rounded-2xl flex items-center justify-center shadow-sm">
+            <div className="bg-gradient-to-r from-amber-400 via-rose-300 to-orange-355 w-12 h-12 rounded-2xl flex items-center justify-center shadow-sm">
               <Zap className="text-amber-950 w-6 h-6 stroke-[3]" />
             </div>
             <div className="min-w-0 text-left">
@@ -516,8 +485,8 @@ const HomePage: React.FC<HomePageProps> = ({ stats, groups, reviewNeeded, onNavi
               </p>
             </div>
           </div>
-          <span className="text-sm sm:text-base bg-white border border-amber-250 text-amber-950 font-black px-4.5 py-3 rounded-2xl group-hover:bg-[#fca5a5] group-hover:text-amber-950 group-hover:border-transparent transition-all shrink-0 shadow-xs relative z-10">
-            进入特训 🛡️
+          <span className="text-sm sm:text-base bg-white border border-amber-250 text-amber-950 font-black px-4.5 py-3 rounded-2xl group-hover:bg-[#fed7aa] group-hover:text-amber-950 group-hover:border-transparent transition-all shrink-0 shadow-xs relative z-10">
+            进入特训 ⚡
           </span>
         </motion.button>
 
@@ -529,7 +498,7 @@ const HomePage: React.FC<HomePageProps> = ({ stats, groups, reviewNeeded, onNavi
             try { audio.playClick(); } catch(e){}
             onOpenErrorCabinet?.();
           }} 
-          className="col-span-2 p-5 bg-gradient-to-r from-[#faf5ff] via-white to-[#fdf2f8] border-2 border-purple-300 border-b-[6px] border-purple-500 rounded-3xl text-left relative overflow-hidden group flex items-center justify-between cursor-pointer shadow-sm active:border-b-[2px] active:translate-y-[4px]"
+          className="col-span-4 p-5 bg-gradient-to-r from-[#faf5ff] via-white to-[#fdf2f8] border-2 border-purple-300 border-b-[6px] border-purple-500 rounded-3xl text-left relative overflow-hidden group flex items-center justify-between cursor-pointer shadow-sm active:border-b-[2px] active:translate-y-[4px]"
         >
           <div className="absolute inset-y-0 right-0 w-[40%] bg-gradient-to-l from-purple-500/5 to-transparent pointer-events-none" />
           
@@ -561,6 +530,40 @@ const HomePage: React.FC<HomePageProps> = ({ stats, groups, reviewNeeded, onNavi
           </div>
           <span className="text-sm sm:text-base bg-white border border-purple-250 text-purple-950 font-black px-4.5 py-3 rounded-2xl group-hover:bg-[#d8b4fe] group-hover:text-purple-950 group-hover:border-transparent transition-all shrink-0 shadow-xs relative z-10">
             开启净化 🪐
+          </span>
+        </motion.button>
+
+        {/* Portal H: AI Rap & Rhythm Tutor (Pipi AI Tutor - Full Width / Epic Portal with magnificent emerald-teal gradient) */}
+        <motion.button 
+          whileHover={{ scale: 1.015, y: -1 }}
+          whileTap={{ scale: 0.985 }}
+          onClick={() => {
+            try { audio.playClick(); } catch(e){}
+            onNavigate('TUTOR');
+          }} 
+          className="col-span-4 p-5 bg-gradient-to-r from-[#ecfdf5] via-white to-[#f0fdf4] border-2 border-emerald-300 border-b-[6px] border-emerald-500 rounded-3xl text-left relative overflow-hidden group flex items-center justify-between cursor-pointer shadow-sm active:border-b-[4px] active:translate-y-[2px]"
+        >
+          <div className="absolute inset-y-0 right-0 w-[40%] bg-gradient-to-l from-emerald-500/5 to-transparent pointer-events-none" />
+          
+          <div className="flex items-center space-x-4 relative z-10 min-w-0">
+            <div className="bg-gradient-to-r from-emerald-500 via-green-400 to-teal-500 w-12 h-12 rounded-2xl flex items-center justify-center shadow-sm relative shrink-0">
+              <span className="text-xl">📻</span>
+              <span className="absolute -top-1.5 -right-1.5 bg-amber-400 border-2 border-white text-emerald-950 text-[8px] font-black w-4.5 h-4.5 flex items-center justify-center rounded-full animate-bounce">
+                AI
+              </span>
+            </div>
+            <div className="min-w-0 text-left font-sans">
+              <h3 className="font-black text-emerald-950 text-lg sm:text-[21.5px] leading-none flex items-center gap-2">
+                <span>说唱导师皮皮 · 单词变魔咒儿歌 🐯📻</span>
+                <span className="bg-emerald-100 text-emerald-800 text-[10px] sm:text-xs font-black px-2 py-0.5 rounded border border-emerald-200">极速响应</span>
+              </h3>
+              <p className="text-base sm:text-[17px] font-bold text-emerald-850 mt-2.5 leading-none">
+                发送任意单词/句子，皮皮导师为你即时编译朗朗上口的说唱三字经 🎧🎸
+              </p>
+            </div>
+          </div>
+          <span className="text-sm sm:text-base bg-white border border-emerald-250 text-emerald-950 font-black px-4.5 py-3 rounded-2xl group-hover:bg-[#a7f3d0] group-hover:text-emerald-950 group-hover:border-transparent transition-all shrink-0 shadow-xs relative z-10">
+            召唤皮皮 🐯
           </span>
         </motion.button>
       </div>
@@ -812,7 +815,9 @@ const HomePage: React.FC<HomePageProps> = ({ stats, groups, reviewNeeded, onNavi
                         <div className="grid grid-cols-2 gap-2.5">
                           {equippedItems.map(item => (
                             <div key={item.id} className="flex items-center space-x-2.5 p-2 bg-white border border-emerald-250 shadow-sm rounded-xl">
-                              <div className="w-8 h-8 bg-amber-50 text-base flex items-center justify-center rounded-lg border border-amber-200 shrink-0">🛡️</div>
+                              <div className="w-8 h-8 bg-amber-50 text-base flex items-center justify-center rounded-lg border border-amber-200 shrink-0">
+                                {getShopEmoji(item.name)}
+                              </div>
                               <div className="min-w-0">
                                 <span className="text-xs sm:text-sm font-black text-emerald-950 block truncate leading-none">{item.name}</span>
                                 <span className="text-[10px] sm:text-xs font-bold text-[#0f766e] block mt-1 truncate leading-none">

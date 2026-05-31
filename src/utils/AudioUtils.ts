@@ -109,8 +109,8 @@ export const audio = {
     audio.play().catch(() => {});
   },
   playError: () => {
-    const audio = new Audio('https://assets.mixkit.co/active_storage/sfx/2572/2572-preview.mp3');
-    audio.volume = 0.2;
+    const audio = new Audio('https://assets.mixkit.co/active_storage/sfx/2573/2573-preview.mp3');
+    audio.volume = 0.3;
     audio.play().catch(() => {});
   },
   playPop: () => {

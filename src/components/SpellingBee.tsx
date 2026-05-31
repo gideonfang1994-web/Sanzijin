@@ -6,6 +6,7 @@ import { Volume2, Star, Trophy, X, Zap, Heart, Search, MousePointer2 } from 'luc
 import audio from '../utils/AudioUtils';
 import confetti from 'canvas-confetti';
 import SafeImage from './SafeImage';
+import { getWordEmoji } from '../utils/WordUtils';
 
 interface Props {
   groups: WordGroup[];
@@ -237,8 +238,14 @@ const SpellingBee: React.FC<Props> = ({ groups, onFinish, onMistake, onClose }) 
                 exit={{ opacity: 0, y: 10 }}
                 className="bg-white/80 backdrop-blur-md p-6 rounded-[32px] border-2 border-amber-100 flex items-center space-x-6 shadow-xl"
               >
-                <div className="w-24 h-24 bg-amber-50 rounded-2xl relative overflow-hidden border-2 border-amber-100">
-                   <SafeImage src={currentWord.imageUrl} alt={currentWord.text} className="w-full h-full object-contain" fallbackText={currentWord.text} width="96" height="96" />
+                <div className="w-24 h-24 bg-amber-50 rounded-2xl relative overflow-hidden border-2 border-amber-100 flex items-center justify-center">
+                  {getWordEmoji(currentWord.text) ? (
+                    <span className="text-[44px] select-none filter drop-shadow-md">
+                      {getWordEmoji(currentWord.text)}
+                    </span>
+                  ) : (
+                    <SafeImage src={currentWord.imageUrl} alt={currentWord.text} className="w-full h-full object-contain" fallbackText={currentWord.text} width="96" height="96" />
+                  )}
                 </div>
                 <div className="flex-1">
                    <p className="text-[10px] font-black text-amber-400 uppercase tracking-widest mb-1">Magical Hint</p>

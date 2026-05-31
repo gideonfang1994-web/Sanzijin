@@ -379,7 +379,7 @@ const SheepMatch: React.FC<Props> = ({ groups, onFinish, onClose }) => {
                     )
                   ) : (
                     <div className="flex flex-col items-center justify-center leading-tight p-0.5">
-                      <span className={`font-black text-center break-words ${tile.type === 'text' ? 'text-emerald-900 text-[18px] sm:text-[20px]' : 'text-emerald-600 text-[16px] sm:text-[18px]'}`}>
+                      <span className={`font-black text-center break-words text-emerald-990 text-[18px] sm:text-[20px]`}>
                         {tile.content}
                       </span>
                     </div>

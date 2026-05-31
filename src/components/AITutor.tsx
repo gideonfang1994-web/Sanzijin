@@ -1,9 +1,13 @@
 
 import React, { useState, useRef, useEffect } from 'react';
 import { chatWithTutor } from '../services/geminiService';
-import { Send, Sparkles, User, Smile, Music } from 'lucide-react';
+import { Send, Sparkles, User, Smile, Music, ChevronLeft } from 'lucide-react';
 
-const AITutor: React.FC = () => {
+interface AITutorProps {
+  onClose?: () => void;
+}
+
+const AITutor: React.FC<AITutorProps> = ({ onClose }) => {
   const [messages, setMessages] = useState<{ role: 'user' | 'ai'; text: string }[]>([
     { role: 'ai', text: '哈喽！我是你的节奏导师皮皮。跟我一起把单词变成好听的三字经吧！让我们开始今天的说唱练习！🐯🎵' }
   ]);
@@ -44,6 +48,17 @@ const AITutor: React.FC = () => {
         <div className="absolute top-0 right-0 p-4 opacity-10">
           <Music className="w-20 h-20" />
         </div>
+        
+        {onClose && (
+          <button 
+            type="button"
+            onClick={onClose}
+            className="mr-4 p-3 bg-white/10 hover:bg-white/25 active:scale-90 rounded-2xl border border-white/20 transition-all cursor-pointer text-white flex items-center justify-center shrink-0"
+          >
+            <ChevronLeft size={20} className="stroke-[3]" />
+          </button>
+        )}
+
         <div className="w-16 h-16 bg-white/20 backdrop-blur-md rounded-3xl flex items-center justify-center mr-5 border border-white/30 shadow-inner relative overflow-hidden group">
           <div className="absolute inset-0 shimmer-bg opacity-30"></div>
           <span className="text-4xl animate-bounce-subtle">🐯</span>
