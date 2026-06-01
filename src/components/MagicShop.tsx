@@ -221,6 +221,34 @@ const CharacterVisual: React.FC<{
                 height="240"
               />
               
+              {/* Floating equipped item overlays physically overlaid on top of the portrait instantly! */}
+              {items.map((item, index) => (
+                <motion.div
+                  key={item.id}
+                  initial={{ scale: 0, y: 5, opacity: 0 }}
+                  animate={{ scale: 1, y: 0, opacity: 1 }}
+                  transition={{ delay: index * 0.05, type: 'spring', stiffness: 200 }}
+                  className="absolute p-0.5 bg-slate-900/90 border border-white/20 rounded-lg shadow-[0_4px_10px_rgba(0,0,0,0.5)] z-20 flex items-center justify-center"
+                  style={{
+                    width: '30px',
+                    height: '30px',
+                    top: item.slot === 'HEAD' ? '8%' : item.slot === 'BODY' ? '40%' : item.slot === 'RIGHT_HAND' ? '60%' : item.slot === 'LEFT_HAND' ? '60%' : '75%',
+                    left: item.slot === 'RIGHT_HAND' ? '8%' : item.slot === 'HEAD' || item.slot === 'BODY' ? '38%' : 'auto',
+                    right: item.slot === 'LEFT_HAND' ? '8%' : item.slot === 'BACK' ? '8%' : 'auto',
+                  }}
+                >
+                  <SafeImage
+                    src={getShopImageUrl(item.name)}
+                    alt={item.name}
+                    fallbackEmoji={getShopEmoji(item.name)}
+                    className="w-full h-full object-contain select-none"
+                  />
+                  <div className="absolute -bottom-1 -right-1 bg-gradient-to-r from-amber-400 to-yellow-500 text-[6px] text-slate-950 font-black px-1 rounded border border-white/30 scale-75 uppercase shadow-sm">
+                    E
+                  </div>
+                </motion.div>
+              ))}
+              
               {/* Equipment Overlays (Visual Feedback) */}
               {items.length > 0 && (
                 <motion.div 
@@ -240,34 +268,24 @@ const CharacterVisual: React.FC<{
           )}
           
           {isGeneratingPortrait && (
-            <div className="absolute inset-0 bg-black/85 flex flex-col items-center justify-center p-3 text-center z-35 backdrop-blur-[2px]">
-              <div className="relative w-12 h-12 flex items-center justify-center">
+            <div className="absolute inset-x-0 bottom-0 bg-slate-950/95 border-t border-emerald-500/30 text-emerald-300 py-1.5 px-2 flex items-center justify-center space-x-1.5 z-40 backdrop-blur-md">
+              <div className="relative w-3.5 h-3.5 flex items-center justify-center shrink-0">
                 <motion.div 
-                  className="absolute inset-0 border-4 border-emerald-500/30 border-t-emerald-400 rounded-full" 
+                  className="absolute inset-0 border-2 border-emerald-500/20 border-t-emerald-400 rounded-full" 
                   animate={{ rotate: 360 }} 
                   transition={{ duration: 1.2, repeat: Infinity, ease: "linear" }} 
                 />
-                <motion.div 
-                  className="absolute inset-1.5 border-4 border-indigo-500/20 border-b-indigo-400 rounded-full" 
-                  animate={{ rotate: -360 }} 
-                  transition={{ duration: 2, repeat: Infinity, ease: "linear" }} 
-                />
-                <Sparkles className="w-4 h-4 text-amber-300 animate-pulse z-10" />
+                <Sparkles className="w-2 h-2 text-yellow-300 animate-pulse z-10" />
               </div>
-              <motion.p 
-                initial={{ opacity: 0.6 }}
-                animate={{ opacity: [0.6, 1, 0.6] }}
-                transition={{ duration: 1.2, repeat: Infinity }}
-                className="text-[10px] text-emerald-300 font-extrabold mt-3 tracking-wide leading-none"
-              >
-                神力装备整合中...
-              </motion.p>
-              <p className="text-[7px] text-slate-400 mt-1 uppercase scale-90">AI 定制高清插画中</p>
+              <div className="flex flex-col text-left">
+                <span className="text-[8px] font-black tracking-wide leading-none text-emerald-400">正在生成定制高清插画中...</span>
+                <span className="text-[6px] text-slate-400 leading-none mt-0.5 scale-90 origin-left">神力整合 & AI 绘画</span>
+              </div>
             </div>
           )}
           
           {/* Lighting Overlay */}
-          <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-white/10" />
+          <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-white/10 pointer-events-none" />
         </div>
 
         {/* Equipment Slots - Right Side */}

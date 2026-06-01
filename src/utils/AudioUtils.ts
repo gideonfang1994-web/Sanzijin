@@ -174,6 +174,12 @@ export const audio = {
     audio.volume = 0.5;
     audio.play().catch(() => {});
   },
+  playReward: () => {
+    // Shimmering chimes and magic sparkle for rewards and gift claiming
+    const audioObj = new Audio('https://assets.mixkit.co/active_storage/sfx/2017/2017-preview.mp3');
+    audioObj.volume = 0.6;
+    audioObj.play().catch(() => {});
+  },
   playPageTurn: () => {
     // Elegant airy swoosh/card turn sound from Mixkit
     const audioObj = new Audio('https://assets.mixkit.co/active_storage/sfx/730/730-preview.mp3');

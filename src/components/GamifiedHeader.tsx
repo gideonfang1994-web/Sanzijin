@@ -48,10 +48,11 @@ const GamifiedHeader: React.FC<Props> = ({ stats }) => {
         <div className="flex items-center space-x-3">
           <motion.div 
             whileHover={{ y: -2 }}
+            title="魔法币"
             className="flex items-center bg-white/50 backdrop-blur-sm px-3.5 py-2.5 rounded-2xl border-2 border-white shadow-sm transition-all hover:bg-white active:scale-95"
           >
-            <CircleDollarSign className="w-4.5 h-4.5 text-amber-500 mr-2 fill-amber-200" />
-            <span className="font-black text-slate-700 text-sm tabular-nums">{stats.starCoins}</span>
+            <CircleDollarSign className="w-4.5 h-4.5 text-amber-500 mr-2 fill-amber-300 animate-spin-slow" />
+            <span className="font-black text-slate-700 text-sm tabular-nums">{stats.magicCoins} 魔法币</span>
           </motion.div>
           
           <motion.div 

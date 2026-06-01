@@ -4,7 +4,7 @@ import { motion, AnimatePresence } from 'motion/react';
 import { 
   ChevronLeft, ChevronRight, ChevronDown, Play, Gamepad2, RefreshCw, Star, Trophy,
   ArrowRight, Volume2, Lock, CheckCircle2, Zap, Trash2, Wand2,
-  BookOpen, Flame, Sparkles, Check
+  BookOpen, Flame, Sparkles, Check, CircleDollarSign
 } from 'lucide-react';
 import confetti from 'canvas-confetti';
 import { WordItem, WordCard, AdventureForestProps, DifficultyLevel } from '../types';
@@ -1245,9 +1245,9 @@ const AdventurePage: React.FC<AdventurePageProps> = ({
                 <span className="font-black text-orange-700 text-sm">{streak}</span>
               </motion.div>
             )}
-            <div className="bg-emerald-100 px-4 py-2 rounded-2xl flex items-center space-x-2 border-2 border-white shadow-sm">
-              <Star className="text-amber-500 fill-amber-500" size={16} />
-              <span className="font-black text-emerald-800 text-sm">{stats.starCoins}</span>
+            <div className="bg-emerald-100 px-4 py-2 rounded-2xl flex items-center space-x-2 border-2 border-white shadow-sm" title="魔法币">
+              <CircleDollarSign className="text-amber-500 fill-amber-300 animate-pulse" size={16} />
+              <span className="font-black text-emerald-800 text-sm">{stats.magicCoins} 魔法币</span>
             </div>
           </div>
         </div>

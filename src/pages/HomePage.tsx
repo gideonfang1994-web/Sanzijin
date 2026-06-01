@@ -227,7 +227,10 @@ const HomePage: React.FC<HomePageProps> = ({ stats, groups, reviewNeeded, onNavi
           <motion.div 
             whileHover={{ scale: 1.15, rotate: [0, -10, 10, -5, 0] }}
             whileTap={{ scale: 0.92 }}
-            transition={{ type: "spring", stiffness: 350, damping: 10 }}
+            transition={{
+              scale: { type: "spring", stiffness: 350, damping: 10 },
+              rotate: { type: "keyframes", duration: 0.45, ease: "easeInOut" }
+            }}
             className="cursor-pointer select-none shrink-0 border-2 border-emerald-400 bg-white p-1 rounded-2xl shadow-sm"
             onClick={() => {
               try { audio.playCheer(); } catch(e){}
@@ -257,8 +260,8 @@ const HomePage: React.FC<HomePageProps> = ({ stats, groups, reviewNeeded, onNavi
             whileHover={{ scale: 1.05 }}
             className="bg-white border-2 border-b-[4px] border-amber-300 px-3 py-1 rounded-xl flex items-center space-x-1 shadow-sm cursor-default"
           >
-            <CircleDollarSign size={16} className="text-amber-500 fill-amber-200 shrink-0" />
-            <span className="font-black text-amber-800 text-sm sm:text-base tabular-nums leading-none">{stats.starCoins} 星星币</span>
+            <CircleDollarSign size={16} className="text-amber-500 fill-amber-300 shrink-0 animate-pulse" />
+            <span className="font-black text-amber-800 text-sm sm:text-base tabular-nums leading-none">{stats.magicCoins} 魔法币</span>
           </motion.div>
 
           <button 

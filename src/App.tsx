@@ -37,11 +37,13 @@ import PetPage from './pages/PetPage';
 import CollectionCenter from './components/CollectionCenter';
 import { PhonicsArena } from './components/PhonicsArena';
 import { ErrorBookDashboard } from './components/ErrorBookDashboard';
+import { DailyCheckIn } from './components/DailyCheckIn';
+import { LuckyWheel } from './components/LuckyWheel';
 import { addVocabularyError } from './utils/errorBookUtils';
 import constants, { ALL_CARDS } from './constants';
 import { RepetitiveMagicStudyModal } from './components/RepetitiveMagicStudyModal';
 import { WordGroup, UserStats, ViewState, DailyQuest, Word, WordItem, ShopItem, Pet } from './types';
-import { Home, BookOpen, Gamepad2, BarChart3, Award, ShoppingBag, Heart, Compass, AlertCircle, X, ShieldAlert, Globe, Sparkles, ExternalLink, Volume2, Check, RefreshCw, Trophy } from 'lucide-react';
+import { Home, BookOpen, Gamepad2, BarChart3, Award, ShoppingBag, Heart, Compass, AlertCircle, X, ShieldAlert, Globe, Sparkles, ExternalLink, Volume2, Check, RefreshCw, Trophy, Calendar } from 'lucide-react';
 import audio from './utils/AudioUtils';
 import confetti from 'canvas-confetti';
 import { generateCharacterPortrait, PORTRAIT_FALLBACKS } from './services/portraitService';
@@ -117,6 +119,76 @@ const App: React.FC = () => {
 
   const [showWelcome, setShowWelcome] = useState(true);
   const [generatingPortrait, setGeneratingPortrait] = useState<Record<string, boolean>>({});
+
+  // Gamified Check-In and Lucky Wheel states
+  const [showDailyCheckIn, setShowDailyCheckIn] = useState<boolean>(false);
+  const [showLuckyWheel, setShowLuckyWheel] = useState<boolean>(false);
+  const [activeDrawMinutes, setActiveDrawMinutes] = useState<number>(5);
+  const [onlineSeconds, setOnlineSeconds] = useState<number>(0);
+  const [availableDrawMinutes, setAvailableDrawMinutes] = useState<number[]>([]);
+  const [claimedDrawMinutes, setClaimedDrawMinutes] = useState<number[]>(() => {
+    try {
+      return JSON.parse(localStorage.getItem('wordland_claimed_draws') || '[]');
+    } catch (e) {
+      return [];
+    }
+  });
+
+  // Track active session seconds
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setOnlineSeconds(prev => {
+        const nextSec = prev + 1;
+        
+        // Check for 5, 10, 15 min triggers
+        const drawThresholdMinutes = [5, 10, 15];
+        drawThresholdMinutes.forEach(mins => {
+          if (nextSec === mins * 60) {
+            // Unlocked active draw
+            setAvailableDrawMinutes(curr => {
+              if (!curr.includes(mins) && !claimedDrawMinutes.includes(mins)) {
+                // Play notification
+                try { audio.playUnlock(); } catch (e) {}
+                return [...curr, mins];
+              }
+              return curr;
+            });
+          }
+        });
+        return nextSec;
+      });
+    }, 1000);
+    return () => clearInterval(interval);
+  }, [claimedDrawMinutes]);
+
+  // Persist claimed draw minutes list
+  useEffect(() => {
+    localStorage.setItem('wordland_claimed_draws', JSON.stringify(claimedDrawMinutes));
+  }, [claimedDrawMinutes]);
+
+  // Automatically pop Lucky Wheel when returning to HOME view if draws are available
+  useEffect(() => {
+    if (view === 'HOME' && availableDrawMinutes.length > 0 && !showLuckyWheel) {
+      const nextMins = availableDrawMinutes[0];
+      setActiveDrawMinutes(nextMins);
+      setShowLuckyWheel(true);
+      // Remove from available and add to claimed
+      setAvailableDrawMinutes(prev => prev.filter(m => m !== nextMins));
+      setClaimedDrawMinutes(prev => [...prev, nextMins]);
+    }
+  }, [view, availableDrawMinutes, showLuckyWheel]);
+
+  // Daily Check-In auto-trigger on initial load once per day
+  useEffect(() => {
+    const todayStr = new Date().toISOString().split('T')[0];
+    const lastCheckin = localStorage.getItem('wordland_last_checkin_date');
+    if (lastCheckin !== todayStr) {
+      const timer = setTimeout(() => {
+        setShowDailyCheckIn(true);
+      }, 1800);
+      return () => clearTimeout(timer);
+    }
+  }, []);
 
   // Auth listener
   useEffect(() => {
@@ -1108,9 +1180,31 @@ const App: React.FC = () => {
     );
   }
 
-        
-
-
+  const getDrawStatusText = () => {
+    const availableCount = availableDrawMinutes.length;
+    if (availableCount > 0) {
+      return `🎉 可抽奖！剩余积攒：${availableCount} 次`;
+    }
+    
+    if (onlineSeconds < 300) {
+      const remainingSecs = 300 - onlineSeconds;
+      const m = Math.floor(remainingSecs / 60);
+      const s = remainingSecs % 60;
+      return `🎁 5分钟 在线奖励倒计时 [ ${m.toString().padStart(2, '0')}:${s.toString().padStart(2, '0')} ]`;
+    } else if (onlineSeconds < 600) {
+      const remainingSecs = 600 - onlineSeconds;
+      const m = Math.floor(remainingSecs / 60);
+      const s = remainingSecs % 60;
+      return `🎁 10分钟 在线奖励倒计时 [ ${m.toString().padStart(2, '0')}:${s.toString().padStart(2, '0')} ]`;
+    } else if (onlineSeconds < 900) {
+      const remainingSecs = 900 - onlineSeconds;
+      const m = Math.floor(remainingSecs / 60);
+      const s = remainingSecs % 60;
+      return `🎁 15分钟 在线奖励倒计时 [ ${m.toString().padStart(2, '0')}:${s.toString().padStart(2, '0')} ]`;
+    } else {
+      return `✨ 15分钟 在线全奖励已集满 ✅`;
+    }
+  };
 
   return (
     <div className="min-h-screen pt-10 pb-32 px-5 flex flex-col items-center max-w-lg mx-auto overflow-x-hidden relative">
@@ -1137,6 +1231,80 @@ const App: React.FC = () => {
         <AnimatePresence mode="wait">
           {view === 'HOME' && (
             <motion.div key="home" initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -10 }} transition={{ duration: 0.3 }}>
+              
+              {/* Daily Check-In & Lucky Draw Quick Activities Grid */}
+              <div className="grid grid-cols-2 gap-2.5 mb-5 px-1">
+                {/* 1. Daily Check-in Button */}
+                <motion.button
+                  whileHover={{ scale: 1.02, y: -1 }}
+                  whileTap={{ scale: 0.98 }}
+                  onClick={() => {
+                    audio.playClick();
+                    setShowDailyCheckIn(true);
+                  }}
+                  className={`relative p-3 rounded-2xl flex flex-col justify-center text-left border-2 transition-all overflow-hidden ${
+                    localStorage.getItem('wordland_last_checkin_date') === new Date().toISOString().split('T')[0]
+                      ? 'bg-emerald-500/5 hover:bg-emerald-500/10 border-emerald-500/40 text-emerald-800'
+                      : 'bg-indigo-950/90 border-indigo-400 text-indigo-300 shadow-[0_4px_12px_rgba(99,102,241,0.15)] animate-pulse-subtle'
+                  }`}
+                >
+                  <div className="absolute top-0 right-0 p-1 bg-indigo-500/10 rounded-bl-xl">
+                    <Calendar size={14} className="text-indigo-400" />
+                  </div>
+                  <span className="text-[10px] font-black uppercase tracking-wider text-slate-400 leading-none">
+                    每日惊喜
+                  </span>
+                  <span className="text-sm font-black text-slate-800 dark:text-white mt-1 leading-none font-cute">
+                    📅 魔法签到大典
+                  </span>
+                  <span className="text-[10px] font-black mt-2 inline-flex items-center gap-1">
+                    {localStorage.getItem('wordland_last_checkin_date') === new Date().toISOString().split('T')[0] ? (
+                      <span className="text-emerald-500">今日已签到 ✓</span>
+                    ) : (
+                      <span className="text-amber-500 animate-pulse">待打卡领取 🎁</span>
+                    )}
+                  </span>
+                </motion.button>
+
+                {/* 2. Online Lucky Wheel Timer Button */}
+                <motion.button
+                  whileHover={{ scale: 1.02, y: -1 }}
+                  whileTap={{ scale: 0.98 }}
+                  onClick={() => {
+                    audio.playClick();
+                    if (availableDrawMinutes.length > 0) {
+                      const nextMins = availableDrawMinutes[0];
+                      setActiveDrawMinutes(nextMins);
+                      setShowLuckyWheel(true);
+                      setAvailableDrawMinutes(prev => prev.filter(m => m !== nextMins));
+                      setClaimedDrawMinutes(prev => [...prev, nextMins]);
+                    } else {
+                      // Even if no draws ready, let them see the reward wheel!
+                      setActiveDrawMinutes(5);
+                      setShowLuckyWheel(true);
+                    }
+                  }}
+                  className={`relative p-3 rounded-2xl flex flex-col justify-center text-left border-2 transition-all overflow-hidden ${
+                    availableDrawMinutes.length > 0
+                      ? 'bg-amber-500/10 border-amber-400 text-amber-800 shadow-[0_4px_12px_rgba(245,158,11,0.2)]'
+                      : 'bg-indigo-950/80 border-indigo-800/60 text-indigo-300 hover:bg-indigo-950/95'
+                  }`}
+                >
+                  <div className="absolute top-0 right-0 p-1 bg-amber-500/10 rounded-bl-xl">
+                    <Compass size={14} className="text-amber-400 animate-spin-slow" />
+                  </div>
+                  <span className="text-[10px] font-black uppercase tracking-wider text-slate-400 leading-none">
+                    在线祈愿
+                  </span>
+                  <span className="text-sm font-black text-slate-800 dark:text-white mt-1 leading-none font-cute">
+                    🎡 幸运轮盘抽奖
+                  </span>
+                  <span className="text-[10px] text-amber-500 font-extrabold mt-2 truncate w-full">
+                    {getDrawStatusText()}
+                  </span>
+                </motion.button>
+              </div>
+
               <HomePage 
                 stats={{ ...stats, quests: dynamicQuests }} 
                 groups={groups} 
@@ -1333,6 +1501,31 @@ const App: React.FC = () => {
       </main>
 
       <AnimatePresence>
+        {showDailyCheckIn && (
+          <DailyCheckIn 
+            stats={stats} 
+            onUpdateStats={handleUpdateStats} 
+            onReward={handleReward} 
+            onClose={() => {
+              try { audio.playClick(); } catch(e){}
+              setShowDailyCheckIn(false);
+            }} 
+          />
+        )}
+
+        {showLuckyWheel && (
+          <LuckyWheel 
+            stats={stats} 
+            onUpdateStats={handleUpdateStats} 
+            onReward={handleReward} 
+            targetMinutes={activeDrawMinutes}
+            onClose={() => {
+              try { audio.playClick(); } catch(e){}
+              setShowLuckyWheel(false);
+            }} 
+          />
+        )}
+
         {showReviewModal && (
           <RepetitiveMagicStudyModal
             stats={stats}
