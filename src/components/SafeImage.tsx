@@ -11,6 +11,10 @@ interface SafeImageProps extends React.ImgHTMLAttributes<HTMLImageElement> {
    * Alternative text for when the primary source should show original word text on fallback.
    */
   fallbackText?: string;
+  /**
+   * Optional colorful emoji to render when the image fails to load.
+   */
+  fallbackEmoji?: string;
 }
 
 /**
@@ -25,6 +29,7 @@ const SafeImage: React.FC<SafeImageProps> = ({
   alt, 
   fallback,
   fallbackText,
+  fallbackEmoji,
   className,
   style,
   ...props 
@@ -38,6 +43,16 @@ const SafeImage: React.FC<SafeImageProps> = ({
   }, [src]);
 
   const handleError = () => {
+    if (imgSrc && imgSrc.includes('/fluency/')) {
+      const colorSrc = imgSrc.replace('/fluency/', '/color/');
+      setImgSrc(colorSrc);
+      return;
+    } else if (imgSrc && imgSrc.includes('/color/')) {
+      const fluencySrc = imgSrc.replace('/color/', '/fluency/');
+      setImgSrc(fluencySrc);
+      return;
+    }
+
     if (isError) return; // Prevent infinite loop if fallback also fails
     
     setIsError(true);
@@ -52,6 +67,17 @@ const SafeImage: React.FC<SafeImageProps> = ({
       setImgSrc('https://img.icons8.com/clouds/200/image.png');
     }
   };
+
+  if (isError && fallbackEmoji) {
+    return (
+      <div 
+        className={`flex items-center justify-center font-bold select-none ${className || ''}`}
+        style={{ fontSize: '2.5rem', ...style }}
+      >
+        {fallbackEmoji}
+      </div>
+    );
+  }
 
   return (
     <img

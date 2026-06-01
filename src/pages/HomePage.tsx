@@ -819,6 +819,7 @@ const HomePage: React.FC<HomePageProps> = ({ stats, groups, reviewNeeded, onNavi
                                 <SafeImage 
                                   src={getShopImageUrl(item.name)} 
                                   alt={item.name} 
+                                  fallbackEmoji={getShopEmoji(item.name)}
                                   className="w-full h-full object-contain filter drop-shadow select-none"
                                 />
                               </div>

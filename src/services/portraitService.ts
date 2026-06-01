@@ -30,7 +30,16 @@ export const PORTRAIT_FALLBACKS: Record<string, string> = {
   c4: assassinShadow
 };
 
-export async function generateCharacterPortrait(characterId: string, equippedItems: string[] = []): Promise<string | null> {
+export async function generateCharacterPortrait(
+  characterId: string, 
+  equippedItems: string[] = [], 
+  petNames: string[] = []
+): Promise<string | null> {
+  // If no equipment is worn and there are no pets, return the static clean character fallback instantly!
+  if (equippedItems.length === 0 && petNames.length === 0) {
+    return PORTRAIT_FALLBACKS[characterId] || null;
+  }
+
   const ai = getAi();
   let basePrompt = PORTRAIT_PROMPTS[characterId];
   if (!basePrompt) return null;
@@ -42,6 +51,14 @@ export async function generateCharacterPortrait(characterId: string, equippedIte
     basePrompt += ` He/She is equipped with: ${itemDescriptions}. The equipment should be clearly visible and integrated into the character design.`;
   } else {
     basePrompt += " He/She is NOT holding any weapons or extra gear.";
+  }
+
+  // Add pet details to the prompt if they have been obtained
+  if (petNames.length > 0) {
+    const petList = petNames.join(", ");
+    basePrompt += ` He/She is accompanied by his/her loyal companion pet(s): ${petList}. The pet(s) must be drawn next to the character.`;
+  } else {
+    basePrompt += " He/She does NOT have any pets around.";
   }
 
   try {

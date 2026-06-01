@@ -44,7 +44,7 @@ import { WordGroup, UserStats, ViewState, DailyQuest, Word, WordItem, ShopItem, 
 import { Home, BookOpen, Gamepad2, BarChart3, Award, ShoppingBag, Heart, Compass, AlertCircle, X, ShieldAlert, Globe, Sparkles, ExternalLink, Volume2, Check, RefreshCw, Trophy } from 'lucide-react';
 import audio from './utils/AudioUtils';
 import confetti from 'canvas-confetti';
-import { generateCharacterPortrait } from './services/portraitService';
+import { generateCharacterPortrait, PORTRAIT_FALLBACKS } from './services/portraitService';
 import { motion, AnimatePresence } from 'framer-motion';
 import { auth, db, doc, getDoc, setDoc, onAuthStateChanged, FirebaseUser, handleFirestoreError, OperationType, signInWithPopup, googleProvider, signOut, signInAnonymously } from './firebase';
 import SafeImage from './components/SafeImage';
@@ -301,7 +301,6 @@ const App: React.FC = () => {
     
     const initializePortraits = async (currentStats: UserStats) => {
       let updated = false;
-      
       const savedPortraits = JSON.parse(localStorage.getItem('wordland_portraits') || '{}');
       
       for (const char of constants.CHARACTERS) {
@@ -309,20 +308,34 @@ const App: React.FC = () => {
           continue;
         }
 
-        if (savedPortraits[char.id] && (!char.portraitUrl || !char.portraitUrl.startsWith('http'))) {
-          char.portraitUrl = savedPortraits[char.id];
+        const equipped = currentStats.equippedItems[char.id] || [];
+        const petsCount = currentStats.pets?.length || 0;
+
+        if (equipped.length === 0 && petsCount === 0) {
+          const fallbackPath = PORTRAIT_FALLBACKS[char.id];
+          if (fallbackPath && char.portraitUrl !== fallbackPath) {
+            char.portraitUrl = fallbackPath;
+            savedPortraits[char.id] = fallbackPath;
+            updated = true;
+          }
           continue;
         }
 
-        if (!char.portraitUrl || !char.portraitUrl.startsWith('http')) {
-          const equipped = currentStats.equippedItems[char.id] || [];
-          const portrait = await generateCharacterPortrait(char.id, equipped);
-          if (portrait) {
-            savedPortraits[char.id] = portrait;
-            char.portraitUrl = portrait;
+        if (savedPortraits[char.id] && savedPortraits[char.id].startsWith('data:')) {
+          if (char.portraitUrl !== savedPortraits[char.id]) {
+            char.portraitUrl = savedPortraits[char.id];
             updated = true;
-            await new Promise(resolve => setTimeout(resolve, 1000));
           }
+          continue;
+        }
+
+        const petNames = currentStats.pets?.map(p => p.name) || [];
+        const portrait = await generateCharacterPortrait(char.id, equipped, petNames);
+        if (portrait) {
+          savedPortraits[char.id] = portrait;
+          char.portraitUrl = portrait;
+          updated = true;
+          await new Promise(resolve => setTimeout(resolve, 1000));
         }
       }
       
@@ -757,9 +770,10 @@ const App: React.FC = () => {
       return newStats;
     });
 
-    // Re-generate portrait to reflect equipment changes
+    // Re-generate portrait to reflect equipment changes and pet integration
     try {
-      const portrait = await generateCharacterPortrait(characterId, updatedEquipped);
+      const petNames = stats.pets?.map(p => p.name) || [];
+      const portrait = await generateCharacterPortrait(characterId, updatedEquipped, petNames);
       if (portrait) {
         const char = constants.CHARACTERS.find(c => c.id === characterId);
         if (char) {

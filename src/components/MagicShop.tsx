@@ -193,6 +193,7 @@ const CharacterVisual: React.FC<{
                     <SafeImage 
                       src={getShopImageUrl(equipped.name)} 
                       alt={equipped.name} 
+                      fallbackEmoji={getShopEmoji(equipped.name)}
                       className="w-full h-full object-contain filter drop-shadow select-none"
                     />
                   </motion.div>
@@ -211,6 +212,7 @@ const CharacterVisual: React.FC<{
               <SafeImage 
                 src={character.portraitUrl} 
                 alt={character.name}
+                fallbackEmoji={character.avatar}
                 className="w-full h-full object-cover"
                 fallback={`https://placehold.co/400x600/${character.color.replace('#', '')}/ffffff?text=${encodeURIComponent(character.name)}`}
                 width="160"
@@ -253,6 +255,7 @@ const CharacterVisual: React.FC<{
                     <SafeImage 
                       src={getShopImageUrl(equipped.name)} 
                       alt={equipped.name} 
+                      fallbackEmoji={getShopEmoji(equipped.name)}
                       className="w-full h-full object-contain filter drop-shadow select-none"
                     />
                   </motion.div>
@@ -398,7 +401,7 @@ const MagicShop: React.FC<MagicShopProps> = ({ stats, onPurchase, onEquip, onSel
                 </div>
               </div>
               
-              <div className="grid grid-cols-3 gap-6">
+              <div className="grid grid-cols-2 sm:grid-cols-3 gap-4 sm:gap-6">
                 {charItems.map(item => {
                   const isUnlocked = (stats.unlockedItems || []).includes(item.id);
                   const isEquipped = (stats.equippedItems?.[selectedChar.id] || []).includes(item.id);
@@ -413,7 +416,7 @@ const MagicShop: React.FC<MagicShopProps> = ({ stats, onPurchase, onEquip, onSel
                       onClick={() => !isLevelLocked && setSelectedItem(item)}
                       className={`bg-white rounded-[40px] p-4 shadow-xl border-2 flex flex-col items-center justify-between min-h-[160px] relative overflow-hidden transition-all duration-300 ${
                         isEquipped ? 'border-emerald-500 shadow-emerald-100' : 
-                        isLevelLocked ? 'border-slate-100 opacity-60 grayscale' :
+                        isLevelLocked ? 'border-slate-100 opacity-65 bg-slate-50/50' :
                         item.type === 'PET' ? 'border-indigo-400 bg-gradient-to-br from-white to-indigo-50/10' :
                         'border-slate-50 hover:border-indigo-100'
                       }`}
@@ -434,19 +437,20 @@ const MagicShop: React.FC<MagicShopProps> = ({ stats, onPurchase, onEquip, onSel
                         </div>
                       )}
                       
-                      <div className="text-center mb-2 px-1">
-                        <span className="text-sm sm:text-[15.5px] font-black text-slate-900 tracking-tight line-clamp-1">{item.name}</span>
+                      <div className="text-center mb-2 px-1 min-h-[36px] flex items-center justify-center">
+                        <span className="text-xs sm:text-[14.5px] font-black text-slate-900 tracking-tight leading-snug line-clamp-2">
+                          {item.name}
+                        </span>
                       </div>
 
-                      <div className={`flex-1 flex items-center justify-center w-full mb-3 ${
-                        (isUnlocked || isConsumable) && !isLevelLocked ? '' : 'grayscale opacity-50'
-                      }`}>
+                      <div className="flex-1 flex items-center justify-center w-full mb-3">
                         <div className="relative flex items-center justify-center w-16 h-16 bg-slate-50/80 rounded-2xl border border-slate-100 shadow-inner hover:scale-110 transition-transform duration-300">
                           <div className="absolute inset-0 bg-gradient-to-br from-indigo-500/5 to-purple-500/5 rounded-2xl blur-md" />
                           <div className="w-12 h-12 flex items-center justify-center z-10">
                             <SafeImage 
                               src={getShopImageUrl(item.name)} 
                               alt={item.name} 
+                              fallbackEmoji={getShopEmoji(item.name)}
                               className="w-full h-full object-contain filter drop-shadow-md select-none"
                             />
                           </div>
@@ -492,6 +496,7 @@ const MagicShop: React.FC<MagicShopProps> = ({ stats, onPurchase, onEquip, onSel
                     <SafeImage 
                       src={getShopImageUrl(selectedItem.name)} 
                       alt={selectedItem.name} 
+                      fallbackEmoji={getShopEmoji(selectedItem.name)}
                       className="w-full h-full object-contain filter drop-shadow-lg select-none"
                     />
                   </div>
