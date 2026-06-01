@@ -455,7 +455,7 @@ const getImageUrl = (name: string) => {
 };
 
 export const getShopImageUrl = (name: string) => {
-  // Map Chinese names to English keywords for more reliable image fetching
+  // Map Chinese names to English keywords for more reliable image fetching in the hand-drawn clouds style
   const nameMap: Record<string, string> = {
     '无畏剑士': 'knight',
     '奇幻女巫': 'witch',
@@ -515,7 +515,7 @@ export const getShopImageUrl = (name: string) => {
     '生命灵药': 'potion'
   };
   const keyword = nameMap[name] || name.toLowerCase().replace(/\s+/g, '-');
-  return `https://img.icons8.com/fluency/200/${keyword}.png`;
+  return `https://img.icons8.com/clouds/200/${keyword}.png`;
 };
 
 export const getShopEmoji = (name: string): string => {

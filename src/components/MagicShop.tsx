@@ -11,6 +11,7 @@ interface MagicShopProps {
   onPurchase: (item: ShopItem) => void;
   onEquip: (characterId: string, itemId: string) => void;
   onSelectCharacter: (characterId: string) => void;
+  isGeneratingPortrait?: boolean;
   onClose?: () => void;
 }
 
@@ -105,8 +106,9 @@ const ParticleEffect: React.FC<{ color: string }> = ({ color }) => {
 const CharacterVisual: React.FC<{ 
   character: Character; 
   equippedItems: string[]; 
-  charStats: { level: number; strength: number; magic: number; defense: number; agility: number } 
-}> = ({ character, equippedItems, charStats }) => {
+  charStats: { level: number; strength: number; magic: number; defense: number; agility: number };
+  isGeneratingPortrait?: boolean;
+}> = ({ character, equippedItems, charStats, isGeneratingPortrait = false }) => {
   const items = equippedItems.map(id => SHOP_ITEMS.find(i => i.id === id)).filter(Boolean) as ShopItem[];
   
   // Define equipment icons based on the reference image
@@ -237,6 +239,33 @@ const CharacterVisual: React.FC<{
             </div>
           )}
           
+          {isGeneratingPortrait && (
+            <div className="absolute inset-0 bg-black/85 flex flex-col items-center justify-center p-3 text-center z-35 backdrop-blur-[2px]">
+              <div className="relative w-12 h-12 flex items-center justify-center">
+                <motion.div 
+                  className="absolute inset-0 border-4 border-emerald-500/30 border-t-emerald-400 rounded-full" 
+                  animate={{ rotate: 360 }} 
+                  transition={{ duration: 1.2, repeat: Infinity, ease: "linear" }} 
+                />
+                <motion.div 
+                  className="absolute inset-1.5 border-4 border-indigo-500/20 border-b-indigo-400 rounded-full" 
+                  animate={{ rotate: -360 }} 
+                  transition={{ duration: 2, repeat: Infinity, ease: "linear" }} 
+                />
+                <Sparkles className="w-4 h-4 text-amber-300 animate-pulse z-10" />
+              </div>
+              <motion.p 
+                initial={{ opacity: 0.6 }}
+                animate={{ opacity: [0.6, 1, 0.6] }}
+                transition={{ duration: 1.2, repeat: Infinity }}
+                className="text-[10px] text-emerald-300 font-extrabold mt-3 tracking-wide leading-none"
+              >
+                神力装备整合中...
+              </motion.p>
+              <p className="text-[7px] text-slate-400 mt-1 uppercase scale-90">AI 定制高清插画中</p>
+            </div>
+          )}
+          
           {/* Lighting Overlay */}
           <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-white/10" />
         </div>
@@ -278,7 +307,7 @@ const CharacterVisual: React.FC<{
   );
 };
 
-const MagicShop: React.FC<MagicShopProps> = ({ stats, onPurchase, onEquip, onSelectCharacter, onClose }) => {
+const MagicShop: React.FC<MagicShopProps> = ({ stats, onPurchase, onEquip, onSelectCharacter, isGeneratingPortrait = false, onClose }) => {
   const [isSelecting, setIsSelecting] = useState(false);
   const [selectedItem, setSelectedItem] = useState<ShopItem | null>(null);
   const selectedChar = CHARACTERS.find(c => c.id === stats.selectedCharacterId) || CHARACTERS[0];
@@ -387,6 +416,7 @@ const MagicShop: React.FC<MagicShopProps> = ({ stats, onPurchase, onEquip, onSel
                 character={selectedChar} 
                 equippedItems={stats.equippedItems?.[selectedChar.id] || []} 
                 charStats={totalStats}
+                isGeneratingPortrait={isGeneratingPortrait}
               />
             </div>
 

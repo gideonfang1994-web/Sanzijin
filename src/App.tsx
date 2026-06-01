@@ -116,6 +116,7 @@ const App: React.FC = () => {
   });
 
   const [showWelcome, setShowWelcome] = useState(true);
+  const [generatingPortrait, setGeneratingPortrait] = useState<Record<string, boolean>>({});
 
   // Auth listener
   useEffect(() => {
@@ -308,6 +309,15 @@ const App: React.FC = () => {
           continue;
         }
 
+        // Restore custom portrait if it exists in local storage (even if unequipped!)
+        if (savedPortraits[char.id] && savedPortraits[char.id].startsWith('data:')) {
+          if (char.portraitUrl !== savedPortraits[char.id]) {
+            char.portraitUrl = savedPortraits[char.id];
+            updated = true;
+          }
+          continue;
+        }
+
         const equipped = currentStats.equippedItems[char.id] || [];
         const petsCount = currentStats.pets?.length || 0;
 
@@ -321,21 +331,13 @@ const App: React.FC = () => {
           continue;
         }
 
-        if (savedPortraits[char.id] && savedPortraits[char.id].startsWith('data:')) {
-          if (char.portraitUrl !== savedPortraits[char.id]) {
-            char.portraitUrl = savedPortraits[char.id];
-            updated = true;
-          }
-          continue;
-        }
-
         const petNames = currentStats.pets?.map(p => p.name) || [];
         const portrait = await generateCharacterPortrait(char.id, equipped, petNames);
         if (portrait) {
           savedPortraits[char.id] = portrait;
           char.portraitUrl = portrait;
           updated = true;
-          await new Promise(resolve => setTimeout(resolve, 1000));
+          await new Promise(resolve => setTimeout(resolve, 800));
         }
       }
       
@@ -347,6 +349,51 @@ const App: React.FC = () => {
 
     initializePortraits(stats);
   }, [initialCharacterStats]);
+
+  // Lazy background generation for the selected character when they have no equipment or pets,
+  // to dynamically draw their clean unequipped anime illustration and replace the pre-equipped default fallback.
+  useEffect(() => {
+    const activeCharId = stats.selectedCharacterId;
+    if (!activeCharId) return;
+
+    const apiKey = process.env.GEMINI_API_KEY || process.env.API_KEY || "";
+    if (!apiKey) return; // Cannot generate without API key
+
+    const savedPortraits = JSON.parse(localStorage.getItem('wordland_portraits') || '{}');
+    const isGenerated = savedPortraits[activeCharId] && savedPortraits[activeCharId].startsWith('data:');
+    const isCurrentlyGenerating = generatingPortrait[activeCharId];
+
+    if (!isGenerated && !isCurrentlyGenerating) {
+      const triggerDelayedGeneration = async () => {
+        try {
+          setGeneratingPortrait(prev => ({ ...prev, [activeCharId]: true }));
+          const equipped = stats.equippedItems[activeCharId] || [];
+          const petNames = stats.pets?.map(p => p.name) || [];
+          
+          console.log(`[App] Lazily generating portrait for Selected Character: ${activeCharId}`);
+          const portrait = await generateCharacterPortrait(activeCharId, equipped, petNames);
+          if (portrait) {
+            const char = constants.CHARACTERS.find(c => c.id === activeCharId);
+            if (char) {
+              char.portraitUrl = portrait;
+              savedPortraits[activeCharId] = portrait;
+              localStorage.setItem('wordland_portraits', JSON.stringify(savedPortraits));
+              setStats(prev => ({ ...prev }));
+              console.log(`[App] Custom unequipped/equipped portrait successfully saved for selected character: ${char.name}`);
+            }
+          }
+        } catch (error) {
+          console.error('[App] Selected character portrait auto-generation failed:', error);
+        } finally {
+          setGeneratingPortrait(prev => ({ ...prev, [activeCharId]: false }));
+        }
+      };
+
+      // Delay slightly to prevent blocking initial rendering transitions
+      const timer = setTimeout(triggerDelayedGeneration, 1000);
+      return () => clearTimeout(timer);
+    }
+  }, [stats.selectedCharacterId]);
 
   // Global View-Based BGM Orchestration
   useEffect(() => {
@@ -732,7 +779,13 @@ const App: React.FC = () => {
   };
 
   const handleEquip = async (characterId: string, itemId: string) => {
-    audio.playEquip();
+    const item = constants.SHOP_ITEMS.find(i => i.id === itemId);
+    if (item) {
+      audio.playEquip(item.type);
+    } else {
+      audio.playEquip();
+    }
+    
     let updatedEquipped: string[] = [];
     
     setStats(prev => {
@@ -772,6 +825,7 @@ const App: React.FC = () => {
 
     // Re-generate portrait to reflect equipment changes and pet integration
     try {
+      setGeneratingPortrait(prev => ({ ...prev, [characterId]: true }));
       const petNames = stats.pets?.map(p => p.name) || [];
       const portrait = await generateCharacterPortrait(characterId, updatedEquipped, petNames);
       if (portrait) {
@@ -789,6 +843,8 @@ const App: React.FC = () => {
       }
     } catch (error) {
       console.error("Failed to update portrait with equipment:", error);
+    } finally {
+      setGeneratingPortrait(prev => ({ ...prev, [characterId]: false }));
     }
   };
 
@@ -1185,6 +1241,7 @@ const App: React.FC = () => {
                 onPurchase={handlePurchase} 
                 onEquip={handleEquip} 
                 onSelectCharacter={handleSelectCharacter} 
+                isGeneratingPortrait={generatingPortrait[stats.selectedCharacterId] || false}
                 onClose={() => handleNavigate('HOME')}
               />
             </motion.div>

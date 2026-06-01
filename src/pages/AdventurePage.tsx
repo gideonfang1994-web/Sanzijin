@@ -934,6 +934,7 @@ const AdventurePage: React.FC<AdventurePageProps> = ({
     showXpPopup(5);
 
     if (cardIndex < currentActiveLevel.cards.length - 1) {
+      audio.playPageTurn();
       setCardIndex(prev => prev + 1);
     } else {
       if (step === 'REVIEW') {

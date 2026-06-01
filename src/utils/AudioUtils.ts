@@ -136,10 +136,28 @@ export const audio = {
     audio.volume = 0.4;
     audio.play().catch(() => {});
   },
-  playEquip: () => {
-    const audio = new Audio('https://assets.mixkit.co/active_storage/sfx/2571/2571-preview.mp3');
-    audio.volume = 0.3;
-    audio.play().catch(() => {});
+  playEquip: (itemType?: string) => {
+    // Satisfying custom item-type sound effects
+    let url = 'https://assets.mixkit.co/active_storage/sfx/2571/2571-preview.mp3'; // Default light snap/pop
+    let volume = 0.3;
+
+    if (itemType === 'WEAPON') {
+      // Blade unsheathe / metal slice sword sound
+      url = 'https://assets.mixkit.co/active_storage/sfx/1460/1460-preview.mp3';
+      volume = 0.45;
+    } else if (itemType === 'ARMOR' || itemType === 'OUTFIT') {
+      // Solid buckle metal lock/fastener armor sound
+      url = 'https://assets.mixkit.co/active_storage/sfx/1110/1110-preview.mp3';
+      volume = 0.5;
+    } else if (itemType === 'PET') {
+      // Magic chime sparkle sound
+      url = 'https://assets.mixkit.co/active_storage/sfx/2017/2017-preview.mp3';
+      volume = 0.4;
+    }
+
+    const audioObj = new Audio(url);
+    audioObj.volume = volume;
+    audioObj.play().catch(() => {});
   },
   playUnlock: () => {
     const audio = new Audio('https://assets.mixkit.co/active_storage/sfx/1435/1435-preview.mp3');
@@ -155,6 +173,12 @@ export const audio = {
     const audio = new Audio('https://assets.mixkit.co/active_storage/sfx/1434/1434-preview.mp3');
     audio.volume = 0.5;
     audio.play().catch(() => {});
+  },
+  playPageTurn: () => {
+    // Elegant airy swoosh/card turn sound from Mixkit
+    const audioObj = new Audio('https://assets.mixkit.co/active_storage/sfx/730/730-preview.mp3');
+    audioObj.volume = 0.35;
+    audioObj.play().catch(() => {});
   },
   speak: (text: string) => {
     const now = Date.now();
