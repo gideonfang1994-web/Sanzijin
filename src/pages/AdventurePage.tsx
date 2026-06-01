@@ -53,7 +53,7 @@ export function getMilestoneReward(displayId: number) {
       items: [
         { name: "宠物：波利史莱姆", icon: "🟢", detail: "生命 +100，伴你拼读左右" },
         { name: "奥术经验", icon: "✨", detail: "+200 XP" },
-        { name: "星星币", icon: "🪙", detail: "+150 星星币" }
+        { name: "魔法币", icon: "🪙", detail: "+150 魔法币" }
       ],
       xp: 200,
       coins: 150,
@@ -69,7 +69,7 @@ export function getMilestoneReward(displayId: number) {
       items: [
         { name: "装备：星光法帽", icon: "🎩", detail: "魔力增幅 +10" },
         { name: "奥术经验", icon: "✨", detail: "+400 XP" },
-        { name: "星星币", icon: "🪙", detail: "+300 星星币" }
+        { name: "魔法币", icon: "🪙", detail: "+300 魔法币" }
       ],
       xp: 400,
       coins: 300,
@@ -84,7 +84,7 @@ export function getMilestoneReward(displayId: number) {
       items: [
         { name: "宠物：智慧之鸮", icon: "🦉", detail: "拥有博学智慧的守护猫头鹰" },
         { name: "奥术经验", icon: "✨", detail: "+500 XP" },
-        { name: "星星币", icon: "🪙", detail: "+500 星星币" }
+        { name: "魔法币", icon: "🪙", detail: "+500 魔法币" }
       ],
       xp: 500,
       coins: 500,
@@ -99,7 +99,7 @@ export function getMilestoneReward(displayId: number) {
     items: [
       { name: "消耗品：经验药水", icon: "🧪", detail: "瞬间增加经验，助英雄突破" },
       { name: "奥术经验", icon: "✨", detail: "+250 XP" },
-      { name: "星星币", icon: "🪙", detail: "+200 星星币" }
+      { name: "魔法币", icon: "🪙", detail: "+200 魔法币" }
     ],
     xp: 250,
     coins: 200,
@@ -634,7 +634,7 @@ const AdventurePage: React.FC<AdventurePageProps> = ({
     // Explicitly update local stats to ensure UI reacts immediately
     onUpdateStats({
       xp: (stats.xp || 0) + earnedXp,
-      starCoins: (stats.starCoins || 0) + earnedCoins
+      magicCoins: (stats.magicCoins || 0) + earnedCoins
     } as any);
     
     // Occasionally show tiger praise
@@ -2053,7 +2053,7 @@ const AdventurePage: React.FC<AdventurePageProps> = ({
                   <p className="text-4xl font-black text-emerald-800">+100</p>
                 </div>
                 <div className="bg-white/80 p-6 rounded-[32px] border-b-8 border-amber-100 shadow-xl text-center transform rotate-2">
-                  <p className="text-[12px] font-black text-amber-500 uppercase tracking-widest mb-1">星星币</p>
+                  <p className="text-[12px] font-black text-amber-500 uppercase tracking-widest mb-1">魔法币</p>
                   <p className="text-4xl font-black text-amber-600">+50</p>
                 </div>
               </div>

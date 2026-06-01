@@ -381,32 +381,33 @@ const App: React.FC = () => {
           continue;
         }
 
-        // Restore custom portrait if it exists in local storage (even if unequipped!)
-        if (savedPortraits[char.id] && savedPortraits[char.id].startsWith('data:')) {
-          if (char.portraitUrl !== savedPortraits[char.id]) {
-            char.portraitUrl = savedPortraits[char.id];
+        const equipped = currentStats.equippedItems[char.id] || [];
+        const petsCount = currentStats.pets?.length || 0;
+        const petNames = currentStats.pets?.map(p => p.name) || [];
+        const cacheKey = `${char.id}_${[...equipped].sort().join(',')}_${[...petNames].sort().join(',')}`;
+
+        // Restore custom portrait if it exists in local storage for this exact equip/pet combination
+        if (savedPortraits[cacheKey] && savedPortraits[cacheKey].startsWith('data:')) {
+          if (char.portraitUrl !== savedPortraits[cacheKey]) {
+            char.portraitUrl = savedPortraits[cacheKey];
             updated = true;
           }
           continue;
         }
-
-        const equipped = currentStats.equippedItems[char.id] || [];
-        const petsCount = currentStats.pets?.length || 0;
 
         if (equipped.length === 0 && petsCount === 0) {
           const fallbackPath = PORTRAIT_FALLBACKS[char.id];
           if (fallbackPath && char.portraitUrl !== fallbackPath) {
             char.portraitUrl = fallbackPath;
-            savedPortraits[char.id] = fallbackPath;
+            savedPortraits[cacheKey] = fallbackPath;
             updated = true;
           }
           continue;
         }
 
-        const petNames = currentStats.pets?.map(p => p.name) || [];
         const portrait = await generateCharacterPortrait(char.id, equipped, petNames);
         if (portrait) {
-          savedPortraits[char.id] = portrait;
+          savedPortraits[cacheKey] = portrait;
           char.portraitUrl = portrait;
           updated = true;
           await new Promise(resolve => setTimeout(resolve, 800));
@@ -422,8 +423,7 @@ const App: React.FC = () => {
     initializePortraits(stats);
   }, [initialCharacterStats]);
 
-  // Lazy background generation for the selected character when they have no equipment or pets,
-  // to dynamically draw their clean unequipped anime illustration and replace the pre-equipped default fallback.
+  // Lazy background generation for the selected character to dynamically draw their specific anime style representation
   useEffect(() => {
     const activeCharId = stats.selectedCharacterId;
     if (!activeCharId) return;
@@ -431,27 +431,29 @@ const App: React.FC = () => {
     const apiKey = process.env.GEMINI_API_KEY || process.env.API_KEY || "";
     if (!apiKey) return; // Cannot generate without API key
 
+    const equipped = stats.equippedItems[activeCharId] || [];
+    const petNames = stats.pets?.map(p => p.name) || [];
+    const cacheKey = `${activeCharId}_${[...equipped].sort().join(',')}_${[...petNames].sort().join(',')}`;
+
     const savedPortraits = JSON.parse(localStorage.getItem('wordland_portraits') || '{}');
-    const isGenerated = savedPortraits[activeCharId] && savedPortraits[activeCharId].startsWith('data:');
+    const isGenerated = savedPortraits[cacheKey] && savedPortraits[cacheKey].startsWith('data:');
     const isCurrentlyGenerating = generatingPortrait[activeCharId];
 
     if (!isGenerated && !isCurrentlyGenerating) {
       const triggerDelayedGeneration = async () => {
         try {
           setGeneratingPortrait(prev => ({ ...prev, [activeCharId]: true }));
-          const equipped = stats.equippedItems[activeCharId] || [];
-          const petNames = stats.pets?.map(p => p.name) || [];
           
-          console.log(`[App] Lazily generating portrait for Selected Character: ${activeCharId}`);
+          console.log(`[App] Lazily generating portrait for Selected Character: ${activeCharId} with key: ${cacheKey}`);
           const portrait = await generateCharacterPortrait(activeCharId, equipped, petNames);
           if (portrait) {
             const char = constants.CHARACTERS.find(c => c.id === activeCharId);
             if (char) {
               char.portraitUrl = portrait;
-              savedPortraits[activeCharId] = portrait;
+              savedPortraits[cacheKey] = portrait;
               localStorage.setItem('wordland_portraits', JSON.stringify(savedPortraits));
               setStats(prev => ({ ...prev }));
-              console.log(`[App] Custom unequipped/equipped portrait successfully saved for selected character: ${char.name}`);
+              console.log(`[App] Portrait successfully saved for key: ${cacheKey}`);
             }
           }
         } catch (error) {
@@ -465,7 +467,7 @@ const App: React.FC = () => {
       const timer = setTimeout(triggerDelayedGeneration, 1000);
       return () => clearTimeout(timer);
     }
-  }, [stats.selectedCharacterId]);
+  }, [stats.selectedCharacterId, stats.equippedItems, stats.pets]);
 
   // Global View-Based BGM Orchestration
   useEffect(() => {
@@ -739,7 +741,7 @@ const App: React.FC = () => {
     setStats(prev => {
       const newXp = prev.xp + score;
       const newCoins = (prev.starCoins || 0) + coins;
-      const newMagicCoins = (prev.magicCoins || 0) + Math.floor(score / 10);
+      const newMagicCoins = (prev.magicCoins || 0) + Math.floor(score / 10) + coins;
       const newLevel = Math.floor(newXp / 1000) + 1;
       
       if (newLevel > prev.level) {
@@ -899,6 +901,8 @@ const App: React.FC = () => {
     try {
       setGeneratingPortrait(prev => ({ ...prev, [characterId]: true }));
       const petNames = stats.pets?.map(p => p.name) || [];
+      const cacheKey = `${characterId}_${[...updatedEquipped].sort().join(',')}_${[...petNames].sort().join(',')}`;
+      
       const portrait = await generateCharacterPortrait(characterId, updatedEquipped, petNames);
       if (portrait) {
         const char = constants.CHARACTERS.find(c => c.id === characterId);
@@ -906,7 +910,7 @@ const App: React.FC = () => {
           char.portraitUrl = portrait;
           // Save to local storage for persistence
           const saved = JSON.parse(localStorage.getItem('wordland_portraits') || '{}');
-          saved[characterId] = portrait;
+          saved[cacheKey] = portrait;
           localStorage.setItem('wordland_portraits', JSON.stringify(saved));
           
           // Force a re-render

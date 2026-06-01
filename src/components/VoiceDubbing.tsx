@@ -22,7 +22,7 @@ interface Props {
   title?: string;
 }
 
-const VoiceDubbing: React.FC<Props> = ({ items, onFinish, onClose, language = 'zh-CN', title = '魔法配音秀' }) => {
+const VoiceDubbing: React.FC<Props> = ({ items, onFinish, onClose, language = 'zh-CN', title = '魔法跟读秀' }) => {
   const [currentIdx, setCurrentIdx] = useState(0);
   const [isRecording, setIsRecording] = useState(false);
   const [score, setScore] = useState(0);
@@ -30,11 +30,60 @@ const VoiceDubbing: React.FC<Props> = ({ items, onFinish, onClose, language = 'z
   const [recognizedText, setRecognizedText] = useState('');
   const [isGameOver, setIsGameOver] = useState(false);
   const [feedback, setFeedback] = useState<{ text: string; color: string; status: 'PASS' | 'FAIL' | 'NEUTRAL' } | null>(null);
+  const [micFlashing, setMicFlashing] = useState(false);
 
   const pool = items;
   const currentItem = pool[currentIdx];
 
   const recognitionRef = useRef<any>(null);
+
+  useEffect(() => {
+    if (!currentItem) return;
+
+    let isCancelled = false;
+    setMicFlashing(false);
+
+    const speakIntro = () => {
+      if (typeof window === 'undefined' || !window.speechSynthesis) return;
+
+      try {
+        window.speechSynthesis.cancel();
+      } catch (err) {}
+
+      const introUtterance = new SpeechSynthesisUtterance('学完三字经，请跟读下哦');
+      introUtterance.lang = 'zh-CN';
+      introUtterance.pitch = 1.6; // High-pitched sweet child voice tone
+      introUtterance.rate = 0.95; 
+      
+      introUtterance.onend = () => {
+        if (isCancelled) return;
+        // Auto play the classic rhyme
+        audio.speak(currentItem.text);
+        // Start pulsing mic guidance
+        setMicFlashing(true);
+      };
+
+      introUtterance.onerror = () => {
+        if (isCancelled) return;
+        audio.speak(currentItem.text);
+        setMicFlashing(true);
+      };
+
+      window.speechSynthesis.speak(introUtterance);
+    };
+
+    const timer = setTimeout(() => {
+      speakIntro();
+    }, 600);
+
+    return () => {
+      isCancelled = true;
+      clearTimeout(timer);
+      if (typeof window !== 'undefined' && window.speechSynthesis) {
+        try { window.speechSynthesis.cancel(); } catch(e){}
+      }
+    };
+  }, [currentItem]);
 
   useEffect(() => {
     audio.init();
@@ -127,6 +176,7 @@ const VoiceDubbing: React.FC<Props> = ({ items, onFinish, onClose, language = 'z
       alert('您的浏览器不支持语音识别，请使用 Chrome 浏览器。');
       return;
     }
+    setMicFlashing(false);
     setRecognizedText('');
     setScore(0);
     setFeedback(null);
@@ -346,10 +396,14 @@ const VoiceDubbing: React.FC<Props> = ({ items, onFinish, onClose, language = 'z
               onClick={startRecording}
               disabled={isRecording}
               className={`w-14 h-14 sm:w-16 sm:h-16 rounded-full flex items-center justify-center transition-all shadow-md active:scale-90 border-4 border-white cursor-pointer ${
-                isRecording ? 'bg-rose-500 animate-pulse ring-4 ring-rose-200' : 'bg-gradient-to-tr from-indigo-500 via-purple-500 to-pink-500 hover:brightness-105'
+                isRecording 
+                  ? 'bg-rose-500 animate-pulse ring-4 ring-rose-200' 
+                  : micFlashing 
+                    ? 'bg-gradient-to-tr from-rose-500 via-pink-500 to-amber-500 animate-pulse ring-4 ring-amber-400 scale-105 shadow-[0_0_15px_rgba(245,158,11,0.6)]'
+                    : 'bg-gradient-to-tr from-indigo-500 via-purple-500 to-pink-500 hover:brightness-105'
               }`}
             >
-              <Mic size={24} className="text-white" />
+              <Mic size={24} className={`text-white ${micFlashing ? 'animate-bounce' : ''}`} />
             </button>
             <button 
               onClick={() => {

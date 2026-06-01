@@ -500,7 +500,7 @@ const PetPage: React.FC<PetPageProps> = ({ stats, onUpdateStats, onNavigate, onC
       }
     } else {
       if (doubleBonusChance) {
-        setPetSpeech(`拂去几缕凡尘！宠兽屋干净了不少，体力 +${healVal}！打扫中意外捡到落叶古币袋，星星币增加 +18 🪙！🍒`);
+        setPetSpeech(`拂去几缕凡尘！宠兽屋干净了不少，体力 +${healVal}！打扫中意外捡到落叶古币袋，魔法币增加 +18 🪙！🍒`);
       } else {
         setPetSpeech(`呼！简单拂尘清扫毕！浮灰退散，栀子花清风扑面而来，舒展舒适！🧼🍃`);
       }

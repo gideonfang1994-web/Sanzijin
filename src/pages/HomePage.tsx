@@ -349,7 +349,7 @@ const HomePage: React.FC<HomePageProps> = ({ stats, groups, reviewNeeded, onNavi
       </div>
 
       {/* COMPACT INTERACTIVE NAVIGATION PORTALS - RATIONAL GAME MAP BENTO LAYOUT */}
-      <div className="grid grid-cols-4 gap-2 sm:gap-3.5 px-1 pb-1">
+      <div className="grid grid-cols-3 gap-2.5 sm:gap-4 px-1 pb-2">
         {/* Portal A: Adventure Forest (Major game mode - Green 3D Toy Button) */}
         <motion.button 
           whileHover={{ scale: 1.05, y: -2 }}
@@ -431,142 +431,46 @@ const HomePage: React.FC<HomePageProps> = ({ stats, groups, reviewNeeded, onNavi
           </span>
         </motion.button>
 
-        {/* Portal E: Word Classic Album (Full Width / Epic Scroll Portal with golden trim) */}
+        {/* Portal E: Phonics Training Arena (Gold/Yellow 3D Toy Button - 修炼场) */}
         <motion.button 
-          whileHover={{ scale: 1.015, y: -1 }}
-          whileTap={{ scale: 0.985 }}
-          onClick={() => {
-            try { audio.playClick(); } catch(e){}
-            onNavigate('COLLECTION');
-          }} 
-          className="col-span-4 p-5 bg-gradient-to-r from-[#eefaf2] via-white to-[#fffbe8] border-2 border-emerald-300 border-b-[6px] border-emerald-500 rounded-3xl text-left relative overflow-hidden group flex items-center justify-between cursor-pointer shadow-sm active:border-b-[2px] active:translate-y-[4px]"
-        >
-          <div className="absolute inset-y-0 right-0 w-[40%] bg-gradient-to-l from-emerald-500/5 to-transparent pointer-events-none" />
-          
-          <div className="flex items-center space-x-4 relative z-10 min-w-0">
-            <div className="bg-gradient-to-r from-emerald-500 via-green-400 to-teal-500 w-12 h-12 rounded-2xl flex items-center justify-center shadow-sm shrink-0">
-              <span className="text-xl">📖</span>
-            </div>
-            <div className="min-w-0 text-left">
-              <h3 className="font-black text-emerald-990 text-lg sm:text-[21.5px] leading-none flex items-center gap-2">
-                <span>太古百神之森 · 魔法秘图鉴</span>
-                <span className="bg-emerald-100/90 text-emerald-700 text-sm sm:text-base font-black px-2 py-0.5 rounded border border-emerald-250">秘阁</span>
-              </h3>
-              <p className="text-base sm:text-[17px] font-bold text-emerald-800 mt-2.5 leading-none">
-                已点亮魔法徽记卡 <span className="text-amber-700 font-extrabold">{(stats.masteredWords || []).length}</span> 枚 🔮
-              </p>
-            </div>
-          </div>
-          <span className="text-sm sm:text-base bg-white border border-emerald-250 text-emerald-850 font-black px-4.5 py-3 rounded-2xl group-hover:bg-[#acd65c] group-hover:text-emerald-950 group-hover:border-transparent transition-all shrink-0 shadow-xs relative z-10">
-            启阅秘卡 📖
-          </span>
-        </motion.button>
-
-        {/* Portal F: Phonics Training Arena (Full Width / Epic Portal with gold trim) */}
-        <motion.button 
-          whileHover={{ scale: 1.015, y: -1 }}
-          whileTap={{ scale: 0.985 }}
+          whileHover={{ scale: 1.05, y: -2 }}
+          whileTap={{ scale: 0.95 }}
           onClick={() => {
             try { audio.playClick(); } catch(e){}
             onNavigate('PHONICS');
           }} 
-          className="col-span-4 p-5 bg-gradient-to-r from-[#ffe4e6] via-white to-[#fff2e8] border-2 border-amber-300 border-b-[6px] border-amber-500 rounded-3xl text-left relative overflow-hidden group flex items-center justify-between cursor-pointer shadow-sm active:border-b-[2px] active:translate-y-[4px]"
+          className="p-2 sm:p-3 bg-gradient-to-br from-[#ffe082] via-[#ffb300] to-[#ff8f00] border-2 border-amber-200 border-b-[5px] border-amber-700 hover:border-amber-100 rounded-2xl sm:rounded-3xl flex flex-col items-center justify-center text-center relative overflow-hidden group h-24 sm:h-28 cursor-pointer shadow-sm transition-all active:border-b-[1px] active:translate-y-[4px]"
         >
-          <div className="absolute inset-y-0 right-0 w-[40%] bg-gradient-to-l from-amber-500/5 to-transparent pointer-events-none" />
-          
-          <div className="flex items-center space-x-4 relative z-10 min-w-0">
-            <div className="bg-gradient-to-r from-amber-400 via-rose-300 to-orange-355 w-12 h-12 rounded-2xl flex items-center justify-center shadow-sm">
-              <Zap className="text-amber-950 w-6 h-6 stroke-[3]" />
-            </div>
-            <div className="min-w-0 text-left">
-              <h3 className="font-black text-amber-950 text-lg sm:text-[21.5px] leading-none flex items-center gap-2">
-                <span>倍速自然拼读 · 声音修炼场</span>
-                <span className="bg-amber-100 text-amber-800 text-[11px] sm:text-xs font-black px-2 py-0.5 rounded border border-amber-200">特训</span>
-              </h3>
-              <p className="text-base sm:text-[17px] font-bold text-amber-800 mt-2.5 leading-none">
-                解锁经典发音口诀，和鸣大声唱 🗣️
-              </p>
-            </div>
+          <div className="absolute top-[-10px] right-[-10px] w-10 h-10 bg-white/10 rounded-full blur-md group-hover:scale-125 transition-transform" />
+          <div className="bg-white/80 w-8 h-8 sm:w-10 sm:h-10 rounded-xl flex items-center justify-center shadow-xs mb-1.5 shrink-0">
+            <Zap className="text-amber-800 w-4.5 h-4.5 sm:w-5 sm:h-5 stroke-[3] group-hover:animate-pulse" />
           </div>
-          <span className="text-sm sm:text-base bg-white border border-amber-250 text-amber-950 font-black px-4.5 py-3 rounded-2xl group-hover:bg-[#fed7aa] group-hover:text-amber-950 group-hover:border-transparent transition-all shrink-0 shadow-xs relative z-10">
-            进入特训 ⚡
+          <span className="font-black text-white text-[11px] sm:text-[13px] tracking-tight leading-tight">
+            修炼场
           </span>
         </motion.button>
 
-        {/* Portal G: Mistake Purification Chamber (Error Book & Reports Dashboard - Full Width / Epic Portal with deep emerald-purple gradient) */}
+        {/* Portal F: Mistake Purification Chamber (Purple/Magenta 3D Toy Button - 错词汇) */}
         <motion.button 
-          whileHover={{ scale: 1.015, y: -1 }}
-          whileTap={{ scale: 0.985 }}
+          whileHover={{ scale: 1.05, y: -2 }}
+          whileTap={{ scale: 0.95 }}
           onClick={() => {
             try { audio.playClick(); } catch(e){}
             onOpenErrorCabinet?.();
           }} 
-          className="col-span-4 p-5 bg-gradient-to-r from-[#faf5ff] via-white to-[#fdf2f8] border-2 border-purple-300 border-b-[6px] border-purple-500 rounded-3xl text-left relative overflow-hidden group flex items-center justify-between cursor-pointer shadow-sm active:border-b-[2px] active:translate-y-[4px]"
+          className="p-2 sm:p-3 bg-gradient-to-br from-[#f3e5f5] via-[#ab47bc] to-[#7b1fa2] border-2 border-purple-250 border-b-[5px] border-purple-700 hover:border-purple-100 rounded-2xl sm:rounded-3xl flex flex-col items-center justify-center text-center relative overflow-hidden group h-24 sm:h-28 cursor-pointer shadow-sm transition-all active:border-b-[1px] active:translate-y-[4px]"
         >
-          <div className="absolute inset-y-0 right-0 w-[40%] bg-gradient-to-l from-purple-500/5 to-transparent pointer-events-none" />
-          
-          <div className="flex items-center space-x-4 relative z-10 min-w-0">
-            <div className="bg-gradient-to-r from-purple-500 via-pink-400 to-indigo-500 w-12 h-12 rounded-2xl flex items-center justify-center shadow-sm relative shrink-0">
-              <span className="text-xl">🛡️</span>
-              {incorrectCount > 0 && (
-                <span className="absolute -top-1.5 -right-1.5 bg-rose-500 border-2 border-white text-white text-[9.5px] font-black w-5.5 h-5.5 flex items-center justify-center rounded-full animate-bounce">
-                  {incorrectCount}
-                </span>
-              )}
-            </div>
-            <div className="min-w-0 text-left font-sans">
-              <h3 className="font-black text-purple-950 text-lg sm:text-[21.5px] leading-none flex items-center gap-2">
-                <span>个人神识净化阁 · 错词汇报汇总</span>
-                {incorrectCount > 0 ? (
-                  <span className="bg-rose-100 text-rose-700 text-[10px] sm:text-xs font-black px-2 py-0.5 rounded border border-rose-200 animate-pulse">有黑雾</span>
-                ) : (
-                  <span className="bg-emerald-100 text-emerald-850 text-[10px] sm:text-xs font-black px-2 py-0.5 rounded border border-emerald-250">已清空</span>
-                )}
-              </h3>
-              <p className="text-base sm:text-[17px] font-bold text-purple-800 mt-2.5 leading-none">
-                {incorrectCount > 0 
-                  ? `发现 ${incorrectCount} 个致错法术印记，速速开启限时挑战净化 ⚡`
-                  : '太完美了！神识无漏，错词魔法雾气已完全消散 🕊️'
-                }
-              </p>
-            </div>
-          </div>
-          <span className="text-sm sm:text-base bg-white border border-purple-250 text-purple-950 font-black px-4.5 py-3 rounded-2xl group-hover:bg-[#d8b4fe] group-hover:text-purple-950 group-hover:border-transparent transition-all shrink-0 shadow-xs relative z-10">
-            开启净化 🪐
-          </span>
-        </motion.button>
-
-        {/* Portal H: AI Rap & Rhythm Tutor (Pipi AI Tutor - Full Width / Epic Portal with magnificent emerald-teal gradient) */}
-        <motion.button 
-          whileHover={{ scale: 1.015, y: -1 }}
-          whileTap={{ scale: 0.985 }}
-          onClick={() => {
-            try { audio.playClick(); } catch(e){}
-            onNavigate('TUTOR');
-          }} 
-          className="col-span-4 p-5 bg-gradient-to-r from-[#ecfdf5] via-white to-[#f0fdf4] border-2 border-emerald-300 border-b-[6px] border-emerald-500 rounded-3xl text-left relative overflow-hidden group flex items-center justify-between cursor-pointer shadow-sm active:border-b-[4px] active:translate-y-[2px]"
-        >
-          <div className="absolute inset-y-0 right-0 w-[40%] bg-gradient-to-l from-emerald-500/5 to-transparent pointer-events-none" />
-          
-          <div className="flex items-center space-x-4 relative z-10 min-w-0">
-            <div className="bg-gradient-to-r from-emerald-500 via-green-400 to-teal-500 w-12 h-12 rounded-2xl flex items-center justify-center shadow-sm relative shrink-0">
-              <span className="text-xl">📻</span>
-              <span className="absolute -top-1.5 -right-1.5 bg-amber-400 border-2 border-white text-emerald-950 text-[8px] font-black w-4.5 h-4.5 flex items-center justify-center rounded-full animate-bounce">
-                AI
+          <div className="absolute top-[-10px] right-[-10px] w-10 h-10 bg-white/10 rounded-full blur-md group-hover:scale-125 transition-transform" />
+          <div className="bg-white/80 w-8 h-8 sm:w-10 sm:h-10 rounded-xl flex items-center justify-center shadow-xs mb-1.5 relative shrink-0">
+            <span className="text-sm sm:text-base select-none">🛡️</span>
+            {incorrectCount > 0 && (
+              <span className="absolute -top-1 -right-1 bg-rose-500 text-white text-[9px] sm:text-[10px] font-black w-4.5 h-4.5 flex items-center justify-center rounded-full animate-pulse border border-white">
+                {incorrectCount}
               </span>
-            </div>
-            <div className="min-w-0 text-left font-sans">
-              <h3 className="font-black text-emerald-950 text-lg sm:text-[21.5px] leading-none flex items-center gap-2">
-                <span>说唱导师皮皮 · 单词变魔咒儿歌 🐯📻</span>
-                <span className="bg-emerald-100 text-emerald-800 text-[10px] sm:text-xs font-black px-2 py-0.5 rounded border border-emerald-200">极速响应</span>
-              </h3>
-              <p className="text-base sm:text-[17px] font-bold text-emerald-850 mt-2.5 leading-none">
-                发送任意单词/句子，皮皮导师为你即时编译朗朗上口的说唱三字经 🎧🎸
-              </p>
-            </div>
+            )}
           </div>
-          <span className="text-sm sm:text-base bg-white border border-emerald-250 text-emerald-950 font-black px-4.5 py-3 rounded-2xl group-hover:bg-[#a7f3d0] group-hover:text-emerald-950 group-hover:border-transparent transition-all shrink-0 shadow-xs relative z-10">
-            召唤皮皮 🐯
+          <span className="font-black text-white text-[11px] sm:text-[13px] tracking-tight leading-tight">
+            错词汇
           </span>
         </motion.button>
       </div>
