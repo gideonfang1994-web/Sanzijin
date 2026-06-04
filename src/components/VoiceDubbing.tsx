@@ -55,19 +55,45 @@ const VoiceDubbing: React.FC<Props> = ({ items, onFinish, onClose, language = 'z
       introUtterance.pitch = 1.6; // High-pitched sweet child voice tone
       introUtterance.rate = 0.95; 
       
-      introUtterance.onend = () => {
-        if (isCancelled) return;
-        // Auto play the classic rhyme
-        audio.speak(currentItem.text);
-        // Start pulsing mic guidance
-        setMicFlashing(true);
-      };
+      // Prevent GC of utterance in Chrome
+      if (typeof window !== 'undefined') {
+        const win = window as any;
+        win._activeUtterances = win._activeUtterances || [];
+        win._activeUtterances.push(introUtterance);
+        
+        const cleanupUtterance = () => {
+          if (win._activeUtterances) {
+            win._activeUtterances = win._activeUtterances.filter((u: any) => u !== introUtterance);
+          }
+        };
+        
+        introUtterance.onend = () => {
+          cleanupUtterance();
+          if (isCancelled) return;
+          // Auto play the classic rhyme
+          audio.speak(currentItem.text);
+          // Start pulsing mic guidance
+          setMicFlashing(true);
+        };
 
-      introUtterance.onerror = () => {
-        if (isCancelled) return;
-        audio.speak(currentItem.text);
-        setMicFlashing(true);
-      };
+        introUtterance.onerror = () => {
+          cleanupUtterance();
+          if (isCancelled) return;
+          audio.speak(currentItem.text);
+          setMicFlashing(true);
+        };
+      } else {
+        introUtterance.onend = () => {
+          if (isCancelled) return;
+          audio.speak(currentItem.text);
+          setMicFlashing(true);
+        };
+        introUtterance.onerror = () => {
+          if (isCancelled) return;
+          audio.speak(currentItem.text);
+          setMicFlashing(true);
+        };
+      }
 
       window.speechSynthesis.speak(introUtterance);
     };

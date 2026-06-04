@@ -475,6 +475,41 @@ const HomePage: React.FC<HomePageProps> = ({ stats, groups, reviewNeeded, onNavi
         </motion.button>
       </div>
 
+      {/* EXQUISITE FULL-WIDTH PICTURE BOOK LIBRARY BANNER */}
+      <div className="px-1 pt-1.5 pb-2">
+        <motion.button
+          whileHover={{ scale: 1.03, y: -2 }}
+          whileTap={{ scale: 0.97 }}
+          onClick={() => {
+            try { audio.playClick(); } catch (e) {}
+            onNavigate('PICTURE_BOOK');
+          }}
+          className="w-full p-4.5 bg-gradient-to-r from-blue-500 via-indigo-600 to-blue-600 border-2 border-indigo-300 border-b-[5px] border-indigo-800 hover:border-indigo-100 rounded-3xl text-left relative overflow-hidden group shadow-sm flex items-center justify-between cursor-pointer transition-all active:border-b-[1px] active:translate-y-[4px]"
+        >
+          {/* Animated decorative sparks */}
+          <div className="absolute right-[-20px] top-[-20px] text-8xl opacity-10 select-none pointer-events-none group-hover:scale-110 transition-transform">📖</div>
+          
+          <div className="flex items-center space-x-4">
+            <div className="bg-white/95 w-12 h-12 rounded-2xl flex items-center justify-center shadow-md border border-indigo-250 shrink-0">
+              <span className="text-2xl select-none group-hover:animate-bounce">📖</span>
+            </div>
+            <div className="min-w-0 flex-1">
+              <h3 className="font-sans font-black text-white text-base sm:text-lg flex items-center gap-1.5 leading-none">
+                <span>魔法绘本馆 (Library)</span>
+                <span className="text-[10px] bg-amber-400 text-amber-950 px-2 py-0.5 rounded-full border border-amber-500 font-extrabold uppercase scale-90">NEW</span>
+              </h3>
+              <p className="text-indigo-100 font-extrabold text-xs mt-2 truncate">
+                聆听跟读原声，开启发音魔法配音挑战！
+              </p>
+            </div>
+          </div>
+          
+          <div className="w-8 h-8 rounded-full bg-white/20 flex items-center justify-center text-white border border-white/30 shrink-0 group-hover:bg-white group-hover:text-blue-900 transition-all ml-2">
+            <ArrowRight size={16} className="stroke-[3]" />
+          </div>
+        </motion.button>
+      </div>
+
       {/* IMMERSIVE RPG ATTRIBUTE / INVENTORY SHEET OVERLAY MODAL */}
       <AnimatePresence>
         {isProfileExpanded && (

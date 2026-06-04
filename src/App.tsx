@@ -35,6 +35,7 @@ import UploadContent from './components/UploadContent';
 import MagicShop from './components/MagicShop';
 import PetPage from './pages/PetPage';
 import CollectionCenter from './components/CollectionCenter';
+import { PictureBookLibrary } from './components/PictureBookLibrary';
 import { PhonicsArena } from './components/PhonicsArena';
 import { ErrorBookDashboard } from './components/ErrorBookDashboard';
 import { DailyCheckIn } from './components/DailyCheckIn';
@@ -372,50 +373,16 @@ const App: React.FC = () => {
       }
     }
     
-    const initializePortraits = async (currentStats: UserStats) => {
+    const initializePortraits = (currentStats: UserStats) => {
       let updated = false;
-      const savedPortraits = JSON.parse(localStorage.getItem('wordland_portraits') || '{}');
-      
       for (const char of constants.CHARACTERS) {
-        if (char.portraitUrl && char.portraitUrl.includes('storage.googleapis.com')) {
-          continue;
-        }
-
-        const equipped = currentStats.equippedItems[char.id] || [];
-        const petsCount = currentStats.pets?.length || 0;
-        const petNames = currentStats.pets?.map(p => p.name) || [];
-        const cacheKey = `${char.id}_${[...equipped].sort().join(',')}_${[...petNames].sort().join(',')}`;
-
-        // Restore custom portrait if it exists in local storage for this exact equip/pet combination
-        if (savedPortraits[cacheKey] && savedPortraits[cacheKey].startsWith('data:')) {
-          if (char.portraitUrl !== savedPortraits[cacheKey]) {
-            char.portraitUrl = savedPortraits[cacheKey];
-            updated = true;
-          }
-          continue;
-        }
-
-        if (equipped.length === 0 && petsCount === 0) {
-          const fallbackPath = PORTRAIT_FALLBACKS[char.id];
-          if (fallbackPath && char.portraitUrl !== fallbackPath) {
-            char.portraitUrl = fallbackPath;
-            savedPortraits[cacheKey] = fallbackPath;
-            updated = true;
-          }
-          continue;
-        }
-
-        const portrait = await generateCharacterPortrait(char.id, equipped, petNames);
-        if (portrait) {
-          savedPortraits[cacheKey] = portrait;
-          char.portraitUrl = portrait;
+        const fallbackPath = PORTRAIT_FALLBACKS[char.id];
+        if (fallbackPath && char.portraitUrl !== fallbackPath) {
+          char.portraitUrl = fallbackPath;
           updated = true;
-          await new Promise(resolve => setTimeout(resolve, 800));
         }
       }
-      
       if (updated) {
-        localStorage.setItem('wordland_portraits', JSON.stringify(savedPortraits));
         setStats(prev => ({ ...prev }));
       }
     };
@@ -423,51 +390,12 @@ const App: React.FC = () => {
     initializePortraits(stats);
   }, [initialCharacterStats]);
 
-  // Lazy background generation for the selected character to dynamically draw their specific anime style representation
+  // Static pre-allocated portraits are used instantly, eliminating costly API generations.
   useEffect(() => {
-    const activeCharId = stats.selectedCharacterId;
-    if (!activeCharId) return;
-
-    const apiKey = process.env.GEMINI_API_KEY || process.env.API_KEY || "";
-    if (!apiKey) return; // Cannot generate without API key
-
-    const equipped = stats.equippedItems[activeCharId] || [];
-    const petNames = stats.pets?.map(p => p.name) || [];
-    const cacheKey = `${activeCharId}_${[...equipped].sort().join(',')}_${[...petNames].sort().join(',')}`;
-
-    const savedPortraits = JSON.parse(localStorage.getItem('wordland_portraits') || '{}');
-    const isGenerated = savedPortraits[cacheKey] && savedPortraits[cacheKey].startsWith('data:');
-    const isCurrentlyGenerating = generatingPortrait[activeCharId];
-
-    if (!isGenerated && !isCurrentlyGenerating) {
-      const triggerDelayedGeneration = async () => {
-        try {
-          setGeneratingPortrait(prev => ({ ...prev, [activeCharId]: true }));
-          
-          console.log(`[App] Lazily generating portrait for Selected Character: ${activeCharId} with key: ${cacheKey}`);
-          const portrait = await generateCharacterPortrait(activeCharId, equipped, petNames);
-          if (portrait) {
-            const char = constants.CHARACTERS.find(c => c.id === activeCharId);
-            if (char) {
-              char.portraitUrl = portrait;
-              savedPortraits[cacheKey] = portrait;
-              localStorage.setItem('wordland_portraits', JSON.stringify(savedPortraits));
-              setStats(prev => ({ ...prev }));
-              console.log(`[App] Portrait successfully saved for key: ${cacheKey}`);
-            }
-          }
-        } catch (error) {
-          console.error('[App] Selected character portrait auto-generation failed:', error);
-        } finally {
-          setGeneratingPortrait(prev => ({ ...prev, [activeCharId]: false }));
-        }
-      };
-
-      // Delay slightly to prevent blocking initial rendering transitions
-      const timer = setTimeout(triggerDelayedGeneration, 1000);
-      return () => clearTimeout(timer);
-    }
-  }, [stats.selectedCharacterId, stats.equippedItems, stats.pets]);
+    try {
+      localStorage.removeItem('wordland_portraits');
+    } catch (e) {}
+  }, []);
 
   // Global View-Based BGM Orchestration
   useEffect(() => {
@@ -860,8 +788,6 @@ const App: React.FC = () => {
       audio.playEquip();
     }
     
-    let updatedEquipped: string[] = [];
-    
     setStats(prev => {
       const currentEquipped = prev.equippedItems[characterId] || [];
       const item = constants.SHOP_ITEMS.find(i => i.id === itemId);
@@ -885,8 +811,6 @@ const App: React.FC = () => {
         newEquipped = [...filtered, itemId];
       }
 
-      updatedEquipped = newEquipped;
-
       const newStats = {
         ...prev,
         equippedItems: {
@@ -896,32 +820,6 @@ const App: React.FC = () => {
       };
       return newStats;
     });
-
-    // Re-generate portrait to reflect equipment changes and pet integration
-    try {
-      setGeneratingPortrait(prev => ({ ...prev, [characterId]: true }));
-      const petNames = stats.pets?.map(p => p.name) || [];
-      const cacheKey = `${characterId}_${[...updatedEquipped].sort().join(',')}_${[...petNames].sort().join(',')}`;
-      
-      const portrait = await generateCharacterPortrait(characterId, updatedEquipped, petNames);
-      if (portrait) {
-        const char = constants.CHARACTERS.find(c => c.id === characterId);
-        if (char) {
-          char.portraitUrl = portrait;
-          // Save to local storage for persistence
-          const saved = JSON.parse(localStorage.getItem('wordland_portraits') || '{}');
-          saved[cacheKey] = portrait;
-          localStorage.setItem('wordland_portraits', JSON.stringify(saved));
-          
-          // Force a re-render
-          setStats(prev => ({ ...prev }));
-        }
-      }
-    } catch (error) {
-      console.error("Failed to update portrait with equipment:", error);
-    } finally {
-      setGeneratingPortrait(prev => ({ ...prev, [characterId]: false }));
-    }
   };
 
   const handleSelectCharacter = useMemo(() => (characterId: string) => {
@@ -1491,6 +1389,20 @@ const App: React.FC = () => {
           {view === 'PHONICS' && (
             <motion.div key="phonics" initial={{ opacity: 0, y: 15 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: 15 }}>
               <PhonicsArena 
+                stats={stats} 
+                onUpdateStats={handleUpdateStats}
+                onReward={(xp, coins) => {
+                  handleReward(xp, coins);
+                  audio.playCoin();
+                }}
+                onClose={() => handleNavigate('HOME')} 
+              />
+            </motion.div>
+          )}
+
+          {view === 'PICTURE_BOOK' && (
+            <motion.div key="picture_book" initial={{ opacity: 0, y: 15 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: 15 }}>
+              <PictureBookLibrary 
                 stats={stats} 
                 onUpdateStats={handleUpdateStats}
                 onReward={(xp, coins) => {

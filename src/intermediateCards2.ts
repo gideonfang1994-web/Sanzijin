@@ -230,8 +230,68 @@ const getImageUrl = (name: string) => {
   return `https://img.icons8.com/fluency/200/${keyword}.png`;
 };
 
-// Raw content representing the textbook pages 181 to 400
+// Raw content representing the textbook pages 151 to 300
 const RAW_TEXTBOOK_PAGES_2: [string, string[], string][] = [
+  // Page 151: post, most, host
+  ['ost', ['post', '邮寄', 'most', '多半', 'host', '主人'], '收到 post（邮寄），其中 most（大部分），都给 host（主人）'],
+  // Page 152: fox, box, ox
+  ['ox', ['fox', '狐狸', 'box', '盒子', 'ox', '公牛'], '一只 fox（狐狸），躲进 box（盒子），躲过 ox（公牛）'],
+  // Page 153: club, pub
+  ['ub', ['club', '社团', 'pub', '酒吧'], '跟着 club(社团,俱乐部)，去了 pub（酒吧）'],
+  // Page 154: tub, rub
+  ['ub', ['tub', '浴缸', 'rub', '摩擦'], '这个 tub（浴缸），可以 rub（按摩）'],
+  // Page 155: mud, bud
+  ['ud', ['mud', '淤泥', 'bud', '芽'], '从那 mud（淤泥），长出 bud（芽）'],
+  // Page 156: bug, hug, dug
+  ['ug', ['bug', '防虫', 'hug', '拥抱', 'dug', '挖掘'], '一只 bug（虫子），把我 hug（拥抱），把洞 dug（挖）'],
+  // Page 157: mum, yum
+  ['um', ['mum', '妈妈', 'yum', '好吃'], '我的 mum（妈妈），做饭 yum（好吃的）'],
+  // Page 158: drum, gum, hum
+  ['um', ['drum', '打鼓', 'gum', '口香糖', 'hum', '哼'], '敲着 drum（鼓），嚼着 gum（口香糖），把歌 hum（哼）'],
+  // Page 159: sun, run, fun
+  ['un', ['sun', '太阳', 'run', '跑步', 'fun', '乐趣'], '晒着 sun（太阳），不停 run（跑步），心情 fun（开心）'],
+  // Page 160: cup, up
+  ['up', ['cup', '杯子', 'up', '向上'], '拿着 cup（杯子），不断 up（向上）'],
+  // Page 161: bus, us, plus
+  ['us', ['bus', '巴士', 'us', '我们', 'plus', '增加'], '一辆 bus（巴士），来接 us（我们），去学 plus（加法）'],
+  // Page 162: cut, nut, put
+  ['ut', ['cut', '切割', 'nut', '坚果', 'put', '放置'], '水果 cut（切），然后 put（放），各种 nut（坚果）'],
+  // Page 163: hut, but, shut
+  ['ut', ['hut', '小屋', 'but', '但是', 'shut', '关门'], '回到 hut（小屋），没想 but（但是），门已 shut（关闭）'],
+  // Page 164: adult, result
+  ['ult', ['adult', '成人', 'result', '结果'], '作为 adult（成年人），承担 result（结果）'],
+  // Page 165: blunt, hunt
+  ['unt', ['blunt', '钝的', 'hunt', '打猎'], '工具 blunt（机智），无法 hunt（打猎）'],
+  // Page 166: just, trust, must
+  ['ust', ['just', '只', 'trust', '信任', 'must', '必须'], '你呀 just（只要），对我 trust（信任），这是 must（必须）'],
+  // Page 167: just, dust, crust, rust
+  ['ust', ['just', '只是', 'dust', '灰尘', 'crust', '表皮', 'rust', '生锈'], '因为 just（只是），打扫 dust（灰尘），机器 crust（表皮），开始 rust（生锈）'],
+  // Page 168: conduct, product
+  ['duct', ['conduct', '行为', 'product', '产品'], '根据 conduct（引导），生产 product（产品）'],
+  // Page 169: music, magic, comic
+  ['ic', ['music', '音乐', 'magic', '魔术', 'comic', '连环画'], '听听 music（音乐），变变 magic（魔术），看看 comic（连环画）'],
+  // Page 170: music, basic, classic
+  ['sic', ['music', '音乐', 'basic', '基础', 'classic', '传统'], '这首 music（音乐），虽然 basic（基础的），但是 classic (经典的)'],
+  // Page 171: traffic, terrific
+  ['fic', ['traffic', '交通', 'terrific', '极棒'], '今天 traffic(交通)，实在 terrific（极好的）'],
+  // Page 172: scientific, specific
+  ['fic', ['scientific', '科学', 'specific', '精确'], '结果 specific（明确的），非常 scientific(科学的)'],
+  // Page 173: republic, relic, public
+  ['lic', ['republic', '共和国', 'relic', '遗迹', 'public', '公共'], '这个 republic (共和国)，全部 relic（遗迹），开放 public（公众）'],
+  // Page 174: picnic, panic, clinic
+  ['nic', ['picnic', '野餐', 'panic', '惊恐', 'clinic', '诊所'], '野外 picnic（野餐），遭受 panic（恐慌），送到 clinic（诊所）'],
+  // Page 175: topic, epic
+  ['pic', ['topic', '话题', 'epic', '史诗'], '这个 topic（话题），非常 epic（宏大的 ）'],
+  // Page 176: Arctic, energetic, fantastic
+  ['tic', ['Arctic', '北极', 'energetic', '有活力', 'fantastic', '极棒'], '来到 Arctic（北极），身体 energetic(精力充沛的)，状态 fantastic（极好的）'],
+  // Page 177: romantic, dramatic
+  ['tic', ['romantic', '浪漫', 'dramatic', '夸张'], '非常 romantic（浪漫的），有点 dramatic(戏剧化的)'],
+  // Page 178: artistic, realistic
+  ['istic', ['artistic', '艺术', 'realistic', '写实'], '有点 artistic(艺术的)，不太 realistic(现实的)'],
+  // Page 179: mice, rice
+  ['ice', ['mice', '老鼠', 'rice', '大米'], '一群 mice（老鼠），看到 rice（米）'],
+  // Page 180: juice, ice, nice
+  ['ice', ['juice', '果汁', 'ice', '冰块', 'nice', '极棒'], '倒杯 juice（果汁），加点 ice（冰块），味道 nice（很棒）'],
   // 181
   ['ice', ['slice', '薄片', 'spice', '香料', 'nice', '好的'], '切片 slice（薄片），洒点 spice（香料），味道 nice（好的）'],
   // 182
@@ -415,11 +475,67 @@ const RAW_TEXTBOOK_PAGES_2: [string, string[], string][] = [
   // 271
   ['eel', ['peel', '削皮', 'steel', '钢'], '动手 peel（削皮），切着 steel（钢铁）'],
   // 272
-  ['eem', ['seem', '好像', 'dream', '梦想'], '好像 seem（可能），实现 dream（梦想）']
+  ['eem', ['seem', '好像', 'dream', '梦想'], '好像 seem（可能），实现 dream（梦想）'],
+  // 273
+  ['een', ['green', '绿色的', 'screen', '屏幕', 'queen', '女王'], '草地 green（绿色），看着 screen（屏幕），拜见 queen（女王）'],
+  // 274
+  ['eep', ['sleep', '睡觉', 'sheep', '小羊', 'jeep', '吉普车'], '正在 sleep（睡觉），抱着 sheep（绵羊），梦见 jeep（吉普车）'],
+  // 275
+  ['eep', ['keep', '保持', 'deep', '深处的', 'sweep', '扫'], '努力 keep（保持），水里 deep（深），认真 sweep（倒垃圾）'],
+  // 276
+  ['eer', ['deer', '鹿', 'beer', '啤酒', 'cheer', '欢呼'], '喂喂 deer（鹿），喝杯 beer（啤酒），为他 cheer（欢呼）'],
+  // 277
+  ['eer', ['peer', '同伴', 'steer', '驾驶', 'career', '职业生涯'], '遇到 peer（同龄人），学会 steer（开车），规划 career（生涯）'],
+  // 278
+  ['ees', ['bees', '蜜蜂们', 'trees', '树木们', 'knees', '膝盖们'], '成群 bees（蜜蜂），飞向 trees（树林），碰到 knees（膝盖）'],
+  // 279
+  ['eet', ['feet', '脚', 'meet', '遇见', 'street', '街道'], '洗洗 feet（双脚），出门 meet（偶遇），走在 street（街道）'],
+  // 280
+  ['eet', ['sweet', '甜的', 'sheet', '传单', 'greet', '问候'], '水果 sweet（甜的），拿着 sheet（纸单），大声 greet（打招呼）'],
+  // 281
+  ['ea', ['tea', '茶', 'sea', '大海', 'pea', '豌豆'], '喝杯 tea（茶），面对 sea（大海），吃颗 pea（豌豆）'],
+  // 282
+  ['ea', ['flea', '跳蚤', 'plea', '恳求'], '身上 flea（跳蚤），发出 plea（哀求）'],
+  // 283
+  ['ead', ['bread', '面包', 'head', '头', 'dead', '死的'], '吃口 bread（面包），一拍 head（头），老鼠 dead（死掉了）'],
+  // 284
+  ['ead', ['lead', '引导', 'read', '阅读'], '前面 lead（引导），我们 read（阅读）'],
+  // 285
+  ['eaf', ['leaf', '叶子', 'deaf', '聋的'], '绿绿 leaf（叶子），耳朵 deaf（听不见）'],
+  // 286
+  ['eal', ['meal', '一餐', 'deal', '交易', 'steal', '偷'], '美味 meal（一餐），达成 deal（合同），切勿 steal（偷盗）'],
+  // 287
+  ['eal', ['seal', '海豹', 'heal', '治愈', 'real', '真的'], '看着 seal（海豹），伤口 heal（治愈），感觉 real（真实的）'],
+  // 288
+  ['eam', ['dream', '梦', 'cream', '奶油', 'steam', '蒸汽'], '做个 dream（好梦），吃点 cream（奶油），冒出 steam（蒸汽）'],
+  // 289
+  ['eam', ['beam', '光束', 'scream', '尖叫'], '一束 beam（光芒），吓得 scream（大叫）'],
+  // 290
+  ['ean', ['clean', '干净的', 'bean', '豆子', 'mean', '吝啬的'], '打扫 clean（干净），吃颗 bean（豆），别太 mean（刻薄）'],
+  // 291
+  ['eap', ['cheap', '便宜的', 'leap', '跳跃', 'heap', '一堆'], '价格 cheap（便宜），向上 leap（跳跃），落入 heap（大堆）'],
+  // 292
+  ['ear', ['bear', '熊', 'pear', '梨', 'tear', '眼泪'], '遇到 bear（大熊），丢掉 pear（梨），吓出 tear（眼泪）'],
+  // 293
+  ['ear', ['hear', '听见', 'ear', '耳朵', 'near', '在附近'], '让我 hear（听见），凑近 ear（耳朵），人就在 near（附近）'],
+  // 294
+  ['ear', ['fear', '害怕', 'gear', '齿轮', 'wear', '穿戴'], '没有 fear（恐惧），开动 gear（设备），准备 wear（衣物）'],
+  // 295
+  ['eas', ['peas', '豌豆（复数）', 'fleas', '跳蚤（复数）'], '剥点 peas（豌豆），除掉 fleas（跳蚤们）'],
+  // 296
+  ['eat', ['meat', '肉', 'eat', '吃', 'heat', '热度'], '想吃 meat（肉），开心 eat（享用），天气 heat（炎热）'],
+  // 297
+  ['eat', ['seat', '座位', 'beat', '打', 'neat', '整洁的'], '找到 seat（座位），随着 beat（拍子），房间 neat（整洁）'],
+  // 298
+  ['eat', ['wheat', '小麦', 'cheat', '骗', 'treat', '招待'], '金色 wheat（麦），别去 cheat（人），大方 treat（招待）'],
+  // 299
+  ['oa', ['boat', '船', 'coat', '外套', 'goat', '山羊'], '坐上 boat（小木船），穿着 coat（大衣），牵着 goat（山羊）'],
+  // 300
+  ['oad', ['road', '路', 'load', '装载', 'toad', '蟾蜍'], '走在 road（路），货物 load（满满），碰到 toad（蛤蟆）']
 ];
 
 export const INTERMEDIATE_TEXTBOOK_CARDS_PART2: WordCard[] = RAW_TEXTBOOK_PAGES_2.map((page, index) => {
-  const pageNum = index + 181; // Continues from 181
+  const pageNum = index + 151; // Continues from 151
   const wordPairs = page[1];
   const wordsList: WordItem[] = [];
   
