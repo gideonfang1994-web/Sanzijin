@@ -69,6 +69,8 @@ export function handleFirestoreError(error: unknown, operationType: OperationTyp
 }
 
 // Test connection
+export let isOfflineMode = false;
+
 async function testConnection() {
   try {
     await getDocFromServer(doc(db, 'test', 'connection'));
@@ -86,7 +88,12 @@ async function testConnection() {
       errMsg.includes('failed-precondition');
       
     if (isNetworkOrBlockerError) {
-      console.error(
+      isOfflineMode = true;
+      try {
+        window.dispatchEvent(new CustomEvent('firestore-offline', { detail: { isOffline: true } }));
+      } catch (e) {}
+      
+      console.warn(
         "Please check your Firebase configuration.\n" +
         "⚠️ CONNECTION BLOCKER DETECTED:\n" +
         "1. Active ad-blockers or privacy extensions (e.g., uBlock Origin, Brave Shield, Privacy Badger) might be blocking requests to 'firestore.googleapis.com'. Please try pausing them for this tab/domain.\n" +

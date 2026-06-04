@@ -1,3 +1,14 @@
+import { 
+  BOOK_19_COVER_SVG,
+  BOOK_20_COVER_SVG, 
+  BOOK_21_COVER_SVG, 
+  BOOK_22_COVER_SVG, 
+  BOOK_23_COVER_SVG, 
+  BOOK_24_COVER_SVG, 
+  BOOK_25_COVER_SVG, 
+  BOOK_26_COVER_SVG 
+} from './pictureBookIllustrator';
+
 export interface BookPage {
   pageNumber: number;
   english: string;
@@ -487,7 +498,7 @@ export const PICTURE_BOOKS: PictureBook[] = [
   {
     id: 'book_11',
     title: '11. Our Bags & Their Maps 🗺️',
-    coverImage: 'https://img.icons8.com/clouds/200/suitcase.png',
+    coverImage: '/src/assets/images/picbook_double_bag_1780577726021.png',
     description: '学习复数形式的物主代词 our / their：我们的包，和他们的帽子！',
     difficulty: 'INTERMEDIATE',
     pages: [
@@ -495,42 +506,42 @@ export const PICTURE_BOOKS: PictureBook[] = [
         pageNumber: 1,
         english: 'These are our bags.',
         chinese: '这些是我们的包。',
-        image: '/src/assets/images/picbook_bad_rat_1780563050522.png',
+        image: '/src/assets/images/picbook_double_bag_1780577726021.png',
         emoji: '🎒🎒'
       },
       {
         pageNumber: 2,
         english: 'These are our maps.',
         chinese: 'these are our maps. 这些是我们的地图。',
-        image: '/src/assets/images/picbook_cat_1780562998321.png',
+        image: '/src/assets/images/picbook_multiple_maps_1780578144358.png',
         emoji: '🗺️🗺️'
       },
       {
         pageNumber: 3,
         english: 'These are our hats.',
         chinese: '这些是我们的帽子。',
-        image: '/src/assets/images/picbook_fat_cat_1780563015884.png',
+        image: '/src/assets/images/picbook_multiple_hats_1780578163695.png',
         emoji: '👒👒'
       },
       {
         pageNumber: 4,
         english: 'Those are their bags.',
         chinese: '那些是他们的包。',
-        image: '/src/assets/images/picbook_bad_rat_1780563050522.png',
+        image: '/src/assets/images/picbook_double_bag_1780577726021.png',
         emoji: '💼💼'
       },
       {
         pageNumber: 5,
         english: 'Those are their maps.',
         chinese: '那些是他们的地图。',
-        image: '/src/assets/images/picbook_cat_1780562998321.png',
+        image: '/src/assets/images/picbook_multiple_maps_1780578144358.png',
         emoji: '🗺️🗺️'
       },
       {
         pageNumber: 6,
         english: 'Those are their hats.',
         chinese: '那些是他们的帽子。',
-        image: '/src/assets/images/picbook_fat_cat_1780563015884.png',
+        image: '/src/assets/images/picbook_multiple_hats_1780578163695.png',
         emoji: '🎩🎩'
       }
     ]
@@ -538,7 +549,7 @@ export const PICTURE_BOOKS: PictureBook[] = [
   {
     id: 'book_12',
     title: '12. This is Not Our Map 🧭',
-    coverImage: 'https://img.icons8.com/clouds/200/treasure-map.png',
+    coverImage: '/src/assets/images/picbook_treasure_map_1780577771241.png',
     description: '对比复数的否定与肯定，区分 who owns what 的高级结构。',
     difficulty: 'INTERMEDIATE',
     pages: [
@@ -546,28 +557,28 @@ export const PICTURE_BOOKS: PictureBook[] = [
         pageNumber: 1,
         english: 'These are not our bags. These are their bags.',
         chinese: '这些不是我们的包。这些是他们的包。',
-        image: '/src/assets/images/picbook_bad_rat_1780563050522.png',
+        image: '/src/assets/images/picbook_double_bag_1780577726021.png',
         emoji: '🎒💼'
       },
       {
         pageNumber: 2,
         english: 'These are not our maps. These are their maps.',
         chinese: '这些不是我们的地图。这些是他们的地图。',
-        image: '/src/assets/images/picbook_cat_1780562998321.png',
+        image: '/src/assets/images/picbook_multiple_maps_1780578144358.png',
         emoji: '🗺️🗺️'
       },
       {
         pageNumber: 3,
         english: 'Those are not our hats. Those are their hats.',
         chinese: '那些不是我们的帽子。那些是他们的帽子。',
-        image: '/src/assets/images/picbook_fat_cat_1780563015884.png',
+        image: '/src/assets/images/picbook_multiple_hats_1780578163695.png',
         emoji: '👒🎩'
       },
       {
         pageNumber: 4,
         english: 'Those are not our maps. Those are their maps.',
         chinese: '那些不是我们的地图。那些是他们的地图。',
-        image: '/src/assets/images/picbook_cat_1780562998321.png',
+        image: '/src/assets/images/picbook_multiple_maps_1780578144358.png',
         emoji: '🗺️🗺️'
       }
     ]
@@ -575,7 +586,7 @@ export const PICTURE_BOOKS: PictureBook[] = [
   {
     id: 'book_13',
     title: '13. Are These Your Bags? 🏪',
-    coverImage: 'https://img.icons8.com/clouds/200/shop.png',
+    coverImage: '/src/assets/images/picbook_toy_shop_cover_1780578181299.png',
     description: '掌握复数一般疑问句：Are these/those your ...? 及双向句式回答。',
     difficulty: 'INTERMEDIATE',
     pages: [
@@ -583,28 +594,28 @@ export const PICTURE_BOOKS: PictureBook[] = [
         pageNumber: 1,
         english: 'Are these your bags? Yes. They are our bags.',
         chinese: '这些是你们的包吗？是的，是我们的包。',
-        image: '/src/assets/images/picbook_bad_rat_1780563050522.png',
+        image: '/src/assets/images/picbook_double_bag_1780577726021.png',
         emoji: '🎒🎒'
       },
       {
         pageNumber: 2,
         english: "Are these your hats? No. They aren't. They are their hats.",
         chinese: '这些是你们的帽子吗？不是，是他们的帽子。',
-        image: '/src/assets/images/picbook_fat_cat_1780563015884.png',
+        image: '/src/assets/images/picbook_multiple_hats_1780578163695.png',
         emoji: '👒🎩'
       },
       {
         pageNumber: 3,
         english: 'Are those your bags? Yes. They are our bags.',
         chinese: '那些是你们的包吗？是的，是我们的包。',
-        image: '/src/assets/images/picbook_bad_rat_1780563050522.png',
+        image: '/src/assets/images/picbook_double_bag_1780577726021.png',
         emoji: '💼💼'
       },
       {
         pageNumber: 4,
         english: "Are those your hats? No. They aren't. They are their hats.",
         chinese: '那些是你们的帽子吗？不是，是他们的帽子。',
-        image: '/src/assets/images/picbook_fat_cat_1780563015884.png',
+        image: '/src/assets/images/picbook_multiple_hats_1780578163695.png',
         emoji: '🎩🎩'
       }
     ]
@@ -612,7 +623,7 @@ export const PICTURE_BOOKS: PictureBook[] = [
   {
     id: 'book_14',
     title: '14. We are Fat and Sad 🥺',
-    coverImage: 'https://img.icons8.com/clouds/200/crying.png',
+    coverImage: '/src/assets/images/picbook_sad_bats_group_1780577871572.png',
     description: '系统学习第一、三及复数人称 be 动词：are 和 is 的组合情绪句！',
     difficulty: 'INTERMEDIATE',
     pages: [
@@ -627,28 +638,28 @@ export const PICTURE_BOOKS: PictureBook[] = [
         pageNumber: 2,
         english: 'She is fat. She is sad.',
         chinese: '她胖胖的，她很难过。',
-        image: '/src/assets/images/picbook_sad_bat_1780563086634.png',
+        image: '/src/assets/images/picbook_sad_bats_group_1780577871572.png',
         emoji: '👧'
       },
       {
         pageNumber: 3,
         english: 'He is fat. He is sad.',
         chinese: '他胖胖的,他很难过。',
-        image: '/src/assets/images/picbook_sad_bat_1780563086634.png',
+         image: '/src/assets/images/picbook_sad_bat_1780563086634.png',
         emoji: '👦'
       },
       {
         pageNumber: 4,
         english: 'We are fat. We are sad.',
         chinese: '我们胖胖的，我们很难过。',
-        image: '/src/assets/images/picbook_sad_bat_1780563086634.png',
+        image: '/src/assets/images/picbook_sad_bats_group_1780577871572.png',
         emoji: '👨‍👩‍👧'
       },
       {
         pageNumber: 5,
         english: 'They are fat. They are sad.',
         chinese: '他们胖胖的，他们很难过。',
-        image: '/src/assets/images/picbook_sad_bat_1780563086634.png',
+        image: '/src/assets/images/picbook_sad_bats_group_1780577871572.png',
         emoji: '👥'
       }
     ]
@@ -656,7 +667,7 @@ export const PICTURE_BOOKS: PictureBook[] = [
   {
     id: 'book_15',
     title: '15. We are Glad, Not Sad! ✨',
-    coverImage: 'https://img.icons8.com/clouds/200/happy.png',
+    coverImage: '/src/assets/images/picbook_bats_group_1780577856313.png',
     description: '反义情绪对比：我不难过！我很开心！am/is/are not 否定核心句法。',
     difficulty: 'INTERMEDIATE',
     pages: [
@@ -671,28 +682,28 @@ export const PICTURE_BOOKS: PictureBook[] = [
         pageNumber: 2,
         english: 'She is not sad. She is glad.',
         chinese: '她不难过。她很开心。',
-        image: '/src/assets/images/picbook_cat_1780562998321.png',
+        image: '/src/assets/images/picbook_cats_group_1780577792847.png',
         emoji: '👧✨'
       },
       {
         pageNumber: 3,
         english: 'He is not sad. He is glad.',
         chinese: '他不难过。他很开心。',
-        image: '/src/assets/images/picbook_cat_1780562998321.png',
+        image: '/src/assets/images/dad_glad_1780575633904.png',
         emoji: '👦✨'
       },
       {
         pageNumber: 4,
         english: 'We are not sad. We are glad.',
         chinese: '我们不难过。我们很开心。',
-        image: '/src/assets/images/picbook_cat_1780562998321.png',
+        image: '/src/assets/images/picbook_bats_group_1780577856313.png',
         emoji: '🧑‍🤝‍🧑'
       },
       {
         pageNumber: 5,
         english: 'They are not sad. They are glad.',
         chinese: '他们不难过。他们很开心。',
-        image: '/src/assets/images/picbook_cat_1780562998321.png',
+        image: '/src/assets/images/picbook_fat_cats_group_1780577808806.png',
         emoji: '🙌'
       }
     ]
@@ -700,7 +711,7 @@ export const PICTURE_BOOKS: PictureBook[] = [
   {
     id: 'book_16',
     title: '16. Is He Fat or Mad? 🔎',
-    coverImage: 'https://img.icons8.com/clouds/200/search.png',
+    coverImage: '/src/assets/images/picbook_detective_glass_1780577756299.png',
     description: '大侦探探案实录：学会提问 Is he / Is she / Are they? 并进行双重回答。',
     difficulty: 'INTERMEDIATE',
     pages: [
@@ -708,14 +719,14 @@ export const PICTURE_BOOKS: PictureBook[] = [
         pageNumber: 1,
         english: 'Is he fat? Yes, he is. / No, he isn’t.',
         chinese: '他胖吗？是的，他胖。/不，他不胖。',
-        image: '/src/assets/images/picbook_sad_bat_1780563086634.png',
+        image: '/src/assets/images/picbook_fat_cat_1780563015884.png',
         emoji: '👦'
       },
       {
         pageNumber: 2,
         english: 'Is he mad? Yes, he is. / No, he isn’t.',
         chinese: '他生气吗？是的，他生气。/不，他不生气。',
-        image: '/src/assets/images/picbook_cat_1780562998321.png',
+        image: '/src/assets/images/dad_mad_1780575595863.png',
         emoji: '😠'
       },
       {
@@ -729,14 +740,14 @@ export const PICTURE_BOOKS: PictureBook[] = [
         pageNumber: 4,
         english: 'Is he sad? Yes, he is. / No, he isn’t.',
         chinese: '他难过吗？是的，他难过。/不，他不难过。',
-        image: '/src/assets/images/picbook_sad_bat_1780563086634.png',
+        image: '/src/assets/images/dad_sad_1780575614289.png',
         emoji: '😢'
       },
       {
         pageNumber: 5,
         english: 'Are they fat? Yes, they are. / No, they aren’t.',
         chinese: '他们胖吗？是的，他们胖。/不，他们不胖。',
-        image: '/src/assets/images/picbook_fat_cat_1780563015884.png',
+        image: '/src/assets/images/picbook_fat_cats_group_1780577808806.png',
         emoji: '👥'
       }
     ]
@@ -744,7 +755,7 @@ export const PICTURE_BOOKS: PictureBook[] = [
   {
     id: 'book_17',
     title: '17. The Cat and Cats 🐈',
-    coverImage: '/src/assets/images/picbook_cat_1780562998321.png',
+    coverImage: '/src/assets/images/picbook_cats_group_1780577792847.png',
     description: '单数 rules 与复数 rules 的神奇变身：The cat is ... versus The cats are ...',
     difficulty: 'ADVANCED',
     pages: [
@@ -752,21 +763,21 @@ export const PICTURE_BOOKS: PictureBook[] = [
         pageNumber: 1,
         english: 'The cat is fat. The cats are fat.',
         chinese: '这只猫很胖。这些猫很胖。',
-        image: '/src/assets/images/picbook_fat_cat_1780563015884.png',
+        image: '/src/assets/images/picbook_fat_cats_group_1780577808806.png',
         emoji: '🐈'
       },
       {
         pageNumber: 2,
         english: 'The rat is fat. The rats are fat.',
         chinese: '这只老鼠很胖。这些老鼠很胖。',
-        image: '/src/assets/images/picbook_rat_1780563032822.png',
+        image: '/src/assets/images/picbook_rats_group_1780577825027.png',
         emoji: '🐀'
       },
       {
         pageNumber: 3,
         english: 'The bat is fat. The bats are fat.',
         chinese: '这只蝙蝠很胖。这些蝙蝠很胖。',
-        image: '/src/assets/images/picbook_bat_1780563068637.png',
+        image: '/src/assets/images/picbook_bats_group_1780577856313.png',
         emoji: '🦇'
       }
     ]
@@ -774,7 +785,7 @@ export const PICTURE_BOOKS: PictureBook[] = [
   {
     id: 'book_18',
     title: '18. Are You Glad? Mood Quiz 😄',
-    coverImage: 'https://img.icons8.com/clouds/200/mental-state.png',
+    coverImage: '/src/assets/images/picbook_forest_cats_cover_1780577886880.png',
     description: '探索超级情绪卡片，做最酷的心灵情感中英文小测验。',
     difficulty: 'ADVANCED',
     pages: [
@@ -782,28 +793,28 @@ export const PICTURE_BOOKS: PictureBook[] = [
         pageNumber: 1,
         english: 'Are you sad ? Yes, I am. / No, I am not.',
         chinese: '你们难过吗？是的，我们难过。/不，我们不难过。',
-        image: '/src/assets/images/picbook_sad_bat_1780563086634.png',
+        image: '/src/assets/images/picbook_sad_bats_group_1780577871572.png',
         emoji: '😢'
       },
       {
         pageNumber: 2,
         english: 'Are you glad? Yes, I am. / No, I am not.',
         chinese: '你们开心吗？是的，我们开心。/不，我们不开心。',
-        image: '/src/assets/images/picbook_cat_1780562998321.png',
+        image: '/src/assets/images/picbook_bats_group_1780577856313.png',
         emoji: '😄'
       },
       {
         pageNumber: 3,
         english: 'Are they sad ? Yes, they are. / No, they are not.',
         chinese: '他们难过吗？是的，他们难过。/不，他们不难过。',
-        image: '/src/assets/images/picbook_sad_bat_1780563086634.png',
+        image: '/src/assets/images/picbook_sad_bats_group_1780577871572.png',
         emoji: '😢👥'
       },
       {
         pageNumber: 4,
         english: 'Are they glad? Yes, they are. / No, they are not.',
         chinese: '他们开心吗？是的，他们开心。/不，他们不开心。',
-        image: '/src/assets/images/picbook_cat_1780562998321.png',
+        image: '/src/assets/images/picbook_bats_group_1780577856313.png',
         emoji: '😄👥'
       }
     ]
@@ -811,7 +822,7 @@ export const PICTURE_BOOKS: PictureBook[] = [
   {
     id: 'book_19',
     title: '19. What is it? It’s a Cat 📦',
-    coverImage: 'https://img.icons8.com/clouds/200/shipping-box.png',
+    coverImage: BOOK_19_COVER_SVG,
     description: '神奇树洞大探险！猜猜看这个影子是什么？It is a ...',
     difficulty: 'ADVANCED',
     pages: [
@@ -819,21 +830,21 @@ export const PICTURE_BOOKS: PictureBook[] = [
         pageNumber: 1,
         english: 'What is it? It’s a cat.',
         chinese: '它是什么？它是一只猫。',
-        image: '/src/assets/images/picbook_cat_1780562998321.png',
+        image: '',
         emoji: '🐱'
       },
       {
         pageNumber: 2,
         english: 'What is it? It’s a rat.',
         chinese: '它是什么？它是一只老鼠。',
-        image: '/src/assets/images/picbook_rat_1780563032822.png',
+        image: '',
         emoji: '🐭'
       },
       {
         pageNumber: 3,
         english: 'What is it? It’s a bat.',
         chinese: '它是什么？它是一只蝙蝠。',
-        image: '/src/assets/images/picbook_bat_1780563068637.png',
+        image: '',
         emoji: '🦇'
       }
     ]
@@ -841,7 +852,7 @@ export const PICTURE_BOOKS: PictureBook[] = [
   {
     id: 'book_20',
     title: '20. Caps, Maps, Vans & Fans 🎁',
-    coverImage: 'https://img.icons8.com/clouds/200/toy-car.png',
+    coverImage: BOOK_20_COVER_SVG,
     description: '学说复数提问：What are they/these/those? 汽车、帽子电风扇！',
     difficulty: 'ADVANCED',
     pages: [
@@ -849,49 +860,49 @@ export const PICTURE_BOOKS: PictureBook[] = [
         pageNumber: 1,
         english: 'What are they? They are cats.',
         chinese: '它们是什么？它们是猫。',
-        image: '/src/assets/images/picbook_cat_1780562998321.png',
+        image: '',
         emoji: '🐱🐱'
       },
       {
         pageNumber: 2,
         english: 'What are they? They are rats.',
         chinese: '它们是什么？它们是老鼠。',
-        image: '/src/assets/images/picbook_rat_1780563032822.png',
+        image: '',
         emoji: '🐭🐭'
       },
       {
         pageNumber: 3,
         english: 'What are they? They are bats.',
         chinese: '它们是什么？它们是蝙蝠。',
-        image: '/src/assets/images/picbook_bat_1780563068637.png',
+        image: '',
         emoji: '🦇🦇'
       },
       {
         pageNumber: 4,
         english: 'What are these? They are caps.',
         chinese: '这些是什么？它们是帽子。',
-        image: '/src/assets/images/picbook_bad_rat_1780563050522.png',
+        image: '',
         emoji: '🧢🧢'
       },
       {
         pageNumber: 5,
         english: 'What are these? They are maps.',
         chinese: '这些是什么？它们是地图。',
-        image: '/src/assets/images/picbook_cat_1780562998321.png',
+        image: '',
         emoji: '🗺️🗺️'
       },
       {
         pageNumber: 6,
         english: 'What are those? They are vans .',
         chinese: '那些是什么？它们是货车。',
-        image: '/src/assets/images/picbook_bat_1780563068637.png',
+        image: '',
         emoji: '🚐🚐'
       },
       {
         pageNumber: 7,
         english: 'What are those? They are fans .',
         chinese: '那些是什么？它们是风扇。',
-        image: '/src/assets/images/picbook_bat_1780563068637.png',
+        image: '',
         emoji: '🌬️🌬️'
       }
     ]
@@ -899,7 +910,7 @@ export const PICTURE_BOOKS: PictureBook[] = [
   {
     id: 'book_21',
     title: '21. On, In, Under 方位冒险 📍',
-    coverImage: 'https://img.icons8.com/clouds/200/pin.png',
+    coverImage: BOOK_21_COVER_SVG,
     description: '跟着在包里的小坏鼠，在垫子上的帽子，学习最基础的方位介词表达！',
     difficulty: 'ADVANCED',
     pages: [
@@ -907,42 +918,42 @@ export const PICTURE_BOOKS: PictureBook[] = [
         pageNumber: 1,
         english: 'The hat is on the mat.',
         chinese: '帽子在垫子上面。',
-        image: '/src/assets/images/picbook_bad_rat_1780563050522.png',
+        image: '',
         emoji: '👒🩹'
       },
       {
         pageNumber: 2,
         english: 'The mat is on the bat.',
         chinese: '垫子在球拍上面。',
-        image: '/src/assets/images/picbook_bat_1780563068637.png',
+        image: '',
         emoji: '🩹🏏'
       },
       {
         pageNumber: 3,
         english: 'The rat is in the bag.',
         chinese: '老鼠在包里。',
-        image: '/src/assets/images/picbook_rat_1780563032822.png',
+        image: '',
         emoji: '🐭🎒'
       },
       {
         pageNumber: 4,
         english: 'The bag is in the gap.',
         chinese: '包在缝隙里。',
-        image: '/src/assets/images/picbook_bad_rat_1780563050522.png',
+        image: '',
         emoji: '🎒🕳️'
       },
       {
         pageNumber: 5,
         english: 'The bat is under the map.',
         chinese: '球拍在地图下面。',
-        image: '/src/assets/images/picbook_bat_1780563068637.png',
+        image: '',
         emoji: '🏏🗺️'
       },
       {
         pageNumber: 6,
         english: 'The map is under the fan.',
         chinese: '地图在风扇下面。',
-        image: '/src/assets/images/picbook_cat_1780562998321.png',
+        image: '',
         emoji: '🗺️🌬️'
       }
     ]
@@ -950,7 +961,7 @@ export const PICTURE_BOOKS: PictureBook[] = [
   {
     id: 'book_22',
     title: '22. I Have a Cat 🌟',
-    coverImage: 'https://img.icons8.com/clouds/200/sparkling-diamond.png',
+    coverImage: BOOK_22_COVER_SVG,
     description: '掌握 are/is 之后，学会用“have / has”表达神奇宝贝的主权。',
     difficulty: 'ADVANCED',
     pages: [
@@ -958,35 +969,35 @@ export const PICTURE_BOOKS: PictureBook[] = [
         pageNumber: 1,
         english: 'I have a cat. I have a mat.',
         chinese: '我有一只猫。我有一张垫子。',
-        image: '/src/assets/images/picbook_cat_1780562998321.png',
+        image: '',
         emoji: '🐱🩹'
       },
       {
         pageNumber: 2,
         english: 'You have a hat. You have a map.',
         chinese: '你有一顶帽子。你有一张地图。',
-        image: '/src/assets/images/picbook_bad_rat_1780563050522.png',
+        image: '',
         emoji: '👒🗺️'
       },
       {
         pageNumber: 3,
         english: 'They have a plan. They have a land.',
         chinese: '他们有一个计划。他们有一片土地。',
-        image: '/src/assets/images/picbook_cat_1780562998321.png',
+        image: '',
         emoji: '📝🏕️'
       },
       {
         pageNumber: 4,
         english: 'He has a bat. He has a pan.',
         chinese: '他有一个球拍。他有一口锅。',
-        image: '/src/assets/images/picbook_bat_1780563068637.png',
+        image: '',
         emoji: '🏏🍳'
       },
       {
         pageNumber: 5,
         english: 'She has a lamp. She has a stamp.',
         chinese: '她有一盏台灯。她有一张邮票。',
-        image: '/src/assets/images/picbook_fat_cat_1780563015884.png',
+        image: '',
         emoji: '💡✉️'
       }
     ]
@@ -994,7 +1005,7 @@ export const PICTURE_BOOKS: PictureBook[] = [
   {
     id: 'book_23',
     title: "23. I Don't Have a Cat 城堡",
-    coverImage: 'https://img.icons8.com/clouds/200/cancel.png',
+    coverImage: BOOK_23_COVER_SVG,
     description: '否定拥有大挑战！学说“don’t have”与“doesn’t have”否定结构。',
     difficulty: 'ADVANCED',
     pages: [
@@ -1002,35 +1013,35 @@ export const PICTURE_BOOKS: PictureBook[] = [
         pageNumber: 1,
         english: 'I don’t have a cat. I don’t have a mat.',
         chinese: '我没有猫。我没有垫子。',
-        image: '/src/assets/images/picbook_cat_1780562998321.png',
+        image: '',
         emoji: '🚫🐱'
       },
       {
         pageNumber: 2,
         english: 'You don’t have a hat. You don’t have a map.',
         chinese: '你没有帽子。你没有地图。',
-        image: '/src/assets/images/picbook_bad_rat_1780563050522.png',
+        image: '',
         emoji: '🚫👒'
       },
       {
         pageNumber: 3,
         english: 'They don’t have a plan. They don’t have a land.',
         chinese: '他们没有计划。他们没有土地。',
-        image: '/src/assets/images/picbook_cat_1780562998321.png',
+        image: '',
         emoji: '🚫📝'
       },
       {
         pageNumber: 4,
         english: 'He doesn’t have a bat. He doesn’t have a pan.',
         chinese: '他没有球拍。他没有锅。',
-        image: '/src/assets/images/picbook_bat_1780563068637.png',
+        image: '',
         emoji: '🚫🍳'
       },
       {
         pageNumber: 5,
         english: 'She doesn’t have a lamp. She doesn’t have a stamp.',
         chinese: '她没有台灯。她没有邮票。',
-        image: '/src/assets/images/picbook_fat_cat_1780563015884.png',
+        image: '',
         emoji: '🚫✉️'
       }
     ]
@@ -1038,7 +1049,7 @@ export const PICTURE_BOOKS: PictureBook[] = [
   {
     id: 'book_24',
     title: '24. I Can Rap! 🎤',
-    coverImage: 'https://img.icons8.com/clouds/200/microphone.png',
+    coverImage: BOOK_24_COVER_SVG,
     description: '才艺竞技大展示：学说我会 rap、chant、wag 还有 act！',
     difficulty: 'ADVANCED',
     pages: [
@@ -1046,28 +1057,28 @@ export const PICTURE_BOOKS: PictureBook[] = [
         pageNumber: 1,
         english: 'I can rap.',
         chinese: '我会说唱。',
-        image: '/src/assets/images/picbook_cat_1780562998321.png',
+        image: '',
         emoji: '🎤😎'
       },
       {
         pageNumber: 2,
         english: 'You can chant.',
         chinese: '你会吟唱。',
-        image: '/src/assets/images/picbook_fat_cat_1780563015884.png',
+        image: '',
         emoji: '🎵🪄'
       },
       {
         pageNumber: 3,
         english: 'She can wag.',
         chinese: '她会摇摆。',
-        image: '/src/assets/images/picbook_cat_1780562998321.png',
+        image: '',
         emoji: '💃'
       },
       {
         pageNumber: 4,
         english: 'We can act.',
         chinese: '我们会表演。',
-        image: '/src/assets/images/picbook_bad_rat_1780563050522.png',
+        image: '',
         emoji: '🎭🎬'
       }
     ]
@@ -1075,7 +1086,7 @@ export const PICTURE_BOOKS: PictureBook[] = [
   {
     id: 'book_25',
     title: "25. I Can't Rap 💤",
-    coverImage: 'https://img.icons8.com/clouds/200/sleeping.png',
+    coverImage: BOOK_25_COVER_SVG,
     description: '表达状态局限性，学说否定句 can’t 的轻重读拼写。',
     difficulty: 'ADVANCED',
     pages: [
@@ -1083,28 +1094,28 @@ export const PICTURE_BOOKS: PictureBook[] = [
         pageNumber: 1,
         english: 'I can’t rap.',
         chinese: '我不会说唱。',
-        image: '/src/assets/images/picbook_cat_1780562998321.png',
+        image: '',
         emoji: '🚫🎤'
       },
       {
         pageNumber: 2,
         english: 'You can’t chant.',
         chinese: '你不会吟唱。',
-        image: '/src/assets/images/picbook_fat_cat_1780563015884.png',
+        image: '',
         emoji: '🚫🎵'
       },
       {
         pageNumber: 3,
         english: 'She can’t wag.',
         chinese: '她不会摇摆。',
-        image: '/src/assets/images/picbook_cat_1780562998321.png',
+        image: '',
         emoji: '🚫💃'
       },
       {
         pageNumber: 4,
         english: 'We can’t act.',
         chinese: '我们不会表演。',
-        image: '/src/assets/images/picbook_bad_rat_1780563050522.png',
+        image: '',
         emoji: '🚫🎭'
       }
     ]
@@ -1112,7 +1123,7 @@ export const PICTURE_BOOKS: PictureBook[] = [
   {
     id: 'book_26',
     title: '26. Can You Rap? 🏁',
-    coverImage: 'https://img.icons8.com/clouds/200/race-flag.png',
+    coverImage: BOOK_26_COVER_SVG,
     description: '终极拼读狂欢：你能够做到吗？“Can you ...? Yes I can / No I can’t.”',
     difficulty: 'ADVANCED',
     pages: [
@@ -1120,35 +1131,35 @@ export const PICTURE_BOOKS: PictureBook[] = [
         pageNumber: 1,
         english: 'Can you rap？ Yes, I can. /No, I can’t.',
         chinese: '你会说唱吗？是的，我会。/不，我不会。',
-        image: '/src/assets/images/picbook_cat_1780562998321.png',
+        image: '',
         emoji: '🎤❓'
       },
       {
         pageNumber: 2,
         english: 'Can you chant？ Yes, I can. /No, I can’t.',
         chinese: '你会吟唱吗？是的，我会。/不，我不会。',
-        image: '/src/assets/images/picbook_fat_cat_1780563015884.png',
+        image: '',
         emoji: '🎵❓'
       },
       {
         pageNumber: 3,
         english: 'Can she wag? Yes, she can. /No, she can’t.',
         chinese: '她会摇摆吗？是的，她会。/不，她不会。',
-        image: '/src/assets/images/picbook_cat_1780562998321.png',
+        image: '',
         emoji: '💃❓'
       },
       {
         pageNumber: 4,
         english: 'Can he act? Yes, he can. /No, he can’t.',
         chinese: '他会表演吗？是的，他会。/不，他不会。',
-        image: '/src/assets/images/picbook_bad_rat_1780563050522.png',
+        image: '',
         emoji: '🎭❓'
       },
       {
         pageNumber: 5,
         english: 'Can we chat? Yes, we can. /No, we can’t.',
         chinese: '我们能聊天吗？是的，我们能。/不，我们不能。',
-        image: '/src/assets/images/picbook_cat_1780562998321.png',
+        image: '',
         emoji: '💬❓'
       }
     ]

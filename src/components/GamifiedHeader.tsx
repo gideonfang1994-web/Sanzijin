@@ -1,12 +1,27 @@
 
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { UserStats } from '../types';
-import { Star, Flame, CircleDollarSign, Trophy, ShieldCheck } from 'lucide-react';
+import { Star, Flame, CircleDollarSign, Trophy, ShieldCheck, WifiOff } from 'lucide-react';
 import { motion } from 'framer-motion';
 
 interface Props {stats: UserStats;}
 
 const GamifiedHeader: React.FC<Props> = ({ stats }) => {
+  const [offline, setOffline] = useState(false);
+
+  useEffect(() => {
+    // Check initial state
+    import('../firebase').then(({ isOfflineMode }) => {
+      if (isOfflineMode) setOffline(true);
+    });
+
+    const handleOffline = () => setOffline(true);
+    window.addEventListener('firestore-offline', handleOffline);
+    return () => {
+      window.removeEventListener('firestore-offline', handleOffline);
+    };
+  }, []);
+
   return (
     <div className="fixed top-4 left-1/2 -translate-x-1/2 w-[92%] max-w-lg z-50">
       <div className="glass-pill rounded-[32px] px-5 py-3.5 flex justify-between items-center shadow-2xl border-b-4 border-slate-100/30">
@@ -43,6 +58,23 @@ const GamifiedHeader: React.FC<Props> = ({ stats }) => {
             </div>
           </div>
         </div>
+        
+        {/* Middle: Offline / Local Sync Info */}
+        {offline && (
+          <motion.div 
+            initial={{ scale: 0, opacity: 0 }}
+            animate={{ scale: 1, opacity: 1 }}
+            className="mx-1 flex items-center space-x-1.5 bg-amber-50/90 border border-amber-200 text-amber-700 px-2.5 py-1 rounded-full text-[10px] font-extrabold shadow-sm"
+            title="离线持久缓存模式已启动。您的学习进度将安全保存于本地，并在网络恢复时自动与云端同步。"
+          >
+            <span className="relative flex h-1.5 w-1.5">
+              <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-amber-400 opacity-75"></span>
+              <span className="relative inline-flex rounded-full h-1.5 w-1.5 bg-amber-500"></span>
+            </span>
+            <span className="font-bold text-amber-600 hidden xs:inline">本地同步中</span>
+            <WifiOff size={11} className="text-amber-500 xs:hidden" />
+          </motion.div>
+        )}
         
         {/* Right: Jewel Case */}
         <div className="flex items-center space-x-3">
