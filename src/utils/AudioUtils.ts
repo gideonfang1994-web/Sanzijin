@@ -263,6 +263,7 @@ export const audio = {
 
       if (isZh) {
         utterance.lang = 'zh-CN';
+        utterance.rate = 0.67; // Also slow down Chinese translation reading by 1.5x
       } else {
         const voices = window.speechSynthesis.getVoices();
         const normalizeLang = (lang: string) => lang.toLowerCase().replace('_', '-');
@@ -290,7 +291,7 @@ export const audio = {
         } else {
           utterance.lang = 'en-US';
         }
-        utterance.rate = rateMultiplier;
+        utterance.rate = rateMultiplier / 1.5; // Slowed down by 1.5x
       }
       window.speechSynthesis.speak(utterance);
     };
@@ -305,6 +306,8 @@ export const audio = {
             : `https://dict.youdao.com/dictvoice?audio=${encodeURIComponent(cleanWord)}&type=2`; // type=2 is US Accent
           
           const aud = new Audio(audioUrl);
+          aud.defaultPlaybackRate = 0.67; // set playback rate to 1.5 times slower (1 / 1.5 ≈ 0.67) Before loading
+          aud.playbackRate = 0.67;
           activeWordAudio = aud;
           aud.volume = 0.95;
           aud.play().catch(() => {

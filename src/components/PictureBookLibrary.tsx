@@ -10,105 +10,16 @@ import audio from '../utils/AudioUtils';
 import confetti from 'canvas-confetti';
 import { UserStats } from '../types';
 
-interface BookPage {
-  pageNumber: number;
-  english: string;
-  chinese: string;
-  image: string;
-}
-
-interface PictureBook {
-  id: string;
-  title: string;
-  coverImage: string;
-  description: string;
-  difficulty: 'PRIMARY' | 'INTERMEDIATE' | 'ADVANCED';
-  pages: BookPage[];
-}
-
-const PICTURE_BOOKS: PictureBook[] = [
-  {
-    id: 'book_1',
-    title: 'Cat, Rat and Bat 的魔法字天书 📖',
-    coverImage: '/src/assets/images/picbook_cat_1780562998321.png',
-    description: '一起来阅读猫咪、胖猫、老鼠、坏老鼠、小蝙蝠和悲伤蝙蝠的生动故事，跟学三字经魔法字母！',
-    difficulty: 'PRIMARY',
-    pages: [
-      {
-        pageNumber: 1,
-        english: 'This is a cat.',
-        chinese: '这是一只猫。',
-        image: '/src/assets/images/picbook_cat_1780562998321.png'
-      },
-      {
-        pageNumber: 2,
-        english: 'This is a fat cat.',
-        chinese: '这是一只胖猫。',
-        image: '/src/assets/images/picbook_fat_cat_1780563015884.png'
-      },
-      {
-        pageNumber: 3,
-        english: 'This is a rat.',
-        chinese: '这是一只老鼠。',
-        image: '/src/assets/images/picbook_rat_1780563032822.png'
-      },
-      {
-        pageNumber: 4,
-        english: 'This is a bad rat.',
-        chinese: '这是一只坏老鼠。',
-        image: '/src/assets/images/picbook_bad_rat_1780563050522.png'
-      },
-      {
-        pageNumber: 5,
-        english: 'This is a bat.',
-        chinese: '这是一只蝙蝠。',
-        image: '/src/assets/images/picbook_bat_1780563068637.png'
-      },
-      {
-        pageNumber: 6,
-        english: 'This is a sad bat.',
-        chinese: '这是一只悲伤的蝙蝠。',
-        image: '/src/assets/images/picbook_sad_bat_1780563086634.png'
-      }
-    ]
-  },
-  {
-    id: 'book_2',
-    title: 'Dog and Log 的原木赛跑 🏃‍♂️',
-    coverImage: '/src/assets/images/picbook_rat_1780563032822.png',
-    description: '小狗 Dog 和神奇木头 Log 之间的快乐滑稽障碍大赛跑！即将解锁...',
-    difficulty: 'PRIMARY',
-    pages: []
-  },
-  {
-    id: 'book_3',
-    title: 'Hen and Pen 的魔力画笔 🎨',
-    coverImage: '/src/assets/images/picbook_bat_1780563068637.png',
-    description: '红母鸡 Hen 用彩色钢笔 Pen 在天空中画出了神奇飞毯。即将解锁...',
-    difficulty: 'INTERMEDIATE',
-    pages: []
-  }
-];
-
-// Vocabulary dictionary mapping with standard Phonetic and POS tags as requested in Fig 2
-interface WordDetail {
-  word: string;
-  pron: string;
-  typeBadge: string;
-  pos: string;
-}
-
-const VOCAB_DICTIONARY: Record<string, WordDetail> = {
-  'this': { word: 'this', pron: "['ðɪs]", typeBadge: '代词', pos: 'pron. 这，这个 (指近处的人或物)' },
-  'is': { word: 'is', pron: "['ɪz]", typeBadge: '系动词', pos: 'v. 是 (用于第三人称单数现在时)' },
-  'a': { word: 'a', pron: "[ə]", typeBadge: '冠词', pos: 'art. 一，一个 (放在单数可数名词前)' },
-  'cat': { word: 'cat', pron: "[kæt]", typeBadge: '核心名词', pos: 'n. 猫，猫咪' },
-  'fat': { word: 'fat', pron: "[fæt]", typeBadge: '形容词', pos: 'adj. 胖的，肥大的' },
-  'rat': { word: 'rat', pron: "[ræt]", typeBadge: '核心名词', pos: 'n. 老鼠，家鼠' },
-  'bad': { word: 'bad', pron: "[bæd]", typeBadge: '形容词', pos: 'adj. 坏的，恶劣的，调皮的' },
-  'bat': { word: 'bat', pron: "[bæt]", typeBadge: '核心名词', pos: 'n. 蝙蝠 (飞行动物)' },
-  'sad': { word: 'sad', pron: "[sæd]", typeBadge: '形容词', pos: 'adj. 悲伤的，不高兴的 (描写心理)' }
-};
+import { 
+  BookPage, 
+  PictureBook, 
+  WordDetail, 
+  PICTURE_BOOKS, 
+  VOCAB_DICTIONARY,
+  getIllustrationForSentence,
+  getLectureSummaryForBook
+} from './pictureBooksData';
+import SafeImage from './SafeImage';
 
 interface Props {
   onClose: () => void;
@@ -149,23 +60,166 @@ export const PictureBookLibrary: React.FC<Props> = ({ onClose, stats, onUpdateSt
   const [hasDubbedPage, setHasDubbedPage] = useState<Record<number, 'PASS' | 'TRY_AGAIN'>>({});
 
   // Practice Mode states
-  const [practiceStage, setPracticeStage] = useState<number>(0); // 0: FillBlank, 1: Unscramble, 2: ImageMatch
+  const [practiceQuestions, setPracticeQuestions] = useState<any[]>([]); // holds 9 dynamic questions
+  const [currentQuestionIdx, setCurrentQuestionIdx] = useState<number>(0); // 0 to 8
   const [practiceComplete, setPracticeComplete] = useState<boolean>(false);
+  
+  // States matching Stage 0 (FillBlank / CHOICE) questions
   const [blankAnswerSelected, setBlankAnswerSelected] = useState<string | null>(null);
   const [blankChecked, setBlankChecked] = useState<boolean>(false);
   const [blankIsCorrect, setBlankIsCorrect] = useState<boolean>(false);
 
-  // Unscramble Practice State
-  const defaultShuffledWords = ['bad', 'This', 'a', 'rat.', 'is'];
-  const [shuffledWords, setShuffledWords] = useState<string[]>(defaultShuffledWords);
+  // States matching Stage 1 (Unscramble) questions
+  const [shuffledWords, setShuffledWords] = useState<string[]>([]);
   const [selectedUnscrambleWords, setSelectedUnscrambleWords] = useState<string[]>([]);
   const [unscrambleChecked, setUnscrambleChecked] = useState<boolean>(false);
   const [unscrambleIsCorrect, setUnscrambleIsCorrect] = useState<boolean>(false);
 
-  // Match Practice State
+  // States matching Stage 2 (Match / OTHER) questions
   const [chosenOption, setChosenOption] = useState<string | null>(null);
   const [matchChecked, setMatchChecked] = useState<boolean>(false);
   const [matchIsCorrect, setMatchIsCorrect] = useState<boolean>(false);
+
+  // Coin flying animation state
+  const [flyingCoins, setFlyingCoins] = useState<{ id: number; delay: number }[]>([]);
+
+  // Derived state to map to the existing layout 0, 1, 2
+  const practiceStage = Math.floor(currentQuestionIdx / 3);
+
+  // Trigger floating coin animation + sound cascading effects
+  const triggerCoinFlow = () => {
+    // Generate 12 coins floating around random slight angles
+    const coinsList = Array.from({ length: 12 }, (_, i) => ({
+      id: Date.now() + i,
+      delay: i * 0.08
+    }));
+    setFlyingCoins(coinsList);
+
+    // Sequence sound plays
+    for (let i = 0; i < 5; i++) {
+      setTimeout(() => {
+        try { audio.playCoin(); } catch (e) {}
+      }, i * 140);
+    }
+
+    // Clear after animation timeline Ends
+    setTimeout(() => {
+      setFlyingCoins([]);
+    }, 2200);
+  };
+
+  // Generate 9 dynamic practice questions (3 choice, 3 unscramble, 3 translation matching)
+  const generatePracticeQuestions = (book: PictureBook) => {
+    const list: any[] = [];
+    const pages = book.pages;
+    if (!pages || pages.length === 0) return;
+
+    // 1. STAGE 0: Choice (3 questions)
+    const choicePages = pages.slice(0, Math.min(3, pages.length));
+    choicePages.forEach((pg) => {
+      const english = pg.english;
+      const words = english.replace(/[.,\/#!$%\^&\*;:{}=\-_`~()?]/g, "").split(/\s+/).filter(w => w.length > 0);
+      
+      const candidateList = [
+        'cat', 'fat', 'rat', 'bad', 'bat', 'sad', 'mad', 'dad', 'glad', 'mat', 'cap', 'van', 'fan', 'pan', 
+        'map', 'bag', 'flag', 'pad', 'act', 'wag', 'rap', 'chat', 'caps', 'maps', 'vans', 'fans'
+      ];
+      const selectedTarget = words.find(w => candidateList.includes(w.toLowerCase())) || words[words.length - 1];
+      const targetWord = selectedTarget ? selectedTarget.replace(/[.,\/#!$%\^&\*;:{}=\-_`~()?]/g, "") : 'cat';
+      
+      const regex = new RegExp(`\\b${targetWord}\\b`, 'i');
+      const problem = english.replace(regex, '______');
+
+      const distractors = [
+        'cat', 'fat', 'rat', 'bad', 'bat', 'sad', 'mad', 'dad', 'glad', 'mat', 'cap', 'van', 'fan', 'pan', 
+        'map', 'bag', 'flag', 'pad'
+      ].filter(d => d.toLowerCase() !== targetWord.toLowerCase()).sort(() => Math.random() - 0.5).slice(0, 3);
+      
+      const options = [targetWord, ...distractors].sort(() => Math.random() - 0.5);
+
+      list.push({
+        type: 'CHOICE',
+        title: '第一关：看图补充短语特征',
+        problem: problem,
+        chineseHint: pg.chinese,
+        options: options,
+        correctAnswer: targetWord,
+        image: pg.image,
+        emoji: pg.emoji || '🐱'
+      });
+    });
+
+    // 2. STAGE 1: Unscramble (3 questions)
+    // Offset or slice dynamically to get unique page sets
+    const unscrambleOffset = pages.length >= 3 ? Math.floor(pages.length / 3) : 0;
+    const unscramblePages = pages.slice(unscrambleOffset, Math.min(unscrambleOffset + 3, pages.length));
+    while (unscramblePages.length < 3 && pages.length > 0) {
+      unscramblePages.push(pages[unscramblePages.length % pages.length]);
+    }
+
+    unscramblePages.forEach((pg) => {
+      const english = pg.english;
+      const words = english.split(/\s+/).filter(w => w.length > 0);
+      const shuffled = [...words].sort(() => Math.random() - 0.5);
+
+      list.push({
+        type: 'UNSCRAMBLE',
+        title: '第二关：连词成句特训',
+        problem: english,
+        chineseHint: pg.chinese,
+        options: shuffled,
+        correctAnswer: words,
+        shuffledWords: shuffled,
+        image: pg.image,
+        emoji: pg.emoji || '🔮'
+      });
+    });
+
+    // 3. STAGE 2: Other/Meaning Matching (3 questions)
+    const otherOffset = pages.length >= 3 ? pages.length - 3 : 0;
+    const otherPages = pages.slice(otherOffset, Math.min(otherOffset + 3, pages.length));
+    while (otherPages.length < 3 && pages.length > 0) {
+      otherPages.push(pages[otherPages.length % pages.length]);
+    }
+
+    otherPages.forEach((pg) => {
+      const english = pg.english;
+      const chinese = pg.chinese;
+
+      const translationPool = [
+        '这是一只胖猫。', '这是一只坏老鼠。', '这是一只悲伤的蝙蝠。', '这只是一只蝙蝠。',
+        '那顶帽子在垫子上。', '那是我的帽子。', '这是一个红色的包。', '那顶帽子是他的。',
+        '这是他的垫子。'
+      ].filter(c => c !== chinese).sort(() => Math.random() - 0.5).slice(0, 3);
+
+      const options = [chinese, ...translationPool].sort(() => Math.random() - 0.5);
+
+      list.push({
+        type: 'OTHER',
+        title: '第三关：看图对流辨析',
+        problem: `“ ${english} ” 的正确中文含义是什么？`,
+        chineseHint: '仔细对照图片与文意，锁定正确的翻译契约吧！',
+        options: options,
+        correctAnswer: chinese,
+        image: pg.image,
+        emoji: pg.emoji || '💡'
+      });
+    });
+
+    setPracticeQuestions(list);
+    setCurrentQuestionIdx(0);
+    resetQuestionStates();
+  };
+
+  // Listen for Unscramble question changes to synchronize shuffled list
+  useEffect(() => {
+    if (practiceQuestions.length > 0 && currentQuestionIdx < practiceQuestions.length) {
+      const q = practiceQuestions[currentQuestionIdx];
+      if (q && q.type === 'UNSCRAMBLE') {
+        setShuffledWords(q.shuffledWords || q.options || []);
+      }
+    }
+  }, [currentQuestionIdx, practiceQuestions]);
 
   const recognitionRef = useRef<any>(null);
   const recordTimerRef = useRef<NodeJS.Timeout | null>(null);
@@ -484,19 +538,24 @@ export const PictureBookLibrary: React.FC<Props> = ({ onClose, stats, onUpdateSt
         [bId]: { ...(prev[bId] || { listened: false, lectured: false, dubbed: false, practiced: false }), lectured: true }
       }));
     }
+
+    if (mode === 'PRACTICE' && selectedBook) {
+      generatePracticeQuestions(selectedBook);
+    }
   };
 
   // Reset tests states
   const resetPracticeState = () => {
-    setPracticeStage(0);
+    setCurrentQuestionIdx(0);
     setPracticeComplete(false);
+    resetQuestionStates();
+  };
+
+  const resetQuestionStates = () => {
     setBlankAnswerSelected(null);
     setBlankChecked(false);
     setBlankIsCorrect(false);
 
-    // Shuffle word cards
-    const initialShuffled = [...defaultShuffledWords].sort(() => Math.random() - 0.5);
-    setShuffledWords(initialShuffled);
     setSelectedUnscrambleWords([]);
     setUnscrambleChecked(false);
     setUnscrambleIsCorrect(false);
@@ -508,14 +567,16 @@ export const PictureBookLibrary: React.FC<Props> = ({ onClose, stats, onUpdateSt
 
   // Check Practice Stage 0 (FillBlank)
   const handleCheckBlank = () => {
-    if (!blankAnswerSelected) return;
+    const q = practiceQuestions[currentQuestionIdx];
+    if (!q || !blankAnswerSelected) return;
     setBlankChecked(true);
-    const correct = blankAnswerSelected === 'fat';
+    const correct = blankAnswerSelected.toLowerCase() === q.correctAnswer.toLowerCase();
     setBlankIsCorrect(correct);
 
     if (correct) {
       try { audio.playCheer(); } catch (e) {}
       confetti({ particleCount: 50, spread: 40 });
+      triggerCoinFlow();
     } else {
       try { audio.playError(); } catch (e) {}
     }
@@ -536,12 +597,11 @@ export const PictureBookLibrary: React.FC<Props> = ({ onClose, stats, onUpdateSt
 
   // Evaluate Sentence Unscramble
   const handleCheckUnscramble = () => {
-    if (selectedUnscrambleWords.length === 0) return;
+    const q = practiceQuestions[currentQuestionIdx];
+    if (!q || selectedUnscrambleWords.length === 0) return;
     setUnscrambleChecked(true);
 
-    const builtSentence = selectedUnscrambleWords.join(' ');
-    // Correct sentence: "This is a bad rat." or "This is a bad rat."
-    const correctOrder = ['This', 'is', 'a', 'bad', 'rat.'];
+    const correctOrder = q.correctAnswer;
     const builtCorrectly = selectedUnscrambleWords.length === correctOrder.length && 
                           selectedUnscrambleWords.every((w, idx) => w === correctOrder[idx]);
 
@@ -549,6 +609,7 @@ export const PictureBookLibrary: React.FC<Props> = ({ onClose, stats, onUpdateSt
     if (builtCorrectly) {
       try { audio.playCheer(); } catch (e) {}
       confetti({ particleCount: 60, spread: 50 });
+      triggerCoinFlow();
     } else {
       try { audio.playError(); } catch (e) {}
     }
@@ -556,9 +617,10 @@ export const PictureBookLibrary: React.FC<Props> = ({ onClose, stats, onUpdateSt
 
   // Evaluate Match Option
   const handleCheckMatch = () => {
-    if (!chosenOption) return;
+    const q = practiceQuestions[currentQuestionIdx];
+    if (!q || !chosenOption) return;
     setMatchChecked(true);
-    const correct = chosenOption === 'B';
+    const correct = chosenOption === q.correctAnswer;
     setMatchIsCorrect(correct);
 
     if (correct) {
@@ -568,24 +630,30 @@ export const PictureBookLibrary: React.FC<Props> = ({ onClose, stats, onUpdateSt
         spread: 90,
         origin: { y: 0.6 }
       });
-      // Complete practicing stamps
-      if (selectedBook) {
-        const bId = selectedBook.id;
-        setProgressStamps(prev => ({
-          ...prev,
-          [bId]: { ...(prev[bId] || { listened: false, lectured: false, dubbed: false, practiced: false }), practiced: true }
-        }));
+      triggerCoinFlow();
+
+      // Complete practicing stamps at final question 8
+      if (currentQuestionIdx === 8) {
+        if (selectedBook) {
+          const bId = selectedBook.id;
+          setProgressStamps(prev => ({
+            ...prev,
+            [bId]: { ...(prev[bId] || { listened: false, lectured: false, dubbed: false, practiced: false }), practiced: true }
+          }));
+        }
+        if (onReward) {
+          onReward(25, 15); // Large complete reward!
+        }
+        setTimeout(() => {
+          setPracticeComplete(true);
+        }, 1500);
       }
-      if (onReward) {
-        onReward(25, 15); // Large complete reward!
-      }
-      setTimeout(() => {
-        setPracticeComplete(true);
-      }, 1500);
     } else {
       try { audio.playError(); } catch (e) {}
     }
   };
+
+  const q = practiceQuestions[currentQuestionIdx];
 
   return (
     <div className="w-full flex-1 flex flex-col justify-start select-none">
@@ -672,10 +740,11 @@ export const PictureBookLibrary: React.FC<Props> = ({ onClose, stats, onUpdateSt
                             </div>
                           ) : (
                             <div className="w-16 h-20 bg-[#f0f9ff] border-2 border-blue-150 rounded-2xl shrink-0 overflow-hidden mr-4 p-1 flex items-center justify-center shadow-inner">
-                              <img 
+                              <SafeImage 
                                 src={book.coverImage} 
                                 alt={book.title} 
                                 className="w-full h-full object-cover rounded-xl"
+                                fallbackEmoji={book.pages[0]?.emoji || '📖'}
                               />
                             </div>
                           )}
@@ -977,10 +1046,12 @@ export const PictureBookLibrary: React.FC<Props> = ({ onClose, stats, onUpdateSt
 
                 {/* Cartoon Illustrator area */}
                 <div className="relative w-full aspect-[4/3] bg-gradient-to-br from-emerald-50 to-indigo-50 border-3 border-emerald-200 rounded-3xl overflow-hidden shadow-xs shrink-0 flex items-center justify-center">
-                  <img 
-                    src={selectedBook.pages[currentPageIdx]?.image} 
+                  <SafeImage 
+                    src={getIllustrationForSentence(selectedBook.pages[currentPageIdx]?.english || '', selectedBook.pages[currentPageIdx]?.image || '')} 
                     alt="Illustration" 
                     className="w-full h-full object-cover transition-all"
+                    fallbackEmoji={selectedBook.pages[currentPageIdx]?.emoji}
+                    style={{ fontSize: '5rem' }}
                   />
                   
                   {isAutoPlaying && (
@@ -1163,137 +1234,93 @@ export const PictureBookLibrary: React.FC<Props> = ({ onClose, stats, onUpdateSt
           )}
 
           {/* ================= SCREEN 4: LECTURE MODE (学精讲) ================= */}
-          {selectedBook && activeBookMode === 'LECTURE' && (
-            <motion.div
-              key="book-lecture"
-              initial={{ opacity: 0, scale: 0.98 }}
-              animate={{ opacity: 1, scale: 1 }}
-              exit={{ opacity: 0, scale: 0.98 }}
-              className="flex-1 flex flex-col space-y-4 text-left"
-            >
-              {/* Lecture Header */}
-              <div className="flex justify-between items-center bg-white p-3 rounded-2xl border-2 border-violet-150 shadow-xs">
-                <button
-                  onClick={() => setBookModeAndClean('MENU')}
-                  className="flex items-center space-x-1.5 px-3 py-1.5 bg-violet-50 hover:bg-violet-100 border-2 border-violet-200 text-violet-900 font-black text-xs rounded-xl"
-                >
-                  <ArrowLeft size={14} className="stroke-[3]" />
-                  <span>神殿地图</span>
-                </button>
-                <div className="flex items-center space-x-1">
-                  <span className="text-xl">💡</span>
-                  <span className="font-extrabold text-[#1e1b4b] text-sm">学精讲: 黄金魔法句式</span>
-                </div>
-                <span className="text-xs font-black text-indigo-700 bg-indigo-50 border border-indigo-200 px-2.5 py-0.5 rounded-full block">
-                  C-A-T 词族
-                </span>
-              </div>
-
-              {/* Lecture Board Scroll Paper */}
-              <div className="flex-1 bg-gradient-to-b from-white to-violet-50 border-3 border-violet-300 border-b-[8px] border-violet-400 rounded-[32px] p-5 sm:p-6 shadow-sm overflow-y-auto max-h-[500px]">
-                
-                {/* Banner title */}
-                <div className="bg-gradient-to-r from-violet-500 to-indigo-500 p-4 border border-violet-300 rounded-2xl text-white mb-5">
-                  <span className="text-[10px] font-black uppercase tracking-widest opacity-90">魔法契约解读</span>
-                  <h4 className="text-base sm:text-lg font-black leading-none mt-1">
-                    解锁绘本涉及的 3 大黄金语法点 ✨
-                  </h4>
-                </div>
-
-                {/* List items representing grammar focus points */}
-                <div className="space-y-4">
-                  
-                  {/* Point 1 */}
-                  <div className="bg-white border-2 border-violet-150 border-b-[4px] border-violet-200 rounded-2xl p-4 transition-transform hover:scale-[1.01]">
-                    <div className="flex items-center gap-2 mb-2.5">
-                      <span className="p-1 text-md bg-violet-100 rounded-xl text-violet-700 font-extrabold">01</span>
-                      <h4 className="font-sans font-black text-[#1e1b4b] text-base leading-none">
-                        介绍物体的经典句式: This is a ...
-                      </h4>
-                    </div>
-                    <p className="text-xs text-slate-500/90 font-semibold leading-relaxed">
-                      当你想向身旁的小伙伴介绍一个你喜欢的事物或者可爱的小动物时，就可以口念法咒：<strong className="text-violet-700">“This is a + 单数名词.”</strong> (这是一只/一个...)
-                    </p>
-                    
-                    <div className="mt-3.5 bg-slate-50 p-3 rounded-xl space-y-1 border border-slate-100">
-                      <span className="text-[10px] font-black text-slate-400 block tracking-wider">魔法口诀例句 (Click to Speak):</span>
-                      
-                      <button 
-                        onClick={() => handleSpeak('This is a cat')}
-                        className="text-left py-1 hover:text-indigo-600 block text-xs font-black text-[#1e1b4b]"
-                      >
-                        🗣️ <span className="underline decoration-dashed decoration-violet-500">This is a cat.</span> (这是一只猫。)
-                      </button>
-                      <button 
-                        onClick={() => handleSpeak('This is a rat')}
-                        className="text-left py-1 hover:text-indigo-600 block text-xs font-black text-[#1e1b4b]"
-                      >
-                        🗣️ <span className="underline decoration-dashed decoration-violet-500">This is a rat.</span> (这是一只老鼠。)
-                      </button>
-                    </div>
-                  </div>
-
-                  {/* Point 2 */}
-                  <div className="bg-white border-2 border-violet-150 border-b-[4px] border-violet-200 rounded-2xl p-4 transition-transform hover:scale-[1.01]">
-                    <div className="flex items-center gap-2 mb-2.5">
-                      <span className="p-1 text-md bg-violet-100 rounded-xl text-violet-700 font-extrabold">02</span>
-                      <h4 className="font-sans font-black text-[#1e1b4b] text-base leading-none">
-                        什么是形容词？(把特征词放在名词前吧)
-                      </h4>
-                    </div>
-                    <p className="text-xs text-slate-500/90 font-semibold leading-relaxed">
-                      在英语里，表示身材、好坏、性格、心情感受的<strong className="text-violet-700">「形容词」</strong>，不能乱放哦！我们要把它们放到名词的<strong className="text-violet-700">前面</strong>来进行修饰。
-                    </p>
-
-                    <div className="grid grid-cols-1 sm:grid-cols-3 gap-2.5 mt-3.5">
-                      <div className="bg-[#fcf8ff] p-2.5 border border-purple-150 rounded-xl text-center">
-                        <span className="text-[10.5px] font-black text-slate-400 block mb-1">外貌修饰</span>
-                        <span className="text-xs font-extrabold text-[#1e1b4b] block">fat cat</span>
-                        <span className="text-[10px] text-purple-700 font-bold block mt-0.5">胖猫咪</span>
-                      </div>
-                      <div className="bg-[#fcf8ff] p-2.5 border border-purple-150 rounded-xl text-center">
-                        <span className="text-[10.5px] font-black text-slate-400 block mb-1">品质修饰</span>
-                        <span className="text-xs font-extrabold text-[#1e1b4b] block">bad rat</span>
-                        <span className="text-[10px] text-purple-700 font-bold block mt-0.5">坏老鼠</span>
-                      </div>
-                      <div className="bg-[#fcf8ff] p-2.5 border border-purple-150 rounded-xl text-center">
-                        <span className="text-[10.5px] font-black text-slate-400 block mb-1">心情修饰</span>
-                        <span className="text-xs font-extrabold text-[#1e1b4b] block">sad bat</span>
-                        <span className="text-[10px] text-purple-700 font-bold block mt-0.5">悲伤的蝙蝠</span>
-                      </div>
-                    </div>
-                  </div>
-
-                  {/* Point 3 */}
-                  <div className="bg-white border-2 border-slate-150 border-b-[4px] border-slate-200 rounded-2xl p-4 transition-transform hover:scale-[1.01]">
-                    <div className="flex items-center gap-2 mb-2.5">
-                      <span className="p-1 text-md bg-slate-100 rounded-xl text-slate-700 font-extrabold">03</span>
-                      <h4 className="font-sans font-black text-[#1e1b4b] text-base leading-none">
-                        趣味押韵音素: C-A-T 系列词族
-                      </h4>
-                    </div>
-                    <p className="text-xs text-slate-500/90 font-semibold leading-relaxed">
-                      发现了吗？<strong className="text-slate-700">c-at, f-at, r-at, b-at, s-ad</strong> 读起来不仅押韵顺口，尾音在拼读中也极为相似。多练习拼写这类具有统一相似音素的家族词汇，会让你背诵效率更高哦！
-                    </p>
-                  </div>
-
-                </div>
-
-                {/* Call to arms */}
-                <div className="mt-6 flex flex-col sm:flex-row gap-3">
-                  <motion.button
-                    whileTap={{ scale: 0.98 }}
+          {selectedBook && activeBookMode === 'LECTURE' && (() => {
+            const summary = getLectureSummaryForBook(selectedBook);
+            return (
+              <motion.div
+                key="book-lecture"
+                initial={{ opacity: 0, scale: 0.98 }}
+                animate={{ opacity: 1, scale: 1 }}
+                exit={{ opacity: 0, scale: 0.98 }}
+                className="flex-1 flex flex-col space-y-4 text-left"
+              >
+                {/* Lecture Header */}
+                <div className="flex justify-between items-center bg-white p-3 rounded-2xl border-2 border-violet-150 shadow-xs">
+                  <button
                     onClick={() => setBookModeAndClean('MENU')}
-                    className="flex-1 py-3 bg-gradient-to-r from-violet-500 to-[#7c3aed] border-b-[4px] border-violet-850 rounded-2xl text-white text-xs sm:text-sm font-black flex items-center justify-center gap-1 shadow cursor-pointer hover:scale-102"
+                    className="flex items-center space-x-1.5 px-3 py-1.5 bg-violet-50 hover:bg-violet-100 border-2 border-violet-200 text-violet-900 font-black text-xs rounded-xl"
                   >
-                    <span>🎯 我已学懂！进入读绘本</span>
-                    <ArrowRight size={14} className="stroke-[3]" />
-                  </motion.button>
+                    <ArrowLeft size={14} className="stroke-[3]" />
+                    <span>神殿地图</span>
+                  </button>
+                  <div className="flex items-center space-x-1">
+                    <span className="text-xl">💡</span>
+                    <span className="font-extrabold text-[#1e1b4b] text-sm">学精讲: 黄金魔法句式</span>
+                  </div>
+                  <span className="text-xs font-black text-indigo-700 bg-indigo-50 border border-indigo-200 px-2.5 py-0.5 rounded-full block">
+                    {summary.familyBadge}
+                  </span>
                 </div>
 
-              </div>
-            </motion.div>
-          )}
+                {/* Lecture Board Scroll Paper */}
+                <div className="flex-1 bg-gradient-to-b from-white to-violet-50 border-3 border-violet-300 border-b-[8px] border-violet-400 rounded-[32px] p-5 sm:p-6 shadow-sm overflow-y-auto max-h-[500px]">
+                  
+                  {/* Banner title */}
+                  <div className="bg-gradient-to-r from-violet-500 to-indigo-500 p-4 border border-violet-300 rounded-2xl text-white mb-5">
+                    <span className="text-[10px] font-black uppercase tracking-widest opacity-90">魔法契约解读</span>
+                    <h4 className="text-base sm:text-lg font-black leading-none mt-1">
+                      {summary.bannerTitle}
+                    </h4>
+                  </div>
+
+                  {/* List items representing grammar focus points */}
+                  <div className="space-y-4">
+                    {summary.points.map((pt, index) => (
+                      <div key={index} className="bg-white border-2 border-violet-150 border-b-[4px] border-violet-200 rounded-2xl p-4 transition-transform hover:scale-[1.01]">
+                        <div className="flex items-center gap-2 mb-2.5">
+                          <span className="p-1 px-2.5 text-xs bg-violet-100 rounded-xl text-violet-700 font-extrabold">{pt.num}</span>
+                          <h4 className="font-sans font-black text-[#1e1b4b] text-base leading-none">
+                            {pt.title}
+                          </h4>
+                        </div>
+                        <p className="text-xs text-slate-500/90 font-semibold leading-relaxed">
+                          {pt.desc}
+                        </p>
+                        
+                        {pt.examples && pt.examples.length > 0 && (
+                          <div className="mt-3.5 bg-slate-50 p-3 rounded-xl space-y-1 border border-slate-100">
+                            <span className="text-[10px] font-black text-slate-400 block tracking-wider">魔法口诀例句 (Click to Speak):</span>
+                            {pt.examples.map((ex, exIdx) => (
+                              <button 
+                                key={exIdx}
+                                onClick={() => handleSpeak(ex.english)}
+                                className="text-left py-1 hover:text-indigo-600 block text-xs font-black text-[#1e1b4b] w-full"
+                              >
+                                🗣️ <span className="underline decoration-dashed decoration-violet-500">{ex.english}</span> ({ex.chinese})
+                              </button>
+                            ))}
+                          </div>
+                        )}
+                      </div>
+                    ))}
+                  </div>
+
+                  {/* Call to arms */}
+                  <div className="mt-6 flex flex-col sm:flex-row gap-3">
+                    <motion.button
+                      whileTap={{ scale: 0.98 }}
+                      onClick={() => setBookModeAndClean('MENU')}
+                      className="flex-1 py-3 bg-gradient-to-r from-violet-500 to-[#7c3aed] border-b-[4px] border-violet-850 rounded-2xl text-white text-xs sm:text-sm font-black flex items-center justify-center gap-1 shadow cursor-pointer hover:scale-102"
+                    >
+                      <span>🎯 我已学懂！返回神殿地图</span>
+                      <ArrowRight size={14} className="stroke-[3]" />
+                    </motion.button>
+                  </div>
+
+                </div>
+              </motion.div>
+            );
+          })()}
 
           {/* ================= SCREEN 5: READ MODE (读绘本 / 配音评级) ================= */}
           {selectedBook && activeBookMode === 'READ' && (
@@ -1327,10 +1354,12 @@ export const PictureBookLibrary: React.FC<Props> = ({ onClose, stats, onUpdateSt
                 
                 {/* Illustration Preview */}
                 <div className="w-full aspect-[4/3] bg-gradient-to-br from-amber-50 to-indigo-50 border-3 border-amber-200 rounded-3xl overflow-hidden shadow-xs shrink-0 flex items-center justify-center relative">
-                  <img 
-                    src={selectedBook.pages[currentPageIdx]?.image} 
+                  <SafeImage 
+                    src={getIllustrationForSentence(selectedBook.pages[currentPageIdx]?.english || '', selectedBook.pages[currentPageIdx]?.image || '')} 
                     alt="Illustration" 
                     className="w-full h-full object-cover select-none"
+                    fallbackEmoji={selectedBook.pages[currentPageIdx]?.emoji}
+                    style={{ fontSize: '5rem' }}
                   />
                   
                   {/* Stamp status overlay */}
@@ -1565,7 +1594,7 @@ export const PictureBookLibrary: React.FC<Props> = ({ onClose, stats, onUpdateSt
                       完美达成！特训三星解锁！
                     </h4>
                     <p className="text-xs text-slate-500 font-semibold max-w-xs leading-relaxed">
-                      你非常顺利地挑战过了“选词填空”、“句子重排”和“看图辨析”三大魔障！
+                      你非常顺利地挑战过了“选词填空”、“句子重排”和“看图辨析”三大力作！
                     </p>
                     
                     <div className="bg-pink-50 text-pink-800 p-3 rounded-2xl border border-pink-150 w-full max-w-[240px]">
@@ -1586,45 +1615,54 @@ export const PictureBookLibrary: React.FC<Props> = ({ onClose, stats, onUpdateSt
                 ) : (
                   <>
                     {/* STAGE 0: FILL IN THE BLANKS */}
-                    {practiceStage === 0 && (
+                    {practiceStage === 0 && q && (
                       <div className="flex-1 flex flex-col justify-between space-y-4">
                         <div className="space-y-1">
-                          <span className="text-[10px] tracking-wider font-extrabold text-pink-650 block">第一关：看图补充短语特征 (Choose Correct Adjective)</span>
+                          <span className="text-[10px] tracking-wider font-extrabold text-pink-650 block">{q.title}</span>
                           <h4 className="text-sm font-black text-indigo-950">
-                            选择最恰当修饰词，补全胖猫咪句子！
+                            选择最恰当的修饰词补全完整句子法咒！
                           </h4>
                         </div>
 
                         {/* Illustration wrapper */}
                         <div className="w-full h-36 bg-white border border-pink-200 rounded-2xl overflow-hidden flex items-center justify-center p-2 shadow-inner relative max-w-xs mx-auto">
-                          <img 
-                            src="/src/assets/images/picbook_fat_cat_1780563015884.png" 
-                            alt="Fat Cat Prompt" 
+                          <SafeImage 
+                            src={getIllustrationForSentence(q.correctAnswer, q.image)} 
+                            alt="Illustration Prompt" 
                             className="h-full object-contain"
+                            fallbackEmoji={q.emoji}
+                            style={{ fontSize: '4.5rem' }}
                           />
                         </div>
 
                         {/* Dynamic blanks block */}
                         <div className="text-center py-2 relative">
                           <div className="inline-flex items-center gap-2 bg-indigo-50/70 border border-indigo-200/50 p-3 rounded-2xl text-lg font-black text-indigo-950">
-                            <span>This is a</span>
-                            <span className={`px-4.5 py-1 min-w-[70px] uppercase border-b-2 font-mono text-center inline-block ${
-                              blankAnswerSelected ? 'text-pink-600 border-pink-400 border-b-0 animate-pulse' : 'text-slate-400 border-slate-400'
-                            }`}>
-                              {blankAnswerSelected || '______'}
-                            </span>
-                            <span>cat.</span>
+                            {(() => {
+                              const parts = q.problem.split('______');
+                              return (
+                                <>
+                                  <span>{parts[0]}</span>
+                                  <span className={`px-4.5 py-1 min-w-[70px] border-b-2 font-mono text-center inline-block ${
+                                    blankAnswerSelected ? 'text-pink-600 border-pink-400 border-b-0 animate-pulse' : 'text-slate-400 border-slate-400'
+                                  }`}>
+                                    {blankAnswerSelected || '______'}
+                                  </span>
+                                  <span>{parts[1]}</span>
+                                </>
+                              );
+                            })()}
                           </div>
                           
                           <div className="text-[10px] text-slate-400 font-extrabold block mt-1.5">
-                            提示中文: 这是一只胖猫。
+                            提示中文: {q.chineseHint}
                           </div>
                         </div>
 
                         {/* Interactive options */}
                         <div className="space-y-3 shrink-0">
                           <div className="grid grid-cols-2 gap-2.5">
-                            {['sad', 'bad', 'fat', 'rat'].map((opt) => (
+                            {q.options.map((opt: string) => (
                               <button
                                 key={opt}
                                 disabled={blankChecked}
@@ -1647,12 +1685,13 @@ export const PictureBookLibrary: React.FC<Props> = ({ onClose, stats, onUpdateSt
                           {blankChecked ? (
                             <div className="p-3 bg-white border border-slate-150 rounded-2xl flex items-center justify-between">
                               <span className={`text-xs font-extrabold ${blankIsCorrect ? 'text-emerald-700' : 'text-red-700'}`}>
-                                {blankIsCorrect ? '🎉 爆赞通过！这就是胖猫！' : '❌ 答错啦，应该是 fat (胖的)'}
+                                {blankIsCorrect ? '🎉 爆赞通过！法力大增！' : `❌ 答错啦，正确的答案是: ${q.correctAnswer}`}
                               </span>
                               <button
                                 onClick={() => {
                                   if (blankIsCorrect) {
-                                    setPracticeStage(1);
+                                    setCurrentQuestionIdx(prev => prev + 1);
+                                    resetQuestionStates();
                                   } else {
                                     setBlankAnswerSelected(null);
                                     setBlankChecked(false);
@@ -1663,7 +1702,7 @@ export const PictureBookLibrary: React.FC<Props> = ({ onClose, stats, onUpdateSt
                                   blankIsCorrect ? 'bg-emerald-500' : 'bg-red-500'
                                 }`}
                               >
-                                {blankIsCorrect ? '下一关' : '重试一次'}
+                                {blankIsCorrect ? '下一题' : '重试一次'}
                               </button>
                             </div>
                           ) : (
@@ -1685,19 +1724,30 @@ export const PictureBookLibrary: React.FC<Props> = ({ onClose, stats, onUpdateSt
                     )}
 
                     {/* STAGE 1: SENTENCE UNSCRAMBLE */}
-                    {practiceStage === 1 && (
+                    {practiceStage === 1 && q && (
                       <div className="flex-1 flex flex-col justify-between space-y-4">
                         <div className="space-y-1">
-                          <span className="text-[10px] tracking-wider font-extrabold text-pink-650 block">第二关：连词成句特训 (Sentence Unscramble)</span>
+                          <span className="text-[10px] tracking-wider font-extrabold text-pink-650 block">{q.title}</span>
                           <h4 className="text-sm font-black text-[#1e1b4b]">
-                            请根据中文大意，点击拖动磁块，将其按正确规则拼出来！
+                            请根据中文大意，点击磁块按正确句法规则进行复原！
                           </h4>
                         </div>
 
+                        {/* Illustration */}
+                        <div className="w-full h-28 bg-white border border-pink-100 rounded-2xl overflow-hidden flex items-center justify-center p-2 shadow-inner relative max-w-xs mx-auto">
+                          <SafeImage 
+                            src={getIllustrationForSentence(q.problem, q.image)} 
+                            alt="Illustration" 
+                            className="h-full object-contain"
+                            fallbackEmoji={q.emoji}
+                            style={{ fontSize: '3rem' }}
+                          />
+                        </div>
+
                         {/* Chinese hint panel */}
-                        <div className="bg-white/80 p-3 rounded-2xl border border-pink-150 text-center font-black">
-                          <span className="text-[10px] text-slate-400 block mb-1">中文示意提示</span>
-                          <span className="text-indigo-950 text-sm">“ 这是一只坏老鼠。 ”</span>
+                        <div className="bg-white/80 p-2.5 rounded-2xl border border-pink-150 text-center font-black">
+                          <span className="text-[10px] text-slate-400 block mb-0.5">中文示意提示</span>
+                          <span className="text-indigo-950 text-sm">“ {q.chineseHint} ”</span>
                         </div>
 
                         {/* Constructed active sentence bar */}
@@ -1721,17 +1771,26 @@ export const PictureBookLibrary: React.FC<Props> = ({ onClose, stats, onUpdateSt
                         {/* Shuffled options card list */}
                         <div className="space-y-4 shrink-0">
                           <div>
-                            <span className="text-[10.5px] font-black text-slate-400 block mb-2 text-center">可点选魔法词块(可反点退回)</span>
+                            <span className="text-[10.5px] font-black text-slate-400 block mb-2 text-center">可点选微型魔法词块 (可反向点击取消)</span>
                             <div className="flex flex-wrap gap-2 justify-center select-none">
-                              {shuffledWords.map((word) => {
-                                const active = selectedUnscrambleWords.includes(word);
+                              {shuffledWords.map((word, idx) => {
                                 return (
                                   <button
-                                    key={word}
+                                    key={`${word}-${idx}`}
                                     disabled={unscrambleChecked}
-                                    onClick={() => handleUnscrambleWordClick(word)}
+                                    onClick={() => {
+                                      if (unscrambleChecked) return;
+                                      try { audio.playPop(); } catch (e) {}
+                                      setSelectedUnscrambleWords(prev => {
+                                        if (prev.includes(word)) {
+                                          return prev.filter(w => w !== word);
+                                        } else {
+                                          return [...prev, word];
+                                        }
+                                      });
+                                    }}
                                     className={`px-3 py-2 rounded-xl text-xs font-black border-2 transition-transform active:scale-95 cursor-pointer ${
-                                      active 
+                                      selectedUnscrambleWords.includes(word)
                                         ? 'bg-slate-100 text-slate-350 border-slate-200 line-through opacity-45' 
                                         : 'bg-white border-pink-200 text-indigo-950 border-b-[3px]'
                                     }`}
@@ -1747,12 +1806,13 @@ export const PictureBookLibrary: React.FC<Props> = ({ onClose, stats, onUpdateSt
                           {unscrambleChecked ? (
                             <div className="p-3 bg-white border border-slate-150 rounded-2xl flex items-center justify-between">
                               <span className={`text-xs font-extrabold ${unscrambleIsCorrect ? 'text-emerald-700' : 'text-red-700'}`}>
-                                {unscrambleIsCorrect ? '🎉 拼写无误，法术凝聚！' : '❌ 语序不对哦，应当是: This is a bad rat.'}
+                                {unscrambleIsCorrect ? '🎉 拼写无误，法术召唤成功！' : `❌ 语序不对，应该是: ${q.correctAnswer.join(' ')}`}
                               </span>
                               <button
                                 onClick={() => {
                                   if (unscrambleIsCorrect) {
-                                    setPracticeStage(2);
+                                    setCurrentQuestionIdx(prev => prev + 1);
+                                    resetQuestionStates();
                                   } else {
                                     setSelectedUnscrambleWords([]);
                                     setUnscrambleChecked(false);
@@ -1763,7 +1823,7 @@ export const PictureBookLibrary: React.FC<Props> = ({ onClose, stats, onUpdateSt
                                   unscrambleIsCorrect ? 'bg-emerald-500' : 'bg-red-500'
                                 }`}
                               >
-                                {unscrambleIsCorrect ? '进入末关' : '再来一次'}
+                                {unscrambleIsCorrect ? '下一题' : '再来一次'}
                               </button>
                             </div>
                           ) : (
@@ -1785,72 +1845,65 @@ export const PictureBookLibrary: React.FC<Props> = ({ onClose, stats, onUpdateSt
                     )}
 
                     {/* STAGE 2: MATCH GRAPH AND OPTION TEXTS */}
-                    {practiceStage === 2 && (
+                    {practiceStage === 2 && q && (
                       <div className="flex-1 flex flex-col justify-between space-y-4">
                         <div className="space-y-1">
-                          <span className="text-[10px] tracking-wider font-extrabold text-pink-650 block">第三关：看图对流辨析 (Visual Reading Matching)</span>
+                          <span className="text-[10px] tracking-wider font-extrabold text-pink-650 block">{q.title}</span>
                           <h4 className="text-sm font-black text-[#1e1b4b]">
-                            仔细看下方图片，点击并圈出能准确总结故事的英文句子！
+                            {q.problem}
                           </h4>
                         </div>
 
                         {/* Graphic illustrator prompt */}
                         <div className="w-full h-34 bg-white border border-pink-200 rounded-2xl overflow-hidden flex items-center justify-center p-2 shadow-inner relative max-w-xs mx-auto">
-                          <img 
-                            src="/src/assets/images/picbook_sad_bat_1780563086634.png" 
-                            alt="Sad Bat Match" 
+                          <SafeImage 
+                            src={getIllustrationForSentence(q.correctAnswer, q.image)} 
+                            alt="Illustration Match" 
                             className="h-full object-contain"
+                            fallbackEmoji={q.emoji}
+                            style={{ fontSize: '4.5rem' }}
                           />
                         </div>
 
-                        {/* Radio options of english */}
-                        <div className="space-y-3 shrink-0">
+                        {/* Radio options of chinese */}
+                        <div className="space-y-3 shrink-1">
                           <div className="grid grid-cols-1 gap-2">
-                            {/* Option A */}
-                            <button
-                              disabled={matchChecked}
-                              onClick={() => {
-                                try { audio.playPop(); } catch (e) {}
-                                setChosenOption('A');
-                              }}
-                              className={`p-3.5 rounded-2xl font-black text-xs text-left border-2 flex items-center justify-between ${
-                                chosenOption === 'A' 
-                                  ? 'bg-pink-100 border-pink-400 text-pink-900 shadow' 
-                                  : 'bg-white hover:bg-slate-50 border-slate-200 text-indigo-950'
-                              }`}
-                            >
-                              <span>🅰️ This is a bat. (这只是一只蝙蝠。)</span>
-                              <span className="text-[10px] text-slate-400 font-bold">基础描述</span>
-                            </button>
-
-                            {/* Option B */}
-                            <button
-                              disabled={matchChecked}
-                              onClick={() => {
-                                try { audio.playPop(); } catch (e) {}
-                                setChosenOption('B');
-                              }}
-                              className={`p-3.5 rounded-2xl font-black text-xs text-left border-2 flex items-center justify-between ${
-                                chosenOption === 'B' 
-                                  ? 'bg-pink-100 border-pink-400 text-pink-900 shadow' 
-                                  : 'bg-white hover:bg-slate-50 border-slate-200 text-indigo-950'
-                              }`}
-                            >
-                              <span>🅱️ This is a sad bat. (这是一只悲伤的蝙蝠。)</span>
-                              <span className="text-[10px] text-pink-600 font-black">精确心理描述 🔥</span>
-                            </button>
+                            {q.options.map((opt: string, idx: number) => {
+                              const badge = idx === 0 ? '🅰️' : idx === 1 ? '🅱️' : idx === 2 ? '🅲' : '🅳';
+                              return (
+                                <button
+                                  key={opt}
+                                  disabled={matchChecked}
+                                  onClick={() => {
+                                    try { audio.playPop(); } catch (e) {}
+                                    setChosenOption(opt);
+                                  }}
+                                  className={`p-3 rounded-xl font-bold text-xs text-left border-2 flex items-center justify-between ${
+                                    chosenOption === opt 
+                                      ? 'bg-pink-150 border-pink-400 text-pink-905 shadow' 
+                                      : 'bg-white hover:bg-slate-50 border-slate-200 text-indigo-950'
+                                  }`}
+                                >
+                                  <span>{badge} {opt}</span>
+                                  {chosenOption === opt && <span className="text-[10px] text-pink-600 font-extrabold">当前选定🎯</span>}
+                                </button>
+                              );
+                            })}
                           </div>
 
                           {/* Verdict checking footer */}
                           {matchChecked ? (
                             <div className="p-3 bg-white border border-slate-150 rounded-2xl flex items-center justify-between">
                               <span className={`text-xs font-extrabold ${matchIsCorrect ? 'text-emerald-700' : 'text-red-700'}`}>
-                                {matchIsCorrect ? '🎉 爆灯通关！心理情绪形容十分到位！' : '❌ 差了一点点细节，应当是具有 sad 表情特征的蝙蝠选项喔！'}
+                                {matchIsCorrect ? '🎉 爆灯通关！理解完全正确！' : `❌ 选错啦，答案应当是: ${q.correctAnswer}`}
                               </span>
                               <button
                                 onClick={() => {
                                   if (matchIsCorrect) {
-                                    // Managed inside checker success redirect timers
+                                    if (currentQuestionIdx < 8) {
+                                      setCurrentQuestionIdx(prev => prev + 1);
+                                      resetQuestionStates();
+                                    }
                                   } else {
                                     setChosenOption(null);
                                     setMatchChecked(false);
@@ -1861,7 +1914,7 @@ export const PictureBookLibrary: React.FC<Props> = ({ onClose, stats, onUpdateSt
                                   matchIsCorrect ? 'bg-emerald-500' : 'bg-red-500'
                                 }`}
                               >
-                                {matchIsCorrect ? '太棒了' : '重新尝试'}
+                                {matchIsCorrect ? (currentQuestionIdx === 8 ? '完成特训' : '下一题') : '重新尝试'}
                               </button>
                             </div>
                           ) : (
