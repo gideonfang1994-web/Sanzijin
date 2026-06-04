@@ -85,7 +85,7 @@ export const PICTURE_BOOKS: PictureBook[] = [
         pageNumber: 4,
         english: 'A fat rat.',
         chinese: '一只胖老鼠。',
-        image: '/src/assets/images/picbook_rat_1780563032822.png',
+        image: '/src/assets/images/picbook_fat_rat_1780576877687.png',
         emoji: '🐀'
       },
       {
@@ -99,7 +99,7 @@ export const PICTURE_BOOKS: PictureBook[] = [
         pageNumber: 6,
         english: 'A fat bat.',
         chinese: '一只胖蝙蝠。',
-        image: '/src/assets/images/picbook_bat_1780563068637.png',
+        image: '/src/assets/images/picbook_fat_bat_1780576896015.png',
         emoji: '🦇'
       }
     ]
@@ -158,7 +158,7 @@ export const PICTURE_BOOKS: PictureBook[] = [
   {
     id: 'book_4',
     title: '4. That is My Cat 🎒',
-    coverImage: '/src/assets/images/picbook_bat_1780563068637.png',
+    coverImage: '/src/assets/images/picbook_cat_1780562998321.png',
     description: '运用“That is ...”和“my ...”句型，那是谁的猫和球拍帽子呢？',
     difficulty: 'PRIMARY',
     pages: [
@@ -180,28 +180,28 @@ export const PICTURE_BOOKS: PictureBook[] = [
         pageNumber: 3,
         english: 'That is a bat.',
         chinese: '那是球拍。',
-        image: '/src/assets/images/picbook_bat_1780563068637.png',
+        image: '/src/assets/images/picbook_sports_bat_1780576914796.png',
         emoji: '🏏'
       },
       {
         pageNumber: 4,
         english: 'That is my bat.',
         chinese: '那是我的球拍。',
-        image: '/src/assets/images/picbook_bat_1780563068637.png',
+        image: '/src/assets/images/picbook_sports_bat_1780576914796.png',
         emoji: '🏏'
       },
       {
         pageNumber: 5,
         english: 'That is a hat.',
         chinese: '那是一顶帽子。',
-        image: '/src/assets/images/picbook_bad_rat_1780563050522.png',
+        image: '/src/assets/images/picbook_cute_hat_1780576943479.png',
         emoji: '🎩'
       },
       {
         pageNumber: 6,
         english: 'That is my hat.',
         chinese: '那是我的帽子。',
-        image: '/src/assets/images/picbook_bad_rat_1780563050522.png',
+        image: '/src/assets/images/picbook_cute_hat_1780576943479.png',
         emoji: '🎩'
       }
     ]
@@ -209,7 +209,7 @@ export const PICTURE_BOOKS: PictureBook[] = [
   {
     id: 'book_5',
     title: '5. His Mat and Her Hat 💻',
-    coverImage: 'https://img.icons8.com/clouds/200/bedsheets.png',
+    coverImage: '/src/assets/images/picbook_cozy_mat_1780576929177.png',
     description: '巧妙学会 his 和 her 代词，区分他的和她的神奇物品！',
     difficulty: 'PRIMARY',
     pages: [
@@ -217,42 +217,42 @@ export const PICTURE_BOOKS: PictureBook[] = [
         pageNumber: 1,
         english: 'This is a mat.',
         chinese: '这是一张垫子。',
-        image: '/src/assets/images/picbook_rat_1780563032822.png',
+        image: '/src/assets/images/picbook_cozy_mat_1780576929177.png',
         emoji: '🩹'
       },
       {
         pageNumber: 2,
         english: 'This is his mat.',
         chinese: '这是他的垫子。',
-        image: '/src/assets/images/picbook_rat_1780563032822.png',
+        image: '/src/assets/images/picbook_cozy_mat_1780576929177.png',
         emoji: '🩹'
       },
       {
         pageNumber: 3,
         english: 'This is a hat.',
         chinese: '这是一顶帽子。',
-        image: '/src/assets/images/picbook_bad_rat_1780563050522.png',
+        image: '/src/assets/images/picbook_cute_hat_1780576943479.png',
         emoji: '👒'
       },
       {
         pageNumber: 4,
         english: 'This is her hat.',
         chinese: '这是她的帽子。',
-        image: '/src/assets/images/picbook_bad_rat_1780563050522.png',
+        image: '/src/assets/images/picbook_cute_hat_1780576943479.png',
         emoji: '👒'
       },
       {
         pageNumber: 5,
         english: 'That is a pad.',
         chinese: '那是一块平板。',
-        image: '/src/assets/images/picbook_bat_1780563068637.png',
+        image: '/src/assets/images/picbook_toy_pad_1780576959864.png',
         emoji: '📱'
       },
       {
         pageNumber: 6,
         english: 'That is his pad.',
         chinese: '那是他的平板。',
-        image: '/src/assets/images/picbook_bat_1780563068637.png',
+        image: '/src/assets/images/picbook_toy_pad_1780576959864.png',
         emoji: '📱'
       },
       {

@@ -17,6 +17,13 @@ const DAD_MAD_PNG = '/src/assets/images/dad_mad_1780575595863.png';
 const DAD_SAD_PNG = '/src/assets/images/dad_sad_1780575614289.png';
 const DAD_GLAD_PNG = '/src/assets/images/dad_glad_1780575633904.png';
 
+const PICBOOK_FAT_RAT_PNG = '/src/assets/images/picbook_fat_rat_1780576877687.png';
+const PICBOOK_FAT_BAT_PNG = '/src/assets/images/picbook_fat_bat_1780576896015.png';
+const PICBOOK_SPORTS_BAT_PNG = '/src/assets/images/picbook_sports_bat_1780576914796.png';
+const PICBOOK_COZY_MAT_PNG = '/src/assets/images/picbook_cozy_mat_1780576929177.png';
+const PICBOOK_CUTE_HAT_PNG = '/src/assets/images/picbook_cute_hat_1780576943479.png';
+const PICBOOK_TOY_PAD_PNG = '/src/assets/images/picbook_toy_pad_1780576959864.png';
+
 // Cute shared SVG design fragments (represented as inline SVG nodes)
 const SVGGradients = `
   <defs>
@@ -447,12 +454,7 @@ export function getIllustrationForSentence(english: string, originalImage: strin
   // 1. Keep original premium PNGs if configured!
   if (originalImage && (
     originalImage.includes('dad_') || 
-    originalImage.includes('picbook_cat') || 
-    originalImage.includes('picbook_fat_cat') || 
-    originalImage.includes('picbook_rat') || 
-    originalImage.includes('picbook_bad_rat') || 
-    originalImage.includes('picbook_bat') || 
-    originalImage.includes('picbook_sad_bat')
+    originalImage.includes('picbook_')
   )) {
     return originalImage;
   }
@@ -461,9 +463,14 @@ export function getIllustrationForSentence(english: string, originalImage: strin
   if (norm === 'a cat' || norm === 'this is a cat' || norm === 'that is a cat') return CAT_PNG;
   if (norm === 'a fat cat' || norm === 'this is a fat cat' || norm === 'that is my cat') return FAT_CAT_PNG;
   if (norm === 'a rat' || norm === 'this is a rat' || norm === 'what is it it s a rat') return RAT_PNG;
-  if (norm === 'a fat rat' || norm === 'this is a bad rat' || norm === 'those are bad rats' || norm === 'these are bad rats') return BAD_RAT_PNG;
+  if (norm === 'a fat rat') return PICBOOK_FAT_RAT_PNG;
+  if (norm === 'this is a bad rat' || norm === 'those are bad rats' || norm === 'these are bad rats') return BAD_RAT_PNG;
   if (norm === 'a bat' || norm === 'this is a bat' || norm === 'what is it it s a bat') return BAT_PNG;
-  if (norm === 'a fat bat' || norm === 'this is a sad bat' || norm === 'those are sad bats' || norm === 'these are sad bats') return SAD_BAT_PNG;
+  if (norm === 'a fat bat') return PICBOOK_FAT_BAT_PNG;
+  if (norm === 'this is a sad bat' || norm === 'those are sad bats' || norm === 'these are sad bats') return SAD_BAT_PNG;
+  if (norm.includes('mat')) return PICBOOK_COZY_MAT_PNG;
+  if (norm.includes('hat')) return PICBOOK_CUTE_HAT_PNG;
+  if (norm.includes('pad')) return PICBOOK_TOY_PAD_PNG;
   
   if (norm.includes('mad dad')) return DAD_MAD_PNG;
   if (norm.includes('sad dad')) return DAD_SAD_PNG;
