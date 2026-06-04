@@ -274,7 +274,7 @@ export const PICTURE_BOOKS: PictureBook[] = [
   {
     id: 'book_6',
     title: '6. This is Not a Cat 🎩',
-    coverImage: 'https://img.icons8.com/clouds/200/not-applicable.png',
+    coverImage: '/src/assets/images/picbook_not_cat_cover_1780577693222.png',
     description: '学习否定句 is not! 这不是猫，而是一只在偷吃的小老鼠！',
     difficulty: 'PRIMARY',
     pages: [
@@ -296,14 +296,14 @@ export const PICTURE_BOOKS: PictureBook[] = [
         pageNumber: 3,
         english: 'This is not a hat. It is a mat.',
         chinese: '这不是一顶帽子。它是一块垫子。',
-        image: '/src/assets/images/picbook_rat_1780563032822.png',
+        image: '/src/assets/images/picbook_cozy_mat_1780576929177.png',
         emoji: '🩹'
       },
       {
         pageNumber: 4,
         english: 'That is not a mat. It is a pad.',
         chinese: '那不是一块垫子。它是一个平板。',
-        image: '/src/assets/images/picbook_bat_1780563068637.png',
+        image: '/src/assets/images/picbook_toy_pad_1780576959864.png',
         emoji: '📱'
       }
     ]
@@ -311,7 +311,7 @@ export const PICTURE_BOOKS: PictureBook[] = [
   {
     id: 'book_7',
     title: '7. This is Not My Bag 🎒',
-    coverImage: 'https://img.icons8.com/clouds/200/backpack.png',
+    coverImage: '/src/assets/images/picbook_cute_bag_1780577713378.png',
     description: '否定所有格特训：学说“This is not my ... It is her/his ...”',
     difficulty: 'PRIMARY',
     pages: [
@@ -319,28 +319,28 @@ export const PICTURE_BOOKS: PictureBook[] = [
         pageNumber: 1,
         english: 'This is not my bag. It is her bag.',
         chinese: '这不是我的包。它是她的包。',
-        image: '/src/assets/images/picbook_bad_rat_1780563050522.png',
+        image: '/src/assets/images/picbook_double_bag_1780577726021.png',
         emoji: '🎒'
       },
       {
         pageNumber: 2,
         english: 'This is not my mat. It is his mat.',
         chinese: '这不是我的垫子。它是他的垫子。',
-        image: '/src/assets/images/picbook_rat_1780563032822.png',
+        image: '/src/assets/images/picbook_cozy_mat_1780576929177.png',
         emoji: '🩹'
       },
       {
         pageNumber: 3,
         english: 'That is not my flag. It is her flag.',
         chinese: '那不是我的旗子。它是她的旗子。',
-        image: '/src/assets/images/picbook_cat_1780562998321.png',
+        image: '/src/assets/images/picbook_cute_flag_1780577740221.png',
         emoji: '🚩'
       },
       {
         pageNumber: 4,
         english: 'That is not my mat. It is his mat.',
         chinese: '那不是我的垫子。它是他的垫子。',
-        image: '/src/assets/images/picbook_rat_1780563032822.png',
+        image: '/src/assets/images/picbook_cozy_mat_1780576929177.png',
         emoji: '🩹'
       }
     ]
@@ -348,7 +348,7 @@ export const PICTURE_BOOKS: PictureBook[] = [
   {
     id: 'book_8',
     title: '8. Is This Your Bag? 🙋‍♂️',
-    coverImage: 'https://img.icons8.com/clouds/200/question-mark.png',
+    coverImage: '/src/assets/images/picbook_detective_glass_1780577756299.png',
     description: '超级小侦探出动！学习一般疑问句和极简答语 Yes/No 答辩。',
     difficulty: 'PRIMARY',
     pages: [
@@ -356,28 +356,28 @@ export const PICTURE_BOOKS: PictureBook[] = [
         pageNumber: 1,
         english: 'Is this your bag? Yes, it is.',
         chinese: '这是你的包吗？是的。',
-        image: '/src/assets/images/picbook_bad_rat_1780563050522.png',
+        image: '/src/assets/images/picbook_cute_bag_1780577713378.png',
         emoji: '🎒'
       },
       {
         pageNumber: 2,
         english: "Is this your map? No, it isn't.",
         chinese: '这是你的地图吗？不是。',
-        image: '/src/assets/images/picbook_cat_1780562998321.png',
+        image: '/src/assets/images/picbook_treasure_map_1780577771241.png',
         emoji: '🗺️'
       },
       {
         pageNumber: 3,
         english: 'Is this your flag? Yes, it is.',
         chinese: '这是你的旗子吗？是的。',
-        image: '/src/assets/images/picbook_cat_1780562998321.png',
+        image: '/src/assets/images/picbook_cute_flag_1780577740221.png',
         emoji: '🚩'
       },
       {
         pageNumber: 4,
         english: "Is this your hat? No, it isn't.",
         chinese: '这是你的帽子吗？不是。',
-        image: '/src/assets/images/picbook_bad_rat_1780563050522.png',
+        image: '/src/assets/images/picbook_cute_hat_1780576943479.png',
         emoji: '👒'
       }
     ]
@@ -385,7 +385,7 @@ export const PICTURE_BOOKS: PictureBook[] = [
   {
     id: 'book_9',
     title: '9. These are Cats 🐾',
-    coverImage: 'https://img.icons8.com/clouds/200/cat.png',
+    coverImage: '/src/assets/images/picbook_cats_group_1780577792847.png',
     description: '学复数近指 These are! 许多许多的胖猫、坏老鼠与淘气蝙蝠。',
     difficulty: 'PRIMARY',
     pages: [
@@ -393,42 +393,42 @@ export const PICTURE_BOOKS: PictureBook[] = [
         pageNumber: 1,
         english: 'These are cats.',
         chinese: '这些是猫。',
-        image: '/src/assets/images/picbook_cat_1780562998321.png',
+        image: '/src/assets/images/picbook_cats_group_1780577792847.png',
         emoji: '🐱🐱'
       },
       {
         pageNumber: 2,
         english: 'These are fat cats.',
         chinese: '这些是胖猫。',
-        image: '/src/assets/images/picbook_fat_cat_1780563015884.png',
+        image: '/src/assets/images/picbook_fat_cats_group_1780577808806.png',
         emoji: '🐈🐈'
       },
       {
         pageNumber: 3,
         english: 'These are rats.',
         chinese: '这些是老鼠。',
-        image: '/src/assets/images/picbook_rat_1780563032822.png',
+        image: '/src/assets/images/picbook_rats_group_1780577825027.png',
         emoji: '🐭🐭'
       },
       {
         pageNumber: 4,
         english: 'These are bad rats.',
         chinese: '这些是坏老鼠。',
-        image: '/src/assets/images/picbook_bad_rat_1780563050522.png',
+        image: '/src/assets/images/picbook_bad_rats_group_1780577840665.png',
         emoji: '👿👿'
       },
       {
         pageNumber: 5,
         english: 'These are bats.',
         chinese: '这些是蝙蝠。',
-        image: '/src/assets/images/picbook_bat_1780563068637.png',
+        image: '/src/assets/images/picbook_bats_group_1780577856313.png',
         emoji: '🦇🦇'
       },
       {
         pageNumber: 6,
         english: 'These are sad bats.',
         chinese: '这些是伤心的蝙蝠。',
-        image: '/src/assets/images/picbook_sad_bat_1780563086634.png',
+        image: '/src/assets/images/picbook_sad_bats_group_1780577871572.png',
         emoji: '😢😢'
       }
     ]
@@ -436,7 +436,7 @@ export const PICTURE_BOOKS: PictureBook[] = [
   {
     id: 'book_10',
     title: '10. Those are Cats 🐈‍⬛',
-    coverImage: 'https://img.icons8.com/clouds/200/forest.png',
+    coverImage: '/src/assets/images/picbook_forest_cats_cover_1780577886880.png',
     description: '学复数远指 Those are! 瞧，远处的松木边有一群小胖猫！',
     difficulty: 'INTERMEDIATE',
     pages: [
@@ -444,42 +444,42 @@ export const PICTURE_BOOKS: PictureBook[] = [
         pageNumber: 1,
         english: 'Those are cats.',
         chinese: '那些是猫。',
-        image: '/src/assets/images/picbook_cat_1780562998321.png',
+        image: '/src/assets/images/picbook_cats_group_1780577792847.png',
         emoji: '🐱🐱'
       },
       {
         pageNumber: 2,
         english: 'Those are fat cats.',
         chinese: '那些是胖猫。',
-        image: '/src/assets/images/picbook_fat_cat_1780563015884.png',
+        image: '/src/assets/images/picbook_fat_cats_group_1780577808806.png',
         emoji: '🐈🐈'
       },
       {
         pageNumber: 3,
         english: 'Those are rats.',
         chinese: '那些是老鼠。',
-        image: '/src/assets/images/picbook_rat_1780563032822.png',
+        image: '/src/assets/images/picbook_rats_group_1780577825027.png',
         emoji: '🐭🐭'
       },
       {
         pageNumber: 4,
         english: 'Those are bad rats.',
         chinese: '那些是坏老鼠。',
-        image: '/src/assets/images/picbook_bad_rat_1780563050522.png',
+        image: '/src/assets/images/picbook_bad_rats_group_1780577840665.png',
         emoji: '👿👿'
       },
       {
         pageNumber: 5,
         english: 'Those are bats.',
         chinese: '那些是蝙蝠。',
-        image: '/src/assets/images/picbook_bat_1780563068637.png',
+        image: '/src/assets/images/picbook_bats_group_1780577856313.png',
         emoji: '🦇🦇'
       },
       {
         pageNumber: 6,
         english: 'Those are sad bats.',
         chinese: '那些是伤心的蝙蝠。',
-        image: '/src/assets/images/picbook_sad_bat_1780563086634.png',
+        image: '/src/assets/images/picbook_sad_bats_group_1780577871572.png',
         emoji: '😢😢'
       }
     ]
