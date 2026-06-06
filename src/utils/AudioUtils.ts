@@ -5,160 +5,119 @@ let activeWordAudio: HTMLAudioElement | null = null;
 let lastSpeakText = '';
 let lastSpeakTime = 0;
 
-let drumSynthIntervalId: any = null;
-let drumSynthAudioCtx: AudioContext | null = null;
-let drumSynthStep = 0;
+let activeAudioCtx: AudioContext | null = null;
+
+export const playRhythmicDrum = (step: number) => {
+  if (typeof window === 'undefined') return;
+  try {
+    const AudioCtxClass = window.AudioContext || (window as any).webkitAudioContext;
+    if (!AudioCtxClass) return;
+    
+    if (!activeAudioCtx || activeAudioCtx.state === 'closed') {
+      activeAudioCtx = new AudioCtxClass();
+    }
+    const ctx = activeAudioCtx;
+    if (ctx.state === 'suspended') {
+      ctx.resume();
+    }
+
+    const now = ctx.currentTime;
+    const loopStep = step % 3; // Triplet beat: 0, 1, 2
+
+    // 1. Core resonant wood/drum oscillator
+    const osc = ctx.createOscillator();
+    const gainNode = ctx.createGain();
+    const filter = ctx.createBiquadFilter();
+    
+    filter.type = 'bandpass';
+    osc.connect(filter);
+    filter.connect(gainNode);
+    gainNode.connect(ctx.destination);
+    
+    // 2. High-frequency click accentuator to simulate a physical mallet hitting a block
+    const clickOsc = ctx.createOscillator();
+    const clickGain = ctx.createGain();
+    clickOsc.type = 'triangle';
+    clickOsc.connect(clickGain);
+    clickGain.connect(ctx.destination);
+
+    if (loopStep === 0) {
+      // Step 1: Accent Hit "哒" (Medium-High energetic wood block / tanggu)
+      osc.type = 'sine';
+      osc.frequency.setValueAtTime(320, now);
+      osc.frequency.exponentialRampToValueAtTime(140, now + 0.15);
+      
+      filter.frequency.setValueAtTime(450, now);
+      filter.Q.setValueAtTime(8, now);
+      
+      gainNode.gain.setValueAtTime(0.25, now);
+      gainNode.gain.exponentialRampToValueAtTime(0.001, now + 0.15);
+      
+      clickOsc.frequency.setValueAtTime(1500, now);
+      clickOsc.frequency.exponentialRampToValueAtTime(300, now + 0.015);
+      clickGain.gain.setValueAtTime(0.08, now);
+      clickGain.gain.exponentialRampToValueAtTime(0.001, now + 0.015);
+      
+      osc.start(now);
+      osc.stop(now + 0.16);
+      clickOsc.start(now);
+      clickOsc.stop(now + 0.02);
+
+    } else if (loopStep === 1) {
+      // Step 2: Pitch Transition "哒" (High crisp wooden slap)
+      osc.type = 'sine';
+      osc.frequency.setValueAtTime(420, now);
+      osc.frequency.exponentialRampToValueAtTime(200, now + 0.1);
+      
+      filter.frequency.setValueAtTime(650, now);
+      filter.Q.setValueAtTime(10, now);
+      
+      gainNode.gain.setValueAtTime(0.18, now);
+      gainNode.gain.exponentialRampToValueAtTime(0.001, now + 0.1);
+      
+      clickOsc.frequency.setValueAtTime(1850, now);
+      clickOsc.frequency.exponentialRampToValueAtTime(500, now + 0.012);
+      clickGain.gain.setValueAtTime(0.09, now);
+      clickGain.gain.exponentialRampToValueAtTime(0.001, now + 0.012);
+      
+      osc.start(now);
+      osc.stop(now + 0.11);
+      clickOsc.start(now);
+      clickOsc.stop(now + 0.02);
+
+    } else {
+      // Step 3: Resolving Drop "哒" (Deep warm resonant low woodblock)
+      osc.type = 'sine';
+      osc.frequency.setValueAtTime(180, now);
+      osc.frequency.exponentialRampToValueAtTime(70, now + 0.22);
+      
+      filter.frequency.setValueAtTime(220, now);
+      filter.Q.setValueAtTime(5, now);
+      
+      gainNode.gain.setValueAtTime(0.32, now); // Anchoring beat
+      gainNode.gain.exponentialRampToValueAtTime(0.001, now + 0.22);
+      
+      clickOsc.frequency.setValueAtTime(1000, now);
+      clickOsc.frequency.exponentialRampToValueAtTime(200, now + 0.02);
+      clickGain.gain.setValueAtTime(0.06, now);
+      clickGain.gain.exponentialRampToValueAtTime(0.001, now + 0.02);
+      
+      osc.start(now);
+      osc.stop(now + 0.23);
+      clickOsc.start(now);
+      clickOsc.stop(now + 0.035);
+    }
+  } catch (e) {
+    console.warn('[DrumSynth] playRhythmicDrum error:', e);
+  }
+};
 
 export const drumController = {
   start: () => {
-    if (typeof window === 'undefined') return;
-    if (drumSynthIntervalId) return;
-
-    try {
-      const AudioCtxClass = window.AudioContext || (window as any).webkitAudioContext;
-      if (!AudioCtxClass) return;
-      
-      const ctx = new AudioCtxClass();
-      drumSynthAudioCtx = ctx;
-      if (ctx.state === 'suspended') {
-        ctx.resume();
-      }
-
-      const bpm = 110;
-      const stepTime = 60 / bpm / 2; // eighth notes
-      let nextNoteTime = ctx.currentTime;
-      drumSynthStep = 0;
-
-      const triggerKick = (time: number) => {
-        try {
-          const osc = ctx.createOscillator();
-          const gain = ctx.createGain();
-          osc.connect(gain);
-          gain.connect(ctx.destination);
-
-          osc.frequency.setValueAtTime(140, time);
-          osc.frequency.exponentialRampToValueAtTime(0.01, time + 0.25);
-
-          gain.gain.setValueAtTime(0.18, time); // Sits cleanly under voice
-          gain.gain.exponentialRampToValueAtTime(0.001, time + 0.25);
-
-          osc.start(time);
-          osc.stop(time + 0.26);
-        } catch (e) {}
-      };
-
-      const triggerSnare = (time: number) => {
-        try {
-          const osc = ctx.createOscillator();
-          const gain = ctx.createGain();
-          osc.type = 'triangle';
-          osc.connect(gain);
-          gain.connect(ctx.destination);
-
-          osc.frequency.setValueAtTime(180, time);
-          osc.frequency.exponentialRampToValueAtTime(100, time + 0.12);
-
-          gain.gain.setValueAtTime(0.06, time);
-          gain.gain.exponentialRampToValueAtTime(0.001, time + 0.12);
-
-          osc.start(time);
-          osc.stop(time + 0.13);
-
-          const bufferSize = ctx.sampleRate * 0.12;
-          const buffer = ctx.createBuffer(1, bufferSize, ctx.sampleRate);
-          const data = buffer.getChannelData(0);
-          for (let i = 0; i < bufferSize; i++) {
-            data[i] = Math.random() * 2 - 1;
-          }
-
-          const noise = ctx.createBufferSource();
-          noise.buffer = buffer;
-
-          const filter = ctx.createBiquadFilter();
-          filter.type = 'highpass';
-          filter.frequency.value = 1200;
-
-          const noiseGain = ctx.createGain();
-          noiseGain.gain.setValueAtTime(0.08, time); // Balanced crisp snap
-          noiseGain.gain.exponentialRampToValueAtTime(0.001, time + 0.12);
-
-          noise.connect(filter);
-          filter.connect(noiseGain);
-          noiseGain.connect(ctx.destination);
-
-          noise.start(time);
-          noise.stop(time + 0.13);
-        } catch (e) {}
-      };
-
-      const triggerHihat = (time: number) => {
-        try {
-          const bufferSize = ctx.sampleRate * 0.04;
-          const buffer = ctx.createBuffer(1, bufferSize, ctx.sampleRate);
-          const data = buffer.getChannelData(0);
-          for (let i = 0; i < bufferSize; i++) {
-            data[i] = Math.random() * 2 - 1;
-          }
-
-          const noise = ctx.createBufferSource();
-          noise.buffer = buffer;
-
-          const filter = ctx.createBiquadFilter();
-          filter.type = 'highpass';
-          filter.frequency.value = 8000;
-
-          const gain = ctx.createGain();
-          gain.gain.setValueAtTime(0.03, time); // Subtle hibar ticks
-          gain.gain.exponentialRampToValueAtTime(0.001, time + 0.04);
-
-          noise.connect(filter);
-          filter.connect(gain);
-          gain.connect(ctx.destination);
-
-          noise.start(time);
-          noise.stop(time + 0.05);
-        } catch (e) {}
-      };
-
-      const scheduleNextBeats = () => {
-        if (!drumSynthAudioCtx) return;
-        while (nextNoteTime < drumSynthAudioCtx.currentTime + 0.1) {
-          const currentStepLocal = drumSynthStep;
-          
-          if (currentStepLocal % 2 === 0) {
-            triggerHihat(nextNoteTime);
-          }
-
-          // Boom-bap rhythm beat: Kick on 0, 4, 5. Snare on 2, 6.
-          if (currentStepLocal === 0 || currentStepLocal === 4 || currentStepLocal === 5) {
-            triggerKick(nextNoteTime);
-          } else if (currentStepLocal === 2 || currentStepLocal === 6) {
-            triggerSnare(nextNoteTime);
-          }
-
-          nextNoteTime += stepTime;
-          drumSynthStep = (drumSynthStep + 1) % 8;
-        }
-      };
-
-      scheduleNextBeats();
-      drumSynthIntervalId = setInterval(scheduleNextBeats, 40);
-    } catch (e) {
-      console.error('[DrumSynth] Failed starting:', e);
-    }
+    // Keep for loop backward compatibility
   },
   stop: () => {
-    if (drumSynthIntervalId) {
-      clearInterval(drumSynthIntervalId);
-      drumSynthIntervalId = null;
-    }
-    if (drumSynthAudioCtx) {
-      try {
-        drumSynthAudioCtx.close();
-      } catch (e) {}
-      drumSynthAudioCtx = null;
-    }
-    drumSynthStep = 0;
+    // Keep for loop backward compatibility
   }
 };
 
@@ -417,18 +376,33 @@ export const audio = {
       activeUtterances.push(utterance); // Prevent GC
       const cleanup = () => {
         activeUtterances = activeUtterances.filter(u => u !== utterance);
-        try { drumController.stop(); } catch (e) {}
       };
       utterance.onend = cleanup;
       utterance.onerror = cleanup;
 
-      if (isZh) {
-        // Trigger rhythmic drum beat loop for Chinese rhymes (sentences >= 6 chars)
-        if (phrase.length >= 6) {
-          try { drumController.start(); } catch (e) {}
+      // Triple-beat synchronized "da-da-da" drum hits precisely matching character boundaries
+      let boundaryCount = 0;
+      let lastTriggeredCharIndex = -1;
+
+      utterance.onboundary = (event) => {
+        if (event.name === 'word' || event.name === 'char') {
+          const charIdx = event.charIndex;
+          if (charIdx !== lastTriggeredCharIndex) {
+            const char = utterance.text.charAt(charIdx);
+            // Verify if spoken element is a classic alphanumeric/Han zi symbol to skip commas and whitespace
+            if (/[\u4e00-\u9fa5a-zA-Z0-9]/.test(char)) {
+              lastTriggeredCharIndex = charIdx;
+              playRhythmicDrum(boundaryCount);
+              boundaryCount++;
+            }
+          }
         }
+      };
+
+      if (isZh) {
         utterance.lang = 'zh-CN';
-        utterance.rate = 0.67; // Also slow down Chinese translation reading by 1.5x
+        // Precise lyrical reading tempo (slower pacing makes character boundaries feel like a stately, crisp ancient classroom recitation)
+        utterance.rate = 0.58; 
       } else {
         const voices = window.speechSynthesis.getVoices();
         const normalizeLang = (lang: string) => lang.toLowerCase().replace('_', '-');
@@ -461,8 +435,12 @@ export const audio = {
       window.speechSynthesis.speak(utterance);
     };
 
-    // If it's a real word or translation phrase, play the Youdao audio (guaranteed to bypass lock/iframe limits with beautiful, human speech)
-    if (!isPhonicSegmentSound && (cleanWord.length > 1 || isChinese)) {
+    // For single word items, Youdao's premium pre-recorded human speech is magnificent.
+    // For full rhythmic classics (Sanzijing lines of length >= 3), we use native SpeechSynthesis 
+    // to unlock exact, grain-level pronunciation character boundaries for our triplet drumroll hits!
+    const isSanzijingOrPhrase = cleanWord.length >= 3 && (isChinese || cleanWord.includes(' '));
+
+    if (!isPhonicSegmentSound && (cleanWord.length > 1 || isChinese) && !isSanzijingOrPhrase) {
       isBypassed: {
         try {
           // Play Youdao Premium Human TTS
@@ -476,28 +454,12 @@ export const audio = {
           activeWordAudio = aud;
           aud.volume = 0.95;
 
-          aud.addEventListener('ended', () => {
-            try { drumController.stop(); } catch (e) {}
-          });
-          aud.addEventListener('pause', () => {
-            try { drumController.stop(); } catch (e) {}
-          });
-          aud.addEventListener('error', () => {
-            try { drumController.stop(); } catch (e) {}
-          });
-
-          if (isChinese && cleanWord.length >= 6) {
-            try { drumController.start(); } catch (e) {}
-          }
-
           aud.play().catch(() => {
             // Autoplay restriction fallback to synthesis
             if (activeWordAudio === aud) activeWordAudio = null;
-            try { drumController.stop(); } catch (e) {}
             speakSynth(cleanWord, isChinese);
           });
         } catch (e) {
-          try { drumController.stop(); } catch (err) {}
           speakSynth(cleanWord, isChinese);
         }
       }
