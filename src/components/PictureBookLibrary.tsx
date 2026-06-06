@@ -211,6 +211,33 @@ export const PictureBookLibrary: React.FC<Props> = ({ onClose, stats, onUpdateSt
     resetQuestionStates();
   };
 
+  // Preload next/previous pages' illustration images Async to prevent visual flickering
+  useEffect(() => {
+    if (!selectedBook || !selectedBook.pages || selectedBook.pages.length === 0) return;
+    
+    const pageIndicesToLoad: number[] = [];
+    if (currentPageIdx + 1 < selectedBook.pages.length) {
+      pageIndicesToLoad.push(currentPageIdx + 1);
+    }
+    if (currentPageIdx + 2 < selectedBook.pages.length) {
+      pageIndicesToLoad.push(currentPageIdx + 2);
+    }
+    if (currentPageIdx - 1 >= 0) {
+      pageIndicesToLoad.push(currentPageIdx - 1);
+    }
+
+    pageIndicesToLoad.forEach(idx => {
+      const page = selectedBook.pages[idx];
+      if (page) {
+        const url = getIllustrationForSentence(page.english || '', page.image || '');
+        if (url) {
+          const img = new Image();
+          img.src = url;
+        }
+      }
+    });
+  }, [selectedBook, currentPageIdx]);
+
   // Listen for Unscramble question changes to synchronize shuffled list
   useEffect(() => {
     if (practiceQuestions.length > 0 && currentQuestionIdx < practiceQuestions.length) {

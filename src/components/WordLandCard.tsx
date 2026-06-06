@@ -13,19 +13,123 @@ interface Props {
   onNext: () => void;
   isLast: boolean;
   onChallenge: () => void;
+  wordMastery?: Record<string, number>;
 }
 
-const WordLandCard: React.FC<Props> = ({ card, onLearned, onNext, isLast, onChallenge }) => {
+const WordLandCard: React.FC<Props> = ({ card, onLearned, onNext, isLast, onChallenge, wordMastery = {} }) => {
   const [isFlipped, setIsFlipped] = useState(false);
+
+  const [triggerCount, setTriggerCount] = useState(() => {
+    try {
+      const saved = localStorage.getItem('wordland_sanzijing_trigger_clicks');
+      return saved ? parseInt(saved, 10) : 0;
+    } catch(e) {
+      return 0;
+    }
+  });
+
+  const handleTriggerClick = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    setIsFlipped(true);
+    try { audio.playClick(); } catch(err){}
+    const nextCount = triggerCount + 1;
+    setTriggerCount(nextCount);
+    try {
+      localStorage.setItem('wordland_sanzijing_trigger_clicks', nextCount.toString());
+    } catch(err) {}
+  };
+
+  const getWordMasteryInfo = (wordText: string) => {
+    const text = wordText.trim().toLowerCase();
+    const count = wordMastery[text] || 0;
+    
+    if (count >= 3) {
+      return {
+        label: '完美 Master',
+        colorClass: 'bg-indigo-50 border-indigo-200 text-indigo-700',
+        starCount: 3,
+        emoji: '💎'
+      };
+    } else if (count === 2) {
+      return {
+        label: '精通 Expert',
+        colorClass: 'bg-emerald-50 border-emerald-250 text-emerald-700',
+        starCount: 2,
+        emoji: '🌟'
+      };
+    } else if (count === 1) {
+      return {
+        label: '熟练 Learner',
+        colorClass: 'bg-amber-50 border-amber-200 text-amber-700',
+        starCount: 1,
+        emoji: '✨'
+      };
+    } else {
+      return {
+        label: '初学 Novice',
+        colorClass: 'bg-slate-50 border-slate-200 text-slate-500',
+        starCount: 0,
+        emoji: '🌱'
+      };
+    }
+  };
+
+  const getCardMasteryStats = () => {
+    const totalWords = card.words.length;
+    if (totalWords === 0) return null;
+    
+    let masteredCount = 0;
+    let totalScore = 0;
+    
+    card.words.forEach(w => {
+      const text = w.text.trim().toLowerCase();
+      const score = wordMastery[text] || 0;
+      totalScore += score;
+      if (score >= 1) masteredCount++;
+    });
+    
+    const avgScore = totalScore / totalWords;
+    
+    if (avgScore >= 3) {
+      return {
+        label: '完美掌握 Perfect',
+        colorClass: 'from-purple-500 to-indigo-600 border-purple-400 text-white',
+        emoji: '🏆'
+      };
+    } else if (avgScore >= 1.5) {
+      return {
+        label: '驾轻就熟 Proficient',
+        colorClass: 'from-emerald-500 to-teal-600 border-emerald-400 text-white',
+        emoji: '💡'
+      };
+    } else if (masteredCount > 0) {
+      return {
+        label: '正在探索 Learning',
+        colorClass: 'from-amber-400 to-amber-500 border-amber-300 text-slate-900',
+        emoji: '🌱'
+      };
+    } else {
+      return {
+        label: '尚未开始 Unstarted',
+        colorClass: 'from-slate-100 to-slate-200 border-slate-300 text-slate-600',
+        emoji: '🔑'
+      };
+    }
+  };
+
   const [isPlaying, setIsPlaying] = useState<string | null>(null);
   const [hasLearned, setHasLearned] = useState(false);
   const [spellingWord, setSpellingWord] = useState<WordItem | null>(null);
   const [activeWordIdx, setActiveWordIdx] = useState(0);
+  const [revealedWords, setRevealedWords] = useState<Record<string, boolean>>({});
+  const [globalReveal, setGlobalReveal] = useState(false);
 
   useEffect(() => {
     setIsFlipped(false);
     setHasLearned(false);
     setActiveWordIdx(0);
+    setRevealedWords({});
+    setGlobalReveal(false);
   }, [card.id]);
 
   const handleSpeak = (text: string, isRhyme: boolean = false) => {
@@ -190,18 +294,41 @@ const WordLandCard: React.FC<Props> = ({ card, onLearned, onNext, isLast, onChal
         return <span className="text-amber-300 font-black text-2xl md:text-3xl font-cute tracking-normal scale-105 inline-block">{englishWord}</span>;
       };
 
+      const isWordRevealed = globalReveal || !!revealedWords[englishWord.toLowerCase()];
+
       parts.push(
         <span 
           key={`word-${match.index}`}
           onClick={(e) => {
             e.stopPropagation();
-            audio.playPop();
+            try { audio.playPop(); } catch (e){}
             audio.speak(englishWord);
+            setRevealedWords(prev => ({
+              ...prev,
+              [englishWord.toLowerCase()]: !prev[englishWord.toLowerCase()]
+            }));
           }}
-          className="cursor-pointer hover:scale-110 active:scale-95 mx-1.5 inline-flex items-center transition-all"
-          title="点击发音"
+          className={`cursor-pointer transition-all duration-300 mx-1 px-3 py-0.5 rounded-xl border-2 select-none inline-flex items-center ${
+            isWordRevealed 
+              ? 'bg-white/10 border-white/20 hover:scale-110 active:scale-95' 
+              : 'bg-amber-400/10 border-dashed border-amber-400/40 hover:bg-amber-400/20 hover:scale-105 active:scale-95'
+          }`}
+          title={isWordRevealed ? "点击发音 / 再次挖空" : "点击揭晓并朗读单词"}
         >
-          {renderWordPart()}
+          {isWordRevealed ? (
+            <motion.span
+              key="revealed"
+              initial={{ scale: 0.8, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              transition={{ type: 'spring', stiffness: 300, damping: 15 }}
+            >
+              {renderWordPart()}
+            </motion.span>
+          ) : (
+            <span key="blank" className="text-amber-300/80 font-sans tracking-wide font-black text-xl md:text-2xl px-1">
+              ____
+            </span>
+          )}
           {translation && (
             <span className="text-amber-100 font-bold text-xl md:text-2xl ml-1 font-cute drop-shadow-sm">
               {translation}
@@ -226,18 +353,88 @@ const WordLandCard: React.FC<Props> = ({ card, onLearned, onNext, isLast, onChal
   };
 
   return (
-    <div className="w-full perspective-1000 min-h-[500px] flex flex-col items-center">
+    <motion.div 
+      initial={{ opacity: 0, y: 50, scale: 0.95 }}
+      animate={{ opacity: 1, y: 0, scale: 1 }}
+      transition={{ 
+        type: "spring",
+        stiffness: 90,
+        damping: 15,
+        mass: 0.8
+      }}
+      className="w-full perspective-1000 min-h-[500px] flex flex-col items-center"
+    >
       <motion.div 
-        className="relative w-full h-[450px] transition-all duration-500 preserve-3d cursor-pointer"
+        className="relative w-full h-[450px] preserve-3d cursor-pointer rounded-[60px]"
         animate={{ rotateY: isFlipped ? 180 : 0 }}
-        onClick={() => setIsFlipped(!isFlipped)}
+        whileHover={isFlipped ? {} : {
+          y: -12,
+          scale: 1.025,
+          z: 10,
+          boxShadow: "0 35px 80px -15px rgba(16, 185, 129, 0.2)"
+        }}
+        transition={{ 
+          rotateY: { duration: 0.8, ease: [0.34, 1.56, 0.64, 1] }, // Elastic bezier timing curve
+          y: { type: "spring", stiffness: 200, damping: 15 },
+          scale: { type: "spring", stiffness: 200, damping: 15 },
+          boxShadow: { duration: 0.3 }
+        }}
+        onClick={() => {
+          setIsFlipped(!isFlipped);
+          try { audio.playClick(); } catch(e){}
+        }}
       >
         {/* Front Side: Words */}
-        <div className="absolute inset-0 backface-hidden bg-white rounded-[60px] shadow-2xl border-[6px] border-emerald-50 p-10 flex flex-col justify-between">
-          <div className="flex justify-between items-start">
-            <h2 className="text-4xl font-black text-emerald-800 tracking-tight">{card.suffix} 魔法</h2>
-            <div className="p-3 bg-emerald-50 rounded-2xl text-emerald-600">
-              <RotateCw size={24} />
+        <div 
+          className="absolute inset-0 bg-white rounded-[60px] shadow-2xl border-[6px] border-emerald-50 p-10 flex flex-col justify-between"
+          style={{ backfaceVisibility: 'hidden', WebkitBackfaceVisibility: 'hidden' }}
+        >
+          <div className="flex justify-between items-start w-full">
+            <div className="space-y-2 text-left">
+              <h2 className="text-4xl font-black text-emerald-800 tracking-tight">{card.suffix} 魔法</h2>
+              {(() => {
+                const cardStats = getCardMasteryStats();
+                if (!cardStats) return null;
+                return (
+                  <div className={`inline-flex items-center space-x-1.5 px-3 py-0.5 text-xs font-black rounded-full border shadow-sm bg-gradient-to-r ${cardStats.colorClass}`}>
+                    <span className="text-sm">{cardStats.emoji}</span>
+                    <span className="tracking-wide uppercase text-[10px]">{cardStats.label}</span>
+                  </div>
+                );
+              })()}
+            </div>
+            
+            <div className="flex flex-col items-end space-y-1">
+              <motion.button 
+                whileHover={{ scale: 1.05 }}
+                whileTap={{ scale: 0.95 }}
+                animate={triggerCount < 3 ? { 
+                  scale: [1, 1.06, 1],
+                  boxShadow: [
+                    "0 4px 6px -1px rgba(16, 185, 129, 0.1), 0 2px 4px -1px rgba(16, 185, 129, 0.06)",
+                    "0 10px 15px -3px rgba(16, 185, 129, 0.35), 0 4px 6px -2px rgba(16, 185, 129, 0.15)",
+                    "0 4px 6px -1px rgba(16, 185, 129, 0.1), 0 2px 4px -1px rgba(16, 185, 129, 0.06)"
+                  ]
+                } : {}}
+                transition={{ repeat: Infinity, duration: 1.8, ease: "easeInOut" }}
+                onClick={handleTriggerClick}
+                className="px-4 py-2 bg-gradient-to-r from-emerald-500 via-teal-500 to-emerald-600 hover:from-emerald-600 hover:to-teal-600 text-white rounded-2xl font-black text-xs tracking-wider shadow-md flex items-center space-x-1.5 transition-all outline-none border border-emerald-400 z-20"
+                title="切换到三字经自测"
+              >
+                <RotateCw size={14} className="animate-spin-slow" />
+                <span>🔮 自测三字经</span>
+              </motion.button>
+              
+              {triggerCount < 3 && (
+                <motion.div 
+                  initial={{ opacity: 0, y: -5 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0 }}
+                  className="text-[10px] font-bold text-emerald-600 bg-emerald-50 border border-emerald-100 rounded-lg px-2.5 py-1 shadow-sm text-right leading-tight max-w-[155px]"
+                >
+                  💡 点击进入“挖空自测”模式
+                </motion.div>
+              )}
             </div>
           </div>
 
@@ -256,7 +453,25 @@ const WordLandCard: React.FC<Props> = ({ card, onLearned, onNext, isLast, onChal
                   <div className="text-4xl font-black tracking-tight text-slate-800">
                     {renderWordHighlight(word.text, card.suffix, 'text-rose-500')}
                   </div>
-                  <span className="text-2xl font-bold text-slate-400">（{word.translation}）</span>
+                  <div className="flex flex-col items-start leading-none space-y-1">
+                    <span className="text-2xl font-bold text-slate-400 leading-none">（{word.translation}）</span>
+                    {(() => {
+                      const m = getWordMasteryInfo(word.text);
+                      return (
+                        <div className={`flex items-center space-x-1 px-2.5 py-0.5 text-[11px] font-black rounded-full border ${m.colorClass}`}>
+                          <span>{m.emoji}</span>
+                          <span className="tracking-wide text-[10px] uppercase">{m.label}</span>
+                          {m.starCount > 0 && (
+                            <span className="flex items-center text-amber-500 gap-0.5">
+                              {Array.from({ length: m.starCount }).map((_, i) => (
+                                <Star key={i} size={8} className="fill-current" />
+                              ))}
+                            </span>
+                          )}
+                        </div>
+                      );
+                    })()}
+                  </div>
                 </div>
                 <div className="relative">
                   <SafeImage 
@@ -273,133 +488,89 @@ const WordLandCard: React.FC<Props> = ({ card, onLearned, onNext, isLast, onChal
             ))}
           </div>
 
-          <div className="text-center text-slate-300 font-black text-xs uppercase tracking-widest">
-            点击翻转查看三字经
+          <div className="text-center text-slate-350 font-black text-xs uppercase tracking-widest">
+            点击空白或右上角按钮翻转查看三字经
           </div>
         </div>
 
         {/* Back Side: Rhyme */}
-        <div className="absolute inset-0 backface-hidden bg-gradient-to-br from-emerald-600 via-teal-700 to-emerald-900 rounded-[60px] shadow-2xl border-[6px] border-white/20 p-8 flex flex-col justify-between rotate-y-180">
-          <div className="flex justify-between items-start" onClick={(e) => e.stopPropagation()}>
+        <div 
+          className="absolute inset-0 bg-gradient-to-br from-emerald-600 via-teal-700 to-emerald-950 rounded-[60px] shadow-2xl border-[6px] border-white/20 p-8 flex flex-col justify-between"
+          style={{ transform: 'rotateY(180deg)', backfaceVisibility: 'hidden', WebkitBackfaceVisibility: 'hidden' }}
+        >
+          <div className="flex justify-between items-center w-full" onClick={(e) => e.stopPropagation()}>
             <div className="text-left space-y-0.5">
               <span className="inline-block bg-white/20 text-white font-black text-[10px] px-2.5 py-0.5 rounded-full uppercase tracking-wider border border-white/15">
-                “{card.suffix}” 魔法节奏
+                “{card.suffix}” 魔法自测
               </span>
-              <h2 className="text-2xl font-black text-white font-cute tracking-wide">英文三字经</h2>
+              <h2 className="text-2xl font-black text-white font-cute tracking-wide">口诀挖空卡</h2>
             </div>
             
-            <button 
-              onClick={() => setIsFlipped(false)}
-              className="p-2.5 bg-white/10 rounded-2xl text-white hover:bg-white/25 active:scale-95 transition-all shadow-sm"
-              title="翻转看单词"
-            >
-              <RotateCw size={18} />
-            </button>
-          </div>
-
-          {/* Word Selector Tabs */}
-          {card.words && card.words.length > 1 && (
-            <div className="flex justify-center bg-white/10 backdrop-blur-md p-1.5 rounded-2xl border border-white/10 space-x-1 gap-y-1 z-20" onClick={(e) => e.stopPropagation()}>
-              {card.words.map((word, i) => (
-                <button
-                  key={i}
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    audio.playPop();
-                    setActiveWordIdx(i);
-                    audio.speak(word.text);
-                  }}
-                  className={`px-3 py-1.5 rounded-xl font-black text-xs transition-all ${
-                    activeWordIdx === i
-                      ? 'bg-amber-400 text-slate-900 shadow-md font-black scale-105'
-                      : 'bg-white/10 text-white hover:bg-white/20'
-                  }`}
-                >
-                  {word.text}
-                </button>
-              ))}
+            <div className="flex items-center space-x-2">
+              <motion.button
+                whileHover={{ scale: 1.05 }}
+                whileTap={{ scale: 0.95 }}
+                onClick={(e) => {
+                  e.stopPropagation();
+                  try { audio.playPop(); } catch(e){}
+                  setGlobalReveal(!globalReveal);
+                }}
+                className={`px-3 py-2 rounded-2xl border transition-all shadow-sm text-xs font-black flex items-center space-x-1.5 backdrop-blur-md ${
+                  globalReveal
+                    ? 'bg-amber-400 text-slate-900 border-amber-300 hover:bg-amber-350'
+                    : 'bg-white/10 text-white border-white/15 hover:bg-white/25'
+                }`}
+                title={globalReveal ? '切换至自测挖空模式' : '显示所有答案词'}
+              >
+                <span>{globalReveal ? '🙈 挖空自测' : '👁️ 显示答案'}</span>
+              </motion.button>
+              
+              <motion.button 
+                whileHover={{ scale: 1.05 }}
+                whileTap={{ scale: 0.95 }}
+                onClick={(e) => {
+                  e.stopPropagation();
+                  setIsFlipped(false);
+                  try { audio.playClick(); } catch(e){}
+                }}
+                className="px-3 py-2 bg-white/10 text-white hover:bg-white/25 transition-all shadow-sm border border-white/15 rounded-2xl text-xs font-black flex items-center space-x-1.5"
+                title="返回正面"
+              >
+                <RotateCw size={12} className="animate-spin-slow duration-1000" />
+                <span>卡片正面</span>
+              </motion.button>
             </div>
-          )}
-
-          {/* Single Word Focus Area on the back card */}
-          {(() => {
-            const activeWord = card.words[activeWordIdx] || card.words[0];
-            if (!activeWord) return null;
-            return (
-              <div className="flex items-center justify-between bg-white/10 rounded-3xl p-3 border border-white/10 space-x-4 h-22 select-none" onClick={(e) => { e.stopPropagation(); audio.playPop(); audio.speak(activeWord.text); }}>
-                <div className="flex items-center space-x-3">
-                  <div className="w-16 h-16 bg-white rounded-2xl flex items-center justify-center p-2 shadow-inner overflow-hidden shrink-0">
-                    <SafeImage 
-                      src={activeWord.imageUrl} 
-                      alt={activeWord.text} 
-                      className="w-full h-full object-contain"
-                      fallbackText={activeWord.text}
-                      width="48"
-                      height="48"
-                    />
-                  </div>
-                  <div className="text-left">
-                    <h3 className="text-2xl font-black text-white flex items-center space-x-2">
-                      <span>
-                        {renderWordHighlight(activeWord.text, card.suffix, 'text-amber-300')}
-                      </span>
-                    </h3>
-                    <p className="text-emerald-100/80 font-bold text-xs">（{activeWord.translation}）</p>
-                  </div>
-                </div>
-                
-                <div className="flex space-x-2 shrink-0" onClick={(e) => e.stopPropagation()}>
-                  <button 
-                    onClick={() => { audio.playPop(); audio.speak(activeWord.text); }}
-                    className="p-1.5 bg-white/10 text-white rounded-xl hover:bg-white/20 active:scale-95 shadow-sm"
-                    title="播放发音"
-                  >
-                    <Volume2 size={16} />
-                  </button>
-                  <button 
-                    onClick={() => {
-                      audio.unlockSpeech();
-                      setSpellingWord(activeWord);
-                    }}
-                    className="p-1.5 bg-amber-400 text-slate-900 rounded-xl hover:bg-amber-305 active:scale-95 shadow-sm font-bold text-[10px]"
-                    title="拼读挑战"
-                  >
-                    拼读
-                  </button>
-                </div>
-              </div>
-            );
-          })()}
+          </div>
 
           {/* Beautiful and tidy SanZijing container on the back card */}
           <div 
-            className="bg-white/10 backdrop-blur-md border-[2px] border-white/15 p-5 md:p-6 rounded-[32px] w-full flex flex-col justify-center space-y-3 relative overflow-hidden text-center shadow-lg"
+            className="bg-white/10 backdrop-blur-md border-[2px] border-white/15 p-6 md:p-8 rounded-[40px] w-full flex-1 flex flex-col justify-center space-y-4 md:space-y-6 relative overflow-hidden text-center shadow-lg my-4"
             onClick={(e) => { e.stopPropagation(); handleSpeak(card.rhyme, true); }}
           >
-            <div className={`space-y-2.5 w-full justify-center flex flex-col items-center select-text ${getRhymeFontSize(card.rhyme)}`}>
+            <div className={`space-y-4 w-full justify-center flex flex-col items-center select-text ${getRhymeFontSize(card.rhyme)}`}>
               {card.rhyme.split(/[,，.。!！?？]/).filter(s => s.trim()).map((part, i) => (
                 <div 
                   key={i} 
-                  className="flex justify-center flex-wrap items-center leading-relaxed tracking-wide font-bold"
+                  className="flex flex-row flex-nowrap whitespace-nowrap justify-center items-center leading-relaxed tracking-wider font-extrabold"
                 >
                   {renderSanzijingLine(part, card.suffix)}
                 </div>
               ))}
             </div>
             
-            <div className="pt-1.5 flex flex-col items-center justify-center border-t border-white/10 space-y-1">
+            <div className="pt-3 flex flex-col items-center justify-center border-t border-white/10 space-y-2">
               <button
                 onClick={(e) => { e.stopPropagation(); handleSpeak(card.rhyme, true); }}
-                className="px-4 py-1.5 rounded-full bg-white/15 hover:bg-white/20 border border-white/10 text-white font-extrabold text-[11px] flex items-center space-x-1 shadow-sm transition-all"
+                className="px-6 py-2 rounded-full bg-white/15 hover:bg-white/20 border border-white/10 text-white font-extrabold text-[12px] flex items-center space-x-2 shadow-sm transition-all active:scale-95"
               >
-                <Volume2 size={12} className={isPlaying === card.rhyme ? 'animate-pulse text-amber-300' : ''} />
-                <span>大声说唱口诀 Chant Along!</span>
+                <Volume2 size={14} className={isPlaying === card.rhyme ? 'animate-pulse text-amber-300' : ''} />
+                <span>🎙️ 大声说唱口诀 Chant Along!</span>
               </button>
             </div>
           </div>
 
           <div className="text-center text-white/40 font-black text-[10px] uppercase tracking-widest leading-none">
-            点击右上角返回或卡片空白处
+            点击空白区域朗读口诀，或点击挖空部分显示单词/播放发音
           </div>
         </div>
       </motion.div>
@@ -444,7 +615,7 @@ const WordLandCard: React.FC<Props> = ({ card, onLearned, onNext, isLast, onChal
           />
         )}
       </AnimatePresence>
-    </div>
+    </motion.div>
   );
 };
 

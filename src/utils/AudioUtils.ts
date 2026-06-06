@@ -5,6 +5,163 @@ let activeWordAudio: HTMLAudioElement | null = null;
 let lastSpeakText = '';
 let lastSpeakTime = 0;
 
+let drumSynthIntervalId: any = null;
+let drumSynthAudioCtx: AudioContext | null = null;
+let drumSynthStep = 0;
+
+export const drumController = {
+  start: () => {
+    if (typeof window === 'undefined') return;
+    if (drumSynthIntervalId) return;
+
+    try {
+      const AudioCtxClass = window.AudioContext || (window as any).webkitAudioContext;
+      if (!AudioCtxClass) return;
+      
+      const ctx = new AudioCtxClass();
+      drumSynthAudioCtx = ctx;
+      if (ctx.state === 'suspended') {
+        ctx.resume();
+      }
+
+      const bpm = 110;
+      const stepTime = 60 / bpm / 2; // eighth notes
+      let nextNoteTime = ctx.currentTime;
+      drumSynthStep = 0;
+
+      const triggerKick = (time: number) => {
+        try {
+          const osc = ctx.createOscillator();
+          const gain = ctx.createGain();
+          osc.connect(gain);
+          gain.connect(ctx.destination);
+
+          osc.frequency.setValueAtTime(140, time);
+          osc.frequency.exponentialRampToValueAtTime(0.01, time + 0.25);
+
+          gain.gain.setValueAtTime(0.18, time); // Sits cleanly under voice
+          gain.gain.exponentialRampToValueAtTime(0.001, time + 0.25);
+
+          osc.start(time);
+          osc.stop(time + 0.26);
+        } catch (e) {}
+      };
+
+      const triggerSnare = (time: number) => {
+        try {
+          const osc = ctx.createOscillator();
+          const gain = ctx.createGain();
+          osc.type = 'triangle';
+          osc.connect(gain);
+          gain.connect(ctx.destination);
+
+          osc.frequency.setValueAtTime(180, time);
+          osc.frequency.exponentialRampToValueAtTime(100, time + 0.12);
+
+          gain.gain.setValueAtTime(0.06, time);
+          gain.gain.exponentialRampToValueAtTime(0.001, time + 0.12);
+
+          osc.start(time);
+          osc.stop(time + 0.13);
+
+          const bufferSize = ctx.sampleRate * 0.12;
+          const buffer = ctx.createBuffer(1, bufferSize, ctx.sampleRate);
+          const data = buffer.getChannelData(0);
+          for (let i = 0; i < bufferSize; i++) {
+            data[i] = Math.random() * 2 - 1;
+          }
+
+          const noise = ctx.createBufferSource();
+          noise.buffer = buffer;
+
+          const filter = ctx.createBiquadFilter();
+          filter.type = 'highpass';
+          filter.frequency.value = 1200;
+
+          const noiseGain = ctx.createGain();
+          noiseGain.gain.setValueAtTime(0.08, time); // Balanced crisp snap
+          noiseGain.gain.exponentialRampToValueAtTime(0.001, time + 0.12);
+
+          noise.connect(filter);
+          filter.connect(noiseGain);
+          noiseGain.connect(ctx.destination);
+
+          noise.start(time);
+          noise.stop(time + 0.13);
+        } catch (e) {}
+      };
+
+      const triggerHihat = (time: number) => {
+        try {
+          const bufferSize = ctx.sampleRate * 0.04;
+          const buffer = ctx.createBuffer(1, bufferSize, ctx.sampleRate);
+          const data = buffer.getChannelData(0);
+          for (let i = 0; i < bufferSize; i++) {
+            data[i] = Math.random() * 2 - 1;
+          }
+
+          const noise = ctx.createBufferSource();
+          noise.buffer = buffer;
+
+          const filter = ctx.createBiquadFilter();
+          filter.type = 'highpass';
+          filter.frequency.value = 8000;
+
+          const gain = ctx.createGain();
+          gain.gain.setValueAtTime(0.03, time); // Subtle hibar ticks
+          gain.gain.exponentialRampToValueAtTime(0.001, time + 0.04);
+
+          noise.connect(filter);
+          filter.connect(gain);
+          gain.connect(ctx.destination);
+
+          noise.start(time);
+          noise.stop(time + 0.05);
+        } catch (e) {}
+      };
+
+      const scheduleNextBeats = () => {
+        if (!drumSynthAudioCtx) return;
+        while (nextNoteTime < drumSynthAudioCtx.currentTime + 0.1) {
+          const currentStepLocal = drumSynthStep;
+          
+          if (currentStepLocal % 2 === 0) {
+            triggerHihat(nextNoteTime);
+          }
+
+          // Boom-bap rhythm beat: Kick on 0, 4, 5. Snare on 2, 6.
+          if (currentStepLocal === 0 || currentStepLocal === 4 || currentStepLocal === 5) {
+            triggerKick(nextNoteTime);
+          } else if (currentStepLocal === 2 || currentStepLocal === 6) {
+            triggerSnare(nextNoteTime);
+          }
+
+          nextNoteTime += stepTime;
+          drumSynthStep = (drumSynthStep + 1) % 8;
+        }
+      };
+
+      scheduleNextBeats();
+      drumSynthIntervalId = setInterval(scheduleNextBeats, 40);
+    } catch (e) {
+      console.error('[DrumSynth] Failed starting:', e);
+    }
+  },
+  stop: () => {
+    if (drumSynthIntervalId) {
+      clearInterval(drumSynthIntervalId);
+      drumSynthIntervalId = null;
+    }
+    if (drumSynthAudioCtx) {
+      try {
+        drumSynthAudioCtx.close();
+      } catch (e) {}
+      drumSynthAudioCtx = null;
+    }
+    drumSynthStep = 0;
+  }
+};
+
 export const audio = {
   init: () => {
     // Initialize audio context if needed
@@ -187,6 +344,9 @@ export const audio = {
     audioObj.play().catch(() => {});
   },
   speak: (text: string) => {
+    // Stop any existing drum rhythm
+    try { drumController.stop(); } catch (e) {}
+
     const now = Date.now();
     if (text && text === lastSpeakText && now - lastSpeakTime < 800) {
       console.log("[AudioUtils] Deduplicated rapid repeat speak request for:", text);
@@ -257,11 +417,16 @@ export const audio = {
       activeUtterances.push(utterance); // Prevent GC
       const cleanup = () => {
         activeUtterances = activeUtterances.filter(u => u !== utterance);
+        try { drumController.stop(); } catch (e) {}
       };
       utterance.onend = cleanup;
       utterance.onerror = cleanup;
 
       if (isZh) {
+        // Trigger rhythmic drum beat loop for Chinese rhymes (sentences >= 6 chars)
+        if (phrase.length >= 6) {
+          try { drumController.start(); } catch (e) {}
+        }
         utterance.lang = 'zh-CN';
         utterance.rate = 0.67; // Also slow down Chinese translation reading by 1.5x
       } else {
@@ -310,12 +475,29 @@ export const audio = {
           aud.playbackRate = 0.67;
           activeWordAudio = aud;
           aud.volume = 0.95;
+
+          aud.addEventListener('ended', () => {
+            try { drumController.stop(); } catch (e) {}
+          });
+          aud.addEventListener('pause', () => {
+            try { drumController.stop(); } catch (e) {}
+          });
+          aud.addEventListener('error', () => {
+            try { drumController.stop(); } catch (e) {}
+          });
+
+          if (isChinese && cleanWord.length >= 6) {
+            try { drumController.start(); } catch (e) {}
+          }
+
           aud.play().catch(() => {
             // Autoplay restriction fallback to synthesis
             if (activeWordAudio === aud) activeWordAudio = null;
+            try { drumController.stop(); } catch (e) {}
             speakSynth(cleanWord, isChinese);
           });
         } catch (e) {
+          try { drumController.stop(); } catch (err) {}
           speakSynth(cleanWord, isChinese);
         }
       }

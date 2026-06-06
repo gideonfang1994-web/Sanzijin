@@ -2,6 +2,7 @@
 import React, { useState } from 'react';
 import { UserStats, ShopItem, Character } from '../types';
 import { CHARACTERS, SHOP_ITEMS, getShopImageUrl } from '../constants';
+import { getCharacterPortraitSvgUri } from '../utils/CharacterIllustrator';
 import { Sparkles, ShoppingBag, Check, Lock, User, Shield, Sword, Wand2, Book, ArrowUp, Zap, BookOpen, ArrowRight, ChevronLeft } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import SafeImage from './SafeImage';
@@ -107,9 +108,13 @@ const CharacterVisual: React.FC<{
   character: Character; 
   equippedItems: string[]; 
   charStats: { level: number; strength: number; magic: number; defense: number; agility: number };
+  activePetType?: 'DRAGON' | 'CAT' | 'OWL' | 'SLIME';
   isGeneratingPortrait?: boolean;
-}> = ({ character, equippedItems, charStats, isGeneratingPortrait = false }) => {
+}> = ({ character, equippedItems, charStats, activePetType, isGeneratingPortrait = false }) => {
   const items = equippedItems.map(id => SHOP_ITEMS.find(i => i.id === id)).filter(Boolean) as ShopItem[];
+  
+  const equippedItemNames = items.map(i => i.name);
+  const portraitUri = getCharacterPortraitSvgUri(character, equippedItemNames, activePetType);
   
   // Define equipment icons based on the reference image
   const getEquipIcon = (slot: string) => {
@@ -209,10 +214,10 @@ const CharacterVisual: React.FC<{
 
         {/* Main Character Portrait */}
         <div className="relative z-10 w-40 h-60 rounded-[32px] overflow-hidden border-2 border-white/20 shadow-2xl bg-black/20">
-          {character.portraitUrl ? (
+          {portraitUri ? (
             <div className="relative w-full h-full">
               <SafeImage 
-                src={character.portraitUrl} 
+                src={portraitUri} 
                 alt={character.name}
                 fallbackEmoji={character.avatar}
                 className="w-full h-full object-cover"
@@ -434,6 +439,7 @@ const MagicShop: React.FC<MagicShopProps> = ({ stats, onPurchase, onEquip, onSel
                 character={selectedChar} 
                 equippedItems={stats.equippedItems?.[selectedChar.id] || []} 
                 charStats={totalStats}
+                activePetType={stats.pets?.find(p => !p.isDead)?.type}
                 isGeneratingPortrait={isGeneratingPortrait}
               />
             </div>

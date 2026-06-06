@@ -4,9 +4,10 @@ import {
   BookOpen, Gamepad2, Sparkles, Trophy, CircleDollarSign, ArrowRight, Search, X,
   Sword, Shield, Zap, Swords, Activity, Heart, Plus, Award
 } from 'lucide-react';
-import { UserStats, WordGroup, ViewState } from '../types';
+import { UserStats, WordGroup, ViewState, ShopItem } from '../types';
 import DailyQuestBoard from '../components/DailyQuestBoard';
 import { CHARACTERS, SHOP_ITEMS, getShopEmoji, getShopImageUrl } from '../constants';
+import { getCharacterPortraitSvgUri } from '../utils/CharacterIllustrator';
 import SafeImage from '../components/SafeImage';
 import audio from '../utils/AudioUtils';
 import { getVocabularyErrors } from '../utils/errorBookUtils';
@@ -131,6 +132,8 @@ const HomePage: React.FC<HomePageProps> = ({ stats, groups, reviewNeeded, onNavi
   // Equipment Bonuses
   const equippedItemIds = stats.equippedItems[selectedChar.id] || [];
   const equippedItems = SHOP_ITEMS.filter(item => equippedItemIds.includes(item.id));
+  const equippedItemNames = equippedItems.map(i => i.name);
+  const selectedCharPortraitUri = getCharacterPortraitSvgUri(selectedChar, equippedItemNames, stats.pets?.find(p => !p.isDead)?.type);
 
   const bonusStrength = equippedItems.reduce((acc, item) => acc + (item.stats?.strength || 0), 0);
   const bonusMagic = equippedItems.reduce((acc, item) => acc + (item.stats?.magic || 0), 0);
@@ -576,17 +579,21 @@ const HomePage: React.FC<HomePageProps> = ({ stats, groups, reviewNeeded, onNavi
                 {activeProfileTab === 'HERO' ? (
                   <div className="space-y-4.5">
                     {/* Character Card Info */}
-                    <div className="bg-white border-2 border-emerald-250 shadow-md rounded-2xl p-4.5 flex items-center space-x-4 relative overflow-hidden">
+                    <div className="bg-white border-2 border-emerald-300 shadow-md rounded-2xl p-4.5 flex items-center space-x-4 relative overflow-hidden">
                       <div className="absolute top-0 right-0 opacity-[0.05] select-none pointer-events-none text-9xl">
                         {selectedChar.avatar}
                       </div>
-                      <div className="w-16 h-16 bg-emerald-50 rounded-2xl border-2 border-emerald-355 flex items-center justify-center text-4xl shrink-0">
-                        {selectedChar.avatar}
+                      <div className="w-20 h-20 bg-slate-950 border border-emerald-400 rounded-2xl overflow-hidden shrink-0 flex items-center justify-center shadow-inner">
+                        <img 
+                          src={selectedCharPortraitUri} 
+                          alt={selectedChar.name} 
+                          className="w-full h-full object-cover"
+                        />
                       </div>
                       <div className="min-w-0 flex-1">
                         <div className="flex items-center gap-2 flex-wrap">
                           <h5 className="font-sans font-black text-emerald-955 text-lg sm:text-xl truncate">{selectedChar.name}</h5>
-                          <span className="text-[11px] bg-emerald-150 text-emerald-900 font-extrabold px-2.5 py-0.5 rounded-full border border-emerald-300">
+                          <span className="text-[11px] bg-emerald-100 text-emerald-900 font-extrabold px-2.5 py-0.5 rounded-full border border-emerald-300">
                             英雄 LV.{charStats.level}
                           </span>
                         </div>

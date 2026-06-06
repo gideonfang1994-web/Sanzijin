@@ -4,7 +4,7 @@ import { motion, AnimatePresence } from 'motion/react';
 import { 
   ChevronLeft, ChevronRight, ChevronDown, Play, Gamepad2, RefreshCw, Star, Trophy,
   ArrowRight, Volume2, Lock, CheckCircle2, Zap, Trash2, Wand2,
-  BookOpen, Flame, Sparkles, Check, CircleDollarSign
+  BookOpen, Flame, Sparkles, Check, CircleDollarSign, RotateCw
 } from 'lucide-react';
 import confetti from 'canvas-confetti';
 import { WordItem, WordCard, AdventureForestProps, DifficultyLevel } from '../types';
@@ -385,9 +385,24 @@ const AdventurePage: React.FC<AdventurePageProps> = ({
   // Learning/Test session state
   const [cardIndex, setCardIndex] = useState(0);
   const [activeWordIdx, setActiveWordIdx] = useState(0);
+  const [isFlipped, setIsFlipped] = useState(false);
+  const [globalReveal, setGlobalReveal] = useState(false);
+  const [revealedWords, setRevealedWords] = useState<Record<string, boolean>>({});
+
+  const [triggerCount, setTriggerCount] = useState(() => {
+    try {
+      const saved = localStorage.getItem('wordland_sanzijing_trigger_clicks');
+      return saved ? parseInt(saved, 10) : 0;
+    } catch(e) {
+      return 0;
+    }
+  });
 
   useEffect(() => {
     setActiveWordIdx(0);
+    setIsFlipped(false);
+    setGlobalReveal(false);
+    setRevealedWords({});
   }, [cardIndex]);
   const [streak, setStreak] = useState(() => {
     const saved = localStorage.getItem('adventure_streak');
@@ -1085,7 +1100,7 @@ const AdventurePage: React.FC<AdventurePageProps> = ({
     while ((match = regex.exec(line)) !== null) {
       if (match.index > lastIndex) {
         parts.push(
-          <span key={`text-${lastIndex}`} className="text-slate-800 font-black text-xl md:text-2xl font-cute tracking-wide">
+          <span key={`text-${lastIndex}`} className={`${isFlipped ? 'text-white' : 'text-slate-800'} font-black text-xl md:text-2xl font-cute tracking-wide ${isFlipped ? 'drop-shadow-sm' : ''}`}>
             {line.substring(lastIndex, match.index)}
           </span>
         );
@@ -1096,7 +1111,7 @@ const AdventurePage: React.FC<AdventurePageProps> = ({
 
       const renderWordPart = () => {
         if (!suffix) {
-          return <span className="text-indigo-600 font-black font-cute">{englishWord}</span>;
+          return <span className={isFlipped ? "text-amber-300 font-black font-cute" : "text-indigo-600 font-black font-cute"}>{englishWord}</span>;
         }
         
         const lowerWord = englishWord.toLowerCase();
@@ -1108,8 +1123,8 @@ const AdventurePage: React.FC<AdventurePageProps> = ({
           const endPart = englishWord.substring(rootLen);
           return (
             <span className="font-black text-2xl md:text-3xl font-cute tracking-normal scale-105 inline-block">
-              <span className="text-indigo-600 hover:text-indigo-500 transition-colors">{root}</span>
-              <span className="text-red-500 hover:text-red-400 transition-colors">{endPart}</span>
+              <span className={isFlipped ? "text-amber-300 hover:text-amber-200 transition-colors" : "text-indigo-600 hover:text-indigo-500 transition-colors"}>{root}</span>
+              <span className={isFlipped ? "text-red-400 hover:text-red-350 transition-colors" : "text-red-500 hover:text-red-400 transition-colors"}>{endPart}</span>
             </span>
           );
         } else if (lowerWord.includes(lowerSuffix)) {
@@ -1119,30 +1134,57 @@ const AdventurePage: React.FC<AdventurePageProps> = ({
           const part3 = englishWord.substring(idx + suffix.length);
           return (
             <span className="font-black text-2xl md:text-3xl font-cute tracking-normal scale-105 inline-block">
-              <span className="text-indigo-600 hover:text-indigo-500 transition-colors">{part1}</span>
-              <span className="text-red-500 hover:text-red-400 transition-colors">{part2}</span>
-              {part3 && <span className="text-indigo-600 hover:text-indigo-500 transition-colors">{part3}</span>}
+              <span className={isFlipped ? "text-amber-300 hover:text-amber-200 transition-colors" : "text-indigo-600 hover:text-indigo-500 transition-colors"}>{part1}</span>
+              <span className={isFlipped ? "text-red-400 hover:text-red-350 transition-colors" : "text-red-500 hover:text-red-400 transition-colors"}>{part2}</span>
+              {part3 && <span className={isFlipped ? "text-amber-300 hover:text-amber-200 transition-colors" : "text-indigo-600 hover:text-indigo-500 transition-colors"}>{part3}</span>}
             </span>
           );
         }
         
-        return <span className="text-indigo-600 font-black text-2xl md:text-3xl font-cute tracking-normal scale-105 inline-block">{englishWord}</span>;
+        return <span className={isFlipped ? "text-amber-300 font-black text-2xl md:text-3xl font-cute tracking-normal scale-105 inline-block" : "text-indigo-600 font-black text-2xl md:text-3xl font-cute tracking-normal scale-105 inline-block"}>{englishWord}</span>;
       };
+
+      const isWordRevealed = !isFlipped || globalReveal || !!revealedWords[englishWord.toLowerCase()];
 
       parts.push(
         <span 
           key={`word-${match.index}`}
           onClick={(e) => {
             e.stopPropagation();
-            audio.playPop();
+            try { audio.playPop(); } catch (e){}
             audio.speak(englishWord);
+            if (isFlipped) {
+              setRevealedWords(prev => ({
+                ...prev,
+                [englishWord.toLowerCase()]: !prev[englishWord.toLowerCase()]
+              }));
+            }
           }}
-          className="cursor-pointer hover:scale-110 active:scale-95 mx-1.5 inline-flex items-center transition-all animate-bounce-gentle-once"
-          title="点击发音"
+          className={`cursor-pointer transition-all duration-300 mx-1 px-3 py-0.5 rounded-xl border-2 select-none inline-flex items-center ${
+            !isFlipped 
+              ? 'bg-transparent border-transparent hover:scale-110 active:scale-95 animate-bounce-gentle-once' 
+              : isWordRevealed
+                ? 'bg-white/10 border-white/20 hover:scale-110 active:scale-95'
+                : 'bg-amber-400/10 border-dashed border-amber-400/40 hover:bg-amber-400/20 hover:scale-105 active:scale-95'
+          }`}
+          title={!isFlipped ? "点击发音" : isWordRevealed ? "点击发音 / 再次挖空" : "点击揭晓并朗读单词"}
         >
-          {renderWordPart()}
+          {isWordRevealed ? (
+            <motion.span
+              key="revealed"
+              initial={isFlipped ? { scale: 0.8, opacity: 0 } : false}
+              animate={isFlipped ? { scale: 1, opacity: 1 } : false}
+              transition={{ type: 'spring', stiffness: 300, damping: 15 }}
+            >
+              {renderWordPart()}
+            </motion.span>
+          ) : (
+            <span key="blank" className="text-amber-300/80 font-sans tracking-wide font-black text-xl md:text-2xl px-1">
+              ____
+            </span>
+          )}
           {translation && (
-            <span className="text-indigo-550 font-black text-xl md:text-2xl ml-1 font-cute">
+            <span className={`${isFlipped ? 'text-amber-100' : 'text-indigo-550'} font-black text-xl md:text-2xl ml-1 font-cute ${isFlipped ? 'drop-shadow-sm' : ''}`}>
               {translation}
             </span>
           )}
@@ -1155,7 +1197,7 @@ const AdventurePage: React.FC<AdventurePageProps> = ({
     if (lastIndex < line.length) {
       const remaining = line.substring(lastIndex);
       parts.push(
-        <span key={`text-end`} className="text-slate-800 font-black text-xl md:text-2xl font-cute tracking-wide">
+        <span key={`text-end`} className={`${isFlipped ? 'text-white' : 'text-slate-800'} font-black text-xl md:text-2xl font-cute tracking-wide`}>
           {remaining}
         </span>
       );
@@ -1694,26 +1736,168 @@ const AdventurePage: React.FC<AdventurePageProps> = ({
                       </div>
                       
                       {currentActiveLevel.cards[cardIndex] && (
-                        <div className="bg-[#f8fafc] border-2 border-slate-100/70 p-6 sm:p-8 rounded-[36px] w-full flex flex-col justify-center space-y-4 relative group">
-                          <div className={`space-y-3.5 w-full justify-center flex flex-col items-center ${getRhymeFontSize(currentActiveLevel.cards[cardIndex].rhyme)}`}>
-                            {currentActiveLevel.cards[cardIndex].rhyme.split(/[,，.。!！?？]/).filter(s => s.trim()).map((line, idx) => (
-                              <div key={idx} className="flex flex-wrap justify-center items-center drop-shadow-sm font-black text-center whitespace-nowrap leading-relaxed tracking-wide">
-                                {renderSanzijingLine(line, currentActiveLevel.cards[cardIndex]?.suffix || currentActiveLevel.suffix || '')}
-                              </div>
-                            ))}
-                          </div>
-
-                          <div className="pt-2 flex flex-col items-center justify-center border-t border-slate-100/50 space-y-2">
-                            <motion.button
-                              whileHover={{ scale: 1.05 }}
-                              whileTap={{ scale: 0.95 }}
-                              onClick={() => speakRhyme(currentActiveLevel.cards[cardIndex].rhyme)}
-                              className="px-5 py-2 rounded-full bg-indigo-50 border border-indigo-100 text-indigo-600 font-extrabold text-xs flex items-center space-x-1.5 shadow-sm hover:bg-indigo-100 transition-colors"
+                        <div className="w-full perspective-1000 min-h-[400px] sm:min-h-[420px] flex flex-col items-center relative z-20">
+                          <motion.div 
+                            className="relative w-full h-[370px] sm:h-[390px] preserve-3d cursor-pointer rounded-[36px]"
+                            animate={{ rotateY: isFlipped ? 180 : 0 }}
+                            whileHover={isFlipped ? {} : {
+                              y: -6,
+                              scale: 1.015,
+                              boxShadow: "0 25px 50px -12px rgba(99, 102, 241, 0.15)"
+                            }}
+                            transition={{ 
+                              rotateY: { duration: 0.8, ease: [0.34, 1.56, 0.64, 1] },
+                              y: { type: "spring", stiffness: 200, damping: 15 },
+                              scale: { type: "spring", stiffness: 200, damping: 15 },
+                              boxShadow: { duration: 0.3 }
+                            }}
+                            onClick={() => {
+                              setIsFlipped(!isFlipped);
+                              try { audio.playClick(); } catch(e){}
+                            }}
+                          >
+                            {/* Front Side: Normal Rhyme */}
+                            <div 
+                              className="absolute inset-0 bg-[#f8fafc] border-2 border-slate-100/70 p-6 sm:p-8 rounded-[36px] w-full h-full flex flex-col justify-between shadow-md"
+                              style={{ backfaceVisibility: 'hidden', WebkitBackfaceVisibility: 'hidden' }}
                             >
-                              <Volume2 size={14} className="text-indigo-500 animate-pulse" />
-                              <span>聆听整句英文三字经 Chanting!</span>
-                            </motion.button>
-                          </div>
+                              <div className="flex justify-between items-center w-full mb-2" onClick={(e) => e.stopPropagation()}>
+                                <span className="text-[10px] font-black text-indigo-600 bg-indigo-50 border border-indigo-100 px-2.5 py-0.5 rounded-full uppercase tracking-wider">
+                                  📖 口诀背诵
+                                </span>
+                                
+                                <div className="flex flex-col items-end space-y-1">
+                                  <motion.button 
+                                    whileHover={{ scale: 1.05 }}
+                                    whileTap={{ scale: 0.95 }}
+                                    animate={triggerCount < 3 ? { 
+                                      scale: [1, 1.06, 1],
+                                      boxShadow: [
+                                        "0 4px 6px -1px rgba(99, 102, 241, 0.1), 0 2px 4px -1px rgba(99, 102, 241, 0.06)",
+                                        "0 10px 15px -3px rgba(99, 102, 241, 0.35)",
+                                        "0 4px 6px -1px rgba(99, 102, 241, 0.1), 0 2px 4px -1px rgba(99, 102, 241, 0.06)"
+                                      ]
+                                    } : {}}
+                                    transition={{ repeat: Infinity, duration: 1.8, ease: "easeInOut" }}
+                                    onClick={(e) => {
+                                      e.stopPropagation();
+                                      setIsFlipped(true);
+                                      try { audio.playClick(); } catch(err){}
+                                      const nextCount = triggerCount + 1;
+                                      setTriggerCount(nextCount);
+                                      try { localStorage.setItem('wordland_sanzijing_trigger_clicks', nextCount.toString()); } catch(err2) {}
+                                    }}
+                                    className="px-3.5 py-1.5 bg-gradient-to-r from-indigo-500 via-purple-500 to-indigo-600 hover:from-indigo-600 hover:to-indigo-655 text-white rounded-xl font-black text-[11px] tracking-wider shadow-md flex items-center space-x-1 outline-none border border-indigo-400/40"
+                                    title="切换到三字经自测"
+                                  >
+                                    <RotateCw size={12} className="animate-spin-slow" />
+                                    <span>🔮 自测三字经</span>
+                                  </motion.button>
+                                  
+                                  {triggerCount < 3 && (
+                                    <motion.div 
+                                      initial={{ opacity: 0, y: -5 }}
+                                      animate={{ opacity: 1, y: 0 }}
+                                      exit={{ opacity: 0 }}
+                                      className="text-[9px] font-bold text-indigo-600 bg-indigo-50 border border-indigo-150 rounded-lg px-2 py-0.5 shadow-sm text-right leading-tight max-w-[150px]"
+                                    >
+                                      💡 点击开启“挖空自测”
+                                    </motion.div>
+                                  )}
+                                </div>
+                              </div>
+
+                              <div className="flex-1 flex flex-col justify-center my-4">
+                                <div className={`space-y-4 w-full justify-center flex flex-col items-center ${getRhymeFontSize(currentActiveLevel.cards[cardIndex].rhyme)}`}>
+                                  {currentActiveLevel.cards[cardIndex].rhyme.split(/[,，.。!！?？]/).filter(s => s.trim()).map((line, idx) => (
+                                    <div key={idx} className="flex flex-row flex-nowrap whitespace-nowrap justify-center items-center drop-shadow-sm font-black text-center leading-relaxed tracking-wide">
+                                      {renderSanzijingLine(line, currentActiveLevel.cards[cardIndex]?.suffix || currentActiveLevel.suffix || '')}
+                                    </div>
+                                  ))}
+                                </div>
+                              </div>
+
+                              <div className="pt-2 flex flex-col items-center justify-center border-t border-slate-100/50 space-y-1.5" onClick={(e) => e.stopPropagation()}>
+                                <motion.button
+                                  whileHover={{ scale: 1.05 }}
+                                  whileTap={{ scale: 0.95 }}
+                                  onClick={() => speakRhyme(currentActiveLevel.cards[cardIndex].rhyme)}
+                                  className="px-5 py-1.5 rounded-full bg-indigo-50 border border-indigo-100 text-indigo-600 font-extrabold text-[11px] flex items-center space-x-1.5 shadow-sm hover:bg-indigo-100 transition-colors"
+                                >
+                                  <Volume2 size={13} className="text-indigo-500 animate-pulse" />
+                                  <span>聆听整句英文三字经 Chanting!</span>
+                                </motion.button>
+                                <span className="text-[9px] font-bold text-slate-400">点击空白或右上角按钮翻转进行自测</span>
+                              </div>
+                            </div>
+
+                            {/* Back Side: Self-test Rhyme (Blanked) */}
+                            <div 
+                              className="absolute inset-0 bg-gradient-to-br from-indigo-900 via-indigo-950 to-slate-900 border-2 border-white/20 p-6 sm:p-8 rounded-[36px] w-full h-full flex flex-col justify-between shadow-2xl"
+                              style={{ transform: 'rotateY(180deg)', backfaceVisibility: 'hidden', WebkitBackfaceVisibility: 'hidden' }}
+                            >
+                              <div className="flex justify-between items-center w-full mb-2" onClick={(e) => e.stopPropagation()}>
+                                <span className="text-[10px] font-black text-amber-400 bg-amber-400/10 border border-amber-400/20 px-2.5 py-0.5 rounded-full uppercase tracking-wider">
+                                  🎯 挖空自测中
+                                </span>
+                                
+                                <div className="flex items-center space-x-1.5">
+                                  <motion.button 
+                                    whileHover={{ scale: 1.05 }}
+                                    whileTap={{ scale: 0.95 }}
+                                    onClick={() => {
+                                      try { audio.playPop(); } catch(e){}
+                                      setGlobalReveal(!globalReveal);
+                                    }}
+                                    className={`px-2.5 py-1 rounded-xl border text-[10px] font-black flex items-center space-x-1 shadow-sm ${
+                                      globalReveal 
+                                        ? 'bg-amber-400 text-slate-950 border-amber-300 shadow-lg scale-105'
+                                        : 'bg-white/10 text-white border-white/15 hover:bg-white/20'
+                                    }`}
+                                  >
+                                    <span>{globalReveal ? '🙈 隐藏答案' : '👁️ 显示答案'}</span>
+                                  </motion.button>
+
+                                  <motion.button 
+                                    whileHover={{ scale: 1.05 }}
+                                    whileTap={{ scale: 0.95 }}
+                                    onClick={() => {
+                                      setIsFlipped(false);
+                                      try { audio.playClick(); } catch(e){}
+                                    }}
+                                    className="p-1 px-2.5 bg-white/10 text-white hover:bg-white/25 border border-white/15 rounded-xl text-[10px] font-black flex items-center space-x-1"
+                                    title="返回正面"
+                                  >
+                                    <RotateCw size={10} className="animate-spin-slow" />
+                                    <span>正面</span>
+                                  </motion.button>
+                                </div>
+                              </div>
+
+                              <div className="flex-1 flex flex-col justify-center my-4">
+                                <div className={`space-y-4 w-full justify-center flex flex-col items-center ${getRhymeFontSize(currentActiveLevel.cards[cardIndex].rhyme)}`}>
+                                  {currentActiveLevel.cards[cardIndex].rhyme.split(/[,，.。!！?？]/).filter(s => s.trim()).map((line, idx) => (
+                                    <div key={idx} className="flex flex-row flex-nowrap whitespace-nowrap justify-center items-center drop-shadow-sm font-black text-center leading-relaxed tracking-wide">
+                                      {renderSanzijingLine(line, currentActiveLevel.cards[cardIndex]?.suffix || currentActiveLevel.suffix || '')}
+                                    </div>
+                                  ))}
+                                </div>
+                              </div>
+
+                              <div className="pt-2 flex flex-col items-center justify-center border-t border-white/10 space-y-1.5" onClick={(e) => e.stopPropagation()}>
+                                <motion.button
+                                  whileHover={{ scale: 1.05 }}
+                                  whileTap={{ scale: 0.95 }}
+                                  onClick={() => speakRhyme(currentActiveLevel.cards[cardIndex].rhyme)}
+                                  className="px-5 py-1.5 rounded-full bg-white/15 border border-white/10 hover:bg-white/25 text-white font-extrabold text-[11px] flex items-center space-x-1.5 shadow-sm transition-all"
+                                >
+                                  <Volume2 size={13} className="text-amber-400 animate-pulse" />
+                                  <span>🎙️ 说唱口诀 Chant Along!</span>
+                                </motion.button>
+                                <span className="text-[9px] font-bold text-white/40">点击空白处学发音，或点击挖空词直接揭晓</span>
+                              </div>
+                            </div>
+                          </motion.div>
                         </div>
                       )}
                     </div>

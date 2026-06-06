@@ -1,5 +1,6 @@
 
 import { WordCard, VideoLesson, WordGroup, Character, ShopItem } from './types';
+import { getShopItemSvgUri } from './utils/ShopItemIllustrator';
 import { INTERMEDIATE_TEXTBOOK_CARDS as INTERMEDIATE_TEXTBOOK_CARDS_PART1 } from './intermediateCards';
 import { INTERMEDIATE_TEXTBOOK_CARDS_PART2 } from './intermediateCards2';
 import { INTERMEDIATE_TEXTBOOK_CARDS_PART3 } from './intermediateCards3';
@@ -455,67 +456,7 @@ const getImageUrl = (name: string) => {
 };
 
 export const getShopImageUrl = (name: string) => {
-  // Map Chinese names to English keywords for more reliable image fetching in the hand-drawn clouds style
-  const nameMap: Record<string, string> = {
-    '无畏剑士': 'knight',
-    '奇幻女巫': 'witch',
-    '灵动狐仙': 'fox',
-    '潜行暗影': 'ninja',
-    '破魔者之剑': 'sword',
-    '炎龙重剑': 'sword',
-    '钢铁护肩': 'armor',
-    '狮心盾': 'shield',
-    '不屈誓言巨盾': 'shield',
-    '弑神圣光巨剑': 'sword',
-    '皇家卫队蓝甲': 'armor',
-    '泰坦神域重甲': 'armor',
-    '勇气头盔': 'helmet',
-    '高级经验药水': 'potion',
-    '魔法咒语书': 'book',
-    
-    '星辰法杖': 'magic-wand',
-    '星光法帽': 'wizard',
-    '星光披风': 'cloak',
-    '法术魔典': 'book',
-    '虚空秘典': 'book',
-    '潮汐圣歌法杖': 'magic-wand',
-    '混沌天演魔杖': 'scepter',
-    '高阶法袍': 'robe',
-    '星界不灭神袍': 'robe',
-
-    '森之弓': 'bow',
-    '森林兜帽': 'cloak',
-    '鹰眼箭袋': 'arrow',
-    '疾风靴': 'boots',
-    '秘银轻弩': 'crossbow',
-    '游侠皮甲套装': 'armor',
-    '月影追风长弓': 'bow-and-arrow',
-    '神树万物长弓': 'bow-and-arrow',
-    '疾风虚空轻甲': 'armor',
-
-    '刺客短刃': 'dagger',
-    '影杀面具': 'mask',
-    '毒蝎手里剑': 'shuriken',
-    '潜行长靴': 'boots',
-    '血月暗黑双刃': 'sword',
-    '暗影斗篷': 'cloak',
-    '夜行隐杀轻装': 'ninja',
-    '天诛无影神刃': 'sword',
-    '寂灭影流神装': 'ninja',
-
-    '经验药水': 'potion',
-    '魔法苹果': 'apple',
-    '蓝龙宠兽': 'dragon',
-    '史莱姆': 'slime',
-    '小蓝龙': 'dragon',
-    '波利史莱姆': 'slime',
-    '招财猫': 'cat',
-    '智慧之鸮': 'owl',
-    '优质肉块': 'steak',
-    '生命灵药': 'potion'
-  };
-  const keyword = nameMap[name] || name.toLowerCase().replace(/\s+/g, '-');
-  return `https://img.icons8.com/clouds/200/${keyword}.png`;
+  return getShopItemSvgUri(name);
 };
 
 export const getShopEmoji = (name: string): string => {

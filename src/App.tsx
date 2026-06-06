@@ -1283,6 +1283,7 @@ const App: React.FC = () => {
                   onNext={() => {}} 
                   isLast={true} 
                   onChallenge={() => handleChallenge(g.id)} 
+                  wordMastery={stats.wordMastery}
                 />
               ))}
             </motion.div>
