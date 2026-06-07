@@ -170,7 +170,7 @@ const HomePage: React.FC<HomePageProps> = ({ stats, groups, reviewNeeded, onNavi
   const totalCombatPower = characterCombatPower + activePetPower;
 
   return (
-    <div className="space-y-5 animate-in fade-in duration-500 pb-8 relative w-full max-w-lg mx-auto overflow-x-hidden">
+    <div className="space-y-3 animate-in fade-in duration-500 pb-3 relative w-full max-w-md mx-auto overflow-x-hidden">
       {/* Dynamic Magical Forest & Astro-Core Background */}
       <div className="fixed inset-0 pointer-events-none overflow-hidden -z-10 bg-gradient-to-b from-[#eafaf1] via-[#f3fcf7] to-[#f9fef6]">
         {/* Soft glowing fairy lights and magical sunbeams */}
@@ -270,20 +270,20 @@ const HomePage: React.FC<HomePageProps> = ({ stats, groups, reviewNeeded, onNavi
       <motion.div 
         initial={{ opacity: 0, y: -10 }}
         animate={{ opacity: 1, y: 0 }}
-        className="bg-gradient-to-b from-white via-[#fcfefd] to-[#eefdf5] border-2 border-emerald-300 border-b-[6px] border-emerald-400 rounded-[24px] p-3.5 sm:p-4 shadow-md text-emerald-950 relative overflow-hidden flex flex-col gap-3"
+        className="bg-gradient-to-b from-white via-[#fcfefd] to-[#eefdf5] border-2 border-emerald-300 border-b-[5px] border-emerald-400 rounded-[20px] p-2.5 shadow-md text-emerald-950 relative overflow-hidden flex flex-col gap-2"
       >
         <div className="absolute top-0 inset-x-0 h-1 bg-gradient-to-r from-transparent via-amber-400 to-transparent animate-pulse" />
         
         {/* Row 1: Profile Avatar + Title & Meta badge + Coins & Attributes button */}
-        <div className="flex items-center justify-between gap-2.5 w-full">
+        <div className="flex items-center justify-between gap-1.5 w-full">
           {/* Left: Avatar portrait and level/name info */}
-          <div className="flex items-center space-x-2.5 min-w-0">
+          <div className="flex items-center space-x-2 min-w-0">
             <div 
               onClick={() => {
                 try { audio.playClick(); } catch(e){}
                 setIsProfileExpanded(true);
               }}
-              className="w-12 h-12 bg-slate-900 border-3 border-amber-300 rounded-2xl overflow-hidden shadow-md cursor-pointer shrink-0 hover:scale-105 active:scale-95 transition-transform flex items-center justify-center relative bg-gradient-to-br from-emerald-500 to-teal-800"
+              className="w-10 h-10 bg-slate-900 border-2 border-amber-300 rounded-xl overflow-hidden shadow-sm cursor-pointer shrink-0 hover:scale-105 active:scale-95 transition-transform flex items-center justify-center relative bg-gradient-to-br from-emerald-500 to-teal-800"
             >
               <img 
                 src={selectedCharPortraitUri} 
@@ -291,27 +291,27 @@ const HomePage: React.FC<HomePageProps> = ({ stats, groups, reviewNeeded, onNavi
                 className="w-full h-full object-cover select-none"
               />
               {unassignedPoints > 0 && (
-                <span className="absolute -top-1.5 -right-1.5 bg-rose-500 text-white font-sans font-black text-[9px] px-1.5 py-0.5 rounded-full animate-bounce border border-white">
+                <span className="absolute -top-1.5 -right-1.5 bg-rose-500 text-white font-sans font-black text-[8px] px-1 rounded-full animate-bounce border border-white">
                   +{unassignedPoints}
                 </span>
               )}
               {activePet && (
-                <span className="absolute -bottom-1 -right-1 bg-amber-400 text-amber-950 border border-white rounded-md text-[9px] px-1 shadow-xs font-black">
+                <span className="absolute -bottom-1 -right-1 bg-amber-400 text-amber-950 border border-white rounded-md text-[8px] px-1 shadow-xs font-black">
                   {PET_EMOJIS[activePet.type] || '🐾'}
                 </span>
               )}
             </div>
 
             <div className="text-left min-w-0">
-              <div className="flex items-center gap-1.5 whitespace-nowrap">
-                <span className="text-[14.5px] sm:text-[16px] font-black text-emerald-950 tracking-wide leading-none whitespace-nowrap select-none">
+              <div className="flex items-center gap-1 whitespace-nowrap">
+                <span className="text-[13.5px] sm:text-[14.5px] font-black text-emerald-950 tracking-wide leading-none whitespace-nowrap select-none">
                   {selectedChar.name}
                 </span>
-                <span className="text-[9.5px] font-extrabold text-white bg-emerald-600 px-1.5 py-0.5 rounded-md shrink-0 select-none">
+                <span className="text-[8.5px] font-extrabold text-white bg-emerald-600 px-1 py-0.2 rounded-md shrink-0 select-none">
                   LV.{stats.level}
                 </span>
               </div>
-              <div className="text-[10px] font-bold text-emerald-700 mt-1 truncate whitespace-nowrap select-none">
+              <div className="text-[9.5px] font-extrabold text-emerald-700 mt-0.5 truncate whitespace-nowrap select-none leading-none">
                 称号: {selectedChar.title}
               </div>
             </div>
@@ -319,7 +319,7 @@ const HomePage: React.FC<HomePageProps> = ({ stats, groups, reviewNeeded, onNavi
 
           {/* Right: Gold Coins display & Attribute allocation button */}
           <div className="flex items-center space-x-1.5 shrink-0">
-            <span className="text-[11.5px] sm:text-[12.5px] font-black text-amber-900 bg-amber-50 border border-amber-200/60 px-2 py-1 rounded-xl flex items-center justify-center gap-0.5 shadow-3xs">
+            <span className="text-[11px] sm:text-[12px] font-black text-amber-900 bg-amber-50 border border-amber-200/60 px-1.5 py-0.5 rounded-lg flex items-center justify-center gap-0.5 shadow-3xs">
               🪙<span className="tabular-nums font-extrabold">{stats.magicCoins}</span>
             </span>
             <button 
@@ -328,50 +328,50 @@ const HomePage: React.FC<HomePageProps> = ({ stats, groups, reviewNeeded, onNavi
                 try { audio.playClick(); } catch(e){}
                 setIsProfileExpanded(true);
               }}
-              className="px-2.5 py-1.5 bg-gradient-to-r from-emerald-500 to-teal-500 hover:brightness-105 active:scale-95 text-white font-black text-[10.5px] rounded-xl border-b-[3px] border-emerald-700 shadow-sm font-sans transition-all flex items-center gap-0.5 leading-none"
+              className="px-2 py-1 bg-gradient-to-r from-emerald-500 to-teal-500 hover:brightness-105 active:scale-95 text-white font-black text-[9.5px] rounded-lg border-b-[2px] border-emerald-700 shadow-sm font-sans transition-all flex items-center gap-0.5 leading-none"
             >
               <span>属性 🗡️</span>
-              {unassignedPoints > 0 && <span className="h-1.5 w-1.5 rounded-full bg-rose-500 animate-pulse" />}
+              {unassignedPoints > 0 && <span className="h-1 w-1 rounded-full bg-rose-500 animate-pulse" />}
             </button>
           </div>
         </div>
 
         {/* Row 2: Grid of RPG Metrics Stats Badges */}
-        <div className="grid grid-cols-3 gap-1.5 bg-emerald-950/[0.04] border border-emerald-250/20 p-1.5 rounded-2xl">
-          <div className="bg-gradient-to-r from-white to-amber-50/35 border border-amber-200/80 rounded-xl py-1.5 px-1.5 flex items-center justify-center gap-1 shadow-3xs hover:brightness-102 transition-all">
-            <span className="text-[10.5px] sm:text-xs font-black text-slate-600">⚔️战力</span>
-            <span className="text-[11.5px] sm:text-xs font-black text-[#be2c2c] tabular-nums font-sans">{totalCombatPower}</span>
+        <div className="grid grid-cols-3 gap-1 bg-emerald-950/[0.03] border border-emerald-250/20 p-1 rounded-xl">
+          <div className="bg-gradient-to-r from-white to-amber-50/20 border border-amber-200/60 rounded-lg py-0.5 px-1 flex items-center justify-center gap-0.5 shadow-3xs hover:brightness-102 transition-all">
+            <span className="text-[10px] font-black text-slate-500">⚔️战力</span>
+            <span className="text-[10px] font-black text-[#be2c2c] tabular-nums font-sans">{totalCombatPower}</span>
           </div>
-          <div className="bg-gradient-to-r from-white to-rose-50/35 border border-rose-200/80 rounded-xl py-1.5 px-1.5 flex items-center justify-center gap-1 shadow-3xs hover:brightness-102 transition-all">
-            <span className="text-[10.5px] sm:text-xs font-black text-slate-600">❤️生命</span>
-            <span className="text-[11.5px] sm:text-xs font-black text-rose-600 tabular-nums font-sans">100</span>
+          <div className="bg-gradient-to-r from-white to-rose-50/20 border border-rose-200/60 rounded-lg py-0.5 px-1 flex items-center justify-center gap-0.5 shadow-3xs hover:brightness-102 transition-all">
+            <span className="text-[10px] font-black text-slate-500">❤️生命</span>
+            <span className="text-[10px] font-black text-rose-600 tabular-nums font-sans">100</span>
           </div>
-          <div className="bg-gradient-to-r from-white to-indigo-50/35 border border-indigo-200/80 rounded-xl py-1.5 px-1.5 flex items-center justify-center gap-1 shadow-3xs hover:brightness-102 transition-all">
-            <span className="text-[10.5px] sm:text-xs font-black text-slate-600">🪄魔力</span>
-            <span className="text-[11.5px] sm:text-xs font-black text-indigo-600 tabular-nums font-sans">{stats.level * 10}</span>
+          <div className="bg-gradient-to-r from-white to-indigo-50/20 border border-indigo-200/60 rounded-lg py-0.5 px-1 flex items-center justify-center gap-0.5 shadow-3xs hover:brightness-102 transition-all">
+            <span className="text-[10px] font-black text-slate-500">🪄魔力</span>
+            <span className="text-[10px] font-black text-indigo-600 tabular-nums font-sans">{stats.level * 10}</span>
           </div>
         </div>
       </motion.div>
 
       {/* CUTE WORD SEARCH SECTION */}
-      <div className="relative group px-1">
-        <div className="absolute inset-y-0 left-5 flex items-center pointer-events-none">
-          <span className="text-lg mr-1 select-none animate-pulse">🔮</span>
-          <Search className="text-emerald-600 w-4.5 h-4.5 group-focus-within:text-amber-500 transition-colors shrink-0 stroke-[3]" />
+      <div className="relative group px-0.5">
+        <div className="absolute inset-y-0 left-4 flex items-center pointer-events-none">
+          <span className="text-base mr-1 select-none animate-pulse">🔮</span>
+          <Search className="text-emerald-600 w-4 h-4 group-focus-within:text-amber-500 transition-colors shrink-0 stroke-[3]" />
         </div>
         <input
           type="text"
           value={searchQuery}
           onChange={handleSearch}
-          placeholder="🧙‍♂️ 输入神秘单词或三字经拼音寻找口诀..."
-          className="w-full bg-white/95 backdrop-blur-md py-4 pl-14 pr-10 rounded-[22px] border-2 border-emerald-300 shadow-sm focus:ring-4 focus:ring-emerald-400/10 focus:border-amber-400 focus:bg-white outline-none transition-all text-sm sm:text-base text-emerald-950 placeholder:text-emerald-700/60 font-black animate-in slide-in-from-top-1 duration-200 border-b-[5px] border-emerald-400"
+          placeholder="🧙‍♂️ 输入神秘单词或拼音寻找口诀..."
+          className="w-full bg-white/95 backdrop-blur-md py-2.5 pl-11 pr-8 rounded-[16px] border-2 border-emerald-300 shadow-sm focus:ring-4 focus:ring-emerald-400/10 focus:border-amber-400 focus:bg-white outline-none transition-all text-xs sm:text-sm text-emerald-950 placeholder:text-emerald-700/60 font-black animate-in slide-in-from-top-1 duration-200 border-b-[4px] border-emerald-400"
         />
         {searchQuery && (
           <button
             onClick={clearSearch}
-            className="absolute inset-y-0 right-4 flex items-center px-1 text-emerald-600 hover:text-emerald-800 transition-colors cursor-pointer"
+            className="absolute inset-y-0 right-3 flex items-center px-1 text-emerald-600 hover:text-emerald-800 transition-colors cursor-pointer"
           >
-            <X className="w-5 h-5 stroke-[2.5]" />
+            <X className="w-4 h-4 stroke-[2.5]" />
           </button>
         )}
       </div>
@@ -383,31 +383,31 @@ const HomePage: React.FC<HomePageProps> = ({ stats, groups, reviewNeeded, onNavi
             initial={{ opacity: 0, y: -8, height: 0 }}
             animate={{ opacity: 1, y: 0, height: 'auto' }}
             exit={{ opacity: 0, y: -8, height: 0 }}
-            className="bg-gradient-to-b from-white to-[#f4fbf6] border-2 border-emerald-300 rounded-[24px] shadow-md p-4 space-y-3.5 overflow-hidden mx-1 border-b-[6px]"
+            className="bg-gradient-to-b from-white to-[#f4fbf6] border-2 border-emerald-300 rounded-[20px] shadow-md p-3 space-y-2 overflow-hidden mx-0.5 border-b-[5px]"
           >
-            <h4 className="text-xs sm:text-[13px] font-black text-amber-700 uppercase tracking-widest px-1 flex items-center gap-1.5">
+            <h4 className="text-[11px] font-black text-amber-700 uppercase tracking-widest px-1 flex items-center gap-1">
               <span>📜 太古碑文口诀卷轴</span>
-              <span className="h-1.5 w-1.5 rounded-full bg-amber-500 animate-pulse" />
+              <span className="h-1 w-1 rounded-full bg-amber-500 animate-pulse" />
             </h4>
-            <div className="space-y-2 max-h-[190px] overflow-y-auto pr-1 custom-scrollbar">
+            <div className="space-y-1.5 max-h-[140px] overflow-y-auto pr-1 custom-scrollbar">
               {searchResults.map((group) => (
                 <div
                   key={group.id}
-                  className="p-3 bg-[#f0fdf4] rounded-2xl border border-emerald-250 hover:border-amber-400/60 hover:bg-[#e6f9ed] transition-all text-left"
+                  className="p-2.5 bg-[#f0fdf4] rounded-xl border border-emerald-250 hover:border-amber-400/60 hover:bg-[#e6f9ed] transition-all text-left"
                 >
-                  <div className="flex justify-between items-start mb-1.5">
+                  <div className="flex justify-between items-start mb-1 flex-wrap gap-1">
                     <div className="flex flex-wrap gap-1">
                       {group.words.map(w => (
-                        <span key={w.text} className={`px-2.5 py-1 rounded-lg text-xs sm:text-[13.5px] font-black leading-none ${w.text.toLowerCase().includes(searchQuery.toLowerCase()) ? 'bg-amber-400 text-emerald-950 shadow border border-amber-305 font-extrabold scale-105' : 'bg-white text-emerald-800 border border-emerald-200'}`}>
+                        <span key={w.text} className={`px-1.5 py-0.5 rounded text-[11px] sm:text-xs font-black leading-none ${w.text.toLowerCase().includes(searchQuery.toLowerCase()) ? 'bg-amber-400 text-emerald-950 border border-amber-305 scale-102' : 'bg-white text-emerald-800 border border-emerald-200'}`}>
                           {w.text}
                         </span>
                       ))}
                     </div>
-                    <span className="text-[10px] sm:text-[11px] font-black text-emerald-600/70 uppercase tracking-widest font-mono">{group.title}</span>
+                    <span className="text-[9px] font-black text-emerald-600/70 uppercase tracking-widest font-mono">{group.title}</span>
                   </div>
-                  <p className="text-emerald-955 font-black text-sm sm:text-[15px] leading-relaxed">
+                  <p className="text-emerald-955 font-black text-xs sm:text-sm leading-normal">
                     {group.rhyme.split(',').map((part, i) => (
-                      <span key={i} className="block mt-0.5 first:mt-0">{part.trim()}</span>
+                      <span key={i} className="block first:mt-0">{part.trim()}</span>
                     ))}
                   </p>
                 </div>
@@ -418,222 +418,211 @@ const HomePage: React.FC<HomePageProps> = ({ stats, groups, reviewNeeded, onNavi
       </AnimatePresence>
 
       {/* TODAY'S QUESTS BOARD CONTAINER */}
-      <div className="overflow-hidden px-1">
+      <div className="overflow-hidden px-0.5">
         <DailyQuestBoard quests={stats.quests} onQuestClick={onQuestClick} />
       </div>
 
       {/* FANTASY ADVENTURE WORLD MAP LAYOUT (BREAKTHROUGH GAME BOARD) */}
-      <div className="px-1 space-y-4">
+      <div className="px-0.5 space-y-2">
         {/* Section title */}
         <div className="flex items-center justify-between">
-          <div className="flex items-center space-x-2">
-            <span className="text-lg">🗺️</span>
-            <span className="font-sans font-black text-emerald-950 text-sm sm:text-base tracking-wide">魔幻奥妙世界版图 (Adventure Map)</span>
+          <div className="flex items-center space-x-1.5">
+            <span className="text-base">🗺️</span>
+            <span className="font-sans font-black text-emerald-950 text-xs sm:text-sm tracking-wide">魔幻奥妙世界版图 (Adventure Map)</span>
           </div>
-          <span className="text-[10px] text-amber-700 font-extrabold bg-amber-50 px-2 py-0.5 rounded-full border border-amber-200 animate-pulse">
-            勇者探险路线
+          <span className="text-[9px] text-amber-700 font-extrabold bg-amber-50 px-1.5 py-0.2 rounded-full border border-amber-200 animate-pulse">
+            学说唱背单词路线
           </span>
         </div>
 
         {/* Graphical Board Trail Map Container */}
-        <div className="relative bg-gradient-to-b from-[#f3fcf6] to-[#e6faf0] border-2 border-emerald-300 border-b-[6px] border-emerald-400 rounded-[30px] shadow-lg overflow-hidden h-[590px] w-full z-10">
+        <div className="relative bg-gradient-to-b from-[#f3fcf6] to-[#e6faf0] border-2 border-emerald-300 border-b-[5px] border-emerald-400 rounded-[24px] shadow-lg overflow-hidden h-[410px] sm:h-[440px] w-full z-10">
           
           {/* MAP GLOW EFFECT BACKDROP (Magical light halos to enrich environment depth) */}
           {/* Sunshine shaft radiating from top-right corner */}
-          <div className="absolute top-0 right-0 w-[240px] h-[240px] bg-gradient-to-bl from-amber-200/25 via-yellow-100/5 to-transparent blur-2xl pointer-events-none select-none z-0" />
+          <div className="absolute top-0 right-0 w-[180px] h-[180px] bg-gradient-to-bl from-amber-200/25 via-yellow-100/5 to-transparent blur-2xl pointer-events-none select-none z-0" />
           
           {/* Glow 1: Behind Adventure Forest (Pine Green Glow) */}
-          <div className="absolute top-[30px] left-[5%] w-32 h-32 bg-emerald-400/15 rounded-full blur-2xl pointer-events-none select-none z-0 animate-[pulse_3s_infinite_ease-in-out]" />
+          <div className="absolute top-[20px] left-[5%] w-24 h-24 bg-emerald-400/12 rounded-full blur-2xl pointer-events-none select-none z-0 animate-[pulse_3s_infinite_ease-in-out]" />
           
           {/* Glow 2: Behind Magic Playground (Sunny Amber Glow) */}
-          <div className="absolute top-[30px] right-[5%] w-32 h-32 bg-orange-400/15 rounded-full blur-2xl pointer-events-none select-none z-0 animate-[pulse_3.5s_infinite_ease-in-out_0.2s]" />
+          <div className="absolute top-[20px] right-[5%] w-24 h-24 bg-orange-400/12 rounded-full blur-2xl pointer-events-none select-none z-0 animate-[pulse_3.5s_infinite_ease-in-out_0.2s]" />
 
           {/* Glow 3: Under centerpiece Magic Picture Book (Majestic Indigo and Gold Royal Halo) */}
-          <div className="absolute top-[120px] left-1/2 -translate-x-1/2 w-[180px] h-[180px] bg-indigo-500/15 rounded-full blur-3xl pointer-events-none select-none z-0 animate-[pulse_4s_infinite_ease-in-out_0.8s]" />
-          <div className="absolute top-[145px] left-1/2 -translate-x-1/2 w-28 h-28 bg-amber-400/5 rounded-full blur-2xl pointer-events-none select-none z-0 animate-[pulse_2.5s_infinite_ease-in-out_0.4s]" />
+          <div className="absolute top-[90px] left-1/2 -translate-x-1/2 w-32 h-32 bg-indigo-500/12 rounded-full blur-2xl pointer-events-none select-none z-0 animate-[pulse_4s_infinite_ease-in-out_0.8s]" />
 
           {/* Glow 4: Behind Phonics Arena (Tingling Sparks Yellow Glow) */}
-          <div className="absolute top-[260px] left-[5%] w-32 h-32 bg-yellow-400/15 rounded-full blur-2xl pointer-events-none select-none z-0 animate-[pulse_3.2s_infinite_ease-in-out_0.6s]" />
+          <div className="absolute top-[180px] left-[5%] w-24 h-24 bg-yellow-400/12 rounded-full blur-2xl pointer-events-none select-none z-0 animate-[pulse_3.2s_infinite_ease-in-out_0.6s]" />
 
           {/* Glow 5: Behind Pet Sanctuary (Friendly Pink Blossom Glow) */}
-          <div className="absolute top-[260px] right-[5%] w-32 h-32 bg-pink-400/15 rounded-full blur-2xl pointer-events-none select-none z-0 animate-[pulse_3s_infinite_ease-in-out_0.9s]" />
+          <div className="absolute top-[180px] right-[5%] w-24 h-24 bg-pink-400/12 rounded-full blur-2xl pointer-events-none select-none z-0 animate-[pulse_3s_infinite_ease-in-out_0.9s]" />
 
           {/* Glow 6: Under Enchanted Shop (Ancient Blue Oracle Glow) */}
-          <div className="absolute bottom-[90px] left-1/2 -translate-x-1/2 w-36 h-36 bg-cyan-400/15 rounded-full blur-2xl pointer-events-none select-none z-0 animate-[pulse_3.8s_infinite_ease-in-out_1.2s]" />
+          <div className="absolute bottom-[60px] left-1/2 -translate-x-1/2 w-28 h-28 bg-cyan-400/12 rounded-full blur-2xl pointer-events-none select-none z-0 animate-[pulse_3.8s_infinite_ease-in-out_1.2s]" />
 
           {/* Sinuous SVG Trail/Road connecting nodes */}
-          <svg className="absolute inset-x-0 inset-y-0 w-full h-full pointer-events-none select-none opacity-50 z-0" viewBox="0 0 320 530" preserveAspectRatio="none">
+          <svg className="absolute inset-x-0 inset-y-0 w-full h-full pointer-events-none select-none opacity-50 z-0" viewBox="0 0 320 440" preserveAspectRatio="none">
             <path 
-              d="M 65,80 Q 160,50 255,80 Q 260,140 160,195 Q 60,250 65,315 Q 160,285 255,315 Q 260,375 160,435" 
+              d="M 65,60 Q 160,35 255,60 Q 260,105 160,150 Q 60,190 65,245 Q 160,220 255,245 Q 260,290 160,340" 
               fill="none" 
               stroke="#10b981" 
-              strokeWidth="5" 
+              strokeWidth="4" 
               strokeLinecap="round" 
-              strokeDasharray="8 6" 
+              strokeDasharray="6 5" 
               className="animate-[dash_60s_linear_infinite]"
             />
           </svg>
 
           {/* Adorable visual landmark stickers inside fantasy map to enrich the environment */}
-          <div className="absolute top-[1%] left-[45%] text-xs select-none pointer-events-none opacity-25">🌳</div>
-          <div className="absolute top-[10%] left-[47%] -translate-x-1/2 text-lg select-none pointer-events-none opacity-20 animate-pulse">☀️</div>
-          <div className="absolute top-[85px] left-[16%] text-xl select-none opacity-20 hover:opacity-40 hover:scale-110 transition-all pointer-events-none">🌋</div>
-          <div className="absolute top-[85px] right-[18%] text-base select-none opacity-20 hover:opacity-40 hover:scale-110 transition-all pointer-events-none">⛺</div>
-          <div className="absolute top-[220px] left-[16%] text-2xl select-none opacity-25 animate-[bounce_4s_infinite_ease-in-out] pointer-events-none">⛵</div>
-          <div className="absolute top-[350px] right-[16%] text-xl select-none opacity-15 hover:opacity-35 hover:scale-110 transition-all pointer-events-none">🏛️</div>
-          <div className="absolute top-[350px] left-[15%] text-lg select-none opacity-20 hover:opacity-45 pointer-events-none">🍄</div>
-          <div className="absolute bottom-[20%] left-[44%] text-xs select-none pointer-events-none opacity-15">🌈</div>
-
-          {/* Floating puffy cartoon clouds */}
-          <div className="absolute top-[5%] left-[2%] text-2xl select-none opacity-30 animate-[bounce_8s_infinite_ease-in-out] pointer-events-none">☁️</div>
-          <div className="absolute top-[24%] right-[2%] text-3xl select-none opacity-20 animate-[bounce_6s_infinite_ease-in-out_1s] pointer-events-none">☁️</div>
-          <div className="absolute top-[48%] left-[78%] text-2xl select-none opacity-25 animate-[pulse_5s_infinite] pointer-events-none">☁️</div>
-
-          {/* Magical Twinkling Sparkles */}
-          <div className="absolute top-[130px] left-[26%] text-amber-400 text-xs animate-ping pointer-events-none">🌟</div>
-          <div className="absolute top-[385px] right-[24%] text-yellow-500 text-sm animate-pulse pointer-events-none">🌟</div>
-          <div className="absolute top-[230px] right-[20%] text-amber-400 text-xs animate-pulse pointer-events-none">🌟</div>
+          <div className="absolute top-[1%] left-[45%] text-[10px] select-none pointer-events-none opacity-20">🌳</div>
+          <div className="absolute top-[8%] left-[47%] -translate-x-1/2 text-sm select-none pointer-events-none opacity-15 animate-pulse">☀️</div>
+          <div className="absolute top-[65px] left-[16%] text-sm select-none opacity-15 pointer-events-none">🌋</div>
+          <div className="absolute top-[65px] right-[18%] text-xs select-none opacity-15 pointer-events-none">⛺</div>
+          <div className="absolute top-[160px] left-[16%] text-lg select-none opacity-20 animate-[bounce_4s_infinite_ease-in-out] pointer-events-none">⛵</div>
+          <div className="absolute top-[260px] right-[16%] text-sm select-none opacity-10 pointer-events-none">🏛️</div>
+          <div className="absolute top-[260px] left-[15%] text-xs select-none opacity-15 pointer-events-none">🍄</div>
+          <div className="absolute bottom-[20%] left-[44%] text-xs select-none pointer-events-none opacity-10">🌈</div>
 
           {/* LAYER 1: HEAD STAGES */}
           {/* Stage 1: Adventure Forest (Left-Top) */}
           <motion.button
-            whileHover={{ scale: 1.08 }}
+            whileHover={{ scale: 1.05 }}
             whileTap={{ scale: 0.95 }}
             onClick={() => {
               try { audio.playClick(); } catch(e){}
               onNavigate('ADVENTURE');
             }}
-            className="absolute top-[40px] left-[6%] flex flex-col items-center group cursor-pointer z-10"
+            className="absolute top-[15px] left-[5%] flex flex-col items-center group cursor-pointer z-10"
           >
-            <div className="w-[72px] h-[72px] rounded-full bg-gradient-to-br from-emerald-400 to-green-600 flex items-center justify-center text-3xl shadow-lg border-4 border-white group-hover:scale-110 active:scale-95 transition-transform duration-150 shrink-0 relative">
+            <div className="w-[58px] h-[58px] sm:w-[64px] sm:h-[64px] rounded-full bg-gradient-to-br from-emerald-400 to-green-600 flex items-center justify-center text-[22px] sm:text-[26px] shadow-md border-3 border-white group-hover:scale-108 active:scale-95 transition-transform duration-150 shrink-0 relative">
               <span>🌲</span>
               {reviewNeeded.length > 0 && (
-                <span className="absolute -top-1 -right-1 bg-rose-500 text-white font-black text-[10px] w-5.5 h-5.5 flex items-center justify-center rounded-full border-2 border-white animate-bounce shadow">
+                <span className="absolute -top-1 -right-1 bg-rose-500 text-white font-black text-[8.5px] w-4.5 h-4.5 flex items-center justify-center rounded-full border border-white animate-bounce shadow">
                   {reviewNeeded.length}
                 </span>
               )}
             </div>
-            <span className="font-black text-emerald-950 text-xs sm:text-[13px] mt-1.5 whitespace-nowrap text-shadow-[0_1px_2px_rgba(255,255,255,0.8)]">冒险深林</span>
-            <span className="text-[10px] text-emerald-800 font-extrabold whitespace-nowrap">闯关背词</span>
+            <span className="font-black text-emerald-950 text-[11px] sm:text-xs mt-1 whitespace-nowrap text-shadow-[0_1px_2px_rgba(255,255,255,0.8)] leading-none">冒险深林</span>
+            <span className="text-[9px] text-emerald-800 font-extrabold whitespace-nowrap leading-none mt-0.5">闯关背词</span>
           </motion.button>
 
           {/* Stage 2: Magic Playground (Right-Top) */}
           <motion.button
-            whileHover={{ scale: 1.08 }}
+            whileHover={{ scale: 1.05 }}
             whileTap={{ scale: 0.95 }}
             onClick={() => {
               try { audio.playClick(); } catch(e){}
               onNavigate('ARCADE');
             }}
-            className="absolute top-[40px] right-[6%] flex flex-col items-center group cursor-pointer z-10"
+            className="absolute top-[15px] right-[5%] flex flex-col items-center group cursor-pointer z-10"
           >
-            <div className="w-[72px] h-[72px] rounded-full bg-gradient-to-br from-amber-400 to-orange-500 flex items-center justify-center text-3xl shadow-lg border-4 border-white group-hover:scale-110 active:scale-95 transition-transform duration-150 shrink-0 relative">
+            <div className="w-[58px] h-[58px] sm:w-[64px] sm:h-[64px] rounded-full bg-gradient-to-br from-amber-400 to-orange-500 flex items-center justify-center text-[22px] sm:text-[26px] shadow-md border-3 border-white group-hover:scale-108 active:scale-95 transition-transform duration-150 shrink-0 relative">
               <span>🎮</span>
             </div>
-            <span className="font-black text-orange-950 text-xs sm:text-[13px] mt-1.5 whitespace-nowrap text-shadow-[0_1px_2px_rgba(255,255,255,0.8)]">演武乐园</span>
-            <span className="text-[10px] text-orange-700 font-extrabold whitespace-nowrap">趣味拼读</span>
+            <span className="font-black text-orange-950 text-[11px] sm:text-xs mt-1 whitespace-nowrap text-shadow-[0_1px_2px_rgba(255,255,255,0.8)] leading-none">演武乐园</span>
+            <span className="text-[9px] text-orange-700 font-extrabold whitespace-nowrap leading-none mt-0.5">趣味拼读</span>
           </motion.button>
 
           {/* LAYER 2: GRAND BOOK PALACE CENTERPIECE */}
           {/* Stage 3: Magic Picture Book Palace (Library) */}
           <motion.button
-            whileHover={{ scale: 1.08 }}
+            whileHover={{ scale: 1.05 }}
             whileTap={{ scale: 0.95 }}
             onClick={() => {
               try { audio.playClick(); } catch (e) {}
               onNavigate('PICTURE_BOOK');
             }}
-            className="absolute top-[155px] left-1/2 -translate-x-1/2 flex flex-col items-center group cursor-pointer z-10"
+            className="absolute top-[110px] left-1/2 -translate-x-1/2 flex flex-col items-center group cursor-pointer z-10"
           >
-            <div className="w-[84px] h-[84px] rounded-full bg-gradient-to-br from-[#4f46e5] to-[#6366f1] flex items-center justify-center text-4xl shadow-xl border-4 border-amber-300 ring-4 ring-white ring-offset-0 group-hover:scale-110 active:scale-95 transition-transform duration-150 shrink-0 relative">
+            <div className="w-[70px] h-[70px] sm:w-[76px] sm:h-[76px] rounded-full bg-gradient-to-br from-[#4f46e5] to-[#6366f1] flex items-center justify-center text-[28px] sm:text-[34px] shadow-lg border-3 border-amber-300 ring-2 ring-white ring-offset-0 group-hover:scale-108 active:scale-95 transition-transform duration-150 shrink-0 relative">
               <span>🏰</span>
-              <span className="absolute -top-1 -right-2 bg-amber-400 text-amber-950 font-black text-[8px] px-1.5 py-0.5 rounded-full border border-amber-500 animate-pulse shadow-sm">NEW</span>
+              <span className="absolute -top-1 -right-2 bg-amber-400 text-amber-950 font-black text-[7px] px-1 rounded-full border border-amber-500 animate-pulse shadow-sm">NEW</span>
             </div>
-            <span className="font-black text-indigo-950 text-xs sm:text-[14px] mt-2 whitespace-nowrap text-shadow-[0_1px_2px_rgba(255,255,255,0.8)]">魔法绘本馆</span>
-            <span className="text-[10px] text-indigo-700 font-extrabold whitespace-nowrap">发音配音</span>
+            <span className="font-black text-indigo-950 text-[12px] sm:text-[13px] mt-1.5 whitespace-nowrap text-shadow-[0_1px_2px_rgba(255,255,255,0.8)] leading-none">魔法绘本馆</span>
+            <span className="text-[9px] text-indigo-700 font-extrabold whitespace-nowrap leading-none mt-0.5">发音配音</span>
           </motion.button>
 
           {/* LAYER 3: MID-SUB STAGES */}
           {/* Stage 4: Phonics Arena (Left-Middle) */}
           <motion.button
-            whileHover={{ scale: 1.08 }}
+            whileHover={{ scale: 1.05 }}
             whileTap={{ scale: 0.95 }}
             onClick={() => {
               try { audio.playClick(); } catch(e){}
               onNavigate('PHONICS');
             }}
-            className="absolute top-[275px] left-[6%] flex flex-col items-center group cursor-pointer z-10"
+            className="absolute top-[205px] left-[5%] flex flex-col items-center group cursor-pointer z-10"
           >
-            <div className="w-[72px] h-[72px] rounded-full bg-gradient-to-br from-yellow-400 to-[#f59e0b] flex items-center justify-center text-3xl shadow-lg border-4 border-white group-hover:scale-110 active:scale-95 transition-transform duration-150 shrink-0 relative">
+            <div className="w-[58px] h-[58px] sm:w-[64px] sm:h-[64px] rounded-full bg-gradient-to-br from-yellow-400 to-[#f59e0b] flex items-center justify-center text-[22px] sm:text-[26px] shadow-md border-3 border-white group-hover:scale-108 active:scale-95 transition-transform duration-150 shrink-0 relative">
               <span>⚡</span>
             </div>
-            <span className="font-black text-amber-950 text-xs sm:text-[13px] mt-1.5 whitespace-nowrap text-shadow-[0_1px_2px_rgba(255,255,255,0.8)]">节奏修炼场</span>
-            <span className="text-[10px] text-amber-800 font-extrabold whitespace-nowrap">说唱拼读</span>
+            <span className="font-black text-amber-950 text-[11px] sm:text-xs mt-1 whitespace-nowrap text-shadow-[0_1px_2px_rgba(255,255,255,0.8)] leading-none">节奏修炼场</span>
+            <span className="text-[9px] text-amber-800 font-extrabold whitespace-nowrap leading-none mt-0.5">说唱拼读</span>
           </motion.button>
 
           {/* Stage 5: Pet Sanctuary (Right-Middle) */}
           <motion.button
-            whileHover={{ scale: 1.08 }}
+            whileHover={{ scale: 1.05 }}
             whileTap={{ scale: 0.95 }}
             onClick={() => {
               try { audio.playClick(); } catch(e){}
               onNavigate('PETS');
             }}
-            className="absolute top-[275px] right-[6%] flex flex-col items-center group cursor-pointer z-10"
+            className="absolute top-[205px] right-[5%] flex flex-col items-center group cursor-pointer z-10"
           >
-            <div className="w-[72px] h-[72px] rounded-full bg-gradient-to-br from-rose-400 to-pink-500 flex items-center justify-center text-3xl shadow-lg border-4 border-white group-hover:scale-110 active:scale-95 transition-transform duration-150 shrink-0 relative">
+            <div className="w-[58px] h-[58px] sm:w-[64px] sm:h-[64px] rounded-full bg-gradient-to-br from-rose-400 to-pink-500 flex items-center justify-center text-[22px] sm:text-[26px] shadow-md border-3 border-white group-hover:scale-108 active:scale-95 transition-transform duration-150 shrink-0 relative">
               <span>🐾</span>
             </div>
-            <span className="font-black text-rose-950 text-xs sm:text-[13px] mt-1.5 whitespace-nowrap text-shadow-[0_1px_2px_rgba(255,255,255,0.8)]">兽神圣域</span>
-            <span className="text-[10px] text-rose-700 font-extrabold whitespace-nowrap">仙宠养成</span>
+            <span className="font-black text-rose-950 text-[11px] sm:text-xs mt-1 whitespace-nowrap text-shadow-[0_1px_2px_rgba(255,255,255,0.8)] leading-none">兽神圣域</span>
+            <span className="text-[9px] text-rose-700 font-extrabold whitespace-nowrap leading-none mt-0.5">仙宠养成</span>
           </motion.button>
 
           {/* LAYER 4: BOTTOM STAGES */}
           {/* Stage 6: Enchanted Shop (Center-Bottom) */}
           <motion.button
-            whileHover={{ scale: 1.08 }}
+            whileHover={{ scale: 1.05 }}
             whileTap={{ scale: 0.95 }}
             onClick={() => {
               try { audio.playClick(); } catch(e){}
               onNavigate('SHOP');
             }}
-            className="absolute top-[395px] left-1/2 -translate-x-1/2 flex flex-col items-center group cursor-pointer z-10"
+            className="absolute top-[295px] left-1/2 -translate-x-1/2 flex flex-col items-center group cursor-pointer z-10"
           >
-            <div className="w-[72px] h-[72px] rounded-full bg-gradient-to-br from-[#64b5f6] to-[#1e88e5] flex items-center justify-center text-3xl shadow-lg border-4 border-white group-hover:scale-110 active:scale-95 transition-transform duration-150 shrink-0 relative">
+            <div className="w-[58px] h-[58px] sm:w-[64px] sm:h-[64px] rounded-full bg-gradient-to-br from-[#64b5f6] to-[#1e88e5] flex items-center justify-center text-[22px] sm:text-[26px] shadow-md border-3 border-white group-hover:scale-108 active:scale-95 transition-transform duration-150 shrink-0 relative">
               <span>🪙</span>
             </div>
-            <span className="font-black text-blue-950 text-[13px] mt-1.5 whitespace-nowrap text-shadow-[0_1px_2px_rgba(255,255,255,0.8)]">法秘商行</span>
-            <span className="text-[10px] text-blue-700 font-extrabold whitespace-nowrap">神装置备</span>
+            <span className="font-black text-blue-950 text-[11px] sm:text-xs mt-1.5 whitespace-nowrap text-shadow-[0_1px_2px_rgba(255,255,255,0.8)] leading-none">法秘商行</span>
+            <span className="text-[9px] text-blue-700 font-extrabold whitespace-nowrap leading-none mt-0.5">神装置备</span>
           </motion.button>
 
           {/* LAYER 5: INTERACTIVE COMPACT CHRONICLES BAR / ERROR BUBBLE */}
-          <div className="absolute bottom-[16px] inset-x-[4%] py-2.5 px-4 border-2 border-emerald-300/35 bg-[#ffffff]/50 backdrop-blur-md rounded-2xl flex justify-between items-center z-10 shadow-lg">
+          <div className="absolute bottom-[10px] inset-x-[3%] py-1.5 px-3 border border-emerald-300 bg-white/75 backdrop-blur-md rounded-xl flex justify-between items-center z-10 shadow-md">
             {/* Quick stats feedback */}
             <div className="text-left flex flex-col justify-center">
-              <span className="text-[10px] font-black text-emerald-800 uppercase block tracking-wider">太古冒险战史</span>
-              <span className="text-xs sm:text-[13px] font-black text-emerald-950 mt-1 flex items-center gap-1">
+              <span className="text-[9px] font-black text-emerald-800 uppercase block tracking-wider leading-none">冒险战史</span>
+              <span className="text-xs font-black text-emerald-950 mt-1 flex items-center gap-0.5 leading-none">
                 已学口诀 <strong className="text-emerald-700 text-sm font-extrabold">{stats.totalWordsLearned}</strong> 册
               </span>
             </div>
 
             {/* Floating Purification Error Bubble renamed to 错词汇 */}
             <motion.button
-              whileHover={{ scale: 1.05 }}
-              whileTap={{ scale: 0.95 }}
+              whileHover={{ scale: 1.02 }}
+              whileTap={{ scale: 0.98 }}
               onClick={() => {
                 try { audio.playClick(); } catch(e){}
                 onOpenErrorCabinet?.();
               }}
-              className="relative px-5 py-2.5 bg-gradient-to-r from-[#8126e8] to-[#601be0] hover:brightness-115 border-2 border-[#b573f9] border-b-[5px] border-b-[#4710ab] text-white font-extrabold text-[#ffffff] text-sm rounded-2xl shadow-[0_4px_12px_rgba(109,40,217,0.35)] hover:translate-y-[-1px] hover:shadow-[0_6px_16px_rgba(109,40,217,0.45)] active:border-b-2 active:translate-y-[2px] active:shadow-md transition-all duration-150 flex items-center justify-center gap-1.5 cursor-pointer select-none"
+              className="relative px-3.5 py-1.5 bg-gradient-to-r from-[#8126e8] to-[#601be0] hover:brightness-115 border-2 border-[#b573f9] border-b-[3.5px] border-b-[#4710ab] text-white font-extrabold text-xs rounded-xl shadow-md active:border-b-2 active:translate-y-[1px] transition-all duration-150 flex items-center justify-center gap-1 cursor-pointer select-none"
             >
-              <span className="text-lg">📔</span>
+              <span className="text-sm">📔</span>
               <span className="font-sans font-black tracking-wide">错词汇</span>
               {incorrectCount > 0 ? (
-                <span className="bg-[#b9215b] text-[#ffffff] font-sans text-[11.5px] font-extrabold rounded-full px-2.5 py-0.5 shadow-inner flex items-center justify-center border border-white/20 ml-1.5 min-w-[28px] h-[21px]">
+                <span className="bg-[#b9215b] text-white font-sans text-[10px] font-extrabold rounded-full px-1.5 py-0.2 shadow-inner border border-white/20">
                   {incorrectCount}
                 </span>
               ) : (
-                <span className="bg-[#b9215b]/45 text-purple-200 text-[11.5px] font-extrabold rounded-full px-2.5 py-0.5 ml-1.5 min-w-[28px] h-[21px] flex items-center justify-center border border-white/15">
+                <span className="bg-[#b9215b]/45 text-purple-200 text-[10px] font-extrabold rounded-full px-1.5 py-0.2 border border-white/15">
                   0
                 </span>
               )}
