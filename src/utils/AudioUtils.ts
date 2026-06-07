@@ -22,117 +22,313 @@ export const playRhythmicDrum = (step: number) => {
     }
 
     const now = ctx.currentTime;
-    const loopStep = step % 3; // Triplet: 0 (Medium Rim Snare + Kick), 1 (Crisp Snap Rim + Hi-Hat Shaker), 2 (Cinematic Marching Snare + Deep Sub Bass)
+    const loopStep = step % 3; // Triplet beat: 0, 1, 2
 
-    // Helper: Synthesize premium metallic snare rattle using white noise high-pass filters
-    const playSnareRattle = (startTime: number, duration: number, gainVal: number, highpassFreq: number) => {
-      const bufferSize = ctx.sampleRate * duration;
-      const buffer = ctx.createBuffer(1, bufferSize, ctx.sampleRate);
-      const data = buffer.getChannelData(0);
-      for (let i = 0; i < bufferSize; i++) {
-        data[i] = Math.random() * 2 - 1;
-      }
-      
-      const noiseNode = ctx.createBufferSource();
-      noiseNode.buffer = buffer;
-      
-      const filterNode = ctx.createBiquadFilter();
-      filterNode.type = 'highpass';
-      filterNode.frequency.setValueAtTime(highpassFreq, startTime);
-      
-      const gainNode = ctx.createGain();
-      gainNode.gain.setValueAtTime(gainVal, startTime);
-      // Clean snare rattle exponential decay over time
-      gainNode.gain.exponentialRampToValueAtTime(0.001, startTime + duration);
-      
-      noiseNode.connect(filterNode);
-      filterNode.connect(gainNode);
-      gainNode.connect(ctx.destination);
-      
-      noiseNode.start(startTime);
-      noiseNode.stop(startTime + duration + 0.01);
-    };
+    // 1. Core resonant wood/drum oscillator
+    const osc = ctx.createOscillator();
+    const gainNode = ctx.createGain();
+    const filter = ctx.createBiquadFilter();
+    
+    filter.type = 'bandpass';
+    osc.connect(filter);
+    filter.connect(gainNode);
+    gainNode.connect(ctx.destination);
+    
+    // 2. High-frequency click accentuator to simulate a physical mallet hitting a block
+    const clickOsc = ctx.createOscillator();
+    const clickGain = ctx.createGain();
+    clickOsc.type = 'triangle';
+    clickOsc.connect(clickGain);
+    clickGain.connect(ctx.destination);
 
-    // Helper: Synthesize standard low drum shell resonance (kick or tom drop)
-    const playBassKick = (startTime: number, duration: number, startFreq: number, endFreq: number, gainVal: number) => {
-      const osc = ctx.createOscillator();
-      const gainNode = ctx.createGain();
-      
-      osc.type = 'sine';
-      osc.frequency.setValueAtTime(startFreq, startTime);
-      osc.frequency.exponentialRampToValueAtTime(endFreq, startTime + duration);
-      
-      gainNode.gain.setValueAtTime(gainVal, startTime);
-      gainNode.gain.exponentialRampToValueAtTime(0.001, startTime + duration);
-      
-      osc.connect(gainNode);
-      gainNode.connect(ctx.destination);
-      
-      osc.start(startTime);
-      osc.stop(startTime + duration + 0.01);
-    };
-
-    // Helper: Synthesize tight high-frequency metallic shaker / tambourine tap
-    const playMetallicShaker = (startTime: number, duration: number, frequency: number, gainVal: number) => {
-      const osc = ctx.createOscillator();
-      const gainNode = ctx.createGain();
-      
-      osc.type = 'triangle';
-      osc.frequency.setValueAtTime(frequency, startTime);
-      osc.frequency.exponentialRampToValueAtTime(1100, startTime + duration);
-      
-      gainNode.gain.setValueAtTime(gainVal, startTime);
-      gainNode.gain.exponentialRampToValueAtTime(0.001, startTime + duration);
-      
-      osc.connect(gainNode);
-      gainNode.connect(ctx.destination);
-      
-      osc.start(startTime);
-      osc.stop(startTime + duration + 0.01);
-    };
-
-    // 1-to-1 marching rhythmic structure for "San Zi Jing"
     if (loopStep === 0) {
-      // Step 0: Solid foundation beat ("人")
-      // Kick: Deep grounding punch
-      playBassKick(now, 0.16, 115, 55, 0.24);
-      // Snare drum sound: Tight rim-tick
-      playBassKick(now, 0.10, 230, 160, 0.14); // Snare shell body resonance
-      playSnareRattle(now, 0.12, 0.18, 1300);   // Snare chains rattle
-      // Metallic shaker:
-      playMetallicShaker(now, 0.03, 6200, 0.07);
+      // Step 1: Accent Hit "哒" (Medium-High energetic wood block / tanggu)
+      osc.type = 'sine';
+      osc.frequency.setValueAtTime(320, now);
+      osc.frequency.exponentialRampToValueAtTime(140, now + 0.15);
+      
+      filter.frequency.setValueAtTime(450, now);
+      filter.Q.setValueAtTime(8, now);
+      
+      gainNode.gain.setValueAtTime(0.25, now);
+      gainNode.gain.exponentialRampToValueAtTime(0.001, now + 0.15);
+      
+      clickOsc.frequency.setValueAtTime(1500, now);
+      clickOsc.frequency.exponentialRampToValueAtTime(300, now + 0.015);
+      clickGain.gain.setValueAtTime(0.08, now);
+      clickGain.gain.exponentialRampToValueAtTime(0.001, now + 0.015);
+      
+      osc.start(now);
+      osc.stop(now + 0.16);
+      clickOsc.start(now);
+      clickOsc.stop(now + 0.02);
 
     } else if (loopStep === 1) {
-      // Step 1: Upbeat crisp transition swing ("之")
-      // Kick: Light tempo-retaining pop
-      playBassKick(now, 0.12, 90, 50, 0.07);
-      // Snare: Crisp, higher pitch double rimshot
-      playBassKick(now, 0.08, 290, 210, 0.16); 
-      playSnareRattle(now, 0.08, 0.24, 2100);   // Tighter snare slap rattle
-      // High frequency open hat/tambourine splash:
-      playMetallicShaker(now, 0.045, 8200, 0.11);
+      // Step 2: Pitch Transition "哒" (High crisp wooden slap)
+      osc.type = 'sine';
+      osc.frequency.setValueAtTime(420, now);
+      osc.frequency.exponentialRampToValueAtTime(200, now + 0.1);
+      
+      filter.frequency.setValueAtTime(650, now);
+      filter.Q.setValueAtTime(10, now);
+      
+      gainNode.gain.setValueAtTime(0.18, now);
+      gainNode.gain.exponentialRampToValueAtTime(0.001, now + 0.1);
+      
+      clickOsc.frequency.setValueAtTime(1850, now);
+      clickOsc.frequency.exponentialRampToValueAtTime(500, now + 0.012);
+      clickGain.gain.setValueAtTime(0.09, now);
+      clickGain.gain.exponentialRampToValueAtTime(0.001, now + 0.012);
+      
+      osc.start(now);
+      osc.stop(now + 0.11);
+      clickOsc.start(now);
+      clickOsc.stop(now + 0.02);
 
     } else {
-      // Step 2: Powerful parade finale blow ("初")
-      // Kick: Resonant heavy bass thud for character 3 landing
-      playBassKick(now, 0.24, 145, 42, 0.35);
-      // Snare: Deep echoing explosive military snare impact
-      playBassKick(now, 0.22, 195, 95, 0.26);  // Deep marching shell body
-      playSnareRattle(now, 0.25, 0.30, 850);    // Dense, rich snare chains resonance
-      // Crisp splash tail:
-      playMetallicShaker(now, 0.08, 9200, 0.14);
+      // Step 3: Resolving Drop "哒" (Deep warm resonant low woodblock)
+      osc.type = 'sine';
+      osc.frequency.setValueAtTime(180, now);
+      osc.frequency.exponentialRampToValueAtTime(70, now + 0.22);
+      
+      filter.frequency.setValueAtTime(220, now);
+      filter.Q.setValueAtTime(5, now);
+      
+      gainNode.gain.setValueAtTime(0.32, now); // Anchoring beat
+      gainNode.gain.exponentialRampToValueAtTime(0.001, now + 0.22);
+      
+      clickOsc.frequency.setValueAtTime(1000, now);
+      clickOsc.frequency.exponentialRampToValueAtTime(200, now + 0.02);
+      clickGain.gain.setValueAtTime(0.06, now);
+      clickGain.gain.exponentialRampToValueAtTime(0.001, now + 0.02);
+      
+      osc.start(now);
+      osc.stop(now + 0.23);
+      clickOsc.start(now);
+      clickOsc.stop(now + 0.035);
     }
   } catch (e) {
     console.warn('[DrumSynth] playRhythmicDrum error:', e);
   }
 };
 
+let synthBgmIntervalId: any = null;
+let synthBgmStep = 0;
+
 export const drumController = {
   start: () => {
-    // Keep for loop backward compatibility
+    if (typeof window === 'undefined') return;
+    if (synthBgmIntervalId) return;
+
+    try {
+      const AudioCtxClass = window.AudioContext || (window as any).webkitAudioContext;
+      if (!AudioCtxClass) return;
+
+      if (!activeAudioCtx || activeAudioCtx.state === 'closed') {
+        activeAudioCtx = new AudioCtxClass();
+      }
+      const ctx = activeAudioCtx;
+      if (ctx.state === 'suspended') {
+        ctx.resume();
+      }
+
+      const bpm = 90;
+      const stepTime = 60 / bpm / 2; // eighth notes (0.3333s per step)
+      let nextNoteTime = ctx.currentTime;
+      synthBgmStep = 0;
+
+      const triggerKick = (time: number) => {
+        try {
+          const osc = ctx.createOscillator();
+          const gainNode = ctx.createGain();
+          osc.connect(gainNode);
+          gainNode.connect(ctx.destination);
+
+          // Deep, elastic sub kick sweep
+          osc.frequency.setValueAtTime(130, time);
+          osc.frequency.exponentialRampToValueAtTime(45, time + 0.12);
+
+          // Balanced, powerful but non-intrusive envelope
+          gainNode.gain.setValueAtTime(0.22, time);
+          gainNode.gain.exponentialRampToValueAtTime(0.001, time + 0.12);
+
+          osc.start(time);
+          osc.stop(time + 0.14);
+        } catch (e) {}
+      };
+
+      const triggerSnap = (time: number) => {
+        try {
+          // 1. Crisp clean physical finger snap high pass noise burst
+          const bufferSize = ctx.sampleRate * 0.08;
+          const buffer = ctx.createBuffer(1, bufferSize, ctx.sampleRate);
+          const data = buffer.getChannelData(0);
+          for (let i = 0; i < bufferSize; i++) {
+            data[i] = Math.random() * 2 - 1;
+          }
+
+          const noise = ctx.createBufferSource();
+          noise.buffer = buffer;
+
+          const filter = ctx.createBiquadFilter();
+          filter.type = 'bandpass';
+          filter.frequency.setValueAtTime(1400, time); // crisp mid-high focus
+          filter.Q.setValueAtTime(4.5, time); // resonant hollow knock
+
+          const gainNode = ctx.createGain();
+          gainNode.gain.setValueAtTime(0.20, time);
+          gainNode.gain.exponentialRampToValueAtTime(0.001, time + 0.06);
+
+          noise.connect(filter);
+          filter.connect(gainNode);
+          gainNode.connect(ctx.destination);
+
+          noise.start(time);
+          noise.stop(time + 0.07);
+
+          // 2. High-frequency click accentuator transient (triangle wave)
+          const clickOsc = ctx.createOscillator();
+          const clickGain = ctx.createGain();
+          clickOsc.type = 'triangle';
+          clickOsc.frequency.setValueAtTime(1550, time);
+
+          clickGain.gain.setValueAtTime(0.09, time);
+          clickGain.gain.exponentialRampToValueAtTime(0.001, time + 0.015);
+
+          clickOsc.connect(clickGain);
+          clickGain.connect(ctx.destination);
+
+          clickOsc.start(time);
+          clickOsc.stop(time + 0.02);
+        } catch (e) {}
+      };
+
+      const triggerHihat = (time: number) => {
+        try {
+          const bufferSize = ctx.sampleRate * 0.025;
+          const buffer = ctx.createBuffer(1, bufferSize, ctx.sampleRate);
+          const data = buffer.getChannelData(0);
+          for (let i = 0; i < bufferSize; i++) {
+            data[i] = Math.random() * 2 - 1;
+          }
+
+          const noise = ctx.createBufferSource();
+          noise.buffer = buffer;
+
+          const filter = ctx.createBiquadFilter();
+          filter.type = 'highpass';
+          filter.frequency.setValueAtTime(8000, time); // High-frequency wash
+
+          const gainNode = ctx.createGain();
+          gainNode.gain.setValueAtTime(0.014, time); // Extremely quiet ticks to maintain spacious mid-highs
+          gainNode.gain.exponentialRampToValueAtTime(0.001, time + 0.02);
+
+          noise.connect(filter);
+          filter.connect(gainNode);
+          gainNode.connect(ctx.destination);
+
+          noise.start(time);
+          noise.stop(time + 0.035);
+        } catch (e) {}
+      };
+
+      const playRhodesChord = (frequencies: number[], time: number) => {
+        try {
+          const filterNode = ctx.createBiquadFilter();
+          filterNode.type = 'lowpass';
+          filterNode.frequency.setValueAtTime(850, time); // Strict top-end filter for spacious mix
+          filterNode.Q.setValueAtTime(1.1, time);
+
+          // Iconic stereo-tremolo swirling effect (modulating volume at 4.2Hz)
+          const lfo = ctx.createOscillator();
+          const lfoGain = ctx.createGain();
+          lfo.type = 'sine';
+          lfo.frequency.setValueAtTime(4.2, time);
+          lfoGain.gain.setValueAtTime(0.12, time);
+
+          const masterChordGain = ctx.createGain();
+          masterChordGain.gain.setValueAtTime(0.09, time); // Warm background level
+
+          lfo.connect(lfoGain);
+          lfoGain.connect(masterChordGain.gain);
+
+          filterNode.connect(masterChordGain);
+          masterChordGain.connect(ctx.destination);
+
+          lfo.start(time);
+          lfo.stop(time + 2.5);
+
+          frequencies.forEach(freq => {
+            const osc = ctx.createOscillator();
+            osc.type = 'triangle'; // Mellifluous wood/bell harmonics
+            osc.frequency.setValueAtTime(freq, time);
+            osc.detune.setValueAtTime(Math.random() * 6 - 3, time);
+
+            const oscGain = ctx.createGain();
+            oscGain.gain.setValueAtTime(0, time);
+            oscGain.gain.linearRampToValueAtTime(0.12, time + 0.06); // Smooth attack
+            oscGain.gain.exponentialRampToValueAtTime(0.001, time + 2.2); // Slow, lush decay
+
+            osc.connect(oscGain);
+            oscGain.connect(filterNode);
+
+            osc.start(time);
+            osc.stop(time + 2.3);
+          });
+        } catch (e) {}
+      };
+
+      // F minor jazzy chord cycle: Fm9 -> Bbm9 -> Ebmaj9 -> Dbmaj9
+      const CHORDS_MAP = [
+        [87.31, 196.00, 207.65, 261.63, 311.13],   // Fm9 (F2, G3, Ab3, C4, Eb4)
+        [116.54, 138.59, 174.61, 207.65, 261.63], // Bbm9 (Bb2, Db3, F3, Ab3, C4)
+        [77.78, 196.00, 233.08, 293.66, 349.23],  // Ebmaj9 (Eb2, G3, Bb3, D4, F4)
+        [69.30, 174.61, 207.65, 261.63, 311.13]   // Dbmaj9 (Db2, F3, Ab3, C4, Eb4)
+      ];
+
+      const scheduleNextBeats = () => {
+        if (!activeAudioCtx || activeAudioCtx.state === 'closed') return;
+
+        while (nextNoteTime < ctx.currentTime + 0.1) {
+          const currentStepLocal = synthBgmStep;
+          const tickIndex = currentStepLocal % 8;
+          const measureIndex = Math.floor(currentStepLocal / 8) % 4;
+
+          // 1. Stable closed hi-hat tick on every eighth note
+          triggerHihat(nextNoteTime);
+
+          // 2. Deep bouncy Kick: beat 1 (tick 0), beat 3 (tick 4), beat 3.5 (tick 5) for syncopated rap bounce
+          if (tickIndex === 0 || tickIndex === 4 || tickIndex === 5) {
+            triggerKick(nextNoteTime);
+          }
+
+          // 3. Crisp Snaps / Claps on beat 2 (tick 2) and beat 4 (tick 6)
+          if (tickIndex === 2 || tickIndex === 6) {
+            triggerSnap(nextNoteTime);
+          }
+
+          // 4. Warm Rhodes chord played at Step 0 of every measure
+          if (tickIndex === 0) {
+            playRhodesChord(CHORDS_MAP[measureIndex], nextNoteTime);
+          }
+
+          nextNoteTime += stepTime;
+          synthBgmStep = (synthBgmStep + 1) % 32;
+        }
+      };
+
+      scheduleNextBeats();
+      synthBgmIntervalId = setInterval(scheduleNextBeats, 40);
+    } catch (e) {
+      console.warn('[DrumSynth] Failed starting synthesized accompaniment:', e);
+    }
   },
   stop: () => {
-    // Keep for loop backward compatibility
+    if (synthBgmIntervalId) {
+      clearInterval(synthBgmIntervalId);
+      synthBgmIntervalId = null;
+    }
+    synthBgmStep = 0;
   }
 };
 
@@ -169,6 +365,12 @@ export const audio = {
       } catch (e) {}
       currentBgm = null;
     }
+    try { drumController.stop(); } catch (e) {}
+
+    if (gameId === 'DUBBING' || gameId === 'DJ') {
+      try { drumController.start(); } catch (e) {}
+      return;
+    }
 
     const tracks: Record<string, string> = {
       SCRAMBLE: 'https://www.soundhelix.com/examples/mp3/SoundHelix-Song-1.mp3', // Upbeat synth
@@ -195,8 +397,7 @@ export const audio = {
       ROCKET: 'https://www.soundhelix.com/examples/mp3/SoundHelix-Song-7.mp3',
       POPIT: 'https://www.soundhelix.com/examples/mp3/SoundHelix-Song-6.mp3',
       POTION: 'https://www.soundhelix.com/examples/mp3/SoundHelix-Song-16.mp3',
-      PARROT: 'https://www.soundhelix.com/examples/mp3/SoundHelix-Song-3.mp3',
-      DUBBING: 'https://www.soundhelix.com/examples/mp3/SoundHelix-Song-3.mp3'
+      PARROT: 'https://www.soundhelix.com/examples/mp3/SoundHelix-Song-3.mp3'
     };
 
     const url = tracks[gameId];
@@ -221,6 +422,7 @@ export const audio = {
       } catch (e) {}
       currentBgm = null;
     }
+    try { drumController.stop(); } catch (e) {}
   },
   playClick: () => {
     const audio = new Audio('https://assets.mixkit.co/active_storage/sfx/2571/2571-preview.mp3');
