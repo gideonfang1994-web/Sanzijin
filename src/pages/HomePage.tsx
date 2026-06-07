@@ -266,134 +266,89 @@ const HomePage: React.FC<HomePageProps> = ({ stats, groups, reviewNeeded, onNavi
         ))}
       </div>
 
-      {/* RETAINED REDESIGNED COMPACT HEADER WITH BRANDING */}
-      <div className="bg-gradient-to-b from-white via-[#fcfefd] to-[#eefdf5] border-2 border-emerald-300 border-b-[6px] border-emerald-400 rounded-[28px] p-4 shadow-md flex flex-row items-center justify-between text-emerald-950 relative overflow-hidden">
-        <div className="absolute top-0 inset-x-0 h-1 bg-gradient-to-r from-transparent via-amber-400 to-transparent animate-pulse" />
-
-        <div className="flex items-center space-x-3 flex-1 min-w-0">
-          <motion.div 
-            whileHover={{ scale: 1.1, rotate: [0, -10, 10, -5, 0] }}
-            whileTap={{ scale: 0.95 }}
-            className="cursor-pointer select-none border-4 border-amber-300 bg-white p-1 rounded-full shadow-md relative shrink-0 flex items-center justify-center w-14 h-14"
-            onClick={() => {
-              try { audio.playCheer(); } catch(e){}
-              onNavigate('TUTOR');
-            }}
-          >
-            <span className="text-3xl block filter drop-shadow-[0_2px_4px_rgba(245,158,11,0.4)]">🐯</span>
-            {activePet && (
-              <span className="absolute -bottom-1 -right-1 bg-rose-500 text-white border-2 border-white rounded-full text-[9px] w-5 h-5 flex items-center justify-center shadow-xs font-black">
-                {PET_EMOJIS[activePet.type] || '🐾'}
-              </span>
-            )}
-          </motion.div>
-
-          <div className="text-left min-w-0">
-            <h1 className="text-lg sm:text-xl font-black text-emerald-950 tracking-wide leading-none flex items-center gap-1">
-              <span>单词奇旅</span>
-              <span className="text-[9px] bg-gradient-to-r from-amber-400 to-amber-505 text-amber-950 font-black px-1 py-0.5 rounded shadow-xs">v2.5</span>
-            </h1>
-            {/* Elegant text status inside header */}
-            <p className="text-[11px] font-bold text-emerald-800 mt-1 truncate">
-              {stats.streak > 0 ? `连续守卫魔法森林第 ${stats.streak} 天 🔥` : "开启新魔法学徒试炼 ✨"}
-            </p>
-          </div>
-        </div>
-
-        {/* Right HUD info */}
-        <div className="flex items-center space-x-2 shrink-0">
-          <div className="flex flex-col items-end mr-1 text-right">
-            <span className="text-[11px] font-black text-amber-800 flex items-center gap-0.5">
-              🪙 <span className="tabular-nums font-black">{stats.magicCoins}</span>
-            </span>
-            <span className="text-[9px] font-extrabold text-emerald-700 bg-emerald-50 px-1.5 py-0.5 rounded border border-emerald-150 mt-0.5">
-              LV.{stats.level}
-            </span>
-          </div>
-          
-          <button 
-            type="button"
-            onClick={() => {
-              try { audio.playClick(); } catch(e){}
-              setIsProfileExpanded(true);
-            }}
-            className="px-3 py-2 bg-gradient-to-r from-emerald-500 to-teal-500 hover:brightness-105 active:scale-95 text-white font-black text-xs rounded-xl border-b-[4px] border-emerald-700 shadow-md font-sans transition-all flex items-center gap-1"
-          >
-            <span>属性 🗡️</span>
-            {unassignedPoints > 0 && <span className="h-1.5 w-1.5 rounded-full bg-rose-500 animate-pulse" />}
-          </button>
-        </div>
-      </div>
-
-      {/* INLINE RPG CHARACTER QUICK-HUD METERS (NEW INTEGRATED ADVENTURE DESIGN) */}
+      {/* COMBINED SINGLE-ROW RPG INTEGRATED ADVENTURE HEADER */}
       <motion.div 
-        initial={{ opacity: 0, y: 10 }}
+        initial={{ opacity: 0, y: -10 }}
         animate={{ opacity: 1, y: 0 }}
-        className="bg-white border-2 border-emerald-300 rounded-[26px] p-3.5 shadow-sm text-left relative overflow-hidden"
+        className="bg-gradient-to-b from-white via-[#fcfefd] to-[#eefdf5] border-2 border-emerald-300 border-b-[6px] border-emerald-400 rounded-[24px] p-3.5 sm:p-4 shadow-md text-emerald-950 relative overflow-hidden flex flex-col gap-3"
       >
-        <div className="absolute top-0 right-0 p-1 bg-emerald-500 text-white rounded-bl-xl text-[9px] font-black uppercase tracking-wider px-2">
-          勇者契约书 (Hero Panel)
-        </div>
+        <div className="absolute top-0 inset-x-0 h-1 bg-gradient-to-r from-transparent via-amber-400 to-transparent animate-pulse" />
         
-        <div className="flex items-center space-x-3.5">
-          {/* Avatar frame */}
-          <div 
-            onClick={() => setIsProfileExpanded(true)}
-            className="w-16 h-16 bg-slate-900 border-2 border-amber-300 rounded-2xl overflow-hidden shadow-inner cursor-pointer shrink-0 hover:scale-105 transition-transform flex items-center justify-center relative"
-          >
-            <img 
-              src={selectedCharPortraitUri} 
-              alt={selectedChar.name} 
-              className="w-full h-full object-cover select-none"
-            />
-            {unassignedPoints > 0 && (
-              <span className="absolute -top-1 -right-1 bg-yellow-400 text-yellow-950 font-black text-[8px] px-1 rounded-full animate-bounce">
-                +{unassignedPoints}
-              </span>
-            )}
+        {/* Row 1: Profile Avatar + Title & Meta badge + Coins & Attributes button */}
+        <div className="flex items-center justify-between gap-2.5 w-full">
+          {/* Left: Avatar portrait and level/name info */}
+          <div className="flex items-center space-x-2.5 min-w-0">
+            <div 
+              onClick={() => {
+                try { audio.playClick(); } catch(e){}
+                setIsProfileExpanded(true);
+              }}
+              className="w-12 h-12 bg-slate-900 border-3 border-amber-300 rounded-2xl overflow-hidden shadow-md cursor-pointer shrink-0 hover:scale-105 active:scale-95 transition-transform flex items-center justify-center relative bg-gradient-to-br from-emerald-500 to-teal-800"
+            >
+              <img 
+                src={selectedCharPortraitUri} 
+                alt={selectedChar.name} 
+                className="w-full h-full object-cover select-none"
+              />
+              {unassignedPoints > 0 && (
+                <span className="absolute -top-1.5 -right-1.5 bg-rose-500 text-white font-sans font-black text-[9px] px-1.5 py-0.5 rounded-full animate-bounce border border-white">
+                  +{unassignedPoints}
+                </span>
+              )}
+              {activePet && (
+                <span className="absolute -bottom-1 -right-1 bg-amber-400 text-amber-950 border border-white rounded-md text-[9px] px-1 shadow-xs font-black">
+                  {PET_EMOJIS[activePet.type] || '🐾'}
+                </span>
+              )}
+            </div>
+
+            <div className="text-left min-w-0">
+              <div className="flex items-center gap-1.5">
+                <span className="text-[15px] sm:text-[16px] font-black text-emerald-950 tracking-wide leading-none">
+                  {selectedChar.name}
+                </span>
+                <span className="text-[9.5px] font-extrabold text-white bg-emerald-600 px-1.5 py-0.5 rounded-md shrink-0">
+                  LV.{stats.level}
+                </span>
+              </div>
+              <div className="text-[10px] font-bold text-emerald-700 mt-1 truncate">
+                称号: {selectedChar.title}
+              </div>
+            </div>
           </div>
 
-          <div className="flex-1 min-w-0">
-            {/* Status rows */}
-            <div className="flex justify-between items-center">
-              <span className="font-sans font-black text-[#0f4c3a] text-sm truncate flex items-center gap-1">
-                <span>{selectedChar.name}</span>
-                <span className="text-[10px] font-medium text-amber-600">({selectedChar.title})</span>
-              </span>
-              <span className="text-xs text-amber-700 font-extrabold flex items-center gap-0.5">
-                战力 <span className="text-[#be2c2c] font-black">{totalCombatPower}</span>
-              </span>
-            </div>
+          {/* Right: Gold Coins display & Attribute allocation button */}
+          <div className="flex items-center space-x-1.5 shrink-0">
+            <span className="text-[11.5px] sm:text-[12.5px] font-black text-amber-900 bg-amber-50 border border-amber-200/60 px-2 py-1 rounded-xl flex items-center justify-center gap-0.5 shadow-3xs">
+              🪙<span className="tabular-nums font-extrabold">{stats.magicCoins}</span>
+            </span>
+            <button 
+              type="button"
+              onClick={() => {
+                try { audio.playClick(); } catch(e){}
+                setIsProfileExpanded(true);
+              }}
+              className="px-2.5 py-1.5 bg-gradient-to-r from-emerald-500 to-teal-500 hover:brightness-105 active:scale-95 text-white font-black text-[10.5px] rounded-xl border-b-[3px] border-emerald-700 shadow-sm font-sans transition-all flex items-center gap-0.5 leading-none"
+            >
+              <span>属性 🗡️</span>
+              {unassignedPoints > 0 && <span className="h-1.5 w-1.5 rounded-full bg-rose-500 animate-pulse" />}
+            </button>
+          </div>
+        </div>
 
-            {/* Health / Magic UI bars for intense gamification */}
-            <div className="grid grid-cols-2 gap-2 mt-2">
-              <div>
-                <div className="flex justify-between items-center text-[9px] font-black text-rose-800">
-                  <span>生命 (HP)</span>
-                  <span>100 / 100</span>
-                </div>
-                <div className="h-1.5 bg-rose-100 rounded-full overflow-hidden border border-rose-200 mt-0.5">
-                  <div className="h-full bg-gradient-to-r from-red-400 to-rose-500 w-full animate-pulse" />
-                </div>
-              </div>
-              <div>
-                <div className="flex justify-between items-center text-[9px] font-black text-blue-800">
-                  <span>魔力 (MP)</span>
-                  <span>{stats.level * 10} / {stats.level * 10}</span>
-                </div>
-                <div className="h-1.5 bg-blue-100 rounded-full overflow-hidden border border-blue-200 mt-0.5">
-                  <div className="h-full bg-gradient-to-r from-blue-400 to-indigo-500 w-full" />
-                </div>
-              </div>
-            </div>
-
-            {/* Companion interaction row */}
-            <div className="mt-2.5 flex items-center space-x-1.5 overflow-hidden">
-              <span className="text-[10px] bg-amber-50 text-amber-900 px-1.5 py-0.5 rounded border border-amber-200 font-black shrink-0">虎伴皮皮语</span>
-              <span className="text-[10px] font-bold text-emerald-800 select-none truncate">
-                "{pipiQuote}"
-              </span>
-            </div>
+        {/* Row 2: Grid of RPG Metrics Stats Badges */}
+        <div className="grid grid-cols-3 gap-1.5 bg-emerald-950/[0.04] border border-emerald-250/20 p-1.5 rounded-2xl">
+          <div className="bg-gradient-to-r from-white to-amber-50/35 border border-amber-200/80 rounded-xl py-1.5 px-1.5 flex items-center justify-center gap-1 shadow-3xs hover:brightness-102 transition-all">
+            <span className="text-[10.5px] sm:text-xs font-black text-slate-600">⚔️战力</span>
+            <span className="text-[11.5px] sm:text-xs font-black text-[#be2c2c] tabular-nums font-sans">{totalCombatPower}</span>
+          </div>
+          <div className="bg-gradient-to-r from-white to-rose-50/35 border border-rose-200/80 rounded-xl py-1.5 px-1.5 flex items-center justify-center gap-1 shadow-3xs hover:brightness-102 transition-all">
+            <span className="text-[10.5px] sm:text-xs font-black text-slate-600">❤️生命</span>
+            <span className="text-[11.5px] sm:text-xs font-black text-rose-600 tabular-nums font-sans">100</span>
+          </div>
+          <div className="bg-gradient-to-r from-white to-indigo-50/35 border border-indigo-200/80 rounded-xl py-1.5 px-1.5 flex items-center justify-center gap-1 shadow-3xs hover:brightness-102 transition-all">
+            <span className="text-[10.5px] sm:text-xs font-black text-slate-600">🪄魔力</span>
+            <span className="text-[11.5px] sm:text-xs font-black text-indigo-600 tabular-nums font-sans">{stats.level * 10}</span>
           </div>
         </div>
       </motion.div>
@@ -483,6 +438,29 @@ const HomePage: React.FC<HomePageProps> = ({ stats, groups, reviewNeeded, onNavi
         {/* Graphical Board Trail Map Container */}
         <div className="relative bg-gradient-to-b from-[#f3fcf6] to-[#e6faf0] border-2 border-emerald-300 border-b-[6px] border-emerald-400 rounded-[30px] shadow-lg overflow-hidden h-[590px] w-full z-10">
           
+          {/* MAP GLOW EFFECT BACKDROP (Magical light halos to enrich environment depth) */}
+          {/* Sunshine shaft radiating from top-right corner */}
+          <div className="absolute top-0 right-0 w-[240px] h-[240px] bg-gradient-to-bl from-amber-200/25 via-yellow-100/5 to-transparent blur-2xl pointer-events-none select-none z-0" />
+          
+          {/* Glow 1: Behind Adventure Forest (Pine Green Glow) */}
+          <div className="absolute top-[30px] left-[5%] w-32 h-32 bg-emerald-400/15 rounded-full blur-2xl pointer-events-none select-none z-0 animate-[pulse_3s_infinite_ease-in-out]" />
+          
+          {/* Glow 2: Behind Magic Playground (Sunny Amber Glow) */}
+          <div className="absolute top-[30px] right-[5%] w-32 h-32 bg-orange-400/15 rounded-full blur-2xl pointer-events-none select-none z-0 animate-[pulse_3.5s_infinite_ease-in-out_0.2s]" />
+
+          {/* Glow 3: Under centerpiece Magic Picture Book (Majestic Indigo and Gold Royal Halo) */}
+          <div className="absolute top-[120px] left-1/2 -translate-x-1/2 w-[180px] h-[180px] bg-indigo-500/15 rounded-full blur-3xl pointer-events-none select-none z-0 animate-[pulse_4s_infinite_ease-in-out_0.8s]" />
+          <div className="absolute top-[145px] left-1/2 -translate-x-1/2 w-28 h-28 bg-amber-400/5 rounded-full blur-2xl pointer-events-none select-none z-0 animate-[pulse_2.5s_infinite_ease-in-out_0.4s]" />
+
+          {/* Glow 4: Behind Phonics Arena (Tingling Sparks Yellow Glow) */}
+          <div className="absolute top-[260px] left-[5%] w-32 h-32 bg-yellow-400/15 rounded-full blur-2xl pointer-events-none select-none z-0 animate-[pulse_3.2s_infinite_ease-in-out_0.6s]" />
+
+          {/* Glow 5: Behind Pet Sanctuary (Friendly Pink Blossom Glow) */}
+          <div className="absolute top-[260px] right-[5%] w-32 h-32 bg-pink-400/15 rounded-full blur-2xl pointer-events-none select-none z-0 animate-[pulse_3s_infinite_ease-in-out_0.9s]" />
+
+          {/* Glow 6: Under Enchanted Shop (Ancient Blue Oracle Glow) */}
+          <div className="absolute bottom-[90px] left-1/2 -translate-x-1/2 w-36 h-36 bg-cyan-400/15 rounded-full blur-2xl pointer-events-none select-none z-0 animate-[pulse_3.8s_infinite_ease-in-out_1.2s]" />
+
           {/* Sinuous SVG Trail/Road connecting nodes */}
           <svg className="absolute inset-x-0 inset-y-0 w-full h-full pointer-events-none select-none opacity-50 z-0" viewBox="0 0 320 530" preserveAspectRatio="none">
             <path 
@@ -629,11 +607,13 @@ const HomePage: React.FC<HomePageProps> = ({ stats, groups, reviewNeeded, onNavi
           </motion.button>
 
           {/* LAYER 5: INTERACTIVE COMPACT CHRONICLES BAR / ERROR BUBBLE */}
-          <div className="absolute bottom-[16px] inset-x-[4%] h-[60px] border-t border-dashed border-emerald-300/60 pt-3 flex justify-between items-center gap-3 bg-white/20 px-2 rounded-xl">
+          <div className="absolute bottom-[16px] inset-x-[4%] py-2.5 px-4 border-2 border-emerald-300/35 bg-[#ffffff]/50 backdrop-blur-md rounded-2xl flex justify-between items-center z-10 shadow-lg">
             {/* Quick stats feedback */}
-            <div className="text-left">
-              <span className="text-[9.5px] font-black text-emerald-850 uppercase block">太古冒险战史</span>
-              <span className="text-xs font-black text-emerald-950">已学口诀 {stats.totalWordsLearned} 册</span>
+            <div className="text-left flex flex-col justify-center">
+              <span className="text-[10px] font-black text-emerald-800 uppercase block tracking-wider">太古冒险战史</span>
+              <span className="text-xs sm:text-[13px] font-black text-emerald-950 mt-1 flex items-center gap-1">
+                已学口诀 <strong className="text-emerald-700 text-sm font-extrabold">{stats.totalWordsLearned}</strong> 册
+              </span>
             </div>
 
             {/* Floating Purification Error Bubble renamed to 错词汇 */}
@@ -644,16 +624,18 @@ const HomePage: React.FC<HomePageProps> = ({ stats, groups, reviewNeeded, onNavi
                 try { audio.playClick(); } catch(e){}
                 onOpenErrorCabinet?.();
               }}
-              className="relative px-3.5 py-1.5 bg-gradient-to-r from-purple-500 to-indigo-600 hover:brightness-105 rounded-xl border border-purple-400 text-white font-black text-xs shadow-md flex items-center gap-1 cursor-pointer select-none"
+              className="relative px-5 py-2.5 bg-gradient-to-r from-[#8126e8] to-[#601be0] hover:brightness-115 border-2 border-[#b573f9] border-b-[5px] border-b-[#4710ab] text-white font-extrabold text-[#ffffff] text-sm rounded-2xl shadow-[0_4px_12px_rgba(109,40,217,0.35)] hover:translate-y-[-1px] hover:shadow-[0_6px_16px_rgba(109,40,217,0.45)] active:border-b-2 active:translate-y-[2px] active:shadow-md transition-all duration-150 flex items-center justify-center gap-1.5 cursor-pointer select-none"
             >
-              <span className="text-sm">📔</span>
-              <span>错词汇</span>
+              <span className="text-lg">📔</span>
+              <span className="font-sans font-black tracking-wide">错词汇</span>
               {incorrectCount > 0 ? (
-                <span className="bg-rose-500 text-white font-serif text-[10.5px] px-1.5 rounded-full animate-pulse ml-0.5 border border-white">
+                <span className="bg-[#b9215b] text-[#ffffff] font-sans text-[11.5px] font-extrabold rounded-full px-2.5 py-0.5 shadow-inner flex items-center justify-center border border-white/20 ml-1.5 min-w-[28px] h-[21px]">
                   {incorrectCount}
                 </span>
               ) : (
-                <span className="text-[9px] text-purple-200">无邪气</span>
+                <span className="bg-[#b9215b]/45 text-purple-200 text-[11.5px] font-extrabold rounded-full px-2.5 py-0.5 ml-1.5 min-w-[28px] h-[21px] flex items-center justify-center border border-white/15">
+                  0
+                </span>
               )}
             </motion.button>
           </div>

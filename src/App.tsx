@@ -1144,30 +1144,38 @@ const App: React.FC = () => {
                     audio.playClick();
                     setShowDailyCheckIn(true);
                   }}
-                  className={`relative p-3 rounded-2xl flex flex-col justify-center text-left border-2 transition-all overflow-hidden ${
+                  className={`relative p-3 rounded-2xl flex flex-col justify-center text-left border-2 transition-all overflow-hidden cursor-pointer ${
                     localStorage.getItem('wordland_last_checkin_date') === new Date().toISOString().split('T')[0]
-                      ? 'bg-emerald-500/5 hover:bg-emerald-500/10 border-emerald-500/40 text-emerald-800'
-                      : 'bg-indigo-950/90 border-indigo-400 text-indigo-300 shadow-[0_4px_12px_rgba(99,102,241,0.15)] animate-pulse-subtle'
+                      ? 'bg-gradient-to-br from-emerald-50 via-white to-emerald-50/70 border-emerald-300 text-emerald-900 shadow-xs hover:bg-emerald-100/50'
+                      : 'bg-gradient-to-br from-indigo-650 via-indigo-600 to-purple-600 border-indigo-400 text-white shadow-md hover:brightness-105 animate-pulse-subtle'
                   }`}
                 >
-                  <div className="absolute top-0 right-0 p-1 bg-indigo-500/10 rounded-bl-xl">
-                    <Calendar size={14} className="text-indigo-400" />
+                  <div className="absolute top-0 right-0 p-1 bg-black/5 rounded-bl-xl">
+                    <Calendar size={14} className={localStorage.getItem('wordland_last_checkin_date') === new Date().toISOString().split('T')[0] ? "text-emerald-600" : "text-indigo-200"} />
                   </div>
-                  <span className="text-[10px] font-black uppercase tracking-wider text-slate-400 leading-none">
+                  <span className={`text-[9.5px] font-black uppercase tracking-wider leading-none ${
+                    localStorage.getItem('wordland_last_checkin_date') === new Date().toISOString().split('T')[0]
+                      ? 'text-slate-500'
+                      : 'text-indigo-200'
+                  }`}>
                     每日惊喜
                   </span>
-                  <span className="text-sm font-black text-slate-800 dark:text-white mt-1 leading-none font-cute">
+                  <span className={`text-xs sm:text-sm font-black mt-1 leading-none font-cute ${
+                    localStorage.getItem('wordland_last_checkin_date') === new Date().toISOString().split('T')[0]
+                      ? 'text-emerald-950'
+                      : 'text-white'
+                  }`}>
                     📅 魔法签到大典
                   </span>
                   <span className="text-[10px] font-black mt-2 inline-flex items-center gap-1">
                     {localStorage.getItem('wordland_last_checkin_date') === new Date().toISOString().split('T')[0] ? (
-                      <span className="text-emerald-500">今日已签到 ✓</span>
+                      <span className="text-emerald-600 font-extrabold">今日已签到 ✓</span>
                     ) : (
-                      <span className="text-amber-500 animate-pulse">待打卡领取 🎁</span>
+                      <span className="text-amber-300 font-black animate-pulse bg-indigo-900/30 px-1.5 py-0.5 rounded">待打卡领取 🎁</span>
                     )}
                   </span>
                 </motion.button>
-
+ 
                 {/* 2. Online Lucky Wheel Timer Button */}
                 <motion.button
                   whileHover={{ scale: 1.02, y: -1 }}
@@ -1186,23 +1194,39 @@ const App: React.FC = () => {
                       setShowLuckyWheel(true);
                     }
                   }}
-                  className={`relative p-3 rounded-2xl flex flex-col justify-center text-left border-2 transition-all overflow-hidden ${
+                  className={`relative p-3 rounded-2xl flex flex-col justify-center text-left border-2 transition-all overflow-hidden cursor-pointer ${
                     availableDrawMinutes.length > 0
-                      ? 'bg-amber-500/10 border-amber-400 text-amber-800 shadow-[0_4px_12px_rgba(245,158,11,0.2)]'
-                      : 'bg-indigo-950/80 border-indigo-800/60 text-indigo-300 hover:bg-indigo-950/95'
+                      ? 'bg-gradient-to-br from-amber-400 via-orange-500 to-yellow-500 border-amber-300 text-white shadow-md hover:brightness-105'
+                      : 'bg-gradient-to-br from-slate-50 via-indigo-50/20 to-slate-100 border-indigo-200 text-slate-800 shadow-xs hover:bg-slate-100/50'
                   }`}
                 >
-                  <div className="absolute top-0 right-0 p-1 bg-amber-500/10 rounded-bl-xl">
-                    <Compass size={14} className="text-amber-400 animate-spin-slow" />
+                  <div className="absolute top-0 right-0 p-1 bg-black/5 rounded-bl-xl">
+                    <Compass size={14} className={availableDrawMinutes.length > 0 ? "text-amber-200 animate-spin-slow" : "text-indigo-400"} />
                   </div>
-                  <span className="text-[10px] font-black uppercase tracking-wider text-slate-400 leading-none">
+                  <span className={`text-[9.5px] font-black uppercase tracking-wider leading-none ${
+                    availableDrawMinutes.length > 0
+                      ? 'text-amber-100'
+                      : 'text-slate-500'
+                  }`}>
                     在线祈愿
                   </span>
-                  <span className="text-sm font-black text-slate-800 dark:text-white mt-1 leading-none font-cute">
+                  <span className={`text-xs sm:text-sm font-black mt-1 leading-none font-cute ${
+                    availableDrawMinutes.length > 0
+                      ? 'text-white'
+                      : 'text-slate-900'
+                  }`}>
                     🎡 幸运轮盘抽奖
                   </span>
-                  <span className="text-[10px] text-amber-500 font-extrabold mt-2 truncate w-full">
-                    {getDrawStatusText()}
+                  <span className="text-[10px] font-black mt-2 truncate w-full">
+                    {availableDrawMinutes.length > 0 ? (
+                      <span className="text-yellow-100 bg-amber-900/30 px-1.5 py-0.5 rounded font-black animate-pulse">
+                        免费抽奖就绪 ⭐
+                      </span>
+                    ) : (
+                      <span className="text-indigo-600 font-extrabold">
+                        {getDrawStatusText()}
+                      </span>
+                    )}
                   </span>
                 </motion.button>
               </div>
