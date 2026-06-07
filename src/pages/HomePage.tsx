@@ -43,6 +43,21 @@ const HomePage: React.FC<HomePageProps> = ({ stats, groups, reviewNeeded, onNavi
   const [isProfileExpanded, setIsProfileExpanded] = React.useState(false);
   const [activeProfileTab, setActiveProfileTab] = React.useState<'HERO' | 'PETS'>('HERO');
 
+  const pipiQuote = React.useMemo(() => {
+    if (reviewNeeded?.length > 0) {
+      return "小勇士，有词汇需要复习哦，快去深林冒险吧！🐾";
+    }
+    const completedQuests = stats.quests?.filter(q => q.completed).length || 0;
+    if (completedQuests === stats.quests?.length && stats.quests?.length > 0) {
+      return "哇塞！今日任务已全部完成，你是最强魔法师！🎉";
+    }
+    return "跟我一起踩着伴奏，把单词变成好听的三字经吧！🐯🎵";
+  }, [reviewNeeded, stats]);
+
+  const activePet = React.useMemo(() => {
+    return stats.pets?.find(p => !p.isDead);
+  }, [stats.pets]);
+
   const handleSearch = (e: React.ChangeEvent<HTMLInputElement>) => {
     const query = e.target.value.toLowerCase();
     setSearchQuery(query);
@@ -155,7 +170,7 @@ const HomePage: React.FC<HomePageProps> = ({ stats, groups, reviewNeeded, onNavi
   const totalCombatPower = characterCombatPower + activePetPower;
 
   return (
-    <div className="space-y-4.5 animate-in fade-in duration-500 pb-6 relative w-full max-w-lg mx-auto overflow-x-hidden">
+    <div className="space-y-5 animate-in fade-in duration-500 pb-8 relative w-full max-w-lg mx-auto overflow-x-hidden">
       {/* Dynamic Magical Forest & Astro-Core Background */}
       <div className="fixed inset-0 pointer-events-none overflow-hidden -z-10 bg-gradient-to-b from-[#eafaf1] via-[#f3fcf7] to-[#f9fef6]">
         {/* Soft glowing fairy lights and magical sunbeams */}
@@ -164,6 +179,36 @@ const HomePage: React.FC<HomePageProps> = ({ stats, groups, reviewNeeded, onNavi
         <div className="absolute top-1/4 right-8 text-amber-400/50 text-2xl pointer-events-none animate-pulse">✨</div>
         <div className="absolute bottom-1/3 left-6 text-emerald-400/30 text-3xl pointer-events-none animate-bounce">🍀</div>
         <div className="absolute bottom-1/5 right-10 text-teal-400/30 text-2xl pointer-events-none animate-pulse">🌸</div>
+
+        {/* Adorable Floating Cartoon Map Stickers */}
+        <motion.div 
+          animate={{ y: [0, -10, 0], rotate: [0, 5, -5, 0] }}
+          transition={{ repeat: Infinity, duration: 6, ease: "easeInOut" }}
+          className="absolute top-[18%] left-[4%] text-4xl opacity-[0.25] pointer-events-none select-none"
+        >
+          🏰
+        </motion.div>
+        <motion.div 
+          animate={{ y: [0, 12, 0], scale: [1, 1.05, 1] }}
+          transition={{ repeat: Infinity, duration: 8, ease: "easeInOut" }}
+          className="absolute top-[52%] left-[3%] text-3xl opacity-[0.22] pointer-events-none select-none"
+        >
+          🍄
+        </motion.div>
+        <motion.div 
+          animate={{ y: [5, -15, 5], rotate: [0, -8, 8, 0] }}
+          transition={{ repeat: Infinity, duration: 7, ease: "easeInOut" }}
+          className="absolute top-[35%] right-[4%] text-4xl opacity-[0.25] pointer-events-none select-none"
+        >
+          🧚
+        </motion.div>
+        <motion.div 
+          animate={{ scale: [0.9, 1.1, 0.9] }}
+          transition={{ repeat: Infinity, duration: 4, ease: "easeInOut" }}
+          className="absolute bottom-[28%] right-[5%] text-2xl opacity-[0.2] pointer-events-none select-none"
+        >
+          🌲
+        </motion.div>
 
         {/* Soft Cartoon Floating Clouds */}
         <motion.div 
@@ -220,80 +265,151 @@ const HomePage: React.FC<HomePageProps> = ({ stats, groups, reviewNeeded, onNavi
           ))
         ))}
       </div>
-      {/* COMPACT INTEGRATED MAGICAL ACADEMY DASHBOARD HEADER */}
-      <div className="bg-gradient-to-b from-white via-[#f3fbf6] to-[#e8faf0] border-2 border-emerald-300 border-b-[6px] border-emerald-400 rounded-[24px] p-3.5 sm:p-5 shadow-sm flex flex-col xs:flex-row gap-3 items-center justify-between text-emerald-950 relative overflow-hidden">
-        {/* Soft glowing line at top */}
+
+      {/* RETAINED REDESIGNED COMPACT HEADER WITH BRANDING */}
+      <div className="bg-gradient-to-b from-white via-[#fcfefd] to-[#eefdf5] border-2 border-emerald-300 border-b-[6px] border-emerald-400 rounded-[28px] p-4 shadow-md flex flex-row items-center justify-between text-emerald-950 relative overflow-hidden">
         <div className="absolute top-0 inset-x-0 h-1 bg-gradient-to-r from-transparent via-amber-400 to-transparent animate-pulse" />
 
-        {/* Left: Branding Identity & Level / XP Bar combined for perfect coordination */}
-        <div className="flex items-center space-x-3.5">
+        <div className="flex items-center space-x-3 flex-1 min-w-0">
           <motion.div 
-            whileHover={{ scale: 1.15, rotate: [0, -10, 10, -5, 0] }}
-            whileTap={{ scale: 0.92 }}
-            transition={{
-              scale: { type: "spring", stiffness: 350, damping: 10 },
-              rotate: { type: "keyframes", duration: 0.45, ease: "easeInOut" }
-            }}
-            className="cursor-pointer select-none shrink-0 border-2 border-emerald-400 bg-white p-1 rounded-2xl shadow-sm"
+            whileHover={{ scale: 1.1, rotate: [0, -10, 10, -5, 0] }}
+            whileTap={{ scale: 0.95 }}
+            className="cursor-pointer select-none border-4 border-amber-300 bg-white p-1 rounded-full shadow-md relative shrink-0 flex items-center justify-center w-14 h-14"
             onClick={() => {
               try { audio.playCheer(); } catch(e){}
               onNavigate('TUTOR');
             }}
           >
-            <span className="text-4xl sm:text-5xl block filter drop-shadow-[0_3px_8px_rgba(52,211,153,0.5)]">🐯</span>
+            <span className="text-3xl block filter drop-shadow-[0_2px_4px_rgba(245,158,11,0.4)]">🐯</span>
+            {activePet && (
+              <span className="absolute -bottom-1 -right-1 bg-rose-500 text-white border-2 border-white rounded-full text-[9px] w-5 h-5 flex items-center justify-center shadow-xs font-black">
+                {PET_EMOJIS[activePet.type] || '🐾'}
+              </span>
+            )}
           </motion.div>
-          <div className="text-left">
-            <h1 className="text-xl sm:text-3xl font-black text-emerald-900 tracking-wide leading-none flex items-center gap-1.5 font-sans">
+
+          <div className="text-left min-w-0">
+            <h1 className="text-lg sm:text-xl font-black text-emerald-950 tracking-wide leading-none flex items-center gap-1">
               <span>单词奇旅</span>
-              <span className="text-[11px] bg-gradient-to-r from-amber-400 to-amber-500 text-amber-950 font-black px-1.5 py-0.5 rounded-md shadow-sm border-b border-amber-600">v2.5</span>
+              <span className="text-[9px] bg-gradient-to-r from-amber-400 to-amber-505 text-amber-950 font-black px-1 py-0.5 rounded shadow-xs">v2.5</span>
             </h1>
-            <div className="flex items-center gap-2 mt-1.5">
-              <span className="text-[13px] sm:text-[16px] font-black text-emerald-850 whitespace-nowrap bg-white/85 px-2.5 py-0.5 rounded-md border border-emerald-200">🌟 LV.{stats.level}</span>
-              <div className="w-16 sm:w-24 h-2.5 bg-emerald-100 rounded-full overflow-hidden border border-emerald-250 relative shadow-inner">
-                <div className="bg-gradient-to-r from-emerald-400 to-teal-400 h-full" style={{ width: `${(stats.xp % 1000) / 10}%` }} />
-                <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,_rgba(255,255,255,0.5)_1px,_transparent_1px)] bg-[length:4px_4px] animate-pulse" />
-              </div>
-            </div>
+            {/* Elegant text status inside header */}
+            <p className="text-[11px] font-bold text-emerald-800 mt-1 truncate">
+              {stats.streak > 0 ? `连续守卫魔法森林第 ${stats.streak} 天 🔥` : "开启新魔法学徒试炼 ✨"}
+            </p>
           </div>
         </div>
 
-        {/* Right: Gold and Attributes Character book trigger */}
-        <div className="flex items-center gap-2.5 shrink-0 w-full xs:w-auto justify-end border-t border-dashed border-emerald-250/40 xs:border-0 pt-2.5 xs:pt-0">
-          <motion.div 
-            whileHover={{ scale: 1.05 }}
-            className="bg-white border-2 border-b-[4px] border-amber-300 px-3 py-1 rounded-xl flex items-center space-x-1 shadow-sm cursor-default"
-          >
-            <CircleDollarSign size={16} className="text-amber-500 fill-amber-300 shrink-0 animate-pulse" />
-            <span className="font-black text-amber-800 text-sm sm:text-base tabular-nums leading-none">{stats.magicCoins} 魔法币</span>
-          </motion.div>
-
+        {/* Right HUD info */}
+        <div className="flex items-center space-x-2 shrink-0">
+          <div className="flex flex-col items-end mr-1 text-right">
+            <span className="text-[11px] font-black text-amber-800 flex items-center gap-0.5">
+              🪙 <span className="tabular-nums font-black">{stats.magicCoins}</span>
+            </span>
+            <span className="text-[9px] font-extrabold text-emerald-700 bg-emerald-50 px-1.5 py-0.5 rounded border border-emerald-150 mt-0.5">
+              LV.{stats.level}
+            </span>
+          </div>
+          
           <button 
             type="button"
             onClick={() => {
               try { audio.playClick(); } catch(e){}
               setIsProfileExpanded(true);
             }}
-            className="px-4 py-2 sm:px-5 sm:py-2.5 bg-gradient-to-r from-[#10b981] to-[#059669] hover:brightness-105 hover:scale-103 active:scale-97 text-white font-black text-sm sm:text-base rounded-xl border-b-[4px] border-emerald-700 flex items-center gap-1 shadow-sm transition-all cursor-pointer"
+            className="px-3 py-2 bg-gradient-to-r from-emerald-500 to-teal-500 hover:brightness-105 active:scale-95 text-white font-black text-xs rounded-xl border-b-[4px] border-emerald-700 shadow-md font-sans transition-all flex items-center gap-1"
           >
-            <span>我的属性 🗡️</span>
-            {unassignedPoints > 0 && (
-              <span className="h-2 w-2 rounded-full bg-rose-500 animate-pulse shrink-0" />
-            )}
+            <span>属性 🗡️</span>
+            {unassignedPoints > 0 && <span className="h-1.5 w-1.5 rounded-full bg-rose-500 animate-pulse" />}
           </button>
         </div>
       </div>
 
-      {/* COMPACT WORD SEARCH SECTION */}
+      {/* INLINE RPG CHARACTER QUICK-HUD METERS (NEW INTEGRATED ADVENTURE DESIGN) */}
+      <motion.div 
+        initial={{ opacity: 0, y: 10 }}
+        animate={{ opacity: 1, y: 0 }}
+        className="bg-white border-2 border-emerald-300 rounded-[26px] p-3.5 shadow-sm text-left relative overflow-hidden"
+      >
+        <div className="absolute top-0 right-0 p-1 bg-emerald-500 text-white rounded-bl-xl text-[9px] font-black uppercase tracking-wider px-2">
+          勇者契约书 (Hero Panel)
+        </div>
+        
+        <div className="flex items-center space-x-3.5">
+          {/* Avatar frame */}
+          <div 
+            onClick={() => setIsProfileExpanded(true)}
+            className="w-16 h-16 bg-slate-900 border-2 border-amber-300 rounded-2xl overflow-hidden shadow-inner cursor-pointer shrink-0 hover:scale-105 transition-transform flex items-center justify-center relative"
+          >
+            <img 
+              src={selectedCharPortraitUri} 
+              alt={selectedChar.name} 
+              className="w-full h-full object-cover select-none"
+            />
+            {unassignedPoints > 0 && (
+              <span className="absolute -top-1 -right-1 bg-yellow-400 text-yellow-950 font-black text-[8px] px-1 rounded-full animate-bounce">
+                +{unassignedPoints}
+              </span>
+            )}
+          </div>
+
+          <div className="flex-1 min-w-0">
+            {/* Status rows */}
+            <div className="flex justify-between items-center">
+              <span className="font-sans font-black text-[#0f4c3a] text-sm truncate flex items-center gap-1">
+                <span>{selectedChar.name}</span>
+                <span className="text-[10px] font-medium text-amber-600">({selectedChar.title})</span>
+              </span>
+              <span className="text-xs text-amber-700 font-extrabold flex items-center gap-0.5">
+                战力 <span className="text-[#be2c2c] font-black">{totalCombatPower}</span>
+              </span>
+            </div>
+
+            {/* Health / Magic UI bars for intense gamification */}
+            <div className="grid grid-cols-2 gap-2 mt-2">
+              <div>
+                <div className="flex justify-between items-center text-[9px] font-black text-rose-800">
+                  <span>生命 (HP)</span>
+                  <span>100 / 100</span>
+                </div>
+                <div className="h-1.5 bg-rose-100 rounded-full overflow-hidden border border-rose-200 mt-0.5">
+                  <div className="h-full bg-gradient-to-r from-red-400 to-rose-500 w-full animate-pulse" />
+                </div>
+              </div>
+              <div>
+                <div className="flex justify-between items-center text-[9px] font-black text-blue-800">
+                  <span>魔力 (MP)</span>
+                  <span>{stats.level * 10} / {stats.level * 10}</span>
+                </div>
+                <div className="h-1.5 bg-blue-100 rounded-full overflow-hidden border border-blue-200 mt-0.5">
+                  <div className="h-full bg-gradient-to-r from-blue-400 to-indigo-500 w-full" />
+                </div>
+              </div>
+            </div>
+
+            {/* Companion interaction row */}
+            <div className="mt-2.5 flex items-center space-x-1.5 overflow-hidden">
+              <span className="text-[10px] bg-amber-50 text-amber-900 px-1.5 py-0.5 rounded border border-amber-200 font-black shrink-0">虎伴皮皮语</span>
+              <span className="text-[10px] font-bold text-emerald-800 select-none truncate">
+                "{pipiQuote}"
+              </span>
+            </div>
+          </div>
+        </div>
+      </motion.div>
+
+      {/* CUTE WORD SEARCH SECTION */}
       <div className="relative group px-1">
         <div className="absolute inset-y-0 left-5 flex items-center pointer-events-none">
-          <Search className="text-emerald-500 w-5 h-5 group-focus-within:text-amber-500 transition-colors shrink-0 stroke-[2.5]" />
+          <span className="text-lg mr-1 select-none animate-pulse">🔮</span>
+          <Search className="text-emerald-600 w-4.5 h-4.5 group-focus-within:text-amber-500 transition-colors shrink-0 stroke-[3]" />
         </div>
         <input
           type="text"
           value={searchQuery}
           onChange={handleSearch}
-          placeholder="🧙‍♂️ 搜索三字经魔法词 (比如 cat, dad, man)..."
-          className="w-full bg-white/95 backdrop-blur-md py-3.5 pl-12 pr-10 rounded-[18px] border-2 border-emerald-300 shadow-sm focus:ring-2 focus:ring-emerald-400/20 focus:border-amber-500 outline-none transition-all text-[17px] sm:text-[18px] text-emerald-950 placeholder:text-emerald-700/50 font-black animate-in slide-in-from-top-2 duration-200 border-b-[4px] border-emerald-400"
+          placeholder="🧙‍♂️ 输入神秘单词或三字经拼音寻找口诀..."
+          className="w-full bg-white/95 backdrop-blur-md py-4 pl-14 pr-10 rounded-[22px] border-2 border-emerald-300 shadow-sm focus:ring-4 focus:ring-emerald-400/10 focus:border-amber-400 focus:bg-white outline-none transition-all text-sm sm:text-base text-emerald-950 placeholder:text-emerald-700/60 font-black animate-in slide-in-from-top-1 duration-200 border-b-[5px] border-emerald-400"
         />
         {searchQuery && (
           <button
@@ -312,9 +428,9 @@ const HomePage: React.FC<HomePageProps> = ({ stats, groups, reviewNeeded, onNavi
             initial={{ opacity: 0, y: -8, height: 0 }}
             animate={{ opacity: 1, y: 0, height: 'auto' }}
             exit={{ opacity: 0, y: -8, height: 0 }}
-            className="bg-gradient-to-b from-white to-[#f4fbf6] border-2 border-emerald-300 rounded-3xl shadow-md p-4 space-y-3.5 overflow-hidden mx-1"
+            className="bg-gradient-to-b from-white to-[#f4fbf6] border-2 border-emerald-300 rounded-[24px] shadow-md p-4 space-y-3.5 overflow-hidden mx-1 border-b-[6px]"
           >
-            <h4 className="text-xs sm:text-[13.5px] font-black text-amber-700 uppercase tracking-widest px-1 flex items-center gap-1">
+            <h4 className="text-xs sm:text-[13px] font-black text-amber-700 uppercase tracking-widest px-1 flex items-center gap-1.5">
               <span>📜 太古碑文口诀卷轴</span>
               <span className="h-1.5 w-1.5 rounded-full bg-amber-500 animate-pulse" />
             </h4>
@@ -322,7 +438,7 @@ const HomePage: React.FC<HomePageProps> = ({ stats, groups, reviewNeeded, onNavi
               {searchResults.map((group) => (
                 <div
                   key={group.id}
-                  className="p-3 bg-[#f0fdf4] rounded-2xl border border-emerald-200 hover:border-amber-400/60 hover:bg-[#e6f9ed] transition-all text-left"
+                  className="p-3 bg-[#f0fdf4] rounded-2xl border border-emerald-250 hover:border-amber-400/60 hover:bg-[#e6f9ed] transition-all text-left"
                 >
                   <div className="flex justify-between items-start mb-1.5">
                     <div className="flex flex-wrap gap-1">
@@ -334,7 +450,7 @@ const HomePage: React.FC<HomePageProps> = ({ stats, groups, reviewNeeded, onNavi
                     </div>
                     <span className="text-[10px] sm:text-[11px] font-black text-emerald-600/70 uppercase tracking-widest font-mono">{group.title}</span>
                   </div>
-                  <p className="text-emerald-950 font-black text-sm sm:text-[15px] leading-relaxed">
+                  <p className="text-emerald-955 font-black text-sm sm:text-[15px] leading-relaxed">
                     {group.rhyme.split(',').map((part, i) => (
                       <span key={i} className="block mt-0.5 first:mt-0">{part.trim()}</span>
                     ))}
@@ -351,167 +467,200 @@ const HomePage: React.FC<HomePageProps> = ({ stats, groups, reviewNeeded, onNavi
         <DailyQuestBoard quests={stats.quests} onQuestClick={onQuestClick} />
       </div>
 
-      {/* COMPACT INTERACTIVE NAVIGATION PORTALS - RATIONAL GAME MAP BENTO LAYOUT */}
-      <div className="grid grid-cols-3 gap-2.5 sm:gap-4 px-1 pb-2">
-        {/* Portal A: Adventure Forest (Major game mode - Green 3D Toy Button) */}
-        <motion.button 
-          whileHover={{ scale: 1.05, y: -2 }}
-          whileTap={{ scale: 0.95 }}
-          onClick={() => {
-            try { audio.playClick(); } catch(e){}
-            onNavigate('ADVENTURE');
-          }} 
-          className="p-2 sm:p-3 bg-gradient-to-br from-[#acd65c] via-[#4caf50] to-[#15803d] border-2 border-emerald-250 border-b-[5px] border-emerald-700 hover:border-emerald-100 rounded-2xl sm:rounded-3xl flex flex-col items-center justify-center text-center relative overflow-hidden group h-24 sm:h-28 cursor-pointer shadow-sm transition-all active:border-b-[1px] active:translate-y-[4px]"
-        >
-          <div className="absolute top-[-10px] right-[-10px] w-10 h-10 bg-white/10 rounded-full blur-md group-hover:scale-125 transition-transform" />
-          <div className="bg-white/80 w-8 h-8 sm:w-10 sm:h-10 rounded-xl flex items-center justify-center shadow-xs mb-1.5 relative shrink-0">
-            <BookOpen className="text-emerald-800 w-4.5 h-4.5 sm:w-5 sm:h-5 stroke-[3] group-hover:animate-bounce" />
-            {reviewNeeded.length > 0 && (
-              <span className="absolute -top-1 -right-1 bg-rose-500 text-white text-[9px] sm:text-[10px] font-black w-4.5 h-4.5 flex items-center justify-center rounded-full animate-pulse border border-white">
-                {reviewNeeded.length}
-              </span>
-            )}
+      {/* FANTASY ADVENTURE WORLD MAP LAYOUT (BREAKTHROUGH GAME BOARD) */}
+      <div className="px-1 space-y-4">
+        {/* Section title */}
+        <div className="flex items-center justify-between">
+          <div className="flex items-center space-x-2">
+            <span className="text-lg">🗺️</span>
+            <span className="font-sans font-black text-emerald-950 text-sm sm:text-base tracking-wide">魔幻奥妙世界版图 (Adventure Map)</span>
           </div>
-          <span className="font-black text-white text-[11px] sm:text-[13px] tracking-tight leading-tight">
-            冒险深林
+          <span className="text-[10px] text-amber-700 font-extrabold bg-amber-50 px-2 py-0.5 rounded-full border border-amber-200 animate-pulse">
+            勇者探险路线
           </span>
-        </motion.button>
-        
-        {/* Portal B: Magic Playground (Major game mode - Orange 3D Toy Button) */}
-        <motion.button 
-          whileHover={{ scale: 1.05, y: -2 }}
-          whileTap={{ scale: 0.95 }}
-          onClick={() => {
-            try { audio.playClick(); } catch(e){}
-            onNavigate('ARCADE');
-          }} 
-          className="p-2 sm:p-3 bg-gradient-to-br from-[#fccf31] via-[#f69d3c] to-[#c2410c] border-2 border-amber-250 border-b-[5px] border-amber-700 hover:border-amber-100 rounded-2xl sm:rounded-3xl flex flex-col items-center justify-center text-center relative overflow-hidden group h-24 sm:h-28 cursor-pointer shadow-sm transition-all active:border-b-[1px] active:translate-y-[4px]"
-        >
-          <div className="absolute top-[-10px] right-[-10px] w-10 h-10 bg-white/10 rounded-full blur-md group-hover:scale-125 transition-transform" />
-          <div className="bg-white/80 w-8 h-8 sm:w-10 sm:h-10 rounded-xl flex items-center justify-center shadow-xs mb-1.5 shrink-0">
-            <Gamepad2 className="text-amber-800 w-4.5 h-4.5 sm:w-5 sm:h-5 stroke-[3] group-hover:rotate-12" />
-          </div>
-          <span className="font-black text-white text-[11px] sm:text-[13px] tracking-tight leading-tight">
-            演武乐园
-          </span>
-        </motion.button>
+        </div>
 
-        {/* Portal C: Pet Sanctuary (Direct access to Pets - Pink 3D Toy Button) */}
-        <motion.button 
-          whileHover={{ scale: 1.05, y: -2 }}
-          whileTap={{ scale: 0.95 }}
-          onClick={() => {
-            try { audio.playClick(); } catch(e){}
-            onNavigate('PETS');
-          }} 
-          className="p-2 sm:p-3 bg-gradient-to-br from-[#fda4af] via-[#f43f5e] to-[#be123c] border-2 border-rose-250 border-b-[5px] border-rose-700 hover:border-rose-100 rounded-2xl sm:rounded-3xl flex flex-col items-center justify-center text-center relative overflow-hidden group h-24 sm:h-28 cursor-pointer shadow-sm transition-all active:border-b-[1px] active:translate-y-[4px]"
-        >
-          <div className="absolute top-[-10px] right-[-10px] w-10 h-10 bg-white/10 rounded-full blur-md group-hover:scale-125 transition-transform" />
-          <div className="bg-white/80 w-8 h-8 sm:w-10 sm:h-10 rounded-xl flex items-center justify-center shadow-xs mb-1.5 shrink-0">
-            <span className="text-sm sm:text-base select-none">🐾</span>
-          </div>
-          <span className="font-black text-white text-[11px] sm:text-[13px] tracking-tight leading-tight">
-            兽神域
-          </span>
-        </motion.button>
+        {/* Graphical Board Trail Map Container */}
+        <div className="relative bg-gradient-to-b from-[#f3fcf6] to-[#e6faf0] border-2 border-emerald-300 border-b-[6px] border-emerald-400 rounded-[30px] shadow-lg overflow-hidden h-[590px] w-full z-10">
+          
+          {/* Sinuous SVG Trail/Road connecting nodes */}
+          <svg className="absolute inset-x-0 inset-y-0 w-full h-full pointer-events-none select-none opacity-50 z-0" viewBox="0 0 320 530" preserveAspectRatio="none">
+            <path 
+              d="M 65,80 Q 160,50 255,80 Q 260,140 160,195 Q 60,250 65,315 Q 160,285 255,315 Q 260,375 160,435" 
+              fill="none" 
+              stroke="#10b981" 
+              strokeWidth="5" 
+              strokeLinecap="round" 
+              strokeDasharray="8 6" 
+              className="animate-[dash_60s_linear_infinite]"
+            />
+          </svg>
 
-        {/* Portal D: Enchanted Shop (Direct access to Shop - Blue 3D Toy Button) */}
-        <motion.button 
-          whileHover={{ scale: 1.05, y: -2 }}
-          whileTap={{ scale: 0.95 }}
-          onClick={() => {
-            try { audio.playClick(); } catch(e){}
-            onNavigate('SHOP');
-          }} 
-          className="p-2 sm:p-3 bg-gradient-to-br from-[#93c5fd] via-[#3b82f6] to-[#1d4ed8] border-2 border-blue-250 border-b-[5px] border-blue-700 hover:border-blue-100 rounded-2xl sm:rounded-3xl flex flex-col items-center justify-center text-center relative overflow-hidden group h-24 sm:h-28 cursor-pointer shadow-sm transition-all active:border-b-[1px] active:translate-y-[4px]"
-        >
-          <div className="absolute top-[-10px] right-[-10px] w-10 h-10 bg-white/10 rounded-full blur-md group-hover:scale-125 transition-transform" />
-          <div className="bg-white/80 w-8 h-8 sm:w-10 sm:h-10 rounded-xl flex items-center justify-center shadow-xs mb-1.5 shrink-0">
-            <span className="text-sm sm:text-base select-none">💎</span>
-          </div>
-          <span className="font-black text-white text-[11px] sm:text-[13px] tracking-tight leading-tight">
-            秘宝商店
-          </span>
-        </motion.button>
+          {/* Adorable visual landmark stickers inside fantasy map to enrich the environment */}
+          <div className="absolute top-[1%] left-[45%] text-xs select-none pointer-events-none opacity-25">🌳</div>
+          <div className="absolute top-[10%] left-[47%] -translate-x-1/2 text-lg select-none pointer-events-none opacity-20 animate-pulse">☀️</div>
+          <div className="absolute top-[85px] left-[16%] text-xl select-none opacity-20 hover:opacity-40 hover:scale-110 transition-all pointer-events-none">🌋</div>
+          <div className="absolute top-[85px] right-[18%] text-base select-none opacity-20 hover:opacity-40 hover:scale-110 transition-all pointer-events-none">⛺</div>
+          <div className="absolute top-[220px] left-[16%] text-2xl select-none opacity-25 animate-[bounce_4s_infinite_ease-in-out] pointer-events-none">⛵</div>
+          <div className="absolute top-[350px] right-[16%] text-xl select-none opacity-15 hover:opacity-35 hover:scale-110 transition-all pointer-events-none">🏛️</div>
+          <div className="absolute top-[350px] left-[15%] text-lg select-none opacity-20 hover:opacity-45 pointer-events-none">🍄</div>
+          <div className="absolute bottom-[20%] left-[44%] text-xs select-none pointer-events-none opacity-15">🌈</div>
 
-        {/* Portal E: Phonics Training Arena (Gold/Yellow 3D Toy Button - 修炼场) */}
-        <motion.button 
-          whileHover={{ scale: 1.05, y: -2 }}
-          whileTap={{ scale: 0.95 }}
-          onClick={() => {
-            try { audio.playClick(); } catch(e){}
-            onNavigate('PHONICS');
-          }} 
-          className="p-2 sm:p-3 bg-gradient-to-br from-[#ffe082] via-[#ffb300] to-[#ff8f00] border-2 border-amber-200 border-b-[5px] border-amber-700 hover:border-amber-100 rounded-2xl sm:rounded-3xl flex flex-col items-center justify-center text-center relative overflow-hidden group h-24 sm:h-28 cursor-pointer shadow-sm transition-all active:border-b-[1px] active:translate-y-[4px]"
-        >
-          <div className="absolute top-[-10px] right-[-10px] w-10 h-10 bg-white/10 rounded-full blur-md group-hover:scale-125 transition-transform" />
-          <div className="bg-white/80 w-8 h-8 sm:w-10 sm:h-10 rounded-xl flex items-center justify-center shadow-xs mb-1.5 shrink-0">
-            <Zap className="text-amber-800 w-4.5 h-4.5 sm:w-5 sm:h-5 stroke-[3] group-hover:animate-pulse" />
-          </div>
-          <span className="font-black text-white text-[11px] sm:text-[13px] tracking-tight leading-tight">
-            修炼场
-          </span>
-        </motion.button>
+          {/* Floating puffy cartoon clouds */}
+          <div className="absolute top-[5%] left-[2%] text-2xl select-none opacity-30 animate-[bounce_8s_infinite_ease-in-out] pointer-events-none">☁️</div>
+          <div className="absolute top-[24%] right-[2%] text-3xl select-none opacity-20 animate-[bounce_6s_infinite_ease-in-out_1s] pointer-events-none">☁️</div>
+          <div className="absolute top-[48%] left-[78%] text-2xl select-none opacity-25 animate-[pulse_5s_infinite] pointer-events-none">☁️</div>
 
-        {/* Portal F: Mistake Purification Chamber (Purple/Magenta 3D Toy Button - 错词汇) */}
-        <motion.button 
-          whileHover={{ scale: 1.05, y: -2 }}
-          whileTap={{ scale: 0.95 }}
-          onClick={() => {
-            try { audio.playClick(); } catch(e){}
-            onOpenErrorCabinet?.();
-          }} 
-          className="p-2 sm:p-3 bg-gradient-to-br from-[#f3e5f5] via-[#ab47bc] to-[#7b1fa2] border-2 border-purple-250 border-b-[5px] border-purple-700 hover:border-purple-100 rounded-2xl sm:rounded-3xl flex flex-col items-center justify-center text-center relative overflow-hidden group h-24 sm:h-28 cursor-pointer shadow-sm transition-all active:border-b-[1px] active:translate-y-[4px]"
-        >
-          <div className="absolute top-[-10px] right-[-10px] w-10 h-10 bg-white/10 rounded-full blur-md group-hover:scale-125 transition-transform" />
-          <div className="bg-white/80 w-8 h-8 sm:w-10 sm:h-10 rounded-xl flex items-center justify-center shadow-xs mb-1.5 relative shrink-0">
-            <span className="text-sm sm:text-base select-none">🛡️</span>
-            {incorrectCount > 0 && (
-              <span className="absolute -top-1 -right-1 bg-rose-500 text-white text-[9px] sm:text-[10px] font-black w-4.5 h-4.5 flex items-center justify-center rounded-full animate-pulse border border-white">
-                {incorrectCount}
-              </span>
-            )}
+          {/* Magical Twinkling Sparkles */}
+          <div className="absolute top-[130px] left-[26%] text-amber-400 text-xs animate-ping pointer-events-none">🌟</div>
+          <div className="absolute top-[385px] right-[24%] text-yellow-500 text-sm animate-pulse pointer-events-none">🌟</div>
+          <div className="absolute top-[230px] right-[20%] text-amber-400 text-xs animate-pulse pointer-events-none">🌟</div>
+
+          {/* LAYER 1: HEAD STAGES */}
+          {/* Stage 1: Adventure Forest (Left-Top) */}
+          <motion.button
+            whileHover={{ scale: 1.08 }}
+            whileTap={{ scale: 0.95 }}
+            onClick={() => {
+              try { audio.playClick(); } catch(e){}
+              onNavigate('ADVENTURE');
+            }}
+            className="absolute top-[40px] left-[6%] flex flex-col items-center group cursor-pointer z-10"
+          >
+            <div className="w-[72px] h-[72px] rounded-full bg-gradient-to-br from-emerald-400 to-green-600 flex items-center justify-center text-3xl shadow-lg border-4 border-white group-hover:scale-110 active:scale-95 transition-transform duration-150 shrink-0 relative">
+              <span>🌲</span>
+              {reviewNeeded.length > 0 && (
+                <span className="absolute -top-1 -right-1 bg-rose-500 text-white font-black text-[10px] w-5.5 h-5.5 flex items-center justify-center rounded-full border-2 border-white animate-bounce shadow">
+                  {reviewNeeded.length}
+                </span>
+              )}
+            </div>
+            <span className="font-black text-emerald-950 text-xs sm:text-[13px] mt-1.5 whitespace-nowrap text-shadow-[0_1px_2px_rgba(255,255,255,0.8)]">冒险深林</span>
+            <span className="text-[10px] text-emerald-800 font-extrabold whitespace-nowrap">闯关背词</span>
+          </motion.button>
+
+          {/* Stage 2: Magic Playground (Right-Top) */}
+          <motion.button
+            whileHover={{ scale: 1.08 }}
+            whileTap={{ scale: 0.95 }}
+            onClick={() => {
+              try { audio.playClick(); } catch(e){}
+              onNavigate('ARCADE');
+            }}
+            className="absolute top-[40px] right-[6%] flex flex-col items-center group cursor-pointer z-10"
+          >
+            <div className="w-[72px] h-[72px] rounded-full bg-gradient-to-br from-amber-400 to-orange-500 flex items-center justify-center text-3xl shadow-lg border-4 border-white group-hover:scale-110 active:scale-95 transition-transform duration-150 shrink-0 relative">
+              <span>🎮</span>
+            </div>
+            <span className="font-black text-orange-950 text-xs sm:text-[13px] mt-1.5 whitespace-nowrap text-shadow-[0_1px_2px_rgba(255,255,255,0.8)]">演武乐园</span>
+            <span className="text-[10px] text-orange-700 font-extrabold whitespace-nowrap">趣味拼读</span>
+          </motion.button>
+
+          {/* LAYER 2: GRAND BOOK PALACE CENTERPIECE */}
+          {/* Stage 3: Magic Picture Book Palace (Library) */}
+          <motion.button
+            whileHover={{ scale: 1.08 }}
+            whileTap={{ scale: 0.95 }}
+            onClick={() => {
+              try { audio.playClick(); } catch (e) {}
+              onNavigate('PICTURE_BOOK');
+            }}
+            className="absolute top-[155px] left-1/2 -translate-x-1/2 flex flex-col items-center group cursor-pointer z-10"
+          >
+            <div className="w-[84px] h-[84px] rounded-full bg-gradient-to-br from-[#4f46e5] to-[#6366f1] flex items-center justify-center text-4xl shadow-xl border-4 border-amber-300 ring-4 ring-white ring-offset-0 group-hover:scale-110 active:scale-95 transition-transform duration-150 shrink-0 relative">
+              <span>🏰</span>
+              <span className="absolute -top-1 -right-2 bg-amber-400 text-amber-950 font-black text-[8px] px-1.5 py-0.5 rounded-full border border-amber-500 animate-pulse shadow-sm">NEW</span>
+            </div>
+            <span className="font-black text-indigo-950 text-xs sm:text-[14px] mt-2 whitespace-nowrap text-shadow-[0_1px_2px_rgba(255,255,255,0.8)]">魔法绘本馆</span>
+            <span className="text-[10px] text-indigo-700 font-extrabold whitespace-nowrap">发音配音</span>
+          </motion.button>
+
+          {/* LAYER 3: MID-SUB STAGES */}
+          {/* Stage 4: Phonics Arena (Left-Middle) */}
+          <motion.button
+            whileHover={{ scale: 1.08 }}
+            whileTap={{ scale: 0.95 }}
+            onClick={() => {
+              try { audio.playClick(); } catch(e){}
+              onNavigate('PHONICS');
+            }}
+            className="absolute top-[275px] left-[6%] flex flex-col items-center group cursor-pointer z-10"
+          >
+            <div className="w-[72px] h-[72px] rounded-full bg-gradient-to-br from-yellow-400 to-[#f59e0b] flex items-center justify-center text-3xl shadow-lg border-4 border-white group-hover:scale-110 active:scale-95 transition-transform duration-150 shrink-0 relative">
+              <span>⚡</span>
+            </div>
+            <span className="font-black text-amber-950 text-xs sm:text-[13px] mt-1.5 whitespace-nowrap text-shadow-[0_1px_2px_rgba(255,255,255,0.8)]">节奏修炼场</span>
+            <span className="text-[10px] text-amber-800 font-extrabold whitespace-nowrap">说唱拼读</span>
+          </motion.button>
+
+          {/* Stage 5: Pet Sanctuary (Right-Middle) */}
+          <motion.button
+            whileHover={{ scale: 1.08 }}
+            whileTap={{ scale: 0.95 }}
+            onClick={() => {
+              try { audio.playClick(); } catch(e){}
+              onNavigate('PETS');
+            }}
+            className="absolute top-[275px] right-[6%] flex flex-col items-center group cursor-pointer z-10"
+          >
+            <div className="w-[72px] h-[72px] rounded-full bg-gradient-to-br from-rose-400 to-pink-500 flex items-center justify-center text-3xl shadow-lg border-4 border-white group-hover:scale-110 active:scale-95 transition-transform duration-150 shrink-0 relative">
+              <span>🐾</span>
+            </div>
+            <span className="font-black text-rose-950 text-xs sm:text-[13px] mt-1.5 whitespace-nowrap text-shadow-[0_1px_2px_rgba(255,255,255,0.8)]">兽神圣域</span>
+            <span className="text-[10px] text-rose-700 font-extrabold whitespace-nowrap">仙宠养成</span>
+          </motion.button>
+
+          {/* LAYER 4: BOTTOM STAGES */}
+          {/* Stage 6: Enchanted Shop (Center-Bottom) */}
+          <motion.button
+            whileHover={{ scale: 1.08 }}
+            whileTap={{ scale: 0.95 }}
+            onClick={() => {
+              try { audio.playClick(); } catch(e){}
+              onNavigate('SHOP');
+            }}
+            className="absolute top-[395px] left-1/2 -translate-x-1/2 flex flex-col items-center group cursor-pointer z-10"
+          >
+            <div className="w-[72px] h-[72px] rounded-full bg-gradient-to-br from-[#64b5f6] to-[#1e88e5] flex items-center justify-center text-3xl shadow-lg border-4 border-white group-hover:scale-110 active:scale-95 transition-transform duration-150 shrink-0 relative">
+              <span>🪙</span>
+            </div>
+            <span className="font-black text-blue-950 text-[13px] mt-1.5 whitespace-nowrap text-shadow-[0_1px_2px_rgba(255,255,255,0.8)]">法秘商行</span>
+            <span className="text-[10px] text-blue-700 font-extrabold whitespace-nowrap">神装置备</span>
+          </motion.button>
+
+          {/* LAYER 5: INTERACTIVE COMPACT CHRONICLES BAR / ERROR BUBBLE */}
+          <div className="absolute bottom-[16px] inset-x-[4%] h-[60px] border-t border-dashed border-emerald-300/60 pt-3 flex justify-between items-center gap-3 bg-white/20 px-2 rounded-xl">
+            {/* Quick stats feedback */}
+            <div className="text-left">
+              <span className="text-[9.5px] font-black text-emerald-850 uppercase block">太古冒险战史</span>
+              <span className="text-xs font-black text-emerald-950">已学口诀 {stats.totalWordsLearned} 册</span>
+            </div>
+
+            {/* Floating Purification Error Bubble renamed to 错词汇 */}
+            <motion.button
+              whileHover={{ scale: 1.05 }}
+              whileTap={{ scale: 0.95 }}
+              onClick={() => {
+                try { audio.playClick(); } catch(e){}
+                onOpenErrorCabinet?.();
+              }}
+              className="relative px-3.5 py-1.5 bg-gradient-to-r from-purple-500 to-indigo-600 hover:brightness-105 rounded-xl border border-purple-400 text-white font-black text-xs shadow-md flex items-center gap-1 cursor-pointer select-none"
+            >
+              <span className="text-sm">📔</span>
+              <span>错词汇</span>
+              {incorrectCount > 0 ? (
+                <span className="bg-rose-500 text-white font-serif text-[10.5px] px-1.5 rounded-full animate-pulse ml-0.5 border border-white">
+                  {incorrectCount}
+                </span>
+              ) : (
+                <span className="text-[9px] text-purple-200">无邪气</span>
+              )}
+            </motion.button>
           </div>
-          <span className="font-black text-white text-[11px] sm:text-[13px] tracking-tight leading-tight">
-            错词汇
-          </span>
-        </motion.button>
+
+        </div>
       </div>
 
-      {/* EXQUISITE FULL-WIDTH PICTURE BOOK LIBRARY BANNER */}
-      <div className="px-1 pt-1.5 pb-2">
-        <motion.button
-          whileHover={{ scale: 1.03, y: -2 }}
-          whileTap={{ scale: 0.97 }}
-          onClick={() => {
-            try { audio.playClick(); } catch (e) {}
-            onNavigate('PICTURE_BOOK');
-          }}
-          className="w-full p-4.5 bg-gradient-to-r from-blue-500 via-indigo-600 to-blue-600 border-2 border-indigo-300 border-b-[5px] border-indigo-800 hover:border-indigo-100 rounded-3xl text-left relative overflow-hidden group shadow-sm flex items-center justify-between cursor-pointer transition-all active:border-b-[1px] active:translate-y-[4px]"
-        >
-          {/* Animated decorative sparks */}
-          <div className="absolute right-[-20px] top-[-20px] text-8xl opacity-10 select-none pointer-events-none group-hover:scale-110 transition-transform">📖</div>
-          
-          <div className="flex items-center space-x-4">
-            <div className="bg-white/95 w-12 h-12 rounded-2xl flex items-center justify-center shadow-md border border-indigo-250 shrink-0">
-              <span className="text-2xl select-none group-hover:animate-bounce">📖</span>
-            </div>
-            <div className="min-w-0 flex-1">
-              <h3 className="font-sans font-black text-white text-base sm:text-lg flex items-center gap-1.5 leading-none">
-                <span>魔法绘本馆 (Library)</span>
-                <span className="text-[10px] bg-amber-400 text-amber-950 px-2 py-0.5 rounded-full border border-amber-500 font-extrabold uppercase scale-90">NEW</span>
-              </h3>
-              <p className="text-indigo-100 font-extrabold text-xs mt-2 truncate">
-                聆听跟读原声，开启发音魔法配音挑战！
-              </p>
-            </div>
-          </div>
-          
-          <div className="w-8 h-8 rounded-full bg-white/20 flex items-center justify-center text-white border border-white/30 shrink-0 group-hover:bg-white group-hover:text-blue-900 transition-all ml-2">
-            <ArrowRight size={16} className="stroke-[3]" />
-          </div>
-        </motion.button>
-      </div>
 
       {/* IMMERSIVE RPG ATTRIBUTE / INVENTORY SHEET OVERLAY MODAL */}
       <AnimatePresence>

@@ -22,90 +22,184 @@ export const playRhythmicDrum = (step: number) => {
     }
 
     const now = ctx.currentTime;
-    const loopStep = step % 3; // Triplet beat: 0, 1, 2
+    const loopStep = step % 3; // Align with the 3 characters of Three Character Classic!
 
-    // 1. Core resonant wood/drum oscillator
-    const osc = ctx.createOscillator();
-    const gainNode = ctx.createGain();
-    const filter = ctx.createBiquadFilter();
-    
-    filter.type = 'bandpass';
-    osc.connect(filter);
-    filter.connect(gainNode);
-    gainNode.connect(ctx.destination);
-    
-    // 2. High-frequency click accentuator to simulate a physical mallet hitting a block
-    const clickOsc = ctx.createOscillator();
-    const clickGain = ctx.createGain();
-    clickOsc.type = 'triangle';
-    clickOsc.connect(clickGain);
-    clickGain.connect(ctx.destination);
+    // Helper to generate closed hi-hat on-the-fly (次)
+    const playHihatNode = (timeOffset: number, volMultiplier: number = 1.0) => {
+      try {
+        const hTime = now + timeOffset;
+        const bufferSize = ctx.sampleRate * 0.022;
+        const buffer = ctx.createBuffer(1, bufferSize, ctx.sampleRate);
+        const data = buffer.getChannelData(0);
+        for (let i = 0; i < bufferSize; i++) {
+          data[i] = Math.random() * 2 - 1;
+        }
+
+        const noise = ctx.createBufferSource();
+        noise.buffer = buffer;
+
+        const filter = ctx.createBiquadFilter();
+        filter.type = 'highpass';
+        filter.frequency.setValueAtTime(10500, hTime);
+
+        const gainNode = ctx.createGain();
+        gainNode.gain.setValueAtTime(0.58 * volMultiplier, hTime);
+        gainNode.gain.exponentialRampToValueAtTime(0.001, hTime + 0.02);
+
+        noise.connect(filter);
+        filter.connect(gainNode);
+        gainNode.connect(ctx.destination);
+
+        noise.start(hTime);
+        noise.stop(hTime + 0.025);
+      } catch (e) {}
+    };
 
     if (loopStep === 0) {
-      // Step 1: Accent Hit "哒" (Medium-High energetic wood block / tanggu)
+      // Step 1: "动" - Booming 808-style Rap Sub Kick + Heavy Sub-bass progression!
+      const osc = ctx.createOscillator();
+      const gainNode = ctx.createGain();
+      
       osc.type = 'sine';
-      osc.frequency.setValueAtTime(320, now);
-      osc.frequency.exponentialRampToValueAtTime(140, now + 0.15);
+      osc.frequency.setValueAtTime(160, now);
+      osc.frequency.exponentialRampToValueAtTime(40, now + 0.18);
       
-      filter.frequency.setValueAtTime(450, now);
-      filter.Q.setValueAtTime(8, now);
+      gainNode.gain.setValueAtTime(1.25, now); // Thumping dynamic volume
+      gainNode.gain.exponentialRampToValueAtTime(0.001, now + 0.19);
       
-      gainNode.gain.setValueAtTime(0.25, now);
-      gainNode.gain.exponentialRampToValueAtTime(0.001, now + 0.15);
-      
-      clickOsc.frequency.setValueAtTime(1500, now);
-      clickOsc.frequency.exponentialRampToValueAtTime(300, now + 0.015);
-      clickGain.gain.setValueAtTime(0.08, now);
-      clickGain.gain.exponentialRampToValueAtTime(0.001, now + 0.015);
+      osc.connect(gainNode);
+      gainNode.connect(ctx.destination);
       
       osc.start(now);
-      osc.stop(now + 0.16);
+      osc.stop(now + 0.20);
+
+      // Beater click to make the kick cut cleanly on mobile speakers
+      const clickOsc = ctx.createOscillator();
+      const clickGain = ctx.createGain();
+      clickOsc.type = 'triangle';
+      clickOsc.frequency.setValueAtTime(2800, now);
+      clickOsc.frequency.exponentialRampToValueAtTime(110, now + 0.022);
+      clickGain.gain.setValueAtTime(0.38, now);
+      clickGain.gain.exponentialRampToValueAtTime(0.001, now + 0.022);
+      clickOsc.connect(clickGain);
+      clickGain.connect(ctx.destination);
       clickOsc.start(now);
-      clickOsc.stop(now + 0.02);
+      clickOsc.stop(now + 0.025);
+
+      // Smooth, warm sliding 808 sub-bass to follow a lovely rap chord root cycle (F -> Bb -> Eb -> Db)
+      const bassRoots = [87.31, 116.54, 77.78, 69.30];
+      const bassIndex = Math.floor(step / 3) % 4;
+      let targetFreq = bassRoots[bassIndex];
+      while (targetFreq > 72) {
+        targetFreq /= 2;
+      }
+
+      const bassOsc = ctx.createOscillator();
+      const bassGain = ctx.createGain();
+      bassOsc.type = 'sine';
+      bassOsc.frequency.setValueAtTime(targetFreq, now);
+      bassOsc.frequency.exponentialRampToValueAtTime(targetFreq * 0.90, now + 0.35); // gliding slide down
+
+      bassGain.gain.setValueAtTime(0.48, now);
+      bassGain.gain.exponentialRampToValueAtTime(0.001, now + 0.35);
+
+      bassOsc.connect(bassGain);
+      bassGain.connect(ctx.destination);
+      bassOsc.start(now);
+      bassOsc.stop(now + 0.36);
+
+      // Crisp background open hi-hat splash or warm vinyl crackle
+      playHihatNode(0, 0.4);
 
     } else if (loopStep === 1) {
-      // Step 2: Pitch Transition "哒" (High crisp wooden slap)
-      osc.type = 'sine';
-      osc.frequency.setValueAtTime(420, now);
-      osc.frequency.exponentialRampToValueAtTime(200, now + 0.1);
-      
-      filter.frequency.setValueAtTime(650, now);
-      filter.Q.setValueAtTime(10, now);
-      
-      gainNode.gain.setValueAtTime(0.18, now);
-      gainNode.gain.exponentialRampToValueAtTime(0.001, now + 0.1);
-      
-      clickOsc.frequency.setValueAtTime(1850, now);
-      clickOsc.frequency.exponentialRampToValueAtTime(500, now + 0.012);
-      clickGain.gain.setValueAtTime(0.09, now);
-      clickGain.gain.exponentialRampToValueAtTime(0.001, now + 0.012);
-      
-      osc.start(now);
-      osc.stop(now + 0.11);
-      clickOsc.start(now);
-      clickOsc.stop(now + 0.02);
+      // Step 2: "次" - Trap doublet hi-hat roll (ch-ch) for extreme hip-hop pace!
+      playHihatNode(0, 1.2); 
+      playHihatNode(0.07, 0.8); // Doublet tick separated by 70ms
+
+      // Soft vinyl crackle mic pop to enrich acoustic atmosphere
+      try {
+        const popOsc = ctx.createOscillator();
+        const popGain = ctx.createGain();
+        popOsc.type = 'triangle';
+        popOsc.frequency.setValueAtTime(2500 + Math.random() * 500, now);
+        popGain.gain.setValueAtTime(0.05, now);
+        popGain.gain.exponentialRampToValueAtTime(0.0001, now + 0.005);
+        popOsc.connect(popGain);
+        popGain.connect(ctx.destination);
+        popOsc.start(now);
+        popOsc.stop(now + 0.006);
+      } catch (e) {}
 
     } else {
-      // Step 3: Resolving Drop "哒" (Deep warm resonant low woodblock)
-      osc.type = 'sine';
-      osc.frequency.setValueAtTime(180, now);
-      osc.frequency.exponentialRampToValueAtTime(70, now + 0.22);
+      // Step 3: "打" - Staggered Trap Clap + Snare hybrid for a fat backbeat impact!
+      // 1. Snare core body (triangle wave)
+      const bodyOsc = ctx.createOscillator();
+      const bodyGain = ctx.createGain();
+      bodyOsc.type = 'triangle';
+      bodyOsc.frequency.setValueAtTime(210, now);
+      bodyOsc.frequency.exponentialRampToValueAtTime(105, now + 0.12);
+      bodyGain.gain.setValueAtTime(0.85, now); 
+      bodyGain.gain.exponentialRampToValueAtTime(0.001, now + 0.12);
       
-      filter.frequency.setValueAtTime(220, now);
-      filter.Q.setValueAtTime(5, now);
+      bodyOsc.connect(bodyGain);
+      bodyGain.connect(ctx.destination);
       
-      gainNode.gain.setValueAtTime(0.32, now); // Anchoring beat
-      gainNode.gain.exponentialRampToValueAtTime(0.001, now + 0.22);
-      
-      clickOsc.frequency.setValueAtTime(1000, now);
-      clickOsc.frequency.exponentialRampToValueAtTime(200, now + 0.02);
-      clickGain.gain.setValueAtTime(0.06, now);
-      clickGain.gain.exponentialRampToValueAtTime(0.001, now + 0.02);
-      
-      osc.start(now);
-      osc.stop(now + 0.23);
-      clickOsc.start(now);
-      clickOsc.stop(now + 0.035);
+      bodyOsc.start(now);
+      bodyOsc.stop(now + 0.13);
+
+      // 2. Pre-clap micro delay for the ultimate "staggered fat click" clap signature
+      try {
+        const pBufferSize = ctx.sampleRate * 0.05;
+        const pBuffer = ctx.createBuffer(1, pBufferSize, ctx.sampleRate);
+        const pData = pBuffer.getChannelData(0);
+        for (let i = 0; i < pBufferSize; i++) { pData[i] = Math.random() * 2 - 1; }
+        
+        const pNoise = ctx.createBufferSource();
+        pNoise.buffer = pBuffer;
+        const pFilter = ctx.createBiquadFilter();
+        pFilter.type = 'bandpass';
+        pFilter.frequency.setValueAtTime(1800, now);
+        
+        const pGain = ctx.createGain();
+        pGain.gain.setValueAtTime(0.45, now);
+        pGain.gain.exponentialRampToValueAtTime(0.001, now + 0.02);
+        
+        pNoise.connect(pFilter);
+        pFilter.connect(pGain);
+        pGain.connect(ctx.destination);
+        pNoise.start(now);
+        pNoise.stop(now + 0.025);
+      } catch (e) {}
+
+      // 3. Main white-noise snare crack
+      const bufferSize = ctx.sampleRate * 0.15;
+      const buffer = ctx.createBuffer(1, bufferSize, ctx.sampleRate);
+      const data = buffer.getChannelData(0);
+      for (let i = 0; i < bufferSize; i++) {
+        data[i] = Math.random() * 2 - 1;
+      }
+
+      const noise = ctx.createBufferSource();
+      noise.buffer = buffer;
+
+      const filter = ctx.createBiquadFilter();
+      filter.type = 'bandpass';
+      filter.frequency.setValueAtTime(1600, now); 
+      filter.Q.setValueAtTime(2.0, now);
+
+      const noiseGain = ctx.createGain();
+      noiseGain.gain.setValueAtTime(1.25, now); // Strong, explosive crack!
+      noiseGain.gain.exponentialRampToValueAtTime(0.001, now + 0.12); 
+
+      noise.connect(filter);
+      filter.connect(noiseGain);
+      noiseGain.connect(ctx.destination);
+
+      noise.start(now);
+      noise.stop(now + 0.13);
+
+      // Play soft offbeat hihat tail
+      playHihatNode(0.18, 0.65);
     }
   } catch (e) {
     console.warn('[DrumSynth] playRhythmicDrum error:', e);
@@ -132,8 +226,8 @@ export const drumController = {
         ctx.resume();
       }
 
-      const bpm = 90;
-      const stepTime = 60 / bpm / 2; // eighth notes (0.3333s per step)
+      const bpm = 92;
+      const stepTime = 60 / bpm / 2; // eighth notes (0.326s per step)
       let nextNoteTime = ctx.currentTime;
       synthBgmStep = 0;
 
@@ -141,26 +235,44 @@ export const drumController = {
         try {
           const osc = ctx.createOscillator();
           const gainNode = ctx.createGain();
+          
+          osc.type = 'sine';
+          // Deep, booming 808-style rap kick sweep
+          osc.frequency.setValueAtTime(145, time);
+          osc.frequency.exponentialRampToValueAtTime(42, time + 0.18);
+
+          // Full punchy presence matching the human vocal level
+          gainNode.gain.setValueAtTime(1.15, time);
+          gainNode.gain.exponentialRampToValueAtTime(0.001, time + 0.18);
+
           osc.connect(gainNode);
           gainNode.connect(ctx.destination);
 
-          // Deep, elastic sub kick sweep
-          osc.frequency.setValueAtTime(130, time);
-          osc.frequency.exponentialRampToValueAtTime(45, time + 0.12);
-
-          // Balanced, powerful but non-intrusive envelope
-          gainNode.gain.setValueAtTime(0.22, time);
-          gainNode.gain.exponentialRampToValueAtTime(0.001, time + 0.12);
-
           osc.start(time);
-          osc.stop(time + 0.14);
+          osc.stop(time + 0.20);
+
+          // Beater click layer to cut cleanly through phone/laptop speakers
+          const clickOsc = ctx.createOscillator();
+          const clickGain = ctx.createGain();
+          clickOsc.type = 'triangle';
+          clickOsc.frequency.setValueAtTime(2400, time);
+          clickOsc.frequency.exponentialRampToValueAtTime(120, time + 0.022);
+
+          clickGain.gain.setValueAtTime(0.42, time);
+          clickGain.gain.exponentialRampToValueAtTime(0.001, time + 0.022);
+
+          clickOsc.connect(clickGain);
+          clickGain.connect(ctx.destination);
+
+          clickOsc.start(time);
+          clickOsc.stop(time + 0.025);
         } catch (e) {}
       };
 
       const triggerSnap = (time: number) => {
         try {
-          // 1. Crisp clean physical finger snap high pass noise burst
-          const bufferSize = ctx.sampleRate * 0.08;
+          // Sharp cracking Hip-hop snare/clap layer (White Noise)
+          const bufferSize = ctx.sampleRate * 0.16;
           const buffer = ctx.createBuffer(1, bufferSize, ctx.sampleRate);
           const data = buffer.getChannelData(0);
           for (let i = 0; i < bufferSize; i++) {
@@ -172,40 +284,42 @@ export const drumController = {
 
           const filter = ctx.createBiquadFilter();
           filter.type = 'bandpass';
-          filter.frequency.setValueAtTime(1400, time); // crisp mid-high focus
-          filter.Q.setValueAtTime(4.5, time); // resonant hollow knock
+          filter.frequency.setValueAtTime(1400, time);
+          filter.Q.setValueAtTime(2.0, time);
 
-          const gainNode = ctx.createGain();
-          gainNode.gain.setValueAtTime(0.20, time);
-          gainNode.gain.exponentialRampToValueAtTime(0.001, time + 0.06);
+          const noiseGain = ctx.createGain();
+          // Full crisp volume impact for that classic rap backbone
+          noiseGain.gain.setValueAtTime(1.20, time);
+          noiseGain.gain.exponentialRampToValueAtTime(0.001, time + 0.12);
 
           noise.connect(filter);
-          filter.connect(gainNode);
-          gainNode.connect(ctx.destination);
+          filter.connect(noiseGain);
+          noiseGain.connect(ctx.destination);
 
           noise.start(time);
-          noise.stop(time + 0.07);
+          noise.stop(time + 0.13);
 
-          // 2. High-frequency click accentuator transient (triangle wave)
-          const clickOsc = ctx.createOscillator();
-          const clickGain = ctx.createGain();
-          clickOsc.type = 'triangle';
-          clickOsc.frequency.setValueAtTime(1550, time);
+          // Woody snappy body to emulate a high-end rimshot/snare cross-stick
+          const bodyOsc = ctx.createOscillator();
+          const bodyGain = ctx.createGain();
+          bodyOsc.type = 'triangle';
+          bodyOsc.frequency.setValueAtTime(210, time);
+          bodyOsc.frequency.exponentialRampToValueAtTime(105, time + 0.10);
+          
+          bodyGain.gain.setValueAtTime(0.78, time);
+          bodyGain.gain.exponentialRampToValueAtTime(0.001, time + 0.10);
 
-          clickGain.gain.setValueAtTime(0.09, time);
-          clickGain.gain.exponentialRampToValueAtTime(0.001, time + 0.015);
+          bodyOsc.connect(bodyGain);
+          bodyGain.connect(ctx.destination);
 
-          clickOsc.connect(clickGain);
-          clickGain.connect(ctx.destination);
-
-          clickOsc.start(time);
-          clickOsc.stop(time + 0.02);
+          bodyOsc.start(time);
+          bodyOsc.stop(time + 0.11);
         } catch (e) {}
       };
 
-      const triggerHihat = (time: number) => {
+      const triggerHihat = (time: number, accent: boolean = false, volumeMultiplier: number = 1.0) => {
         try {
-          const bufferSize = ctx.sampleRate * 0.025;
+          const bufferSize = ctx.sampleRate * 0.022;
           const buffer = ctx.createBuffer(1, bufferSize, ctx.sampleRate);
           const data = buffer.getChannelData(0);
           for (let i = 0; i < bufferSize; i++) {
@@ -217,10 +331,11 @@ export const drumController = {
 
           const filter = ctx.createBiquadFilter();
           filter.type = 'highpass';
-          filter.frequency.setValueAtTime(8000, time); // High-frequency wash
+          filter.frequency.setValueAtTime(accent ? 11000 : 9000, time);
 
           const gainNode = ctx.createGain();
-          gainNode.gain.setValueAtTime(0.014, time); // Extremely quiet ticks to maintain spacious mid-highs
+          // High-frequency trap hi-hat tick volume
+          gainNode.gain.setValueAtTime((accent ? 0.44 : 0.26) * volumeMultiplier, time);
           gainNode.gain.exponentialRampToValueAtTime(0.001, time + 0.02);
 
           noise.connect(filter);
@@ -228,7 +343,177 @@ export const drumController = {
           gainNode.connect(ctx.destination);
 
           noise.start(time);
-          noise.stop(time + 0.035);
+          noise.stop(time + 0.025);
+        } catch (e) {}
+      };
+
+      const triggerOpenHihat = (time: number) => {
+        try {
+          const bufferSize = ctx.sampleRate * 0.16;
+          const buffer = ctx.createBuffer(1, bufferSize, ctx.sampleRate);
+          const data = buffer.getChannelData(0);
+          for (let i = 0; i < bufferSize; i++) {
+            data[i] = Math.random() * 2 - 1;
+          }
+
+          const noise = ctx.createBufferSource();
+          noise.buffer = buffer;
+
+          const filter = ctx.createBiquadFilter();
+          filter.type = 'highpass';
+          filter.frequency.setValueAtTime(7500, time);
+
+          const gainNode = ctx.createGain();
+          // Spacious open hat offbeat splash
+          gainNode.gain.setValueAtTime(0.18, time);
+          gainNode.gain.exponentialRampToValueAtTime(0.001, time + 0.13);
+
+          noise.connect(filter);
+          filter.connect(gainNode);
+          gainNode.connect(ctx.destination);
+
+          noise.start(time);
+          noise.stop(time + 0.15);
+        } catch (e) {}
+      };
+
+      const triggerMelodyPluck = (freq: number, time: number, vol: number = 0.18) => {
+        try {
+          const osc = ctx.createOscillator();
+          const gainNode = ctx.createGain();
+          
+          osc.type = 'sine';
+          osc.frequency.setValueAtTime(freq, time);
+          // Rhythmic pluck pitch glide
+          osc.frequency.exponentialRampToValueAtTime(freq * 0.98, time + 0.15);
+
+          gainNode.gain.setValueAtTime(vol, time);
+          gainNode.gain.exponentialRampToValueAtTime(0.001, time + 0.35);
+
+          const filter = ctx.createBiquadFilter();
+          filter.type = 'bandpass';
+          filter.frequency.setValueAtTime(1800, time);
+          filter.Q.setValueAtTime(1.0, time);
+
+          osc.connect(filter);
+          filter.connect(gainNode);
+          gainNode.connect(ctx.destination);
+
+          osc.start(time);
+          osc.stop(time + 0.40);
+
+          // Crystalline high-end chime bell harmonic layer
+          const bellOsc = ctx.createOscillator();
+          const bellGain = ctx.createGain();
+          bellOsc.type = 'sine';
+          bellOsc.frequency.setValueAtTime(freq * 3.0, time); // 3rd overtone chordal shimmer
+
+          bellGain.gain.setValueAtTime(vol * 0.45, time);
+          bellGain.gain.exponentialRampToValueAtTime(0.001, time + 0.22);
+
+          bellOsc.connect(bellGain);
+          bellGain.connect(ctx.destination);
+
+          bellOsc.start(time);
+          bellOsc.stop(time + 0.25);
+        } catch (e) {}
+      };
+
+      const triggerScratchFX = (time: number, isPitchUp: boolean = true) => {
+        try {
+          const bufferSize = ctx.sampleRate * 0.11;
+          const buffer = ctx.createBuffer(1, bufferSize, ctx.sampleRate);
+          const data = buffer.getChannelData(0);
+          for (let i = 0; i < bufferSize; i++) {
+            data[i] = Math.random() * 2 - 1;
+          }
+
+          const noise = ctx.createBufferSource();
+          noise.buffer = buffer;
+
+          const filter = ctx.createBiquadFilter();
+          filter.type = 'bandpass';
+          filter.frequency.setValueAtTime(isPitchUp ? 750 : 1800, time);
+          filter.frequency.exponentialRampToValueAtTime(isPitchUp ? 2400 : 550, time + 0.10);
+          filter.Q.setValueAtTime(3.8, time);
+
+          const gainNode = ctx.createGain();
+          gainNode.gain.setValueAtTime(0.13, time);
+          gainNode.gain.exponentialRampToValueAtTime(0.001, time + 0.10);
+
+          noise.connect(filter);
+          filter.connect(gainNode);
+          gainNode.connect(ctx.destination);
+
+          noise.start(time);
+          noise.stop(time + 0.11);
+        } catch (e) {}
+      };
+
+      const triggerVinylCrackle = (time: number) => {
+        try {
+          // Micro-pop to emulate real vinyl record warmth
+          const osc = ctx.createOscillator();
+          const gainNode = ctx.createGain();
+          osc.type = 'triangle';
+          osc.frequency.setValueAtTime(2800 + Math.random() * 800, time);
+          gainNode.gain.setValueAtTime(0.04, time);
+          gainNode.gain.exponentialRampToValueAtTime(0.0001, time + 0.006);
+
+          osc.connect(gainNode);
+          gainNode.connect(ctx.destination);
+
+          osc.start(time);
+          osc.stop(time + 0.008);
+        } catch (e) {}
+      };
+
+      const triggerBassTarget = (rootFreq: number, time: number, dur: number = 0.5) => {
+        try {
+          const osc = ctx.createOscillator();
+          const gainNode = ctx.createGain();
+          
+          osc.type = 'sine'; // Super clean, room-shaking 808 fundamental sub pitch
+          
+          let subFreq = rootFreq;
+          while (subFreq > 80) {
+            subFreq /= 2;
+          }
+          
+          osc.frequency.setValueAtTime(subFreq, time);
+          // Gliding pitch slide mimicking sliding 808s in modern rap music
+          osc.frequency.exponentialRampToValueAtTime(subFreq * 0.88, time + dur);
+          
+          gainNode.gain.setValueAtTime(0.48, time); // High rumble presence
+          gainNode.gain.exponentialRampToValueAtTime(0.001, time + dur - 0.02);
+          
+          osc.connect(gainNode);
+          gainNode.connect(ctx.destination);
+          
+          osc.start(time);
+          osc.stop(time + dur);
+
+          // Harmonic saturation layer (triangle wave at 2x freq to be heard on phones/small speakers)
+          const midOsc = ctx.createOscillator();
+          const midGain = ctx.createGain();
+          const midFilter = ctx.createBiquadFilter();
+          
+          midOsc.type = 'triangle';
+          midOsc.frequency.setValueAtTime(subFreq * 2.0, time);
+          midOsc.frequency.exponentialRampToValueAtTime(subFreq * 2.0 * 0.88, time + dur);
+          
+          midFilter.type = 'lowpass';
+          midFilter.frequency.setValueAtTime(180, time);
+          
+          midGain.gain.setValueAtTime(0.18, time);
+          midGain.gain.exponentialRampToValueAtTime(0.001, time + dur - 0.02);
+          
+          midOsc.connect(midFilter);
+          midFilter.connect(midGain);
+          midGain.connect(ctx.destination);
+          
+          midOsc.start(time);
+          midOsc.stop(time + dur);
         } catch (e) {}
       };
 
@@ -236,18 +521,18 @@ export const drumController = {
         try {
           const filterNode = ctx.createBiquadFilter();
           filterNode.type = 'lowpass';
-          filterNode.frequency.setValueAtTime(850, time); // Strict top-end filter for spacious mix
-          filterNode.Q.setValueAtTime(1.1, time);
+          filterNode.frequency.setValueAtTime(800, time); // Cozy warmth
+          filterNode.Q.setValueAtTime(1.0, time);
 
-          // Iconic stereo-tremolo swirling effect (modulating volume at 4.2Hz)
+          // Tremolo effect for neo-soul/lo-fi rap chord vibe
           const lfo = ctx.createOscillator();
           const lfoGain = ctx.createGain();
           lfo.type = 'sine';
-          lfo.frequency.setValueAtTime(4.2, time);
-          lfoGain.gain.setValueAtTime(0.12, time);
+          lfo.frequency.setValueAtTime(4.8, time);
+          lfoGain.gain.setValueAtTime(0.15, time);
 
           const masterChordGain = ctx.createGain();
-          masterChordGain.gain.setValueAtTime(0.09, time); // Warm background level
+          masterChordGain.gain.setValueAtTime(0.12, time);
 
           lfo.connect(lfoGain);
           lfoGain.connect(masterChordGain.gain);
@@ -260,20 +545,20 @@ export const drumController = {
 
           frequencies.forEach(freq => {
             const osc = ctx.createOscillator();
-            osc.type = 'triangle'; // Mellifluous wood/bell harmonics
+            osc.type = 'triangle';
             osc.frequency.setValueAtTime(freq, time);
-            osc.detune.setValueAtTime(Math.random() * 6 - 3, time);
+            osc.detune.setValueAtTime(Math.random() * 8 - 4, time);
 
             const oscGain = ctx.createGain();
             oscGain.gain.setValueAtTime(0, time);
-            oscGain.gain.linearRampToValueAtTime(0.12, time + 0.06); // Smooth attack
-            oscGain.gain.exponentialRampToValueAtTime(0.001, time + 2.2); // Slow, lush decay
+            oscGain.gain.linearRampToValueAtTime(0.12, time + 0.05); // Rapid slick swell
+            oscGain.gain.exponentialRampToValueAtTime(0.001, time + 2.1);
 
             osc.connect(oscGain);
             oscGain.connect(filterNode);
 
             osc.start(time);
-            osc.stop(time + 2.3);
+            osc.stop(time + 2.2);
           });
         } catch (e) {}
       };
@@ -286,6 +571,14 @@ export const drumController = {
         [69.30, 174.61, 207.65, 261.63, 311.13]   // Dbmaj9 (Db2, F3, Ab3, C4, Eb4)
       ];
 
+      // Beautiful synco-pentatonic chime bell pitch maps aligned with each chord
+      const MELODY_MAP = [
+        [523.25, 622.25], // Fm9 (C5, Eb5)
+        [349.22, 415.30], // Bbm9 (F4, Ab4)
+        [466.16, 587.33], // Ebmaj9 (Bb4, D5)
+        [415.30, 523.25]  // Dbmaj9 (Ab4, C5)
+      ];
+
       const scheduleNextBeats = () => {
         if (!activeAudioCtx || activeAudioCtx.state === 'closed') return;
 
@@ -294,22 +587,73 @@ export const drumController = {
           const tickIndex = currentStepLocal % 8;
           const measureIndex = Math.floor(currentStepLocal / 8) % 4;
 
-          // 1. Stable closed hi-hat tick on every eighth note
-          triggerHihat(nextNoteTime);
+          // 1. Trap-Style Hi-Hat Rolls & Patterns (Dynamic Triplets and Doublets for Rap texture!)
+          // - We implement a sixteenth note doublet roll on tick indices 3 and 7.
+          // - We implement a rapid triplet roll on tick index 7 of the fourth measure.
+          if (measureIndex === 3 && tickIndex === 7) {
+            // Trap Triplet Roll (takes place over the 8th note duration)
+            triggerHihat(nextNoteTime, true, 1.1);
+            triggerHihat(nextNoteTime + stepTime / 3, false, 0.85);
+            triggerHihat(nextNoteTime + (2 * stepTime) / 3, false, 0.85);
+          } else if (tickIndex === 3 || tickIndex === 5) {
+            // Trap Doublet Roll (two 16th notes)
+            triggerHihat(nextNoteTime, true, 1.0);
+            triggerHihat(nextNoteTime + stepTime / 2, false, 0.75);
+          } else {
+            // Standard crisp 8th notes
+            triggerHihat(nextNoteTime, tickIndex % 2 === 0, 1.0);
+          }
 
-          // 2. Deep bouncy Kick: beat 1 (tick 0), beat 3 (tick 4), beat 3.5 (tick 5) for syncopated rap bounce
-          if (tickIndex === 0 || tickIndex === 4 || tickIndex === 5) {
+          // Offbeat Open Hihat splash exactly on the backbeat off-side (tick index 4)
+          if (tickIndex === 4) {
+            triggerOpenHihat(nextNoteTime);
+          }
+
+          // 2. Heavy Syncopated Rap Boom-Bap Kick syncopations
+          // - Standard heavy boom on tick 0
+          // - Syncopated bounce syncopation picks on tick 3 and tick 5 for the trap feel
+          // - Additional pickup kick on tick 6 in the alternate measures
+          const shouldPlayKick = (tickIndex === 0) || 
+                                 (tickIndex === 3) || 
+                                 (tickIndex === 5) || 
+                                 (measureIndex % 2 === 0 && tickIndex === 4);
+          if (shouldPlayKick) {
             triggerKick(nextNoteTime);
           }
 
-          // 3. Crisp Snaps / Claps on beat 2 (tick 2) and beat 4 (tick 6)
+          // 3. Crisp Snare Backbeats on counts 2 and 6
           if (tickIndex === 2 || tickIndex === 6) {
             triggerSnap(nextNoteTime);
           }
 
-          // 4. Warm Rhodes chord played at Step 0 of every measure
+          // 4. Warm background Rhodes electric keyboard chord progression on downbeats (tick 0)
           if (tickIndex === 0) {
             playRhodesChord(CHORDS_MAP[measureIndex], nextNoteTime);
+          }
+
+          // 5. Thumping gliding 808 sub-bass following the kick drum pattern securely (ticks 0, 3, 5)
+          if (tickIndex === 0 || tickIndex === 3 || tickIndex === 5) {
+            const chordNotes = CHORDS_MAP[measureIndex];
+            const rootFrequency = chordNotes[0];
+            const bassDuration = (tickIndex === 3 || tickIndex === 5) ? 0.22 : 0.42;
+            triggerBassTarget(rootFrequency, nextNoteTime, bassDuration);
+          }
+
+          // 6. Pentatonic high bell counter melodies (ticks 2 and 5)
+          if (tickIndex === 2) {
+            triggerMelodyPluck(MELODY_MAP[measureIndex][0], nextNoteTime, 0.16);
+          } else if (tickIndex === 5) {
+            triggerMelodyPluck(MELODY_MAP[measureIndex][1], nextNoteTime, 0.16);
+          }
+
+          // 7. Transition Fill (Vinyl Scratch FX on step 7 of alternating measures)
+          if (tickIndex === 7 && (measureIndex === 1 || measureIndex === 3)) {
+            triggerScratchFX(nextNoteTime, measureIndex === 3);
+          }
+
+          // 8. Physical warm vinyl record hum & pop on the downbeat
+          if (tickIndex === 0) {
+            triggerVinylCrackle(nextNoteTime);
           }
 
           nextNoteTime += stepTime;
@@ -591,9 +935,20 @@ export const audio = {
 
       const utterance = new SpeechSynthesisUtterance(finalPhrase);
       activeUtterances.push(utterance); // Prevent GC
+      
+      // Duck background music volume dramatically to boost voice volume relatively by 30%+
+      const originalBgmVolume = currentBgm ? currentBgm.volume : 0.08;
+      if (currentBgm) {
+        currentBgm.volume = 0.02; 
+      }
+
       const cleanup = () => {
         activeUtterances = activeUtterances.filter(u => u !== utterance);
+        if (currentBgm) {
+          currentBgm.volume = originalBgmVolume; // Restore BGM volume
+        }
       };
+      
       utterance.onend = cleanup;
       utterance.onerror = cleanup;
 
@@ -616,10 +971,14 @@ export const audio = {
         }
       };
 
+      // Set full output volume for maximum audibility
+      utterance.volume = 1.0;
+
       if (isZh) {
         utterance.lang = 'zh-CN';
-        // Precise lyrical reading tempo (slower pacing makes character boundaries feel like a stately, crisp ancient classroom recitation)
-        utterance.rate = 0.58; 
+        // Natural human recitation tempo & original smooth pitch curve (removing mechanical pitch bends)
+        utterance.rate = 0.88; 
+        utterance.pitch = 1.0;
       } else {
         const voices = window.speechSynthesis.getVoices();
         const normalizeLang = (lang: string) => lang.toLowerCase().replace('_', '-');
@@ -647,7 +1006,8 @@ export const audio = {
         } else {
           utterance.lang = 'en-US';
         }
-        utterance.rate = rateMultiplier / 1.5; // Slowed down by 1.5x
+        // Removed the slow-down divisor (1.5x) to prevent mechanical audio fragmentation stutter
+        utterance.rate = rateMultiplier; 
       }
       window.speechSynthesis.speak(utterance);
     };
@@ -669,11 +1029,25 @@ export const audio = {
           aud.defaultPlaybackRate = 0.67; // set playback rate to 1.5 times slower (1 / 1.5 ≈ 0.67) Before loading
           aud.playbackRate = 0.67;
           activeWordAudio = aud;
-          aud.volume = 0.95;
+          aud.volume = 1.0; // Boosted volume
+
+          // Duck background music volume during word narration to increase perceived speech volume relatively
+          const originalBgmVolume = currentBgm ? currentBgm.volume : 0.08;
+          if (currentBgm) {
+            currentBgm.volume = 0.02;
+          }
+
+          const restoreBgm = () => {
+            if (currentBgm) currentBgm.volume = originalBgmVolume;
+          };
+
+          aud.onended = restoreBgm;
+          aud.onerror = restoreBgm;
 
           aud.play().catch(() => {
             // Autoplay restriction fallback to synthesis
             if (activeWordAudio === aud) activeWordAudio = null;
+            restoreBgm();
             speakSynth(cleanWord, isChinese);
           });
         } catch (e) {
