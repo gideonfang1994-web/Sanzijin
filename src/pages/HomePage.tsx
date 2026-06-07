@@ -303,15 +303,15 @@ const HomePage: React.FC<HomePageProps> = ({ stats, groups, reviewNeeded, onNavi
             </div>
 
             <div className="text-left min-w-0">
-              <div className="flex items-center gap-1.5">
-                <span className="text-[15px] sm:text-[16px] font-black text-emerald-950 tracking-wide leading-none">
+              <div className="flex items-center gap-1.5 whitespace-nowrap">
+                <span className="text-[14.5px] sm:text-[16px] font-black text-emerald-950 tracking-wide leading-none whitespace-nowrap select-none">
                   {selectedChar.name}
                 </span>
-                <span className="text-[9.5px] font-extrabold text-white bg-emerald-600 px-1.5 py-0.5 rounded-md shrink-0">
+                <span className="text-[9.5px] font-extrabold text-white bg-emerald-600 px-1.5 py-0.5 rounded-md shrink-0 select-none">
                   LV.{stats.level}
                 </span>
               </div>
-              <div className="text-[10px] font-bold text-emerald-700 mt-1 truncate">
+              <div className="text-[10px] font-bold text-emerald-700 mt-1 truncate whitespace-nowrap select-none">
                 称号: {selectedChar.title}
               </div>
             </div>

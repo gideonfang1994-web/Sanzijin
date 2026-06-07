@@ -69,8 +69,8 @@ const App: React.FC = () => {
   const navigateTimestamp = React.useRef<number>(0);
   
   const initialQuests: DailyQuest[] = [
-    { id: 'q1', label: '解锁一个新魔法', target: 1, current: 0, completed: false, rewardXp: 100, rewardCoins: 10, targetView: 'ADVENTURE' },
-    { id: 'q2', label: '游乐园大获全胜', target: 1, current: 0, completed: false, rewardXp: 200, rewardCoins: 25, targetView: 'ARCADE' },
+    { id: 'q1', label: '解锁新魔法', target: 1, current: 0, completed: false, rewardXp: 100, rewardCoins: 10, targetView: 'ADVENTURE' },
+    { id: 'q2', label: '乐园大获全胜', target: 1, current: 0, completed: false, rewardXp: 200, rewardCoins: 25, targetView: 'ARCADE' },
     { id: 'q3', label: '反复研习魔法', target: 1, current: 0, completed: false, rewardXp: 300, rewardCoins: 50, targetView: 'HOME', isReviewType: true },
   ];
 
