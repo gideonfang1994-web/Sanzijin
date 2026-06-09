@@ -35,6 +35,7 @@ import UploadContent from './components/UploadContent';
 import MagicShop from './components/MagicShop';
 import PetPage from './pages/PetPage';
 import CollectionCenter from './components/CollectionCenter';
+import TextbookPage from './pages/TextbookPage';
 import { PictureBookLibrary } from './components/PictureBookLibrary';
 import { PhonicsArena } from './components/PhonicsArena';
 import { ErrorBookDashboard } from './components/ErrorBookDashboard';
@@ -63,6 +64,7 @@ const App: React.FC = () => {
   const [lastLearnedWords, setLastLearnedWords] = useState<WordItem[]>([]);
   const [lastLearnedLevelId, setLastLearnedLevelId] = useState<number | null>(null);
   const [pendingLevelId, setPendingLevelId] = useState<number | undefined>(undefined);
+  const [pendingCardId, setPendingCardId] = useState<string | undefined>(undefined);
   
   const [showLevelUp, setShowLevelUp] = useState(false);
   const [newLevel, setNewLevel] = useState(1);
@@ -471,6 +473,7 @@ const App: React.FC = () => {
       // Clear level ID if we're not going to adventure explicitly with a level
       if (newView !== 'ADVENTURE') {
         setPendingLevelId(undefined);
+        setPendingCardId(undefined);
       } else if (levelId !== undefined) {
         setPendingLevelId(levelId);
       }
@@ -1236,7 +1239,10 @@ const App: React.FC = () => {
                 groups={groups} 
                 reviewNeeded={reviewNeeded} 
                 onNavigate={handleNavigate} 
-                onQuestClick={(v, r, l) => {
+                onQuestClick={(v, r, l, cardId) => {
+                  if (cardId) {
+                    setPendingCardId(cardId);
+                  }
                   if (r) {
                     setShowReviewModal(true);
                   } else if (v === 'ARCADE') {
@@ -1275,7 +1281,11 @@ const App: React.FC = () => {
                 stats={stats}
                 onUpdateStats={handleUpdateStats}
                 initialLevelId={pendingLevelId}
-                onConsumedLevelId={() => setPendingLevelId(undefined)}
+                initialCardId={pendingCardId}
+                onConsumedLevelId={() => {
+                  setPendingLevelId(undefined);
+                  setPendingCardId(undefined);
+                }}
                 onCompleteLevel={(words, levelId) => {
                   setLastLearnedWords(words);
                   setLastLearnedLevelId(levelId);
@@ -1435,6 +1445,25 @@ const App: React.FC = () => {
                   audio.playCoin();
                 }}
                 onClose={() => handleNavigate('HOME')} 
+              />
+            </motion.div>
+          )}
+
+          {view === 'TEXTBOOK' && (
+            <motion.div key="textbook" initial={{ opacity: 0, y: 15 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: 15 }}>
+              <TextbookPage 
+                stats={stats}
+                onNavigate={handleNavigate}
+                onQuestClick={(v, r, l, cardId) => {
+                  if (cardId) {
+                    setPendingCardId(cardId);
+                  }
+                  if (l !== undefined) {
+                    setPendingLevelId(l);
+                  }
+                  handleNavigate(v, l);
+                }}
+                onClose={() => handleNavigate('HOME')}
               />
             </motion.div>
           )}

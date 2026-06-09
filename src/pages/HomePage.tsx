@@ -6,7 +6,7 @@ import {
 } from 'lucide-react';
 import { UserStats, WordGroup, ViewState, ShopItem } from '../types';
 import DailyQuestBoard from '../components/DailyQuestBoard';
-import { CHARACTERS, SHOP_ITEMS, getShopEmoji, getShopImageUrl } from '../constants';
+import { CHARACTERS, SHOP_ITEMS, getShopEmoji, getShopImageUrl, ALL_CARDS } from '../constants';
 import { getCharacterPortraitSvgUri } from '../utils/CharacterIllustrator';
 import SafeImage from '../components/SafeImage';
 import audio from '../utils/AudioUtils';
@@ -24,7 +24,7 @@ interface HomePageProps {
   groups: WordGroup[];
   reviewNeeded: WordGroup[];
   onNavigate: (view: ViewState) => void;
-  onQuestClick: (view: ViewState, isReview?: boolean, levelId?: number) => void;
+  onQuestClick: (view: ViewState, isReview?: boolean, levelId?: number, cardId?: string) => void;
   onUpdateStats?: (newStats: Partial<UserStats>) => void;
   onOpenErrorCabinet?: () => void;
 }
@@ -75,6 +75,29 @@ const HomePage: React.FC<HomePageProps> = ({ stats, groups, reviewNeeded, onNavi
   const clearSearch = () => {
     setSearchQuery('');
     setSearchResults([]);
+  };
+
+  const handleSearchResultClick = (group: WordGroup) => {
+    try {
+      const difficulty = group.difficulty || 'PRIMARY';
+      const cardsOfDifficulty = ALL_CARDS.filter(c => (c.difficulty || 'PRIMARY') === difficulty);
+      const cardIndex = cardsOfDifficulty.findIndex(c => c.id === group.id);
+      if (cardIndex === -1) return;
+
+      const cardsPerDay = stats.cardsPerDay || 5;
+
+      let offset = 0;
+      if (difficulty === 'INTERMEDIATE') offset = 100;
+      if (difficulty === 'ADVANCED') offset = 200;
+
+      const relativeId = Math.floor(cardIndex / cardsPerDay) + 1;
+      const levelId = offset + relativeId;
+
+      localStorage.setItem('selected_adventure_difficulty', difficulty);
+      onQuestClick('ADVENTURE', false, levelId, group.id);
+    } catch (e) {
+      console.warn('[SearchClick] navigation failure:', e);
+    }
   };
 
   const selectedChar = React.useMemo(() => {
@@ -393,7 +416,8 @@ const HomePage: React.FC<HomePageProps> = ({ stats, groups, reviewNeeded, onNavi
               {searchResults.map((group) => (
                 <div
                   key={group.id}
-                  className="p-2.5 bg-[#f0fdf4] rounded-xl border border-emerald-250 hover:border-amber-400/60 hover:bg-[#e6f9ed] transition-all text-left"
+                  onClick={() => handleSearchResultClick(group)}
+                  className="p-2.5 bg-[#f0fdf4] rounded-xl border border-emerald-250 hover:border-amber-400/60 hover:bg-[#e6f9ed] transition-all text-left cursor-pointer active:scale-[0.99] group/card relative pr-16"
                 >
                   <div className="flex justify-between items-start mb-1 flex-wrap gap-1">
                     <div className="flex flex-wrap gap-1">
@@ -410,6 +434,12 @@ const HomePage: React.FC<HomePageProps> = ({ stats, groups, reviewNeeded, onNavi
                       <span key={i} className="block first:mt-0">{part.trim()}</span>
                     ))}
                   </p>
+                  
+                  {/* Visual Hint Indicator */}
+                  <div className="absolute right-2.5 top-1/2 -translate-y-1/2 opacity-0 group-hover/card:opacity-100 transition-all duration-300 translate-x-1 group-hover/card:translate-x-0 flex items-center gap-0.5 text-[9px] sm:text-[10px] font-black text-amber-600">
+                    <span>走起仙林</span>
+                    <ArrowRight size={10} className="stroke-[3.5] animate-pulse" />
+                  </div>
                 </div>
               ))}
             </div>
@@ -442,28 +472,31 @@ const HomePage: React.FC<HomePageProps> = ({ stats, groups, reviewNeeded, onNavi
           {/* Sunshine shaft radiating from top-right corner */}
           <div className="absolute top-0 right-0 w-[180px] h-[180px] bg-gradient-to-bl from-amber-200/25 via-yellow-100/5 to-transparent blur-2xl pointer-events-none select-none z-0" />
           
-          {/* Glow 1: Behind Adventure Forest (Pine Green Glow) */}
-          <div className="absolute top-[20px] left-[5%] w-24 h-24 bg-emerald-400/12 rounded-full blur-2xl pointer-events-none select-none z-0 animate-[pulse_3s_infinite_ease-in-out]" />
+          {/* Glow 1: Behind Rhythm Arena (Sunny Amber/Yellow Glow) */}
+          <div className="absolute top-[20px] left-[6%] w-24 h-24 bg-yellow-400/12 rounded-full blur-2xl pointer-events-none select-none z-0 animate-[pulse_3s_infinite_ease-in-out]" />
           
-          {/* Glow 2: Behind Magic Playground (Sunny Amber Glow) */}
-          <div className="absolute top-[20px] right-[5%] w-24 h-24 bg-orange-400/12 rounded-full blur-2xl pointer-events-none select-none z-0 animate-[pulse_3.5s_infinite_ease-in-out_0.2s]" />
+          {/* Glow 2: Behind Adventure Forest (Pine Green Glow) */}
+          <div className="absolute top-[20px] right-[6%] w-24 h-24 bg-emerald-400/12 rounded-full blur-2xl pointer-events-none select-none z-0 animate-[pulse_3.5s_infinite_ease-in-out_0.2s]" />
 
-          {/* Glow 3: Under centerpiece Magic Picture Book (Majestic Indigo and Gold Royal Halo) */}
-          <div className="absolute top-[90px] left-1/2 -translate-x-1/2 w-32 h-32 bg-indigo-500/12 rounded-full blur-2xl pointer-events-none select-none z-0 animate-[pulse_4s_infinite_ease-in-out_0.8s]" />
+          {/* Glow 3: Behind Arcade Mode (Fruit Orange Glow) */}
+          <div className="absolute top-[115px] left-[6%] w-24 h-24 bg-orange-400/12 rounded-full blur-2xl pointer-events-none select-none z-0 animate-[pulse_4s_infinite_ease-in-out_0.8s]" />
 
-          {/* Glow 4: Behind Phonics Arena (Tingling Sparks Yellow Glow) */}
-          <div className="absolute top-[180px] left-[5%] w-24 h-24 bg-yellow-400/12 rounded-full blur-2xl pointer-events-none select-none z-0 animate-[pulse_3.2s_infinite_ease-in-out_0.6s]" />
+          {/* Glow 4: Behind Picture Book Library (Indigo/Royal Pearl Glow) */}
+          <div className="absolute top-[115px] right-[6%] w-24 h-24 bg-indigo-500/12 rounded-full blur-2xl pointer-events-none select-none z-0 animate-[pulse_3.2s_infinite_ease-in-out_0.6s]" />
 
-          {/* Glow 5: Behind Pet Sanctuary (Friendly Pink Blossom Glow) */}
-          <div className="absolute top-[180px] right-[5%] w-24 h-24 bg-pink-400/12 rounded-full blur-2xl pointer-events-none select-none z-0 animate-[pulse_3s_infinite_ease-in-out_0.9s]" />
+          {/* Glow 5: Behind Sync Textbook (Teal Fresh Glow) */}
+          <div className="absolute top-[210px] left-[6%] w-24 h-24 bg-teal-400/12 rounded-full blur-2xl pointer-events-none select-none z-0 animate-[pulse_3.8s_infinite_ease-in-out_1.2s]" />
 
-          {/* Glow 6: Under Enchanted Shop (Ancient Blue Oracle Glow) */}
-          <div className="absolute bottom-[60px] left-1/2 -translate-x-1/2 w-28 h-28 bg-cyan-400/12 rounded-full blur-2xl pointer-events-none select-none z-0 animate-[pulse_3.8s_infinite_ease-in-out_1.2s]" />
+          {/* Glow 6: Behind Pet Sanctuary (Friendly Pink Blossom Glow) */}
+          <div className="absolute top-[210px] right-[6%] w-24 h-24 bg-pink-400/12 rounded-full blur-2xl pointer-events-none select-none z-0 animate-[pulse_3s_infinite_ease-in-out_0.9s]" />
+
+          {/* Glow 7: Behind Enchanted Shop (Ancient Blue Oracle Glow) */}
+          <div className="absolute top-[300px] left-1/2 -translate-x-1/2 w-24 h-24 bg-cyan-400/12 rounded-full blur-2xl pointer-events-none select-none z-0 animate-[pulse_4s_infinite_ease-in-out_1.5s]" />
 
           {/* Sinuous SVG Trail/Road connecting nodes */}
           <svg className="absolute inset-x-0 inset-y-0 w-full h-full pointer-events-none select-none opacity-50 z-0" viewBox="0 0 320 440" preserveAspectRatio="none">
             <path 
-              d="M 65,60 Q 160,35 255,60 Q 260,105 160,150 Q 60,190 65,245 Q 160,220 255,245 Q 260,290 160,340" 
+              d="M 50,47 C 120,30 200,30 270,47 C 255,100 115,85 50,142 C 120,125 200,125 270,142 C 255,195 115,180 50,237 C 120,220 200,220 270,237 C 240,280 190,310 160,325" 
               fill="none" 
               stroke="#10b981" 
               strokeWidth="4" 
@@ -484,7 +517,24 @@ const HomePage: React.FC<HomePageProps> = ({ stats, groups, reviewNeeded, onNavi
           <div className="absolute bottom-[20%] left-[44%] text-xs select-none pointer-events-none opacity-10">🌈</div>
 
           {/* LAYER 1: HEAD STAGES */}
-          {/* Stage 1: Adventure Forest (Left-Top) */}
+          {/* Stage 1: Phonics Arena (Rhythm Arena - Left-Top) */}
+          <motion.button
+            whileHover={{ scale: 1.05 }}
+            whileTap={{ scale: 0.95 }}
+            onClick={() => {
+              try { audio.playClick(); } catch(e){}
+              onNavigate('PHONICS');
+            }}
+            className="absolute top-[15px] left-[6%] flex flex-col items-center group cursor-pointer z-10"
+          >
+            <div className="w-[58px] h-[58px] sm:w-[64px] sm:h-[64px] rounded-full bg-gradient-to-br from-yellow-400 to-[#f59e0b] flex items-center justify-center text-[22px] sm:text-[26px] shadow-md border-3 border-white group-hover:scale-108 active:scale-95 transition-transform duration-150 shrink-0 relative">
+              <span>⚡</span>
+            </div>
+            <span className="font-black text-amber-950 text-[11px] sm:text-xs mt-1 whitespace-nowrap text-shadow-[0_1px_2px_rgba(255,255,255,0.8)] leading-none">节奏修炼场</span>
+            <span className="text-[9px] text-amber-800 font-extrabold whitespace-nowrap leading-none mt-0.5">说唱拼读</span>
+          </motion.button>
+
+          {/* Stage 2: Adventure Forest (Right-Top) */}
           <motion.button
             whileHover={{ scale: 1.05 }}
             whileTap={{ scale: 0.95 }}
@@ -492,7 +542,7 @@ const HomePage: React.FC<HomePageProps> = ({ stats, groups, reviewNeeded, onNavi
               try { audio.playClick(); } catch(e){}
               onNavigate('ADVENTURE');
             }}
-            className="absolute top-[15px] left-[5%] flex flex-col items-center group cursor-pointer z-10"
+            className="absolute top-[15px] right-[6%] flex flex-col items-center group cursor-pointer z-10"
           >
             <div className="w-[58px] h-[58px] sm:w-[64px] sm:h-[64px] rounded-full bg-gradient-to-br from-emerald-400 to-green-600 flex items-center justify-center text-[22px] sm:text-[26px] shadow-md border-3 border-white group-hover:scale-108 active:scale-95 transition-transform duration-150 shrink-0 relative">
               <span>🌲</span>
@@ -506,7 +556,8 @@ const HomePage: React.FC<HomePageProps> = ({ stats, groups, reviewNeeded, onNavi
             <span className="text-[9px] text-emerald-800 font-extrabold whitespace-nowrap leading-none mt-0.5">闯关背词</span>
           </motion.button>
 
-          {/* Stage 2: Magic Playground (Right-Top) */}
+          {/* LAYER 2: MID-UP STAGES */}
+          {/* Stage 3: Magic Playground (Arcade Mode - Left-Middle-Up) */}
           <motion.button
             whileHover={{ scale: 1.05 }}
             whileTap={{ scale: 0.95 }}
@@ -514,7 +565,7 @@ const HomePage: React.FC<HomePageProps> = ({ stats, groups, reviewNeeded, onNavi
               try { audio.playClick(); } catch(e){}
               onNavigate('ARCADE');
             }}
-            className="absolute top-[15px] right-[5%] flex flex-col items-center group cursor-pointer z-10"
+            className="absolute top-[110px] left-[6%] flex flex-col items-center group cursor-pointer z-10"
           >
             <div className="w-[58px] h-[58px] sm:w-[64px] sm:h-[64px] rounded-full bg-gradient-to-br from-amber-400 to-orange-500 flex items-center justify-center text-[22px] sm:text-[26px] shadow-md border-3 border-white group-hover:scale-108 active:scale-95 transition-transform duration-150 shrink-0 relative">
               <span>🎮</span>
@@ -523,8 +574,7 @@ const HomePage: React.FC<HomePageProps> = ({ stats, groups, reviewNeeded, onNavi
             <span className="text-[9px] text-orange-700 font-extrabold whitespace-nowrap leading-none mt-0.5">趣味拼读</span>
           </motion.button>
 
-          {/* LAYER 2: GRAND BOOK PALACE CENTERPIECE */}
-          {/* Stage 3: Magic Picture Book Palace (Library) */}
+          {/* Stage 4: Magic Picture Book Palace (Library - Right-Middle-Up) */}
           <motion.button
             whileHover={{ scale: 1.05 }}
             whileTap={{ scale: 0.95 }}
@@ -532,35 +582,36 @@ const HomePage: React.FC<HomePageProps> = ({ stats, groups, reviewNeeded, onNavi
               try { audio.playClick(); } catch (e) {}
               onNavigate('PICTURE_BOOK');
             }}
-            className="absolute top-[110px] left-1/2 -translate-x-1/2 flex flex-col items-center group cursor-pointer z-10"
+            className="absolute top-[110px] right-[6%] flex flex-col items-center group cursor-pointer z-10"
           >
-            <div className="w-[70px] h-[70px] sm:w-[76px] sm:h-[76px] rounded-full bg-gradient-to-br from-[#4f46e5] to-[#6366f1] flex items-center justify-center text-[28px] sm:text-[34px] shadow-lg border-3 border-amber-300 ring-2 ring-white ring-offset-0 group-hover:scale-108 active:scale-95 transition-transform duration-150 shrink-0 relative">
+            <div className="w-[58px] h-[58px] sm:w-[64px] sm:h-[64px] rounded-full bg-gradient-to-br from-[#4f46e5] to-[#6366f1] flex items-center justify-center text-[22px] sm:text-[26px] shadow-md border-3 border-white group-hover:scale-108 active:scale-95 transition-transform duration-150 shrink-0 relative">
               <span>🏰</span>
               <span className="absolute -top-1 -right-2 bg-amber-400 text-amber-950 font-black text-[7px] px-1 rounded-full border border-amber-500 animate-pulse shadow-sm">NEW</span>
             </div>
-            <span className="font-black text-indigo-950 text-[12px] sm:text-[13px] mt-1.5 whitespace-nowrap text-shadow-[0_1px_2px_rgba(255,255,255,0.8)] leading-none">魔法绘本馆</span>
+            <span className="font-black text-indigo-950 text-[11px] sm:text-xs mt-1 whitespace-nowrap text-shadow-[0_1px_2px_rgba(255,255,255,0.8)] leading-none">魔法绘本馆</span>
             <span className="text-[9px] text-indigo-700 font-extrabold whitespace-nowrap leading-none mt-0.5">发音配音</span>
           </motion.button>
 
-          {/* LAYER 3: MID-SUB STAGES */}
-          {/* Stage 4: Phonics Arena (Left-Middle) */}
+          {/* LAYER 3: MID-DOWN STAGES */}
+          {/* Stage 5: Sync Textbook Palace (Left-Middle-Down) */}
           <motion.button
             whileHover={{ scale: 1.05 }}
             whileTap={{ scale: 0.95 }}
             onClick={() => {
               try { audio.playClick(); } catch(e){}
-              onNavigate('PHONICS');
+              onNavigate('TEXTBOOK');
             }}
-            className="absolute top-[205px] left-[5%] flex flex-col items-center group cursor-pointer z-10"
+            className="absolute top-[205px] left-[6%] flex flex-col items-center group cursor-pointer z-10"
           >
-            <div className="w-[58px] h-[58px] sm:w-[64px] sm:h-[64px] rounded-full bg-gradient-to-br from-yellow-400 to-[#f59e0b] flex items-center justify-center text-[22px] sm:text-[26px] shadow-md border-3 border-white group-hover:scale-108 active:scale-95 transition-transform duration-150 shrink-0 relative">
-              <span>⚡</span>
+            <div className="w-[58px] h-[58px] sm:w-[64px] sm:h-[64px] rounded-full bg-gradient-to-br from-teal-400 to-[#0d9488] flex items-center justify-center text-[22px] sm:text-[26px] shadow-md border-3 border-white group-hover:scale-108 active:scale-95 transition-transform duration-150 shrink-0 relative">
+              <span>🎒</span>
+              <span className="absolute -top-1.5 -right-1.5 bg-yellow-400 text-yellow-950 font-black text-[7px] px-1 rounded-full border border-yellow-500 animate-bounce shadow">同步</span>
             </div>
-            <span className="font-black text-amber-950 text-[11px] sm:text-xs mt-1 whitespace-nowrap text-shadow-[0_1px_2px_rgba(255,255,255,0.8)] leading-none">节奏修炼场</span>
-            <span className="text-[9px] text-amber-800 font-extrabold whitespace-nowrap leading-none mt-0.5">说唱拼读</span>
+            <span className="font-black text-teal-950 text-[11px] sm:text-xs mt-1 whitespace-nowrap text-shadow-[0_1px_2px_rgba(255,255,255,0.8)] leading-none">同步馆</span>
+            <span className="text-[9px] text-teal-700 font-extrabold whitespace-nowrap leading-none mt-0.5">教材对应</span>
           </motion.button>
 
-          {/* Stage 5: Pet Sanctuary (Right-Middle) */}
+          {/* Stage 6: Pet Sanctuary (Right-Middle-Down) */}
           <motion.button
             whileHover={{ scale: 1.05 }}
             whileTap={{ scale: 0.95 }}
@@ -568,7 +619,7 @@ const HomePage: React.FC<HomePageProps> = ({ stats, groups, reviewNeeded, onNavi
               try { audio.playClick(); } catch(e){}
               onNavigate('PETS');
             }}
-            className="absolute top-[205px] right-[5%] flex flex-col items-center group cursor-pointer z-10"
+            className="absolute top-[205px] right-[6%] flex flex-col items-center group cursor-pointer z-10"
           >
             <div className="w-[58px] h-[58px] sm:w-[64px] sm:h-[64px] rounded-full bg-gradient-to-br from-rose-400 to-pink-500 flex items-center justify-center text-[22px] sm:text-[26px] shadow-md border-3 border-white group-hover:scale-108 active:scale-95 transition-transform duration-150 shrink-0 relative">
               <span>🐾</span>
@@ -578,7 +629,7 @@ const HomePage: React.FC<HomePageProps> = ({ stats, groups, reviewNeeded, onNavi
           </motion.button>
 
           {/* LAYER 4: BOTTOM STAGES */}
-          {/* Stage 6: Enchanted Shop (Center-Bottom) */}
+          {/* Stage 7: Enchanted Shop (Center-Bottom) */}
           <motion.button
             whileHover={{ scale: 1.05 }}
             whileTap={{ scale: 0.95 }}

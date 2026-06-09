@@ -42,6 +42,7 @@ interface Level {
 
 interface AdventurePageProps extends AdventureForestProps {
   onConsumedLevelId?: () => void;
+  initialCardId?: string;
 }
 
 export function getMilestoneReward(displayId: number) {
@@ -288,6 +289,7 @@ const AdventurePage: React.FC<AdventurePageProps> = ({
   stats, 
   onUpdateStats, 
   initialLevelId,
+  initialCardId,
   onConsumedLevelId 
 }) => {
   const [step, setStep] = useState<AdventureStep>('SETUP');
@@ -593,7 +595,11 @@ const AdventurePage: React.FC<AdventurePageProps> = ({
         console.log('[Adventure] Auto-starting level:', initialLevelId);
         setActiveLevel(level);
         
-        if (!level.isCompleted) {
+        if (initialCardId) {
+          const foundIdx = level.cards.findIndex(c => c.id === initialCardId);
+          setCardIndex(foundIdx >= 0 ? foundIdx : 0);
+          setStep('LEARN');
+        } else if (!level.isCompleted) {
           setCardIndex(0);
           setStep('LEARN');
         } else {
@@ -606,7 +612,7 @@ const AdventurePage: React.FC<AdventurePageProps> = ({
         }
       }
     }
-  }, [initialLevelId, levels, step, onConsumedLevelId]);
+  }, [initialLevelId, levels, step, onConsumedLevelId, initialCardId]);
 
   // Derive current level from levels array to avoid stale state issues
   const currentActiveLevel = useMemo(() => {
@@ -1417,6 +1423,12 @@ const AdventurePage: React.FC<AdventurePageProps> = ({
                       <button
                         key={item.key}
                         onClick={() => {
+                          if (item.key === 'ADVANCED') {
+                            setFeedbackMessage("请等待");
+                            setTimeout(() => setFeedbackMessage(null), 2500);
+                            try { audio.playClick(); } catch (e) {}
+                            return;
+                          }
                           setSelectedDifficulty(item.key as DifficultyLevel);
                           localStorage.setItem('selected_adventure_difficulty', item.key);
                           audio.playClick();

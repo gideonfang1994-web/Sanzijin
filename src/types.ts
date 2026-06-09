@@ -158,6 +158,7 @@ export interface AdventureForestProps {
   stats: UserStats;
   onUpdateStats: (stats: Partial<UserStats>) => void;
   initialLevelId?: number;
+  initialCardId?: string;
 }
 
-export type ViewState = 'HOME' | 'CARDS' | 'VIDEOS' | 'CHALLENGE' | 'SCRAMBLE' | 'MEMORY' | 'BALLOON' | 'WHACK' | 'RANKING' | 'UPLOAD' | 'ARCADE' | 'SHEEP' | 'COLLECTION' | 'ADVENTURE' | 'DUBBING' | 'SHOP' | 'PETS' | 'SPELLING' | 'PLANTS' | 'RAIDEN' | 'FISHING' | 'ALCHEMIST' | 'MINER' | 'SLASHER' | 'SONAR' | 'COOKING' | 'FEEDING' | 'HAMSTER' | 'SHOOTER' | 'ICECREAM' | 'DINO' | 'DJ' | 'ROCKET' | 'POPIT' | 'POTION' | 'PARROT' | 'PHONICS' | 'TUTOR' | 'PICTURE_BOOK';
+export type ViewState = 'HOME' | 'CARDS' | 'VIDEOS' | 'CHALLENGE' | 'SCRAMBLE' | 'MEMORY' | 'BALLOON' | 'WHACK' | 'RANKING' | 'UPLOAD' | 'ARCADE' | 'SHEEP' | 'COLLECTION' | 'ADVENTURE' | 'DUBBING' | 'SHOP' | 'PETS' | 'SPELLING' | 'PLANTS' | 'RAIDEN' | 'FISHING' | 'ALCHEMIST' | 'MINER' | 'SLASHER' | 'SONAR' | 'COOKING' | 'FEEDING' | 'HAMSTER' | 'SHOOTER' | 'ICECREAM' | 'DINO' | 'DJ' | 'ROCKET' | 'POPIT' | 'POTION' | 'PARROT' | 'PHONICS' | 'TUTOR' | 'PICTURE_BOOK' | 'TEXTBOOK';

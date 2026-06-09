@@ -680,6 +680,128 @@ export const audio = {
   init: () => {
     // Initialize audio context if needed
   },
+  playPetFeed: () => {
+    if (typeof window === 'undefined') return;
+    try {
+      const AudioCtxClass = window.AudioContext || (window as any).webkitAudioContext;
+      if (!AudioCtxClass) return;
+      const ctx = new AudioCtxClass();
+      const now = ctx.currentTime;
+      
+      const playBite = (timeOffset: number) => {
+        const t = now + timeOffset;
+        const osc = ctx.createOscillator();
+        const gain = ctx.createGain();
+        osc.type = 'triangle';
+        osc.frequency.setValueAtTime(320, t);
+        osc.frequency.exponentialRampToValueAtTime(80, t + 0.08);
+        
+        gain.gain.setValueAtTime(0.25, t);
+        gain.gain.exponentialRampToValueAtTime(0.01, t + 0.08);
+        
+        osc.connect(gain);
+        gain.connect(ctx.destination);
+        osc.start(t);
+        osc.stop(t + 0.09);
+        
+        // Add a high frequency crunch burst
+        const bufferSize = ctx.sampleRate * 0.04;
+        const buffer = ctx.createBuffer(1, bufferSize, ctx.sampleRate);
+        const data = buffer.getChannelData(0);
+        for (let i = 0; i < bufferSize; i++) {
+          data[i] = Math.random() * 2 - 1;
+        }
+        const noise = ctx.createBufferSource();
+        noise.buffer = buffer;
+        const noiseGain = ctx.createGain();
+        noiseGain.gain.setValueAtTime(0.08, t);
+        noiseGain.gain.exponentialRampToValueAtTime(0.001, t + 0.04);
+        noise.connect(noiseGain);
+        noiseGain.connect(ctx.destination);
+        noise.start(t);
+        noise.stop(t + 0.05);
+      };
+      
+      playBite(0);
+      playBite(0.12);
+      playBite(0.24);
+    } catch (e) {
+      console.warn('[AudioUtils] playPetFeed error:', e);
+    }
+  },
+  playPetStroke: () => {
+    if (typeof window === 'undefined') return;
+    try {
+      const AudioCtxClass = window.AudioContext || (window as any).webkitAudioContext;
+      if (!AudioCtxClass) return;
+      const ctx = new AudioCtxClass();
+      const now = ctx.currentTime;
+      
+      const osc = ctx.createOscillator();
+      const gain = ctx.createGain();
+      
+      osc.type = 'sine';
+      osc.frequency.setValueAtTime(140, now);
+      osc.frequency.linearRampToValueAtTime(190, now + 0.08);
+      osc.frequency.linearRampToValueAtTime(150, now + 0.16);
+      
+      const lfo = ctx.createOscillator();
+      const lfoGain = ctx.createGain();
+      lfo.type = 'sine';
+      lfo.frequency.setValueAtTime(18, now);
+      lfoGain.gain.setValueAtTime(15, now);
+      
+      lfo.connect(lfoGain);
+      lfoGain.connect(osc.frequency);
+      
+      gain.gain.setValueAtTime(0, now);
+      gain.gain.linearRampToValueAtTime(0.25, now + 0.04);
+      gain.gain.exponentialRampToValueAtTime(0.001, now + 0.22);
+      
+      osc.connect(gain);
+      gain.connect(ctx.destination);
+      
+      lfo.start(now);
+      osc.start(now);
+      
+      lfo.stop(now + 0.24);
+      osc.stop(now + 0.24);
+    } catch (e) {
+      console.warn('[AudioUtils] playPetStroke error:', e);
+    }
+  },
+  playCelestialMagic: () => {
+    if (typeof window === 'undefined') return;
+    try {
+      const AudioCtxClass = window.AudioContext || (window as any).webkitAudioContext;
+      if (!AudioCtxClass) return;
+      const ctx = new AudioCtxClass();
+      const now = ctx.currentTime;
+      
+      const notes = [523.25, 587.33, 659.25, 783.99, 880.00, 1046.50];
+      notes.forEach((freq, index) => {
+        const time = now + index * 0.07;
+        const osc = ctx.createOscillator();
+        const gain = ctx.createGain();
+        
+        osc.type = 'sine';
+        osc.frequency.setValueAtTime(freq, time);
+        osc.detune.setValueAtTime(4, time);
+        
+        gain.gain.setValueAtTime(0, time);
+        gain.gain.linearRampToValueAtTime(0.15, time + 0.02);
+        gain.gain.exponentialRampToValueAtTime(0.001, time + 0.38);
+        
+        osc.connect(gain);
+        gain.connect(ctx.destination);
+        
+        osc.start(time);
+        osc.stop(time + 0.42);
+      });
+    } catch (e) {
+      console.warn('[AudioUtils] playCelestialMagic error:', e);
+    }
+  },
   unlockSpeech: () => {
     if (typeof window !== 'undefined' && window.speechSynthesis) {
       if (window.speechSynthesis.paused) {

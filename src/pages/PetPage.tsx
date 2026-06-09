@@ -79,6 +79,37 @@ const PetPage: React.FC<PetPageProps> = ({ stats, onUpdateStats, onNavigate, onC
 
   const activePet = stats.pets[selectedPetIndex];
 
+  const [flyingParticles, setFlyingParticles] = useState<{ id: string; emoji: string; x: number; y: number; rotate: number; scale: number }[]>([]);
+
+  const triggerFlyingParticles = (petType: string) => {
+    let emojiPool = ['⭐', '✨', '💖', '❤️'];
+    if (petType === 'DRAGON') {
+      emojiPool = ['⭐', '✨', '🔥', '🌟', '💥'];
+    } else if (petType === 'CAT') {
+      emojiPool = ['💖', '❤️', '🐾', '🌸', '🌹'];
+    } else if (petType === 'OWL') {
+      emojiPool = ['⭐', '✨', '🔮', '📖', '🌟', '🎓'];
+    } else if (petType === 'SLIME') {
+      emojiPool = ['🫧', '🍮', '💖', '❤️', '✨', '💧'];
+    }
+
+    const count = 4 + Math.floor(Math.random() * 4);
+    const newParticles = Array.from({ length: count }).map((_, i) => ({
+      id: Math.random().toString() + i,
+      emoji: emojiPool[Math.floor(Math.random() * emojiPool.length)],
+      x: (Math.random() * 80 - 40), 
+      y: (Math.random() * 10 - 20), 
+      rotate: Math.random() * 120 - 60,
+      scale: 0.8 + Math.random() * 0.6
+    }));
+
+    setFlyingParticles(prev => [...prev, ...newParticles]);
+
+    setTimeout(() => {
+      setFlyingParticles(prev => prev.filter(p => !newParticles.find(np => np.id === p.id)));
+    }, 1500);
+  };
+
   useEffect(() => {
     if (activePet) {
       const greets: Record<string, string> = {
@@ -93,8 +124,16 @@ const PetPage: React.FC<PetPageProps> = ({ stats, onUpdateStats, onNavigate, onC
 
   const handlePetClick = () => {
     if (!activePet || activePet.isDead) return;
-    try { audio.playClick(); } catch (e) {}
+    try { 
+      audio.playPetStroke(); 
+      setTimeout(() => {
+        audio.playCelestialMagic();
+      }, 100);
+    } catch (e) {}
     
+    // Trigger floating love hearts or stars according to pet type
+    triggerFlyingParticles(activePet.type);
+
     const speechArray = PET_SPEECHES[activePet.type] || ["来和我玩儿吧~ ✨"];
     const randomSpeech = speechArray[Math.floor(Math.random() * speechArray.length)];
     setPetSpeech(randomSpeech);
@@ -159,7 +198,10 @@ const PetPage: React.FC<PetPageProps> = ({ stats, onUpdateStats, onNavigate, onC
     }
 
     setIsFeeding(true);
-    audio.playPurchase();
+    try {
+      audio.playPurchase();
+      audio.playPetFeed();
+    } catch (e) {}
     setPetSpeech(`嗷呜！敲好吃！正在美滋滋地享用「${food.name}」中！🍔✨`);
 
     // Spawn flying food particles towards pet
@@ -198,7 +240,14 @@ const PetPage: React.FC<PetPageProps> = ({ stats, onUpdateStats, onNavigate, onC
       });
       setIsFeeding(false);
       setFlyingFoods([]);
-      audio.playSuccess();
+      
+      try {
+        audio.playSuccess();
+        audio.playCelestialMagic();
+      } catch (e) {}
+      
+      // Trigger particles as health/happiness increased!
+      triggerFlyingParticles(activePet.type);
       
       confetti({
         particleCount: isCrit ? 80 : 50,
@@ -716,6 +765,29 @@ const PetPage: React.FC<PetPageProps> = ({ stats, onUpdateStats, onNavigate, onC
                       {item.emoji}
                     </motion.div>
                   ))}
+
+                  {/* Floating Hearts/Stars Custom Interactive Animators */}
+                  <AnimatePresence>
+                    {flyingParticles.map(p => (
+                      <motion.div
+                        key={p.id}
+                        initial={{ x: p.x, y: 0, scale: 0.5, opacity: 1, rotate: 0 }}
+                        animate={{ 
+                          x: p.x + (Math.random() * 80 - 40), 
+                          y: p.y - 130 - Math.random() * 50, 
+                          scale: p.scale * 1.6, 
+                          opacity: 0,
+                          rotate: p.rotate
+                        }}
+                        exit={{ opacity: 0 }}
+                        transition={{ duration: 1.3, ease: "easeOut" }}
+                        className="absolute text-3xl sm:text-4xl z-40 pointer-events-none select-none filter drop-shadow-md"
+                        style={{ left: '50%', top: '50%', transform: 'translate(-50%, -50%)' }}
+                      >
+                        {p.emoji}
+                      </motion.div>
+                    ))}
+                  </AnimatePresence>
 
                   <motion.div
                     onClick={handlePetClick}

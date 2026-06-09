@@ -927,8 +927,8 @@ const TEXTBOOK_ALL_CARDS = [
 ];
 
 export const ALL_CARDS: WordCard[] = [
-  // Primary has all entries from the original textbook PDF 1 (giving exactly 330 cards, nearly 400!)
-  ...ORIGINAL_CARDS_LIST.map((card, index) => {
+  // Primary has all entries from the original textbook PDF 1 (excluding any ADVANCED cards to comply with deletion)
+  ...ORIGINAL_CARDS_LIST.filter(card => card.difficulty !== 'ADVANCED').map((card, index) => {
     const pageNum = index + 1;
     return {
       ...card,
@@ -946,17 +946,6 @@ export const ALL_CARDS: WordCard[] = [
       id: `int_${pageNum}`,
       levelName: `中级 课时 ${pageNum}`,
       difficulty: 'INTERMEDIATE' as const
-    };
-  }),
-
-  // Advanced has advanced cards from ORIGINAL_CARDS_LIST
-  ...ORIGINAL_CARDS_LIST.filter(card => card.difficulty === 'ADVANCED').map((card, index) => {
-    const pageNum = index + 1;
-    return {
-      ...card,
-      id: `adv_${pageNum}`,
-      levelName: `高级 课时 ${pageNum}`,
-      difficulty: 'ADVANCED' as const
     };
   })
 ];
