@@ -1,17 +1,14 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { 
-  X, BarChart3, HelpCircle, Volume2, Sparkles, AlertCircle, Play, 
-  Trash2, RefreshCw, Trophy, Heart, Timer, Check, ShieldAlert, Award,
-  Flame, TrendingUp, Calendar, Zap, BookOpen, Gamepad2, Compass, ArrowRight, Star
+  X, Volume2, Sparkles, Trash2, Heart, Timer, Check, Flame, Zap, 
+  BookOpen, Star, Shield, Award, Skull, Swords, RefreshCw, Sparkle, Info
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { WordItem, UserStats } from '../types';
+import { UserStats } from '../types';
 import audio from '../utils/AudioUtils';
 import confetti from 'canvas-confetti';
 import { 
   getVocabularyErrors, 
-  removeVocabularyError, 
-  addVocabularyError,
   IncorrectVocabularyItem,
   getPurifiedSpirits,
   promoteToSpirit,
@@ -20,6 +17,9 @@ import {
   calculateRetention,
   PurifiedSpiritItem
 } from '../utils/errorBookUtils';
+import { getCharacterPortraitSvgUri } from '../utils/CharacterIllustrator';
+import { getShopItemSvgUri } from '../utils/ShopItemIllustrator';
+import { CHARACTERS, SHOP_ITEMS } from '../constants';
 
 interface ErrorBookDashboardProps {
   stats: UserStats;
@@ -28,50 +28,31 @@ interface ErrorBookDashboardProps {
 }
 
 export const ErrorBookDashboard: React.FC<ErrorBookDashboardProps> = ({ stats, onReward, onClose }) => {
-  const [activeTab, setActiveTab] = useState<'DASHBOARD' | 'WORDLIST' | 'SANCTUM'>('DASHBOARD');
+  // Navigation: Subzones
+  // PEDIA = 怪兽天牢, ENCHANT = 铁匠铺·装备附魔, WANTED = 败将通缉令, SANCTUM = 圣殿·净化魂魄
+  const [activeTab, setActiveTab] = useState<'PEDIA' | 'ENCHANT' | 'WANTED' | 'SANCTUM'>('PEDIA');
+  
   const [errorList, setErrorList] = useState<IncorrectVocabularyItem[]>([]);
   const [purifiedSpirits, setPurifiedSpirits] = useState<PurifiedSpiritItem[]>([]);
-  
-  // Game states for Timed Challenge Mode
-  const [isPlayingChallenge, setIsPlayingChallenge] = useState<boolean>(false);
-  const [challengeGameMode, setChallengeGameMode] = useState<'SPELLING' | 'MCQ'>('SPELLING');
-  const [gamePool, setGamePool] = useState<IncorrectVocabularyItem[]>([]);
-  const [gameIndex, setGameIndex] = useState<number>(0);
-  const [gameScore, setGameScore] = useState<number>(0);
-  const [gameHearts, setGameHearts] = useState<number>(3);
-  const [gameTimeLeft, setGameTimeLeft] = useState<number>(15);
-  const [gameFeedback, setGameFeedback] = useState<string | null>(null);
-  const [gameFeedbackType, setGameFeedbackType] = useState<'SUCCESS' | 'ERROR' | null>(null);
-  const [userAnswerInput, setUserAnswerInput] = useState<string>('');
-  const [gameOptions, setGameOptions] = useState<string[]>([]);
-  
-  // Keyboard Spelling interactive states
-  const [spellInput, setSpellInput] = useState<string>('');
-  const [spellRuneBubbles, setSpellRuneBubbles] = useState<{ id: number; char: string; used: boolean }[]>([]);
 
-  // Sanctum advanced visual layout states
-  const [sanctumViewMode, setSanctumViewMode] = useState<'GRID' | 'CONSTELLATION'>('CONSTELLATION');
-  const [activeConstellationNode, setActiveConstellationNode] = useState<PurifiedSpiritItem | null>(null);
-
-  const [challengeResult, setChallengeResult] = useState<{
-    wordsPurified: string[];
-    xpEarned: number;
-    coinsEarned: number;
-    totalAttempted: number;
-    correctCount: number;
+  // Local persistent enchantment buffs
+  const [activeEnchantBuff, setActiveEnchantBuff] = useState<{
+    itemName: string;
+    buffDuration: number; // 2 battles
+    strengthBoost: number;
+    agilityBoost: number;
   } | null>(null);
 
-  // Spaced repetition spirit review states
-  const [activeReviewSpirit, setActiveReviewSpirit] = useState<PurifiedSpiritItem | null>(null);
-  const [spiritReviewOptions, setSpiritReviewOptions] = useState<string[]>([]);
-  const [spiritReviewFeedback, setSpiritReviewFeedback] = useState<string | null>(null);
-  const [spiritReviewFeedbackType, setSpiritReviewFeedbackType] = useState<'SUCCESS' | 'ERROR' | null>(null);
-  
-  // Review spell states
-  const [reviewSpellInput, setReviewSpellInput] = useState<string>('');
-  const [reviewRuneBubbles, setReviewRuneBubbles] = useState<{ id: number; char: string; used: boolean }[]>([]);
+  // Sound and Speech Synthesis
+  const speakWord = (wordText: string) => {
+    try {
+      audio.speak(wordText);
+    } catch (e) {
+      console.warn("Speech synthesis error:", e);
+    }
+  };
 
-  // Initialize and reload collected data
+  // Reload data from local storage
   const loadData = () => {
     setErrorList(getVocabularyErrors());
     setPurifiedSpirits(getPurifiedSpirits());
@@ -82,1721 +63,797 @@ export const ErrorBookDashboard: React.FC<ErrorBookDashboardProps> = ({ stats, o
   }, []);
 
   // -------------------------------------------------------------
-  // DIAGNOSTIC METRICS CALCULATIONS
+  // METRICS & USER HERO RESOLVERS
   // -------------------------------------------------------------
   const metrics = useMemo(() => {
     const totalErrors = errorList.length;
     const totalLearned = stats.totalWordsLearned || 10;
     
-    // Distribution metrics
-    const adventureCount = errorList.filter(item => item.sources.includes('ADVENTURE')).length;
-    const arcadeCount = errorList.filter(item => item.sources.includes('ARCADE')).length;
-    
-    // Top hardest/high-frequency error words
     const topHardest = [...errorList]
       .sort((a, b) => b.errorCount - a.errorCount)
       .slice(0, 3);
-      
-    // Mastery estimate
-    const healthyCount = totalLearned - totalErrors > 0 ? totalLearned - totalErrors : 0;
-    const masteryPercentage = Math.round((healthyCount / Math.max(1, totalLearned)) * 100);
-
-    // Calc reviews that are due right now according to Ebbinghaus timers
+       
     const dueReviewsCount = purifiedSpirits.filter(s => s.nextReviewAt <= Date.now() || calculateRetention(s) <= 50).length;
     const finishedMasteryCount = purifiedSpirits.filter(s => s.stage === 5).length;
+    
+    const errorRatio = totalErrors / Math.max(1, totalLearned);
+    const memoryHealthPercentage = Math.max(15, Math.min(100, Math.round((1 - errorRatio) * 105)));
 
     return {
       totalErrors,
-      adventureCount,
-      arcadeCount,
       topHardest,
-      masteryPercentage,
       dueReviewsCount,
-      finishedMasteryCount
+      finishedMasteryCount,
+      memoryHealthPercentage
     };
   }, [errorList, purifiedSpirits, stats]);
 
-  // Handle word text-to-speech pronunciation
-  const speakWord = (wordText: string) => {
-    try {
-      audio.speak(wordText);
-    } catch (e) {
-      console.warn("Speech synthesis error:", e);
-    }
-  };
-
-  // One-click purification (manually remove/master a word from kesalahan)
-  const handlePurifyWord = (wordItem: IncorrectVocabularyItem) => {
-    try { audio.playSuccess(); } catch (e) {}
+  const activeHero = useMemo(() => {
+    const char = CHARACTERS.find(c => c.id === (stats.selectedCharacterId || 'c1')) || CHARACTERS[0];
+    const equippedIds = stats.equippedItems?.[char.id] || [];
+    const equippedNames = SHOP_ITEMS.filter(item => equippedIds.includes(item.id)).map(item => item.name);
+    const petType = stats.pets?.[0]?.type;
+    const avatarUri = getCharacterPortraitSvgUri(char, equippedNames, petType);
     
-    // Promote to a Purified spirit for spaced repetition instead of deleting completely!
-    const updatedSpirits = promoteToSpirit(wordItem);
+    return {
+      char,
+      equippedNames,
+      avatarUri,
+      level: stats.characterStats?.[char.id]?.level || stats.level || 1,
+      stats: stats.characterStats?.[char.id] || { strength: 10, magic: 10, defense: 10, agility: 10 }
+    };
+  }, [stats]);
+
+  // Exorcise monster manually
+  const handleManualPurify = (item: IncorrectVocabularyItem) => {
+    audio.playSuccess();
+    const updatedSpirits = promoteToSpirit(item);
     setPurifiedSpirits(updatedSpirits);
+    loadData();
 
-    const updatedErrors = getVocabularyErrors();
-    setErrorList(updatedErrors);
-    
-    // Reward small encouragement
-    onReward(5, 2);
+    onReward(10, 5);
     confetti({
-      particleCount: 20,
-      spread: 30,
-      origin: { y: 0.8 },
-      colors: ['#34d399', '#10b981']
+      particleCount: 40,
+      spread: 50,
+      origin: { y: 0.7 },
+      colors: ['#a855f7', '#6366f1', '#3b82f6']
     });
   };
 
-  // -------------------------------------------------------------
-  // TIMED CHALLENGE CORE ENGINE
-  // -------------------------------------------------------------
-  const startTimedChallenge = () => {
-    if (errorList.length === 0) {
-      try { audio.playError(); } catch (e) {}
-      return;
-    }
-    
-    try { audio.playClick(); } catch (e) {}
-    // Shuffle the error list to serve as the challenge pool
-    const shuffled = [...errorList].sort(() => Math.random() - 0.5);
-    setGamePool(shuffled);
-    setGameIndex(0);
-    setGameScore(0);
-    setGameHearts(3);
-    setGameTimeLeft(challengeGameMode === 'SPELLING' ? 15 : 10);
-    setIsPlayingChallenge(true);
-    setChallengeResult(null);
-    setGameFeedback(null);
-    setGameFeedbackType(null);
-  };
-
-  // Prepare a question for challenge (watching active question and gameplay mode)
-  useEffect(() => {
-    if (isPlayingChallenge && gamePool.length > 0 && gameIndex < gamePool.length) {
-      const activeWord = gamePool[gameIndex];
-      
-      // Auto speak correct english spelling
-      setTimeout(() => speakWord(activeWord.text), 300);
-
-      // MCQ Choice list builder
-      const allTranslations = [
-        '苹果', '橘子', '香蕉', '写字', '裹入', '神兽', '火山', '踏步', '跳跃', '魔法', 
-        '汉字', '萌宠', '地鼠', '冰川', '植物', '射手', '僵尸', '吊钩', '清除', '消除'
-      ];
-      const incorrectDistractors = allTranslations
-        .filter(t => t !== activeWord.translation)
-        .sort(() => Math.random() - 0.5)
-        .slice(0, 3);
-      const options = [...incorrectDistractors, activeWord.translation].sort(() => Math.random() - 0.5);
-      setGameOptions(options);
-
-      // SPELLING scrambled letter setup
-      if (activeWord?.text) {
-        const letters = activeWord.text.split('');
-        const alphabet = 'abcdefghijklmnopqrstuvwxyz';
-        const extras: string[] = [];
-        // Add dynamic letters to build standard pool of up to 8 interactive bubbles
-        if (letters.length < 8) {
-          const distCount = Math.max(1, 8 - letters.length);
-          for (let i = 0; i < distCount; i++) {
-            const rChar = alphabet[Math.floor(Math.random() * alphabet.length)];
-            if (!letters.includes(rChar) && !extras.includes(rChar)) {
-              extras.push(rChar);
-            }
-          }
-        }
-        const combination = [...letters, ...extras]
-          .map((char, index) => ({ id: index, char, used: false }))
-          .sort(() => Math.random() - 0.5);
-        setSpellRuneBubbles(combination);
-      }
-
-      setSpellInput('');
-      setGameTimeLeft(challengeGameMode === 'SPELLING' ? 15 : 10);
-      setGameFeedback(null);
-      setGameFeedbackType(null);
-    }
-  }, [isPlayingChallenge, gameIndex, gamePool, challengeGameMode]);
-
-  // Timed challenge ticker logic
-  useEffect(() => {
-    let timer: any = null;
-    if (isPlayingChallenge && !challengeResult && gameHearts > 0 && gameIndex < gamePool.length) {
-      timer = setInterval(() => {
-        setGameTimeLeft(prev => {
-          if (prev <= 1) {
-            handleChallengeTimeout();
-            return challengeGameMode === 'SPELLING' ? 15 : 10;
-          }
-          return prev - 1;
-        });
-      }, 1000);
-    }
-    return () => timer && clearInterval(timer);
-  }, [isPlayingChallenge, gameIndex, gameHearts, challengeResult, challengeGameMode]);
-
-  const handleChallengeTimeout = () => {
-    try { audio.playError(); } catch (e) {}
-    setGameFeedback('⏰ 时间耗尽！心魔黑雾暴涨！');
-    setGameFeedbackType('ERROR');
-    
-    setGameHearts(prev => {
-      const nextHearts = prev - 1;
-      if (nextHearts <= 0) {
-        finishChallenge(true);
-      }
-      return nextHearts;
-    });
-
-    setTimeout(() => {
-      setGameIndex(prev => prev + 1);
-    }, 1500);
-  };
-
-  // Click handler for letters clicked/choosed in interactive Spelling board
-  const handleSpellLetterClick = (bubbleId: number, letterValue: string) => {
-    if (gameFeedback) return;
-    
-    const activeWord = gamePool[gameIndex];
-    if (!activeWord) return;
-    
-    const nextExpectedIndex = spellInput.length;
-    const nextExpectedChar = activeWord.text[nextExpectedIndex];
-    
-    if (letterValue.toLowerCase() === nextExpectedChar.toLowerCase()) {
-      // Correct character clicked
-      const updatedInput = spellInput + nextExpectedChar;
-      setSpellInput(updatedInput);
-      
-      // Consume bubble representing that exact occurrence
-      setSpellRuneBubbles(prev => prev.map(b => b.id === bubbleId ? { ...b, used: true } : b));
-      try { audio.playPop(); } catch (e) {}
-
-      // Did they complete the spelling correctly?
-      if (updatedInput.toLowerCase() === activeWord.text.toLowerCase()) {
-        try { audio.playSuccess(); } catch (e) {}
-        setGameFeedback('✨ 符文归位！黑雾散尽，净化神效！');
-        setGameFeedbackType('SUCCESS');
-        setGameScore(prev => prev + 120 + gameTimeLeft * 10);
-        
-        // Promote from Active Errors list to persistent Sanctum Spaced Repetition queue!
-        promoteToSpirit(activeWord);
-        
-        confetti({
-          particleCount: 15,
-          spread: 30,
-          origin: { y: 0.75 }
-        });
-
-        setTimeout(() => {
-          if (gameIndex >= gamePool.length - 1) {
-            finishChallenge(false);
-          } else {
-            setGameIndex(prev => prev + 1);
-          }
-        }, 1500);
-      }
-    } else {
-      // Incorrect click during spell
-      try { audio.playError(); } catch (e) {}
-      setGameFeedback('💥 咒语出错！黑雾暴乱，符文消散！');
-      setGameFeedbackType('ERROR');
-      
-      setGameHearts(prev => {
-        const nextHearts = prev - 1;
-        if (nextHearts <= 0) {
-          finishChallenge(true);
-        }
-        return nextHearts;
-      });
-
-      // Clear layout progress so they retry typing this very word from the starting character
-      setTimeout(() => {
-        setSpellInput('');
-        setSpellRuneBubbles(prev => prev.map(b => ({ ...b, used: false })));
-        setGameFeedback(null);
-        setGameFeedbackType(null);
-      }, 1200);
-    }
-  };
-
-  // Magic Hint powerup trades 2 seconds of remaining time to cast next correct letter
-  const handleUseMagicHint = () => {
-    const activeWord = gamePool[gameIndex];
-    if (!activeWord || gameFeedback) return;
-    
-    const nextExpectedIndex = spellInput.length;
-    if (nextExpectedIndex >= activeWord.text.length) return;
-    
-    const nextExpectedChar = activeWord.text[nextExpectedIndex];
-    const matchingBubble = spellRuneBubbles.find(b => b.char.toLowerCase() === nextExpectedChar.toLowerCase() && !b.used);
-    
-    if (matchingBubble) {
-      const updatedInput = spellInput + nextExpectedChar;
-      setSpellInput(updatedInput);
-      setSpellRuneBubbles(prev => prev.map(b => b.id === matchingBubble.id ? { ...b, used: true } : b));
-      try { audio.playPop(); } catch (e) {}
-      
-      // Deduct 2 seconds penalty for hints
-      setGameTimeLeft(prev => Math.max(1, prev - 2));
-
-      // Check if this finalizes the spell
-      if (updatedInput.toLowerCase() === activeWord.text.toLowerCase()) {
-        try { audio.playSuccess(); } catch (e) {}
-        setGameFeedback('✨ 念咒达成！净化成功！');
-        setGameFeedbackType('SUCCESS');
-        setGameScore(prev => prev + 80 + gameTimeLeft * 5);
-        
-        promoteToSpirit(activeWord);
-        
-        setTimeout(() => {
-          if (gameIndex >= gamePool.length - 1) {
-            finishChallenge(false);
-          } else {
-            setGameIndex(prev => prev + 1);
-          }
-        }, 1400);
-      }
-    }
-  };
-
-  const handleChooseOption = (option: string) => {
-    if (gameFeedback) return; // Prevent double taps during animation
-    
-    const activeWord = gamePool[gameIndex];
-    const isCorrect = option === activeWord.translation;
-
-    if (isCorrect) {
-      try { audio.playSuccess(); } catch (e) {}
-      setGameFeedback('✨ 净化成功！黑雾退散，收为词灵！');
-      setGameFeedbackType('SUCCESS');
-      setGameScore(prev => prev + 100 + gameTimeLeft * 10);
-      
-      // Promote from Active Errors list to Spaced Repetition queue!
-      promoteToSpirit(activeWord);
-      
-      // Animate single confetti burst
-      confetti({
-        particleCount: 15,
-        spread: 30,
-        origin: { y: 0.75 }
-      });
-    } else {
-      try { audio.playError(); } catch (e) {}
-      setGameFeedback(`💥 法术暴走！正确释义是: ${activeWord.translation}`);
-      setGameFeedbackType('ERROR');
-      
-      setGameHearts(prev => {
-        const nextHearts = prev - 1;
-        if (nextHearts <= 0) {
-          finishChallenge(true);
-        }
-        return nextHearts;
-      });
-    }
-
-    // Move to next question after show feedback delay
-    setTimeout(() => {
-      if (gameIndex >= gamePool.length - 1) {
-        finishChallenge(false);
-      } else {
-        setGameIndex(prev => prev + 1);
-      }
-    }, 1800);
-  };
-
-  const finishChallenge = (isLoss: boolean) => {
-    // Compile results
-    const processedWords = gamePool.slice(0, isLoss ? gameIndex + 1 : gamePool.length);
-    const correctItems = processedWords.filter((w, idx) => {
-      return idx < gameIndex || (idx === gameIndex && gameFeedbackType === 'SUCCESS');
-    });
-
-    const purifiedWordsList = correctItems.map(item => item.text);
-    
-    // Calculate rewards
-    const xpReward = correctItems.length * 20 + 30;
-    const coinsReward = correctItems.length * 8 + 10;
-    
-    onReward(xpReward, coinsReward);
-    try { audio.playReward(); } catch (e) {}
-    
-    setChallengeResult({
-      wordsPurified: purifiedWordsList,
-      xpEarned: xpReward,
-      coinsEarned: coinsReward,
-      totalAttempted: processedWords.length,
-      correctCount: correctItems.length
-    });
-
-    // Refresh remaining error items listing and spirits listing
-    loadData();
-  };
-
-  const handleExitChallenge = () => {
-    setIsPlayingChallenge(false);
-    setChallengeResult(null);
-    loadData();
-  };
-
-  // -------------------------------------------------------------
-  // SPACED REPETITION (RE-MASTERY ORTHOGRAPHIC WORKOUT)
-  // -------------------------------------------------------------
-  const startReviewSpirit = (spirit: PurifiedSpiritItem) => {
-    try { audio.playClick(); } catch (e) {}
-    setActiveReviewSpirit(spirit);
-    speakWord(spirit.text);
-
-    // MCQ Backup Options Distractors setup
-    const distractorPool = [
-      '城堡', '森林', '海洋', '书写', '跳跃', '奔跑', '闪电', '星光', '羽毛', '红叶',
-      '龙鳞', '精灵', '神话', '魔法', '金币', '弓箭', '神盾', '巨龙', '智慧', '挑战'
-    ];
-    const incorrectChoices = distractorPool
-      .filter(d => d !== spirit.translation)
-      .sort(() => Math.random() - 0.5)
-      .slice(0, 3);
-
-    const choices = [...incorrectChoices, spirit.translation].sort(() => Math.random() - 0.5);
-    setSpiritReviewOptions(choices);
-    setSpiritReviewFeedback(null);
-    setSpiritReviewFeedbackType(null);
-  };
-
-  // Load review spell scrambled tiles when user selects a due spirit review card
-  useEffect(() => {
-    if (activeReviewSpirit) {
-      const letters = activeReviewSpirit.text.split('');
-      const alphabet = 'abcdefghijklmnopqrstuvwxyz';
-      const extras: string[] = [];
-      if (letters.length < 8) {
-        const distCount = Math.max(1, 8 - letters.length);
-        for (let i = 0; i < distCount; i++) {
-          const rChar = alphabet[Math.floor(Math.random() * alphabet.length)];
-          if (!letters.includes(rChar) && !extras.includes(rChar)) {
-            extras.push(rChar);
-          }
-        }
-      }
-      const scrambledCombined = [...letters, ...extras]
-        .map((char, index) => ({ id: index, char, used: false }))
-        .sort(() => Math.random() - 0.5);
-      
-      setReviewRuneBubbles(scrambledCombined);
-      setReviewSpellInput('');
-    }
-  }, [activeReviewSpirit]);
-
-  // Handle letter click inside Spaced Repetition Spell Overlay
-  const handleReviewLetterClick = (bubbleId: number, letterValue: string) => {
-    if (!activeReviewSpirit || spiritReviewFeedback) return;
-    
-    const nextExpectedIndex = reviewSpellInput.length;
-    const nextExpectedChar = activeReviewSpirit.text[nextExpectedIndex];
-    
-    if (letterValue.toLowerCase() === nextExpectedChar.toLowerCase()) {
-      const updatedSpell = reviewSpellInput + nextExpectedChar;
-      setReviewSpellInput(updatedSpell);
-      setReviewRuneBubbles(prev => prev.map(b => b.id === bubbleId ? { ...b, used: true } : b));
-      try { audio.playPop(); } catch (e) {}
-
-      // Did they complete the spelling correctly?
-      if (updatedSpell.toLowerCase() === activeReviewSpirit.text.toLowerCase()) {
-        try { audio.playSuccess(); } catch (e) {}
-        const nextStage = Math.min(5, activeReviewSpirit.stage + 1);
-        
-        let rewardText = `✨ 契合重鸣！遗忘防线筑牢至 Stage ${nextStage}！`;
-        if (nextStage === 5 && activeReviewSpirit.stage < 5) {
-          rewardText = '🏆 灵力圆满！该词灵已成不灭黄金圣果，奖励50经验和20魔法币！';
-          onReward(50, 20);
-          try { audio.playLevelUp(); } catch (e) {}
-          confetti({
-            particleCount: 100,
-            spread: 70,
-            origin: { y: 0.6 }
-          });
-        } else {
-          onReward(10, 3);
-        }
-
-        setSpiritReviewFeedback(rewardText);
-        setSpiritReviewFeedbackType('SUCCESS');
-        
-        const updatedSpirits = reviewPurifiedSpirit(activeReviewSpirit.text, true);
-        setPurifiedSpirits(updatedSpirits);
-
-        setTimeout(() => {
-          setActiveReviewSpirit(null);
-          setSpiritReviewFeedback(null);
-          setSpiritReviewFeedbackType(null);
-          loadData();
-        }, 1800);
-      }
-    } else {
-      // Wrong spell assembly click in Review
-      try { audio.playError(); } catch (e) {}
-      setSpiritReviewFeedback(`💔 咒诀崩溃！词灵能量落回 Stage 1，请重试！`);
-      setSpiritReviewFeedbackType('ERROR');
-      
-      const updatedSpirits = reviewPurifiedSpirit(activeReviewSpirit.text, false);
-      setPurifiedSpirits(updatedSpirits);
-
-      setTimeout(() => {
-        setReviewSpellInput('');
-        setReviewRuneBubbles(prev => prev.map(b => ({ ...b, used: false })));
-        setSpiritReviewFeedback(null);
-        setSpiritReviewFeedbackType(null);
-        loadData();
-      }, 1400);
-    }
-  };
-
-  const handleAnswerReviewSpirit = (option: string) => {
-    if (!activeReviewSpirit || spiritReviewFeedback) return;
-
-    const isCorrect = option === activeReviewSpirit.translation;
-    const wordText = activeReviewSpirit.text;
-
-    if (isCorrect) {
-      try { audio.playSuccess(); } catch (e) {}
-      const nextStage = Math.min(5, activeReviewSpirit.stage + 1);
-      
-      let rewardText = `✨ 契合重鸣！遗忘防线筑牢至 Stage ${nextStage}！`;
-      if (nextStage === 5 && activeReviewSpirit.stage < 5) {
-        rewardText = '🏆 灵力圆满！该词灵已成不灭黄金圣果，奖励50经验和20魔法币！';
-        onReward(50, 20);
-        try { audio.playLevelUp(); } catch (e) {}
-        confetti({
-          particleCount: 100,
-          spread: 70,
-          origin: { y: 0.6 }
-        });
-      } else {
-        onReward(10, 3);
-      }
-
-      setSpiritReviewFeedback(rewardText);
-      setSpiritReviewFeedbackType('SUCCESS');
-      
-      const updatedSpirits = reviewPurifiedSpirit(wordText, true);
-      setPurifiedSpirits(updatedSpirits);
-    } else {
-      try { audio.playError(); } catch (e) {}
-      setSpiritReviewFeedback(`💔 魂力崩解！正确释义应为：${activeReviewSpirit.translation}。已落入 Stage 1。`);
-      setSpiritReviewFeedbackType('ERROR');
-      
-      const updatedSpirits = reviewPurifiedSpirit(wordText, false);
-      setPurifiedSpirits(updatedSpirits);
-    }
-
-    // Refresh after delay
-    setTimeout(() => {
-      setActiveReviewSpirit(null);
-      setSpiritReviewFeedback(null);
-      setSpiritReviewFeedbackType(null);
-      loadData();
-    }, 2200);
-  };
-
-  const handleReleaseSpirit = (spiritText: string) => {
-    try { audio.playPop(); } catch (e) {}
+  const handleManualRelease = (spiritText: string) => {
+    audio.playPop();
     const updated = removePurifiedSpirit(spiritText);
     setPurifiedSpirits(updated);
     loadData();
   };
 
-  // Start complete ritual workout for all due cards
+  // Helper inside Jail: Monster Level Details
+  const getMonsterClass = (errorCount: number) => {
+    if (errorCount >= 5) {
+      return {
+        name: '烈焰毁灭领主 / World Boss',
+        emoji: '🌋',
+        desc: '极其顽固的五级心魔：吸纳万劫业火，防线固若金汤。将其战胜可获取丰厚神光馈赠！',
+        color: 'from-rose-600 via-orange-500 to-red-650',
+        borderColor: 'border-rose-500 shadow-[0_0_15px_rgba(239,68,68,0.7)] animate-pulse',
+        badgeColor: 'bg-rose-950/80 border-rose-500 text-rose-350',
+        glowBg: 'rgba(239,68,68,0.2)'
+      };
+    } else if (errorCount >= 3) {
+      return {
+        name: '玄铁双钩魔将 / Elite',
+        emoji: '💀',
+        desc: '三至四级精英邪灵：身覆带刺玄铠，常驻于潜意识深处纠缠。不可大意！',
+        color: 'from-purple-600 to-indigo-700',
+        borderColor: 'border-purple-500 shadow-[0_0_10px_rgba(168,85,247,0.5)]',
+        badgeColor: 'bg-purple-950/80 border-purple-550 text-purple-300',
+        glowBg: 'rgba(168,85,247,0.1)'
+      };
+    } else if (errorCount === 2) {
+      return {
+        name: '捣蛋赤面小妖 / Rogue Imp',
+        emoji: '👹',
+        desc: '二级游荡小魔：喜好偷啃记忆之火，行踪诡谲飘忽。',
+        color: 'from-amber-500 to-rose-400',
+        borderColor: 'border-amber-500/50 shadow-md',
+        badgeColor: 'bg-amber-950/60 border-amber-500/40 text-amber-350',
+        glowBg: 'rgba(245,158,11,0.05)'
+      };
+    } else {
+      return {
+        name: '迷途虚无幽灵 / Stray Ghost',
+        emoji: '👻',
+        desc: '一级微弱幽魂：记忆波形溢散而成的幻影。只需轻颂一遍释义即可引渡净化。',
+        color: 'from-cyan-400 to-blue-500',
+        borderColor: 'border-cyan-500/30',
+        badgeColor: 'bg-slate-900 border-slate-800 text-cyan-350',
+        glowBg: 'rgba(34,211,238,0.02)'
+      };
+    }
+  };
+
+  // Helper inside Sanctum: Ebbinghaus Stage Info
+  const getSpiritStageDisplay = (stage: number) => {
+    switch (stage) {
+      case 1: 
+        return { 
+          name: '🌱 萌芽魂魄', 
+          icon: '🌱', 
+          color: 'from-teal-600 to-emerald-400', 
+          desc: '初生弱魄（半衰期30秒）：覆有三重古老厚重枷锁锁闭。',
+          chains: '⛓️⛓️⛓️ 枷锁厚重', 
+          lockEmoji: '🔒',
+          glowEffect: 'shadow-[0_0_8px_rgba(20,184,166,0.3)]'
+        };
+      case 2: 
+        return { 
+          name: '🌿 舒展幼灵', 
+          icon: '🌿', 
+          color: 'from-emerald-400 to-teal-400', 
+          desc: '稳步入定（半衰期12h）：核心解禁，剩一缕精铁戒环环绕。',
+          chains: '⛓️ 精铁单环', 
+          lockEmoji: '🔓',
+          glowEffect: 'shadow-[0_0_12px_rgba(52,211,153,0.4)]'
+        };
+      case 3: 
+        return { 
+          name: '☘️ 翠羽守护仙', 
+          icon: '☘️', 
+          color: 'from-teal-400 to-cyan-500', 
+          desc: '渐入佳境（半衰期24h）：枷锁全碎，沐浴于记忆轻拂气场。',
+          chains: '💫 灵能微风', 
+          lockEmoji: '🕊️',
+          glowEffect: 'shadow-[0_0_15px_rgba(45,212,191,0.5)]'
+        };
+      case 4: 
+        return { 
+          name: '🌸 凡尘神秀瓣', 
+          icon: '🌸', 
+          color: 'from-purple-400 to-pink-500', 
+          desc: '融会贯通（半衰期3天）：在华逸的水晶音晶能量秘盒中沉浮自修。',
+          chains: '🔮 水晶音盒', 
+          lockEmoji: '✨',
+          glowEffect: 'shadow-[0_0_20px_rgba(192,132,252,0.6)]'
+        };
+      case 5: 
+        return { 
+          name: '👑 黄金永恒圣果', 
+          icon: '👑', 
+          color: 'from-amber-400 via-yellow-450 to-orange-500 animate-pulse', 
+          desc: '圆满终结（半衰期7天）：永不退化！金身大成，刻骨铭心！',
+          chains: '👑 永恒金身', 
+          lockEmoji: '👼',
+          glowEffect: 'shadow-[0_0_35px_rgba(245,158,11,0.95)] shadow-yellow-500/40 border-yellow-300'
+        };
+      default: 
+        return { 
+          name: '未知元神', 
+          icon: '❓', 
+          color: 'from-slate-400 to-slate-500', 
+          desc: '',
+          chains: '', 
+          lockEmoji: '❓',
+          glowEffect: ''
+        };
+    }
+  };
+
+
+  // =============================================================
+  // 🕹️ GAMEPLAY MODE A: 【铁匠铺·装备附魔】
+  // =============================================================
+  const [selectedEnchantJob, setSelectedEnchantJob] = useState<string | null>(null);
+  const [isEnchantingActive, setIsEnchantingActive] = useState<boolean>(false);
+  const [enchantPool, setEnchantPool] = useState<IncorrectVocabularyItem[]>([]);
+  const [enchantIndex, setEnchantIndex] = useState<number>(0);
+  const [enchantCorrectCount, setEnchantCorrectCount] = useState<number>(0);
+  const [enchantOptions, setEnchantOptions] = useState<string[]>([]);
+  const [enchantFeedback, setEnchantFeedback] = useState<string | null>(null);
+  const [enchantFeedbackType, setEnchantFeedbackType] = useState<'SUCCESS' | 'ERROR' | null>(null);
+  const [enchantSuccessAlert, setEnchantSuccessAlert] = useState<{
+    itemName: string;
+    xpEarned: number;
+    coinsEarned: number;
+  } | null>(null);
+
+  // Default forgeable weapons in case player has empty equipped items
+  const FORGEABLE_DEFAULT_ITEMS = useMemo(() => {
+    return [
+      { id: 'def_w1', name: '誓约破魔者之剑', desc: '学院特配双手猎魔巨剑，纹理完美，易吸纳魔法词灵！', requiredSlot: 'RIGHT_HAND' },
+      { id: 'def_w2', name: '太古真理盾牌', desc: '龙骨合铸的圆形坚御圣盾，唯有纯烈智慧才能点亮其中护体灵光。', requiredSlot: 'BODY' },
+      { id: 'def_w3', name: '星辉奥术圣杖', desc: '流溢着湛蓝星流能的符文木梳。契合高词力学生。', requiredSlot: 'RIGHT_HAND' },
+    ];
+  }, []);
+
+  // Merge actual character equipped gear with defaults to prioritize real personalization
+  const playerForgeableItems = useMemo(() => {
+    if (activeHero.equippedNames && activeHero.equippedNames.length > 0) {
+      const equippedList = activeHero.equippedNames.map((name, i) => ({
+        id: `real_equip_${i}`,
+        name: name,
+        desc: `【当前穿戴中】你在换装商店中辛苦入手的极品行头，最适合刻画词灵能量！`,
+        requiredSlot: name.includes('头盔') || name.includes('铠') || name.includes('盾') ? 'BODY' : 'RIGHT_HAND'
+      }));
+      // Pad with defaults if too short
+      return [...equippedList, ...FORGEABLE_DEFAULT_ITEMS.slice(0, 1)];
+    }
+    return FORGEABLE_DEFAULT_ITEMS;
+  }, [activeHero.equippedNames, FORGEABLE_DEFAULT_ITEMS]);
+
+  const startEnchantmentProcess = (itemName: string) => {
+    let pWords: IncorrectVocabularyItem[] = [...errorList];
+    if (pWords.length < 5) {
+      // Guarantee 5 words to let players play
+      const fillers: IncorrectVocabularyItem[] = [
+        { text: 'adventure', translation: '冒险', imageUrl: '', errorCount: 1, lastErrorAt: Date.now(), sources: ['ADVENTURE'] },
+        { text: 'legend', translation: '传奇', imageUrl: '', errorCount: 1, lastErrorAt: Date.now(), sources: ['ADVENTURE'] },
+        { text: 'glorious', translation: '辉煌的', imageUrl: '', errorCount: 1, lastErrorAt: Date.now(), sources: ['ADVENTURE'] },
+        { text: 'conquer', translation: '征服', imageUrl: '', errorCount: 1, lastErrorAt: Date.now(), sources: ['ADVENTURE'] },
+        { text: 'phoenix', translation: '凤凰', imageUrl: '', errorCount: 1, lastErrorAt: Date.now(), sources: ['ADVENTURE'] },
+      ];
+      pWords = [...pWords, ...fillers].slice(0, 5);
+    } else {
+      pWords = pWords.sort(() => Math.random() - 0.5).slice(0, 5);
+    }
+
+    setEnchantPool(pWords);
+    setEnchantIndex(0);
+    setEnchantCorrectCount(0);
+    setSelectedEnchantJob(itemName);
+    setIsEnchantingActive(true);
+    setEnchantFeedback(null);
+    setEnchantFeedbackType(null);
+    setEnchantSuccessAlert(null);
+    audio.playClick();
+  };
+
+  useEffect(() => {
+    if (isEnchantingActive && enchantPool.length > 0 && enchantIndex < enchantPool.length) {
+      const activeWord = enchantPool[enchantIndex];
+      const audioTimer = setTimeout(() => speakWord(activeWord.text), 400);
+
+      // Distractors pool
+      const distractPool = ['古塔', '圣女', '圣光守护', '恶灵退散', '极速闪现', '火龙狂啸', '森之物语', '圣杯秘药', '虚弱药水', '金币增幅', '无畏重击', '审判利刃'];
+      const incorrectChoices = distractPool
+        .filter(t => t !== activeWord.translation)
+        .sort(() => Math.random() - 0.5)
+        .slice(0, 3);
+      const shuffledOptions = [...incorrectChoices, activeWord.translation].sort(() => Math.random() - 0.5);
+      
+      setEnchantOptions(shuffledOptions);
+      setEnchantFeedback(null);
+      setEnchantFeedbackType(null);
+
+      return () => clearTimeout(audioTimer);
+    }
+  }, [isEnchantingActive, enchantIndex, enchantPool]);
+
+  const handleEnchantAnswer = (option: string) => {
+    if (enchantFeedback) return;
+
+    const activeWord = enchantPool[enchantIndex];
+    const isCorrect = option === activeWord.translation;
+
+    if (isCorrect) {
+      audio.playSuccess();
+      setEnchantCorrectCount(prev => prev + 1);
+      setEnchantFeedback('✨ 完美刻印！附魔光晶亮起！');
+      setEnchantFeedbackType('SUCCESS');
+      promoteToSpirit(activeWord);
+    } else {
+      audio.playError();
+      setEnchantFeedback(`💥 属性崩裂！正确释义应为：${activeWord.translation}`);
+      setEnchantFeedbackType('ERROR');
+    }
+
+    setTimeout(() => {
+      if (enchantIndex >= 4) {
+        finishEnchantment();
+      } else {
+        setEnchantIndex(prev => prev + 1);
+      }
+    }, 1500);
+  };
+
+  const finishEnchantment = () => {
+    setIsEnchantingActive(false);
+    audio.playReward();
+    
+    // Reward ratios
+    const xpReward = enchantCorrectCount * 15 + 20;
+    const coinsReward = enchantCorrectCount * 5 + 10;
+    onReward(xpReward, coinsReward);
+
+    setEnchantSuccessAlert({
+      itemName: selectedEnchantJob || '极佳装备',
+      xpEarned: xpReward,
+      coinsEarned: coinsReward
+    });
+
+    // Write temp active buff visible on main UI
+    if (enchantCorrectCount === 5) {
+      setActiveEnchantBuff({
+        itemName: selectedEnchantJob || '附魔装备',
+        buffDuration: 2,
+        strengthBoost: 5,
+        agilityBoost: 3
+      });
+    }
+
+    // Exploding double confetti
+    confetti({
+      particleCount: 100,
+      angle: 60,
+      spread: 60,
+      origin: { x: 0.1 },
+      colors: ['#3b82f6', '#ec4899', '#f59e0b']
+    });
+    confetti({
+      particleCount: 100,
+      angle: 120,
+      spread: 60,
+      origin: { x: 0.9 },
+      colors: ['#3b82f6', '#ec4899', '#f59e0b']
+    });
+
+    loadData();
+  };
+
+  const exitEnchantmentGame = () => {
+    setSelectedEnchantJob(null);
+    setIsEnchantingActive(false);
+    loadData();
+  };
+
+
+  // =============================================================
+  // 🕹️ GAMEPLAY MODE B: 【战场·败将通缉令】
+  // =============================================================
+  const [activeBountyWanted, setActiveBountyWanted] = useState<IncorrectVocabularyItem | null>(null);
+  const [bountyOptions, setBountyOptions] = useState<string[]>([]);
+  const [bountyFeedback, setBountyFeedback] = useState<string | null>(null);
+  const [bountyStatus, setBountyStatus] = useState<'IDLE' | 'SUCCESS' | 'ERROR' | 'TIMEOUT'>('IDLE');
+  const [bountyTimer, setBountyTimer] = useState<number>(10);
+  const [bountyHP, setBountyHP] = useState<number>(3);
+  const [isBountyBoardShaking, setIsBountyBoardShaking] = useState<boolean>(false);
+  const [lastSlashedText, setLastSlashedText] = useState<boolean>(false);
+  // Track cleared words on this session to show persistent stamp directly on the wanted list
+  const [clearedBountyTexts, setClearedBountyTexts] = useState<string[]>([]);
+
+  const startBountyBattle = (item: IncorrectVocabularyItem) => {
+    setActiveBountyWanted(item);
+    setBountyStatus('IDLE');
+    setBountyFeedback(null);
+    setBountyTimer(10);
+    setBountyHP(3);
+    speakWord(item.text);
+
+    const distractors = ['炽天使羽翼', '流光重甲', '寒金战盔', '太古圣物', '虚空迷宫', '元素圣坛', '破旧木剑', '神秘药水', '剧毒之物', '幽冥禁地'];
+    const filteredDistractors = distractors
+      .filter(d => d !== item.translation)
+      .sort(() => Math.random() - 0.5)
+      .slice(0, 3);
+    setBountyOptions([...filteredDistractors, item.translation].sort(() => Math.random() - 0.5));
+    audio.playClick();
+  };
+
+  // Timer ticker for Bounty Battle
+  useEffect(() => {
+    let ticker: any = null;
+    if (activeBountyWanted && bountyStatus === 'IDLE' && bountyHP > 0) {
+      ticker = setInterval(() => {
+        setBountyTimer(prev => {
+          if (prev <= 1) {
+            handleBountyTimeout();
+            return 10;
+          }
+          return prev - 1;
+        });
+      }, 1000);
+    }
+    return () => ticker && clearInterval(ticker);
+  }, [activeBountyWanted, bountyStatus, bountyHP]);
+
+  const handleBountyTimeout = () => {
+    audio.playError();
+    setBountyStatus('TIMEOUT');
+    setBountyFeedback('⏰ 倒计时归零！魔物狂化反扑，对你造成1点猛烈伤害！');
+    setIsBountyBoardShaking(true);
+    setTimeout(() => setIsBountyBoardShaking(false), 500);
+
+    setBountyHP(h => {
+      const nextH = h - 1;
+      if (nextH <= 0) {
+        setTimeout(() => setActiveBountyWanted(null), 2500);
+      }
+      return nextH;
+    });
+
+    setTimeout(() => {
+      if (bountyHP > 1) {
+        setBountyStatus('IDLE');
+        setBountyFeedback(null);
+        setBountyTimer(10);
+      }
+    }, 2000);
+  };
+
+  const attemptCaptureBounty = (option: string) => {
+    if (bountyStatus !== 'IDLE') return;
+
+    const isCorrect = option === activeBountyWanted?.translation;
+    if (isCorrect && activeBountyWanted) {
+      audio.playSuccess();
+      setLastSlashedText(true);
+      setTimeout(() => setLastSlashedText(false), 800);
+      
+      setBountyStatus('SUCCESS');
+      setBountyFeedback('👊 一剑击飞魔魂！在重度破防通缉令上盖下圣印中！💫');
+      
+      // Update persistent session stamps
+      setClearedBountyTexts(prev => [...prev, activeBountyWanted.text]);
+      promoteToSpirit(activeBountyWanted);
+
+      onReward(25, 10);
+      confetti({
+        particleCount: 30,
+        spread: 40,
+        origin: { y: 0.6 }
+      });
+      
+      setTimeout(() => {
+        setActiveBountyWanted(null);
+        loadData();
+      }, 2300);
+
+    } else if (activeBountyWanted) {
+      audio.playError();
+      setIsBountyBoardShaking(true);
+      setTimeout(() => setIsBountyBoardShaking(false), 500);
+      
+      setBountyStatus('ERROR');
+      setBountyFeedback(`⚠️ 剑锋落空！正确含义应为: ${activeBountyWanted.translation}！气血受创！`);
+
+      setBountyHP(h => {
+        const nextH = h - 1;
+        if (nextH <= 0) {
+          setTimeout(() => {
+            setActiveBountyWanted(null);
+            loadData();
+          }, 2500);
+        }
+        return nextH;
+      });
+
+      setTimeout(() => {
+        if (bountyHP > 1) {
+          setBountyStatus('IDLE');
+          setBountyFeedback(null);
+          setBountyTimer(10);
+        }
+      }, 2300);
+    }
+  };
+
+
+  // =============================================================
+  // 🕹️ GAMEPLAY MODE C: 【圣殿·净化魂魄】（3D卡牌翻转）
+  // =============================================================
+  const [activeFlippedSpirits, setActiveFlippedSpirits] = useState<string[]>([]);
+  // Store intermediate text verification option logic inside the flipped cards
+  const [interactiveSpiritChallenge, setInteractiveSpiritChallenge] = useState<{
+    spiritText: string;
+    options: string[];
+    feedback: string | null;
+    success: boolean | null;
+  } | null>(null);
+
+  const toggleSpiritCardFlip = (spirit: PurifiedSpiritItem) => {
+    const isCurrentlyFlipped = activeFlippedSpirits.includes(spirit.text);
+    audio.playPop();
+
+    if (isCurrentlyFlipped) {
+      // Flip back to face-down monochromatic state
+      setActiveFlippedSpirits(prev => prev.filter(t => t !== spirit.text));
+      if (interactiveSpiritChallenge?.spiritText === spirit.text) {
+        setInteractiveSpiritChallenge(null);
+      }
+    } else {
+      // Flip forward to colourful glowing spirit state!
+      setActiveFlippedSpirits(prev => [...prev, spirit.text]);
+      
+      // Trigger voice read aloud
+      speakWord(spirit.text);
+
+      // Create interactive micro multiple-choice check right inside the card frame!
+      const distractPool = ['古树', '巨剑', '火把', '王冠', '精灵', '恶魔', '冰晶', '奥术', '魔法', '守护', '治愈', '雷霆'];
+      const incorrectChoices = distractPool
+        .filter(d => d !== spirit.translation)
+        .sort(() => Math.random() - 0.5)
+        .slice(0, 2);
+      const options = [...incorrectChoices, spirit.translation].sort(() => Math.random() - 0.5);
+
+      setInteractiveSpiritChallenge({
+        spiritText: spirit.text,
+        options,
+        feedback: null,
+        success: null,
+      });
+    }
+  };
+
   const handleReviewAllDue = () => {
     const dueList = purifiedSpirits.filter(s => s.nextReviewAt <= Date.now() || calculateRetention(s) <= 50);
     if (dueList.length === 0) {
-      try { audio.playError(); } catch (e) {}
+      audio.playError();
       return;
     }
+    const dueTexts = dueList.map(s => s.text);
+    setActiveFlippedSpirits(prev => {
+      const merged = [...new Set([...prev, ...dueTexts])];
+      return merged;
+    });
+    audio.playSuccess();
     
-    // Choose one random due card to start testing
-    const chosen = dueList[Math.floor(Math.random() * dueList.length)];
-    startReviewSpirit(chosen);
+    // Focus challenge on the first due card
+    const first = dueList[0];
+    const distractPool = ['古树', '巨剑', '火把', '王冠', '精灵', '恶魔', '冰晶', '奥术', '魔法', '守护', '治愈', '雷霆'];
+    const incorrectChoices = distractPool
+      .filter(d => d !== first.translation)
+      .sort(() => Math.random() - 0.5)
+      .slice(0, 2);
+    const options = [...incorrectChoices, first.translation].sort(() => Math.random() - 0.5);
+
+    setInteractiveSpiritChallenge({
+      spiritText: first.text,
+      options,
+      feedback: null,
+      success: null,
+    });
+    speakWord(first.text);
   };
 
-  // Helper arrays for visualizing Stage properties
-  const getStageDisplay = (stage: number) => {
-    switch (stage) {
-      case 1: return { name: '萌芽期', icon: '🌱', color: 'from-amber-500 to-emerald-400', desc: '半衰期30秒，随时可能遗忘' };
-      case 2: return { name: '含苞期', icon: '🌿', color: 'from-emerald-400 to-teal-400', desc: '半衰期12h，逐步刻画脑回路' };
-      case 3: return { name: '碧叶期', icon: '☘️', color: 'from-teal-400 to-emerald-500', desc: '半衰期24h，形成较深印象' };
-      case 4: return { name: '凡生花', icon: '🌸', color: 'from-purple-400 to-pink-500', desc: '半衰期3天，已可条件反射拼读' };
-      case 5: return { name: '黄金圣果', icon: '👑', color: 'from-amber-400 via-yellow-400 to-orange-500 animate-pulse', desc: '半衰期7天，烙印进太古长期记忆' };
-      default: return { name: '未知', icon: '❓', color: 'from-slate-400 to-slate-500', desc: '' };
+  const handleSpiritVerification = (spirit: PurifiedSpiritItem, selectedOpt: string) => {
+    if (!interactiveSpiritChallenge || interactiveSpiritChallenge.feedback !== null) return;
+
+    const isCorrect = selectedOpt === spirit.translation;
+    if (isCorrect) {
+      audio.playSuccess();
+      const nextStage = Math.min(5, spirit.stage + 1);
+      reviewPurifiedSpirit(spirit.text, true);
+
+      let feedbackString = `🌿 净化神鸣！防线晋升至 Stage ${nextStage}！`;
+      if (nextStage === 5 && spirit.stage < 5) {
+        feedbackString = '👑 圆满永恒！金身大成暴增经验！ XP+50';
+        onReward(50, 20);
+        confetti({ particleCount: 50, spread: 65, origin: { y: 0.7 } });
+      } else {
+        onReward(15, 5);
+      }
+
+      setInteractiveSpiritChallenge(prev => prev ? {
+        ...prev,
+        feedback: feedbackString,
+        success: true
+      } : null);
+
+      setTimeout(() => {
+        setInteractiveSpiritChallenge(null);
+        loadData();
+      }, 2000);
+
+    } else {
+      audio.playError();
+      reviewPurifiedSpirit(spirit.text, false);
+      
+      setInteractiveSpiritChallenge(prev => prev ? {
+        ...prev,
+        feedback: '💔 魂魄受阻！阶段跌落至 Stage 1，重新温养。',
+        success: false
+      } : null);
+
+      setTimeout(() => {
+        setInteractiveSpiritChallenge(null);
+        loadData();
+      }, 2000);
     }
   };
 
   return (
-    <div className="fixed inset-0 z-50 bg-[#022c22]/95 backdrop-blur-xl flex flex-col items-center justify-start p-4 overflow-y-auto font-sans text-slate-100 select-none">
+    <div id="oracledashboard_root" className="fixed inset-0 z-50 bg-[#070913] backdrop-blur-3xl flex flex-col items-center justify-start p-3 sm:p-5 overflow-y-auto text-slate-100 select-none scrollbar-none">
       
-      {/* 1. TIMED CHALLENGE OVERLAY VIEW */}
-      <AnimatePresence>
-        {isPlayingChallenge && (
-          <motion.div 
-            initial={{ opacity: 0, scale: 0.95 }}
-            animate={{ opacity: 1, scale: 1 }}
-            exit={{ opacity: 0, scale: 0.95 }}
-            className="w-full max-w-md mx-auto my-auto bg-gradient-to-b from-slate-900 to-[#022c22] rounded-[40px] border-4 border-emerald-500/80 shadow-2xl overflow-hidden flex flex-col p-6 min-h-[550px] justify-between text-center relative z-50"
-          >
+      {/* Active Buff status header banner */}
+      {activeEnchantBuff && (
+        <motion.div 
+          initial={{ opacity: 0, y: -20 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="w-full max-w-4xl bg-gradient-to-r from-amber-500/10 via-yellow-500/15 to-orange-500/10 border-2 border-yellow-500/40 rounded-2xl p-3 mb-3 text-center flex items-center justify-center gap-3 relative overflow-hidden"
+        >
+          <div className="absolute inset-0 bg-yellow-400/5 animate-pulse" />
+          <span className="text-lg">⚡</span>
+          <p className="text-xs font-black text-amber-300">
+            锻炎附魔狂热中: 【{activeEnchantBuff.itemName}】临时获得全队增幅 (力量 +{activeEnchantBuff.strengthBoost}, 敏捷 +{activeEnchantBuff.agilityBoost})！
+          </p>
+          <div className="bg-amber-550/20 text-yellow-400 border border-yellow-500 text-[10px] font-black px-2 py-0.5 rounded-lg">
+            持续2场战役中
+          </div>
+        </motion.div>
+      )}
+
+      {/* 1. MAIN MENU & HEADER SECTION (Only visible when active overlays are false) */}
+      {!isEnchantingActive && !activeBountyWanted && (
+        <div id="main_dashboard_body" className="w-full max-w-4xl mx-auto flex flex-col space-y-4 pt-2 pb-16">
+          
+          {/* Brand Premium Banner */}
+          <div className="bg-gradient-to-r from-[#0a0a16] via-[#10142c] to-[#0c0a15] border-2 border-slate-800 p-5 sm:p-6 rounded-[34px] sm:rounded-[42px] relative overflow-hidden shadow-2xl flex flex-col md:flex-row items-center gap-6">
+            
+            {/* Close cross */}
             <button 
-              onClick={handleExitChallenge}
-              className="absolute top-4 right-4 p-2.5 bg-slate-800 hover:bg-slate-700 text-slate-400 hover:text-white rounded-2xl transition-all cursor-pointer"
+              id="btn_close_oracle"
+              onClick={onClose}
+              className="absolute top-4 right-4 p-2 sm:p-3 bg-slate-900/40 hover:bg-slate-850 border border-slate-800/80 hover:border-indigo-500 rounded-2xl transition-all cursor-pointer z-20 outline-none"
             >
-              <X size={18} />
+              <X size={16} className="text-slate-400 hover:text-white" />
             </button>
 
-            {challengeResult ? (
-              <motion.div 
-                initial={{ opacity: 0, y: 15 }} 
-                animate={{ opacity: 1, y: 0 }} 
-                className="space-y-6 py-6"
-              >
-                <div className="flex justify-center">
-                  <span className="text-7xl animate-bounce">🛡️</span>
-                </div>
-                
-                <div>
-                  <span className="bg-emerald-900/80 border border-emerald-700/80 text-emerald-400 font-black px-3.5 py-1 text-xs rounded-full tracking-widest uppercase">
-                    消灭心魔·魔学特训报告
-                  </span>
-                  <h2 className="text-3xl font-black mt-3 leading-snug">
-                    神识复苏！
-                  </h2>
-                  <p className="text-[13px] text-emerald-300 font-semibold mt-1 leading-relaxed px-2">
-                    你击破了黑雾，以下词灵重获新生，已被转移至 <strong>记忆圣殿</strong> 进行遗忘复习巩固：
-                  </p>
-                </div>
+            {/* Radiant decorative blurred circle */}
+            <div className="absolute top-0 right-0 w-80 h-40 bg-indigo-600/10 rounded-full blur-[80px] pointer-events-none" />
+            <div className="absolute bottom-0 left-0 w-60 h-30 bg-purple-600/10 rounded-full blur-[60px] pointer-events-none" />
 
-                {challengeResult.wordsPurified.length > 0 ? (
-                  <div className="bg-slate-950/60 p-4 border border-emerald-900 rounded-2xl max-h-36 overflow-y-auto space-y-1 text-left scrollbar-thin">
-                    <p className="text-[11px] text-emerald-400 font-extrabold mb-1 px-1">🕊️ 转化进入圣殿的词灵：</p>
-                    <div className="flex flex-wrap gap-1.5 p-1">
-                      {challengeResult.wordsPurified.map(wordText => (
-                        <span key={wordText} className="bg-emerald-500/20 text-emerald-300 border border-emerald-800/80 px-2.5 py-1 rounded-xl text-xs font-black inline-flex items-center gap-1">
-                          <Check size={11} className="stroke-[3]" /> {wordText}
-                        </span>
-                      ))}
-                    </div>
-                  </div>
-                ) : (
-                  <div className="bg-slate-950/60 p-5 border border-slate-800 rounded-2xl text-slate-400 text-xs font-bold leading-relaxed">
-                    由于黑雾略浓，这次没有词汇完成彻底净化。不用灰心，去错题管理直接听发音温读看看！🌿
-                  </div>
-                )}
-
-                <div className="bg-gradient-to-r from-[#022c22] to-slate-900 border-2 border-emerald-900/60 p-4 rounded-2xl flex items-center justify-around">
-                  <div className="text-center">
-                    <p className="text-[10px] text-slate-400 font-bold uppercase tracking-wider">净化成功</p>
-                    <p className="text-2xl font-black text-emerald-400 mt-1">
-                      {challengeResult.wordsPurified.length} <span className="text-xs">词</span>
-                    </p>
-                  </div>
-                  <div className="h-8 w-px bg-slate-800" />
-                  <div className="text-center">
-                    <p className="text-[10px] text-slate-400 font-bold uppercase tracking-wider">经验奖励</p>
-                    <p className="text-2xl font-black text-amber-500 mt-1">
-                      +{challengeResult.xpEarned} <span className="text-xs">XP</span>
-                    </p>
-                  </div>
-                  <div className="h-8 w-px bg-slate-800" />
-                  <div className="text-center">
-                    <p className="text-[10px] text-slate-400 font-bold uppercase tracking-wider">收获魔法币</p>
-                    <p className="text-2xl font-black text-amber-500 mt-1">
-                      +{challengeResult.coinsEarned} <span className="text-xs">🪙</span>
-                    </p>
-                  </div>
-                </div>
-
-                <div className="bg-slate-950/40 p-3.5 border border-emerald-800/30 rounded-2xl flex items-center justify-between text-xs">
-                  <span className="text-slate-400 font-bold">本次训练正确率</span>
-                  <span className={`text-xl font-black ${
-                    (challengeResult.correctCount / Math.max(1, challengeResult.totalAttempted)) >= 0.8 ? 'text-emerald-400' :
-                    (challengeResult.correctCount / Math.max(1, challengeResult.totalAttempted)) >= 0.5 ? 'text-amber-400' : 'text-rose-450'
-                  }`}>
-                    {challengeResult.totalAttempted > 0 ? Math.round((challengeResult.correctCount / challengeResult.totalAttempted) * 100) : 0}% ({challengeResult.correctCount}/{challengeResult.totalAttempted})
-                  </span>
-                </div>
-
-                <div className="flex flex-col gap-2">
-                  {(challengeResult.correctCount < challengeResult.totalAttempted || getVocabularyErrors().length > 0) && (
-                    <button 
-                      onClick={startTimedChallenge}
-                      className="w-full py-3.5 bg-gradient-to-r from-amber-400 to-orange-500 hover:from-amber-350 hover:to-orange-450 text-slate-950 font-black text-sm rounded-2xl border-b-[5px] border-amber-700 active:border-b-2 active:translate-y-0.5 shadow-md cursor-pointer transition-all"
-                    >
-                      再次净化心魔 ⚡
-                    </button>
-                  )}
-
-                  <button 
-                    onClick={handleExitChallenge}
-                    className="w-full py-3.5 bg-emerald-500 hover:bg-emerald-600 text-emerald-950 font-black text-xs rounded-2xl border-b-[5px] border-emerald-700 active:border-b-2 active:translate-y-0.5 shadow-md cursor-pointer transition-all"
-                  >
-                    返回阁楼 📜
-                  </button>
-                </div>
-              </motion.div>
-            ) : (
-              <div className="flex-1 flex flex-col justify-between py-1">
-                {/* Mode Selector and Stats Header */}
-                <div className="space-y-2">
-                  <div className="flex items-center justify-between pb-3 border-b border-emerald-950 text-xs font-black">
-                    <div className="flex items-center space-x-1.5">
-                      {[...Array(3)].map((_, i) => (
-                        <Heart 
-                          key={i} 
-                          size={18} 
-                          className={`transition-all duration-300 ${
-                            i < gameHearts ? 'text-rose-500 fill-rose-500 filter drop-shadow(0 0 4px #f43f5e)' : 'text-slate-800'
-                          }`} 
-                        />
-                      ))}
-                    </div>
-                    
-                    <div className="flex items-center space-x-2">
-                      <span className="text-slate-400 font-bold">时间:</span>
-                      <span className={`text-xl tabular-nums ${gameTimeLeft < 4 ? 'text-rose-500 animate-pulse' : 'text-emerald-400'}`}>
-                        {gameTimeLeft}s
-                      </span>
-                    </div>
-                    
-                    <span className="bg-emerald-950 text-emerald-400 border border-emerald-900 px-3 py-0.5 rounded-full font-mono">
-                      第 {gameIndex + 1} / {gamePool.length} 关
-                    </span>
-                  </div>
-
-                  {/* Mode Slider / Toggle */}
-                  <div className="grid grid-cols-2 bg-slate-950 p-1 rounded-xl border border-emerald-900/40">
-                    <button
-                      type="button"
-                      onClick={() => setChallengeGameMode('SPELLING')}
-                      className={`py-1.5 rounded-lg text-xs font-black transition-all cursor-pointer ${
-                        challengeGameMode === 'SPELLING' 
-                          ? 'bg-emerald-500 text-slate-950 shadow-md' 
-                          : 'text-slate-400 hover:text-slate-100'
-                      }`}
-                    >
-                      🔮 符文拼写拼读
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => setChallengeGameMode('MCQ')}
-                      className={`py-1.5 rounded-lg text-xs font-black transition-all cursor-pointer ${
-                        challengeGameMode === 'MCQ' 
-                          ? 'bg-emerald-500 text-slate-950 shadow-md' 
-                          : 'text-slate-400 hover:text-slate-100'
-                      }`}
-                    >
-                      🎯 汉字中译抉择
-                    </button>
-                  </div>
-                </div>
-
-                <div className="w-full bg-slate-800/80 h-1.5 rounded-full overflow-hidden mt-2.5">
-                  <div 
-                    className="h-full bg-gradient-to-r from-emerald-500 to-teal-400 transition-all duration-350" 
-                    style={{ width: `${((gameIndex + 1) / gamePool.length) * 100}%` }}
-                  />
-                </div>
-
-                <div className="my-auto py-4 space-y-4">
-                  {/* Speaker action */}
-                  <div 
-                    onClick={() => speakWord(gamePool[gameIndex].text)}
-                    className="inline-block p-4 bg-gradient-to-r from-emerald-500 to-teal-400 hover:scale-105 active:scale-95 text-slate-950 rounded-full cursor-pointer shadow-lg transition-transform" 
-                  >
-                    <Volume2 size={32} className="animate-pulse" />
-                  </div>
-                  
-                  <div>
-                    {challengeGameMode === 'SPELLING' ? (
-                      <div className="space-y-4">
-                        <div className="bg-emerald-950/20 border border-emerald-950 rounded-2xl py-2 px-4 inline-block">
-                          <p className="text-[10px] text-emerald-400 font-extrabold uppercase tracking-widest">
-                            当前净化目标释义:
-                          </p>
-                          <p className="text-lg font-black text-white mt-0.5">
-                            {gamePool[gameIndex].translation}
-                          </p>
-                        </div>
-
-                        {/* Spelling word display boxes */}
-                        <div className="flex flex-wrap justify-center gap-1.5 font-mono py-2">
-                          {gamePool[gameIndex].text.split('').map((char, charIdx) => {
-                            const isTyped = charIdx < spellInput.length;
-                            return (
-                              <span 
-                                key={charIdx} 
-                                className={`w-9 h-11 border-2 rounded-xl text-xl font-bold flex items-center justify-center transition-all ${
-                                  isTyped 
-                                    ? 'bg-emerald-500/20 text-emerald-300 border-emerald-500 shadow-[0_0_10px_rgba(52,211,153,0.3)] animate-bounce' 
-                                    : 'bg-slate-950 border-slate-800 text-slate-700'
-                                }`}
-                              >
-                                {isTyped ? spellInput[charIdx] : '_'}
-                              </span>
-                            );
-                          })}
-                        </div>
-                      </div>
-                    ) : (
-                      <div>
-                        <h3 className="text-4xl font-extrabold tracking-widest text-white leading-tight uppercase font-mono">
-                          {gamePool[gameIndex].text}
-                        </h3>
-                        <p className="text-xs text-slate-400 font-semibold mt-1">
-                          按发音钮，选出正确的太古中译释义
-                        </p>
-                      </div>
-                    )}
-                  </div>
-                </div>
-
-                {/* Feedbacks container */}
-                <div className="h-10 flex items-center justify-center my-0.5">
-                  <AnimatePresence mode="wait">
-                    {gameFeedback && (
-                      <motion.div
-                        initial={{ opacity: 0, y: 8 }}
-                        animate={{ opacity: 1, y: 0 }}
-                        exit={{ opacity: 0, y: -8 }}
-                        className={`text-xs font-black tracking-wide py-1 px-3.5 rounded-full ${
-                          gameFeedbackType === 'SUCCESS' 
-                            ? 'text-emerald-300 bg-emerald-950/50 border border-emerald-900/60' 
-                            : 'text-rose-400 bg-rose-950/50 border border-rose-900/60'
-                        }`}
-                      >
-                        {gameFeedback}
-                      </motion.div>
-                    )}
-                  </AnimatePresence>
-                </div>
-
-                {/* Subgame dynamic boards */}
-                <div className="pb-3 text-center">
-                  {challengeGameMode === 'SPELLING' ? (
-                    <div className="space-y-3.5">
-                      {/* Scrambled Bubble Buttons */}
-                      <div className="flex flex-wrap justify-center gap-2.5 max-w-sm mx-auto p-1.5 bg-slate-950/60 border border-emerald-950/40 rounded-3xl">
-                        {spellRuneBubbles.map((bubble) => (
-                          <button
-                            key={bubble.id}
-                            disabled={bubble.used || gameFeedback !== null}
-                            onClick={() => handleSpellLetterClick(bubble.id, bubble.char)}
-                            className={`w-11 h-11 rounded-full font-mono text-base font-black flex items-center justify-center transition-all cursor-pointer shadow border-b-4 ${
-                              bubble.used 
-                                ? 'opacity-25 scale-75 cursor-default border-transparent bg-slate-900 text-transparent' 
-                                : 'bg-gradient-to-b from-slate-900 to-slate-800 text-slate-100 hover:from-slate-800 hover:to-slate-700 border-slate-950 border-b-slate-600 active:border-b-0 active:translate-y-1'
-                            }`}
-                          >
-                            {bubble.char}
-                          </button>
-                        ))}
-                      </div>
-
-                      {/* Hint Trigger */}
-                      <div className="flex items-center justify-center">
-                        <button
-                          type="button"
-                          onClick={handleUseMagicHint}
-                          disabled={gameFeedback !== null || spellInput.length >= gamePool[gameIndex].text.length}
-                          className="flex items-center gap-1 bg-[#064e3b]/80 hover:bg-[#065f46] disabled:opacity-40 border border-emerald-500/30 text-emerald-300 hover:text-white px-3.5 py-1.5 rounded-full text-[11px] font-bold transition-all cursor-pointer shadow-md"
-                        >
-                          <Sparkles size={13} className="text-amber-400 animate-pulse" /> 魔法水晶提示 (时间-2秒)
-                        </button>
-                      </div>
-                    </div>
-                  ) : (
-                    <div className="grid grid-cols-2 gap-3 max-w-sm mx-auto">
-                      {gameOptions.map((option) => (
-                        <button
-                          key={option}
-                          onClick={() => {
-                            setUserAnswerInput(option);
-                            handleChooseOption(option);
-                          }}
-                          disabled={gameFeedback !== null}
-                          className="py-4 px-3.5 bg-slate-950 hover:bg-slate-850 disabled:opacity-40 border-2 border-b-[5px] border-slate-900 text-[15px] font-black text-slate-200 hover:border-emerald-500 rounded-2xl active:border-b-2 active:translate-y-0.5 cursor-pointer shadow-md transition-all text-center"
-                        >
-                          {option}
-                        </button>
-                      ))}
-                    </div>
-                  )}
+            {/* User Profile Avatar Graphics */}
+            <div className="relative flex-shrink-0 animate-bounce-gentle mt-2">
+              <div className="w-24 h-24 sm:w-28 sm:h-28 rounded-[28px] bg-slate-950 border-2 border-purple-500/80 overflow-hidden shadow-2xl flex items-center justify-center p-1 relative">
+                <img 
+                  src={activeHero.avatarUri} 
+                  alt="activeHero" 
+                  referrerPolicy="no-referrer"
+                  className="w-full h-full object-contain filter drop-shadow-[0_0_8px_rgba(168,85,247,0.5)]"
+                />
+                <div className="absolute bottom-1 right-1 bg-purple-600 text-[9px] font-black px-1.5 py-0.5 rounded border border-purple-400 select-none">
+                  LV {activeHero.level}
                 </div>
               </div>
-            )}
-          </motion.div>
-        )}
-      </AnimatePresence>
+              <div className="absolute -top-3 -left-3 w-8 h-8 rounded-full bg-gradient-to-br from-indigo-505 to-purple-600 flex items-center justify-center text-xs shadow-md border border-indigo-400 animate-pulse">
+                🔮
+              </div>
+            </div>
 
-      {/* 2. SPECIFIC WORD SPIRIT RE-MASTERY OVERLAY */}
-      <AnimatePresence>
-        {activeReviewSpirit && (
-          <motion.div
-            initial={{ opacity: 0, scale: 0.95 }}
-            animate={{ opacity: 1, scale: 1 }}
-            exit={{ opacity: 0, scale: 0.95 }}
-            className="fixed inset-0 z-[60] bg-slate-950/90 backdrop-blur-md flex items-center justify-center p-4 animate-fade-in"
-          >
-            <div className="bg-gradient-to-b from-slate-900 to-[#1e1b4b] rounded-[40px] border-4 border-indigo-500 p-6 w-full max-w-sm text-center relative shadow-2xl">
-              <button 
-                onClick={() => {
-                  setActiveReviewSpirit(null);
-                  setSpiritReviewFeedback(null);
-                  loadData();
-                }}
-                className="absolute top-4 right-4 p-2 bg-slate-800 hover:bg-slate-700 text-slate-400 hover:text-white rounded-xl transition-all cursor-pointer"
-              >
-                <X size={15} />
-              </button>
-
-              <span className="text-5xl animate-spin inline-block mb-2">🔮</span>
-              <h2 className="text-xl font-black text-indigo-300">词灵拼写唤醒仪式</h2>
-              <p className="text-[11px] text-slate-400 mt-1 leading-snug">
-                回忆其中意，通过字母符文板拼写复苏该词灵！
+            {/* Brand details */}
+            <div className="text-center md:text-left flex-1 space-y-2">
+              <div className="inline-flex items-center px-3 py-1 bg-indigo-500/10 text-indigo-400 border border-indigo-500/20 rounded-full text-[9px] font-extrabold uppercase tracking-widest leading-none">
+                🧠 LEXICAL HERO RPG FORGING LEDGER
+              </div>
+              <h1 className="text-3xl sm:text-4xl font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-slate-100 via-indigo-150 to-purple-300 leading-tight">
+                词魂神炼馆 · 遗忘圣殿
+              </h1>
+              <p className="text-xs sm:text-[12.5px] text-slate-405 max-w-xl font-medium leading-relaxed">
+                这里将错词拟态化作为心魔怪灵。点击上方导航，进入铁匠铺为你的狮子头盔或大剑进行<strong>“附魔强化”</strong>，或者前往<strong>“败将通缉墙”</strong>讨伐心魔，亦或在<strong>“圣殿”</strong>中净化翻转卡牌！
               </p>
 
-              <div className="my-5 p-5 bg-slate-950/80 border border-indigo-900/60 rounded-3xl space-y-3.5">
-                <div 
-                  onClick={() => speakWord(activeReviewSpirit.text)}
-                  className="mx-auto w-11 h-11 flex items-center justify-center rounded-full bg-indigo-550/20 hover:bg-indigo-550 text-indigo-300 hover:text-white cursor-pointer transition-transform duration-200 hover:scale-105"
-                >
-                  <Volume2 size={22} className="animate-pulse" />
+              {/* Grid counter */}
+              <div className="grid grid-cols-3 gap-2.5 sm:gap-3.5 pt-2 max-w-lg">
+                <div className="bg-slate-950/70 border border-slate-800/80 p-2 rounded-2xl text-center">
+                  <p className="text-[9px] text-slate-500 font-extrabold uppercase mb-0.5">捕获心魔</p>
+                  <p className="text-xl font-black text-rose-450">{errorList.length} <span className="text-[10px] text-slate-500">怪</span></p>
                 </div>
-                
-                <div className="bg-indigo-950/40 p-2.5 rounded-xl border border-indigo-950 inline-block">
-                  <p className="text-[9px] text-indigo-400 font-extrabold uppercase tracking-widest">太古中译释义提示：</p>
-                  <p className="text-[15px] font-black text-indigo-100">{activeReviewSpirit.translation}</p>
+                <div className="bg-slate-950/70 border border-slate-800/80 p-2 rounded-2xl text-center">
+                  <p className="text-[9px] text-slate-500 font-extrabold uppercase mb-0.5">自修词魄</p>
+                  <p className="text-xl font-black text-indigo-405">{purifiedSpirits.length} <span className="text-[10px] text-slate-500">魄</span></p>
                 </div>
-
-                {/* Review spelling boxes visual */}
-                <div className="flex flex-wrap justify-center gap-1 font-mono pt-1">
-                  {activeReviewSpirit.text.split('').map((char, charIdx) => {
-                    const isTyped = charIdx < reviewSpellInput.length;
-                    return (
-                      <span 
-                        key={charIdx} 
-                        className={`w-7 h-9 border-2 rounded-lg text-base font-bold flex items-center justify-center transition-all ${
-                          isTyped 
-                            ? 'bg-indigo-500/20 text-indigo-300 border-indigo-400 shadow-[0_0_8px_rgba(99,102,241,0.4)]' 
-                            : 'bg-slate-950 border-slate-800 text-slate-700'
-                        }`}
-                      >
-                        {isTyped ? reviewSpellInput[charIdx] : '_'}
-                      </span>
-                    );
-                  })}
+                <div className="bg-slate-950/70 border border-slate-800/80 p-2 rounded-2xl text-center">
+                  <p className="text-[9px] text-slate-500 font-extrabold uppercase mb-0.5">记忆神识健康</p>
+                  <p className="text-xl font-black text-emerald-400">{metrics.memoryHealthPercentage}%</p>
                 </div>
-
-                <p className="text-[9.5px] text-slate-400 max-w-xs mx-auto">
-                  阶段为：Stage {activeReviewSpirit.stage} - {getStageDisplay(activeReviewSpirit.stage).name}
-                </p>
-              </div>
-
-              {spiritReviewFeedback ? (
-                <motion.p 
-                  initial={{ opacity: 0 }}
-                  animate={{ opacity: 1 }}
-                  className={`text-xs font-black min-h-[48px] flex items-center justify-center p-2.5 rounded-2xl leading-relaxed ${
-                    spiritReviewFeedbackType === 'SUCCESS' 
-                      ? 'text-emerald-300 bg-emerald-950/60 border border-emerald-900' 
-                      : 'text-rose-300 bg-rose-950/60 border border-rose-900'
-                  }`}
-                >
-                  {spiritReviewFeedback}
-                </motion.p>
-              ) : (
-                <div className="space-y-3 pt-1">
-                  {/* Letters Keyboard spelling */}
-                  <div className="flex flex-wrap justify-center gap-2 max-w-sm mx-auto p-2 bg-slate-950 border border-indigo-950 rounded-2xl">
-                    {reviewRuneBubbles.map((bubble) => (
-                      <button
-                        key={bubble.id}
-                        disabled={bubble.used || spiritReviewFeedback !== null}
-                        onClick={() => handleReviewLetterClick(bubble.id, bubble.char)}
-                        className={`w-9 h-9 rounded-full font-mono text-sm font-bold flex items-center justify-center transition-all cursor-pointer shadow border-b-2 ${
-                          bubble.used 
-                            ? 'opacity-20 scale-75 cursor-default border-transparent bg-slate-900 text-transparent' 
-                            : 'bg-gradient-to-b from-slate-950 to-slate-900 text-indigo-100 hover:from-indigo-950 hover:to-indigo-900 border-indigo-950/50 border-b-indigo-705 active:translate-y-0.5'
-                        }`}
-                      >
-                        {bubble.char}
-                      </button>
-                    ))}
-                  </div>
-
-                  <p className="text-[10px] text-slate-500 font-semibold italic">💡 温馨提示：拼写拼错会重置噢，请细心施咒</p>
-                </div>
-              )}
-            </div>
-          </motion.div>
-        )}
-      </AnimatePresence>
-
-      {/* 3. MAIN STATIC WORKSPACE */}
-      {!isPlayingChallenge && (
-        <div className="w-full max-w-4xl mx-auto flex flex-col space-y-6 pb-20 pt-2 relative">
-          
-          {/* Header Panel */}
-          <div className="bg-gradient-to-r from-slate-900 to-[#022c22] border-2 border-emerald-900/60 p-6 sm:p-8 rounded-[40px] text-center relative overflow-hidden shadow-2xl">
-            <button 
-              onClick={onClose}
-              className="absolute top-5 right-5 p-3 bg-slate-800 hover:bg-slate-700 text-slate-305 hover:text-white rounded-2xl transition-all cursor-pointer z-20"
-            >
-              <X size={20} />
-            </button>
-            
-            <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-64 h-64 border-4 border-emerald-500/10 rounded-full blur-2xl pointer-events-none" />
-            
-            <div className="inline-flex items-center px-4.5 py-1.5 bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 rounded-full text-[10px] font-black uppercase tracking-[0.2em] mb-4 shadow">
-              <ShieldAlert size={12} className="mr-2" />
-              INCORRECT WORDS & MEMORY SANCTUM
-            </div>
-            
-            <h2 className="text-4xl sm:text-5xl font-black text-white tracking-tight leading-none">
-              神识修炼馆 · 错词与记忆圣殿
-            </h2>
-            <p className="text-sm font-semibold text-emerald-400/90 mt-3 leading-relaxed max-w-xl mx-auto">
-              此空间汇总 <strong>冒险深林</strong> 与 <strong>游乐园</strong> 特训中的错误记忆，并应用 <strong>Ebbinghaus 艾宾浩斯遗忘曲线</strong> 全天候跟踪消灭掉的词灵，安排阶段自修重铸！
-            </p>
-
-            {/* Micro statistic badges */}
-            <div className="grid grid-cols-3 gap-3.5 mt-8 max-w-xl mx-auto bg-slate-950/60 p-4 border border-emerald-900/30 rounded-3xl">
-              <div className="text-center">
-                <p className="text-[10px] text-slate-400 font-bold uppercase tracking-wider mb-1">活跃心魔 (错词量)</p>
-                <p className="text-2xl sm:text-3xl font-black text-rose-450">{errorList.length}</p>
-              </div>
-              <div className="h-10 w-px bg-slate-800/80 my-auto" />
-              <div className="text-center">
-                <p className="text-[10px] text-slate-400 font-bold uppercase tracking-wider mb-1">圣殿看守词灵数</p>
-                <p className="text-2xl sm:text-3xl font-black text-indigo-400">{purifiedSpirits.length}</p>
-              </div>
-              <div className="h-10 w-px bg-slate-800/80 my-auto" />
-              <div className="text-center">
-                <p className="text-[10px] text-slate-400 font-bold uppercase tracking-wider mb-1">长效记忆健康度</p>
-                <p className="text-2xl sm:text-3xl font-black text-emerald-400">{metrics.masteryPercentage}%</p>
               </div>
             </div>
           </div>
 
-          {/* Quick Timed Challenge trigger strip (Only clickable if mistakes exist) */}
-          {activeTab !== 'SANCTUM' && errorList.length > 0 && (
-            <motion.div 
-              whileHover={{ y: -3 }}
-              className="bg-gradient-to-r from-amber-400 to-orange-500 p-1.5 rounded-[32px] shadow-xl border-2 border-white/10"
-            >
-              <button 
-                onClick={startTimedChallenge}
-                className="w-full p-4 bg-gradient-to-r from-slate-900 to-slate-950 hover:bg-slate-900 text-amber-400 font-black text-xs rounded-[28px] cursor-pointer"
-              >
-                <div className="flex items-center justify-between px-2">
-                  <div className="flex items-center space-x-3 text-left">
-                    <span className="p-2.5 bg-amber-500/10 rounded-2xl shrink-0">
-                      <Timer className="text-amber-400 animate-spin" size={20} />
-                    </span>
-                    <div>
-                      <p className="text-md font-black text-white">进入心魔限时净化挑战</p>
-                      <p className="text-[11px] text-slate-400">10秒高压训练极速掌握错词。正确答出可消灭词错且直接将其护送入“记忆圣殿”！</p>
-                    </div>
-                  </div>
-                  <span className="bg-amber-400 text-slate-950 px-4 py-2 font-black text-[10px] rounded-xl shadow inline-flex items-center gap-1">
-                    PLAY ⚡
-                  </span>
-                </div>
-              </button>
-            </motion.div>
-          )}
-
-          {/* Tab switches */}
-          <div className="flex bg-slate-950/80 p-1.5 border border-slate-800 rounded-3xl w-full max-w-lg mx-auto">
-            <button 
-              onClick={() => { audio.playClick(); setActiveTab('DASHBOARD'); }}
-              className={`flex-1 py-3 text-center text-xs font-black rounded-2xl transition-all cursor-pointer inline-flex items-center justify-center space-x-1.5 ${
-                activeTab === 'DASHBOARD' ? 'bg-emerald-500 text-slate-950 shadow font-extrabold' : 'text-slate-400 hover:text-slate-200'
+          {/* Sub Navigation Selectors */}
+          <div className="flex bg-slate-950/80 p-1.5 border border-slate-850 rounded-[24px] max-w-3xl mx-auto w-full overflow-x-auto select-none scrollbar-none gap-1 shadow-lg">
+            <button
+              onClick={() => { audio.playClick(); setActiveTab('PEDIA'); }}
+              className={`flex-1 py-3 px-1.5 text-center text-xs font-black rounded-xl transition-all min-w-[100px] shrink-0 inline-flex items-center justify-center space-x-1.5 cursor-pointer outline-none ${
+                activeTab === 'PEDIA' ? 'bg-gradient-to-r from-violet-600 to-indigo-650 text-white shadow font-extrabold' : 'text-slate-405 hover:text-slate-200'
               }`}
             >
-              <BarChart3 size={15} /> <span>修炼诊断</span>
-            </button>
-            
-            <button 
-              onClick={() => { audio.playClick(); setActiveTab('WORDLIST'); }}
-              className={`flex-1 py-3 text-center text-xs font-black rounded-2xl transition-all cursor-pointer inline-flex items-center justify-center space-x-1.5 ${
-                activeTab === 'WORDLIST' ? 'bg-emerald-500 text-slate-950 shadow font-extrabold' : 'text-slate-400 hover:text-slate-200'
-              }`}
-            >
-              <BookOpen size={15} /> <span>错词自修({errorList.length})</span>
+              <Skull size={14} className={activeTab === 'PEDIA' ? 'text-indigo-200 animate-pulse' : 'text-slate-500'} />
+              <span>怪兽天牢</span>
             </button>
 
-            <button 
+            <button
+              onClick={() => { audio.playClick(); setActiveTab('ENCHANT'); }}
+              className={`flex-1 py-3 px-1.5 text-center text-xs font-black rounded-xl transition-all min-w-[100px] shrink-0 inline-flex items-center justify-center space-x-1.5 cursor-pointer outline-none ${
+                activeTab === 'ENCHANT' ? 'bg-gradient-to-r from-violet-600 to-indigo-650 text-white shadow font-extrabold' : 'text-slate-405 hover:text-slate-200'
+              }`}
+            >
+              <Flame size={14} className={activeTab === 'ENCHANT' ? 'text-amber-400 animate-pulse' : 'text-slate-500'} />
+              <span>铁匠铺·附魔</span>
+            </button>
+
+            <button
+              onClick={() => { audio.playClick(); setActiveTab('WANTED'); }}
+              className={`flex-1 py-3 px-1.5 text-center text-xs font-black rounded-xl transition-all min-w-[100px] shrink-0 inline-flex items-center justify-center space-x-1.5 cursor-pointer outline-none ${
+                activeTab === 'WANTED' ? 'bg-gradient-to-r from-violet-600 to-indigo-650 text-white shadow font-extrabold' : 'text-slate-405 hover:text-slate-200'
+              }`}
+            >
+              <Swords size={14} className={activeTab === 'WANTED' ? 'text-red-400 animate-spin-slow' : 'text-slate-500'} />
+              <span>败将通缉令</span>
+            </button>
+
+            <button
               onClick={() => { audio.playClick(); setActiveTab('SANCTUM'); }}
-              className={`flex-1 py-3 text-center text-xs font-black rounded-2xl transition-all cursor-pointer inline-flex items-center justify-center space-x-1.5 ${
-                activeTab === 'SANCTUM' ? 'bg-emerald-500 text-slate-950 shadow font-extrabold' : 'text-slate-400 hover:text-slate-200'
+              className={`flex-1 py-3 px-1.5 text-center text-xs font-black rounded-xl transition-all min-w-[100px] shrink-0 inline-flex items-center justify-center space-x-1.5 cursor-pointer outline-none ${
+                activeTab === 'SANCTUM' ? 'bg-gradient-to-r from-violet-600 to-indigo-650 text-white shadow font-extrabold' : 'text-slate-405 hover:text-slate-200'
               }`}
             >
-              <Star size={15} className="text-yellow-450 animate-pulse" /> <span>记忆圣殿({purifiedSpirits.length})</span>
+              <Award size={14} className={activeTab === 'SANCTUM' ? 'text-yellow-405 animate-pulse' : 'text-slate-500'} />
+              <span>圣殿·净化魂魄</span>
             </button>
           </div>
 
-          {/* Panels switcher Container */}
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-            
-            {/* TAB A: DETAILED DIAGNOSTICS */}
-            {activeTab === 'DASHBOARD' && (
-              <>
-                <div className="md:col-span-2 bg-slate-900 border border-slate-800 rounded-[36px] p-6 space-y-6">
-                  <h3 className="text-lg font-black text-white flex items-center gap-2">
-                    <TrendingUp className="text-emerald-400" size={18} />
-                    太古词误高发期特征分布
+          <div className="pt-2">
+            {/* ----------------------------------------------------------- */}
+            {/* TAB 1: 怪兽天牢 (Overview list of all mistakes) */}
+            {/* ----------------------------------------------------------- */}
+            {activeTab === 'PEDIA' && (
+              <div className="space-y-4 text-left">
+                <div className="pb-2 border-b border-slate-850">
+                  <h3 className="text-lg font-black text-rose-350 flex items-center gap-2">
+                    <Skull size={18} /> 识心密锁 · 浮游心魔牢笼
                   </h3>
-                  
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                    <div className="bg-slate-950/50 p-4 border border-emerald-900/30 rounded-2xl flex items-center space-x-4">
-                      <div className="relative w-16 h-16 shrink-0 flex items-center justify-center">
-                        <svg className="absolute w-16 h-16 rotate-[-90deg]">
-                          <circle cx="32" cy="32" r="28" fill="transparent" stroke="#111827" strokeWidth="6" />
-                          <circle 
-                            cx="32" cy="32" r="28" fill="transparent" stroke="#10b981" strokeWidth="6" 
-                            strokeDasharray="176" 
-                            strokeDashoffset={176 - (176 * (errorList.length ? metrics.adventureCount / Math.max(1, errorList.length) : 0))}
-                          />
-                        </svg>
-                        <span className="text-slate-350 font-black text-xs">
-                          {errorList.length ? Math.round((metrics.adventureCount / errorList.length) * 100) : 0}%
-                        </span>
-                      </div>
-                      
-                      <div className="text-left">
-                        <p className="text-xs text-emerald-400 font-extrabold flex items-center gap-1 mb-1">
-                          🌲 冒险森林
-                        </p>
-                        <p className="text-lg font-black text-white">{metrics.adventureCount} 次错词</p>
-                        <p className="text-[10px] text-slate-400 font-semibold">自学拼读或跟读评估致错</p>
-                      </div>
-                    </div>
-
-                    <div className="bg-slate-950/50 p-4 border border-emerald-900/30 rounded-2xl flex items-center space-x-4">
-                      <div className="relative w-16 h-16 shrink-0 flex items-center justify-center">
-                        <svg className="absolute w-16 h-16 rotate-[-90deg]">
-                          <circle cx="32" cy="32" r="28" fill="transparent" stroke="#111827" strokeWidth="6" />
-                          <circle 
-                            cx="32" cy="32" r="28" fill="transparent" stroke="#fbbf24" strokeWidth="6" 
-                            strokeDasharray="176" 
-                            strokeDashoffset={176 - (176 * (errorList.length ? metrics.arcadeCount / Math.max(1, errorList.length) : 0))}
-                          />
-                        </svg>
-                        <span className="text-slate-350 font-black text-xs">
-                          {errorList.length ? Math.round((metrics.arcadeCount / errorList.length) * 100) : 0}%
-                        </span>
-                      </div>
-                      
-                      <div className="text-left">
-                        <p className="text-xs text-amber-500 font-extrabold flex items-center gap-1 mb-1">
-                          🎮 游乐园
-                        </p>
-                        <p className="text-lg font-black text-white">{metrics.arcadeCount} 次错词</p>
-                        <p className="text-[10px] text-slate-400 font-semibold">射击热气球，卡片游戏时致错</p>
-                      </div>
-                    </div>
-                  </div>
-
-                  <div className="border-t border-slate-800 pt-5 space-y-4">
-                    <p className="text-[11px] font-black uppercase text-slate-400 tracking-wider">
-                      📊 极值起因与常任致错深度：
-                    </p>
-                    
-                    <div className="space-y-3">
-                      {errorList.length > 0 ? (
-                        [...errorList]
-                          .sort((a, b) => b.errorCount - a.errorCount)
-                          .slice(0, 4)
-                          .map((item, idx) => {
-                            const maxError = Math.max(...errorList.map(e => e.errorCount), 4);
-                            const fillPercent = Math.min(100, Math.max(15, (item.errorCount / maxError) * 100));
-                            
-                            return (
-                              <div key={item.text} className="space-y-1">
-                                <div className="flex items-center justify-between text-xs font-bold px-1">
-                                  <span className="text-slate-300 font-mono text-[13px]">{item.text} / {item.translation}</span>
-                                  <span className="text-rose-400">致错值: {item.errorCount} 次</span>
-                                </div>
-                                <div className="w-full bg-slate-950 h-2.5 rounded-full overflow-hidden border border-slate-800">
-                                  <motion.div 
-                                    initial={{ width: 0 }}
-                                    animate={{ width: `${fillPercent}%` }}
-                                    transition={{ duration: 0.5, delay: idx * 0.05 }}
-                                    className={`h-full rounded-full bg-gradient-to-r ${
-                                      idx === 0 ? 'from-rose-500 to-rose-600' :
-                                      idx === 1 ? 'from-orange-400 to-rose-500' :
-                                      'from-amber-400 to-orange-400'
-                                    }`}
-                                  />
-                                </div>
-                              </div>
-                            );
-                          })
-                      ) : (
-                        <div className="py-6 text-center text-slate-500 text-xs font-semibold leading-loose">
-                          修炼心如止水，毫无阴霾黑雾！去冒险大显身手吧 🌟
-                        </div>
-                      )}
-                    </div>
-                  </div>
-                </div>
-
-                <div className="bg-slate-900 border border-slate-800 rounded-[36px] p-6 space-y-5">
-                  <h3 className="text-lg font-black text-white flex items-center gap-1.5 leading-none">
-                    <Flame className="text-rose-500" size={18} />
-                    急需磨炼 Top3 重点错词
-                  </h3>
-                  
-                  <div className="space-y-3">
-                    {metrics.topHardest.length > 0 ? (
-                      metrics.topHardest.map((item, idx) => (
-                        <div 
-                          key={item.text} 
-                          className="bg-slate-950 border border-slate-850 p-4 rounded-2xl relative overflow-hidden flex flex-col justify-between"
-                        >
-                          <div className="absolute top-2 right-2 flex flex-col items-end">
-                            <span className="text-rose-450 animate-pulse text-xs font-black">
-                              🔥 {item.errorCount}次
-                            </span>
-                          </div>
-
-                          <span className="text-[10px] text-rose-400 font-bold tracking-widest uppercase">
-                            急需降伏
-                          </span>
-                          
-                          <h4 className="text-2xl font-black text-rose-100 font-mono mt-1 uppercase">
-                            {item.text}
-                          </h4>
-                          
-                          <p className="text-slate-450 text-xs mt-1">
-                            中译: {item.translation}
-                          </p>
-
-                          <div className="flex items-center justify-between mt-4 pt-3 border-t border-slate-900/60">
-                            <button 
-                              onClick={() => speakWord(item.text)}
-                              className="p-1 px-3 bg-slate-800 hover:bg-slate-700 hover:text-white rounded-lg text-slate-350 text-xs font-black inline-flex items-center gap-1 transition-all cursor-pointer"
-                            >
-                              <Volume2 size={11} /> 播音
-                            </button>
-                            <button 
-                              onClick={() => handlePurifyWord(item)}
-                              className="p-1 px-3 bg-emerald-500 hover:bg-emerald-600 text-slate-950 rounded-lg text-xs font-black transition-all cursor-pointer shadow-md"
-                            >
-                              🛡️ 手动降伏
-                            </button>
-                          </div>
-                        </div>
-                      ))
-                    ) : (
-                      <div className="py-10 text-center text-slate-500 text-xs font-bold leading-normal">
-                        暂无重点词。极好！🕊️
-                      </div>
-                    )}
-                  </div>
-                </div>
-              </>
-            )}
-
-            {/* TAB B: INTERACTIVE WORDPOOL LIST AND SELF STUDY */}
-            {activeTab === 'WORDLIST' && (
-              <div className="md:col-span-3 bg-slate-900 border border-slate-800 rounded-[35px] p-6 space-y-4">
-                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-2 border-b border-slate-800">
-                  <h3 className="text-md sm:text-lg font-black text-white flex items-center gap-2">
-                    <BookOpen className="text-emerald-400" size={18} />
-                    太古错词自修阁 ({errorList.length})
-                  </h3>
-                  <p className="text-slate-400 text-xs">
-                    点击播音矫正读法，按 “已掌握” 转换进入圣殿，通过科学曲线阶段复审巩固！
+                  <p className="text-xs text-slate-400">
+                    此天牢羁押着近期冒险途中阻挠你的错词邪灵。你可通过点击“直接度化”对其进行斩邪温养并护送至圣殿。
                   </p>
                 </div>
 
                 {errorList.length > 0 ? (
-                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-                    {errorList.map((item) => (
-                      <div 
-                        key={item.text}
-                        className="bg-slate-950 border border-slate-900 p-5 rounded-2xl flex flex-col justify-between hover:border-emerald-500/50 transition-all duration-200 relative group"
-                      >
-                        <span className="absolute top-4 right-4 bg-rose-950/40 text-rose-350 border border-rose-900/40 font-mono text-[9px] font-bold px-2 py-0.5 rounded-full select-none">
-                          致错: {item.errorCount}
-                        </span>
-
-                        <div className="space-y-1.5 text-left">
-                          <span className="text-[9px] text-slate-500 font-bold uppercase tracking-wider">
-                            {item.sources.map(s => s === 'ADVENTURE' ? '🌲冒险森林' : '🎮游乐园').join(' / ')}
-                          </span>
-                          
-                          <div className="flex items-baseline space-x-1.5">
-                            <h4 className="text-2xl font-black text-white font-mono uppercase tracking-wide leading-none">
-                              {item.text}
-                            </h4>
-                            {item.syllables && item.syllables.length > 0 && (
-                              <span className="text-[10px] text-slate-500 font-mono font-bold">
-                                ({item.syllables.join('-')})
-                              </span>
-                            )}
-                          </div>
-                          
-                          <p className="text-slate-400 text-xs font-medium">
-                            中译: {item.translation}
-                          </p>
-                        </div>
-
-                        <div className="flex items-center justify-between gap-2 mt-4 pt-3 border-t border-slate-950">
-                          <button
-                            onClick={() => { speakWord(item.text); audio.playClick(); }}
-                            className="p-1 px-3 bg-slate-800 hover:bg-slate-700 hover:text-white rounded-lg text-slate-350 text-xs font-black inline-flex items-center gap-1 transition-all cursor-pointer"
-                          >
-                            <Volume2 size={11} /> 播音
-                          </button>
-                          
-                          <button
-                            onClick={() => handlePurifyWord(item)}
-                            className="p-1 px-3 bg-emerald-500 hover:bg-emerald-600 text-slate-950 rounded-lg text-xs font-black transition-all cursor-pointer shadow-md"
-                          >
-                            🛡️ 掌握消灭
-                          </button>
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                ) : (
-                  <div className="py-20 text-center space-y-4">
-                    <span className="text-7xl block animate-bounce">⚔️</span>
-                    <h4 className="text-xl font-black text-indigo-400">自修阁静谧，无错词心魔</h4>
-                    <p className="text-slate-400 text-xs max-w-sm mx-auto font-medium leading-relaxed">
-                      你在森林冒险或极速清除特训中，暂无未消灭的错词！
-                    </p>
-                  </div>
-                )}
-              </div>
-            )}
-
-            {/* TAB C: SPACED REPETITION SANCTUM REVIEW (EBBI-CURVE HARBOUR) */}
-            {activeTab === 'SANCTUM' && (
-              <div className="md:col-span-3 bg-slate-900 border border-slate-800 rounded-[35px] p-6 space-y-6">
-                
-                {/* Sanctum top dashboard */}
-                <div className="bg-gradient-to-r from-[#111827] to-[#1e1b4b] border border-indigo-900/60 p-5 rounded-3xl flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-                  <div className="text-left space-y-1">
-                    <div className="flex items-center justify-between sm:justify-start gap-2">
-                      <span className="p-1 px-2.5 bg-indigo-550/20 text-indigo-300 border border-indigo-500/25 rounded-md text-[10px] font-black uppercase tracking-wider">
-                        Ebbinghaus Curve Sanctum
-                      </span>
-                      {metrics.dueReviewsCount > 0 && (
-                        <span className="flex h-2.5 w-2.5 relative">
-                          <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-rose-400 opacity-75"></span>
-                          <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-rose-500"></span>
-                        </span>
-                      )}
-                    </div>
-                    <h3 className="text-2xl font-black text-white">太古智慧记忆圣殿</h3>
-                    <p className="text-xs text-slate-400 max-w-xl">
-                      已净化的词位护送至此，安排 <strong>艾宾浩斯曲线5阶段</strong> 算法离线成长重铸。拼写通关注入契合度，极速达到永久记忆！
-                    </p>
-                  </div>
-
-                  {/* Switchers and Controls */}
-                  <div className="flex flex-col items-stretch gap-2 shrink-0">
-                    <div className="flex bg-slate-950 p-1 rounded-xl border border-indigo-900/40 text-[10px] font-black self-end">
-                      <button 
-                        type="button"
-                        onClick={() => { audio.playClick(); setSanctumViewMode('CONSTELLATION'); }}
-                        className={`px-3 py-1.5 rounded-lg transition-all cursor-pointer ${
-                          sanctumViewMode === 'CONSTELLATION' 
-                            ? 'bg-indigo-600 text-white shadow-md' 
-                            : 'text-slate-450 hover:text-white'
-                        }`}
-                      >
-                        🌌 智识星脉图
-                      </button>
-                      <button 
-                        type="button"
-                        onClick={() => { audio.playClick(); setSanctumViewMode('GRID'); }}
-                        className={`px-3 py-1.5 rounded-lg transition-all cursor-pointer ${
-                          sanctumViewMode === 'GRID' 
-                            ? 'bg-indigo-600 text-white shadow-md' 
-                            : 'text-slate-450 hover:text-white'
-                        }`}
-                      >
-                        🗂️ 灵馆卡牌
-                      </button>
-                    </div>
-
-                    <div className="flex gap-2 justify-end">
-                      <div className="bg-slate-950/70 border border-indigo-950/60 p-2.5 rounded-xl text-center min-w-[70px]">
-                        <p className="text-[9px] text-slate-400 uppercase tracking-widest leading-none">需要召唤</p>
-                        <p className="text-lg font-black text-rose-450 leading-none mt-1">{metrics.dueReviewsCount}</p>
-                      </div>
-                      <div className="bg-slate-950/70 border border-indigo-950/60 p-2.5 rounded-xl text-center min-w-[70px]">
-                        <p className="text-[9px] text-slate-400 uppercase tracking-widest leading-none">契合圆满</p>
-                        <p className="text-lg font-black text-amber-400 leading-none mt-1">{metrics.finishedMasteryCount}</p>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-
-                {purifiedSpirits.length > 0 ? (
-                  <div>
-                    {sanctumViewMode === 'CONSTELLATION' ? (
-                      /* CONSTELLATION GALAXY VIEW MODE */
-                      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-                        {/* The interactive Space Canvas */}
-                        <div className="lg:col-span-2 bg-slate-950/80 rounded-3xl border-2 border-indigo-950 p-4 relative overflow-hidden h-[420px] flex flex-col justify-between shadow-inner">
-                          {/* Twinkly deep space stars decoration */}
-                          <div className="absolute inset-0 pointer-events-none">
-                            {backgroundStars.map((star) => (
-                              <div
-                                key={star.id}
-                                className="absolute bg-white rounded-full transition-opacity duration-1000"
-                                style={{
-                                  left: `${star.x}%`,
-                                  top: `${star.y}%`,
-                                  width: `${star.size}px`,
-                                  height: `${star.size}px`,
-                                  opacity: star.opacity,
-                                }}
-                              />
-                            ))}
-                          </div>
-
-                          <div className="z-10 flex items-center justify-between text-[11px] font-bold text-indigo-300 pointer-events-none bg-slate-900/60 backdrop-blur-sm self-start px-3 py-1.5 rounded-full border border-indigo-900/40">
-                            🌌 点击星网节点激发该词灵神识
-                          </div>
-
-                          {/* Constellation SVG layout coordinates graph */}
-                          <div className="absolute inset-x-0 top-6 bottom-4 flex items-center justify-center">
-                            <svg 
-                              viewBox="0 0 400 400" 
-                              className="w-full h-full max-w-[390px] max-h-[390px]"
-                            >
-                              {/* Connector Links path */}
-                              {(() => {
-                                const spiralNodes = purifiedSpirits.map((spirit, idx) => {
-                                  const angle = idx * 2.3; 
-                                  const radius = 25 + idx * (145 / Math.max(purifiedSpirits.length, 6));
-                                  return {
-                                    spirit,
-                                    x: 200 + Math.cos(angle) * Math.min(160, radius),
-                                    y: 200 + Math.sin(angle) * Math.min(160, radius),
-                                  };
-                                });
-
-                                return (
-                                  <>
-                                    {spiralNodes.map((node, idx) => {
-                                      if (idx === 0) return null;
-                                      const prev = spiralNodes[idx - 1];
-                                      return (
-                                        <line
-                                          key={`link-${idx}`}
-                                          x1={prev.x}
-                                          y1={prev.y}
-                                          x2={node.x}
-                                          y2={node.y}
-                                          stroke="rgba(99, 102, 241, 0.45)"
-                                          strokeWidth="1.5"
-                                          strokeDasharray="4 3"
-                                        />
-                                      );
-                                    })}
-
-                                    {/* Core spiral node buttons */}
-                                    {spiralNodes.map((node, idx) => {
-                                      const retentionValue = calculateRetention(node.spirit);
-                                      const isDue = node.spirit.nextReviewAt <= Date.now() || retentionValue <= 50;
-                                      const isMastered = node.spirit.stage === 5;
-                                      const isSelected = activeConstellationNode?.text === node.spirit.text;
-
-                                      // Node theme styles
-                                      let glowColor = "rgba(129, 140, 248, 0.4)";
-                                      let coreColor = "#6366f1";
-                                      if (isMastered) {
-                                        glowColor = "rgba(245, 158, 11, 0.5)";
-                                        coreColor = "#f59e0b";
-                                      } else if (isDue) {
-                                        glowColor = "rgba(239, 68, 68, 0.6)";
-                                        coreColor = "#ef4444";
-                                      }
-
-                                      return (
-                                        <g 
-                                          key={node.spirit.text}
-                                          className="cursor-pointer"
-                                          onClick={() => {
-                                            audio.playClick();
-                                            setActiveConstellationNode(node.spirit);
-                                          }}
-                                        >
-                                          {/* Hover halo outer glow */}
-                                          <circle
-                                            cx={node.x}
-                                            cy={node.y}
-                                            r={isSelected ? 16 : 10}
-                                            fill={glowColor}
-                                            className={`${isDue ? 'animate-ping' : ''} transition-all duration-300`}
-                                          />
-
-                                          {/* Core star dot */}
-                                          <circle
-                                            cx={node.x}
-                                            cy={node.y}
-                                            r={isSelected ? 6 : 4}
-                                            fill={coreColor}
-                                            stroke="#fff"
-                                            strokeWidth={isSelected ? 2 : 1}
-                                            className="transition-all duration-300"
-                                          />
-
-                                          {/* Text tag label */}
-                                          <text
-                                            x={node.x}
-                                            y={node.y + 16}
-                                            textAnchor="middle"
-                                            fill={isSelected ? "#fff" : "rgba(203, 213, 225, 0.75)"}
-                                            fontSize="9"
-                                            fontWeight={isSelected ? "900" : "700"}
-                                            fontFamily="monospace"
-                                            className="select-none tracking-tight pointer-events-none drop-shadow"
-                                          >
-                                            {node.spirit.text.toUpperCase()}
-                                          </text>
-                                        </g>
-                                      );
-                                    })}
-                                  </>
-                                );
-                              })()}
-                            </svg>
-                          </div>
-
-                          <div className="z-10 flex text-[10px] text-slate-500 font-bold justify-between w-full self-end bg-slate-950/80 p-2 rounded-2xl border border-indigo-950/40">
-                            <span>🔴 红色：虚弱需补充</span>
-                            <span>🔵 蓝色：成长充能中</span>
-                            <span>🟡 金色：大圆满永久内聚</span>
-                          </div>
-                        </div>
-
-                        {/* Node detail and summoning review panel */}
-                        <div className="bg-slate-950/60 rounded-3xl border-2 border-indigo-950/40 p-5 flex flex-col justify-between min-h-[420px]">
-                          {activeConstellationNode ? (
-                            <div className="space-y-4 text-left flex flex-col justify-between h-full">
-                              <div className="space-y-3">
-                                <div className="flex items-center justify-between border-b border-indigo-950 pb-3">
-                                  <span className="text-xs bg-indigo-950 text-indigo-300 px-2.5 py-1 rounded-lg font-black border border-indigo-900">
-                                    Stage {activeConstellationNode.stage} · {getStageDisplay(activeConstellationNode.stage).name}
-                                  </span>
-                                  <button
-                                    onClick={() => speakWord(activeConstellationNode.text)}
-                                    className="p-1.5 bg-indigo-500/10 hover:bg-indigo-500/20 text-indigo-300 rounded-lg transition-transform hover:scale-105"
-                                  >
-                                    <Volume2 size={15} />
-                                  </button>
-                                </div>
-
-                                <div className="space-y-1">
-                                  <span className="text-[10px] text-slate-500 font-bold uppercase tracking-wider">词灵圣殿神像:</span>
-                                  <h4 className="text-3xl font-black text-white font-mono uppercase tracking-wide leading-none">
-                                    {activeConstellationNode.text}
-                                  </h4>
-                                  <p className="text-xs font-bold text-slate-300">
-                                    释义: {activeConstellationNode.translation}
-                                  </p>
-                                </div>
-
-                                {/* Retention metrics bar */}
-                                <div className="p-3.5 bg-slate-900/60 border border-indigo-950/60 rounded-2xl space-y-2">
-                                  <div className="flex justify-between items-center text-[10.5px] font-black">
-                                    <span className="text-slate-400">当前记忆残留值</span>
-                                    <span className={
-                                      calculateRetention(activeConstellationNode) >= 80 ? 'text-emerald-400' :
-                                      calculateRetention(activeConstellationNode) >= 50 ? 'text-amber-400' : 'text-red-400 animate-pulse'
-                                    }>
-                                      {calculateRetention(activeConstellationNode)}%
-                                    </span>
-                                  </div>
-
-                                  <div className="w-full bg-slate-950 h-2 rounded-full overflow-hidden">
-                                    <div 
-                                      className="h-full bg-gradient-to-r from-indigo-500 to-teal-400"
-                                      style={{ width: `${calculateRetention(activeConstellationNode)}%` }}
-                                    />
-                                  </div>
-                                  <p className="text-[9.5px] text-slate-500 uppercase italic">
-                                    {getStageDisplay(activeConstellationNode.stage).desc}
-                                  </p>
-                                </div>
-
-                                <div className="space-y-1.5 text-xs text-slate-400 pl-1 leading-snug">
-                                  <p>• <strong>首次修成:</strong> {new Date(activeConstellationNode.purifiedAt).toLocaleDateString()}</p>
-                                  <p>• <strong>温习期限:</strong> {new Date(activeConstellationNode.nextReviewAt).toLocaleString()}</p>
-                                </div>
-                              </div>
-
-                              <div className="space-y-2 pt-4 border-t border-indigo-950">
-                                {(() => {
-                                  const isDue = activeConstellationNode.nextReviewAt <= Date.now() || calculateRetention(activeConstellationNode) <= 50;
-                                  return (
-                                    <>
-                                      {isDue ? (
-                                        <button
-                                          onClick={() => startReviewSpirit(activeConstellationNode)}
-                                          className="w-full py-2.5 bg-gradient-to-r from-rose-500 to-red-600 border border-rose-400 hover:scale-[1.02] text-white rounded-xl font-black text-xs inline-flex items-center justify-center gap-1.5 transition-all cursor-pointer shadow-lg shadow-rose-950/20"
-                                        >
-                                          <Zap size={11} fill="currentColor" /> 温习召唤仪式
-                                        </button>
-                                      ) : (
-                                        <button
-                                          onClick={() => speakWord(activeConstellationNode.text)}
-                                          className="w-full py-2.5 bg-indigo-900/30 hover:bg-slate-800 border border-indigo-800 text-indigo-300 rounded-xl font-bold text-xs inline-flex items-center justify-center gap-1.5 transition-all cursor-pointer"
-                                        >
-                                          <Volume2 size={11} /> 圣音自听
-                                        </button>
-                                      )}
-                                      
-                                      <button
-                                        onClick={() => handleReleaseSpirit(activeConstellationNode.text)}
-                                        className="w-full py-2 hover:bg-rose-950/10 text-slate-500 hover:text-rose-450 border border-transparent hover:border-rose-950/30 rounded-xl font-bold text-[10px] transition-all cursor-pointer"
-                                      >
-                                        🕊️ 提前超度释放该词灵
-                                      </button>
-                                    </>
-                                  );
-                                })()}
-                              </div>
-                            </div>
-                          ) : (
-                            <div className="my-auto text-center space-y-3.5 py-8">
-                              <span className="text-4xl block animate-pulse">🛰️</span>
-                              <h5 className="text-xs font-black text-slate-400">词灵图谱节点未就绪</h5>
-                              <p className="text-[10px] text-slate-500 leading-normal max-w-[200px] mx-auto">
-                                请在左侧星网中，点击具体的星辰节点，即可获取该词灵的具体修炼记忆生命条，并实施神识施咒法术。
-                              </p>
-                            </div>
-                          )}
-                        </div>
-                      </div>
-                    ) : (
-                      /* CLASSIC LIST GRID VIEW MODE */
-                      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-                        {purifiedSpirits.map((spirit) => {
-                          const retentionValue = calculateRetention(spirit);
-                          const isDue = spirit.nextReviewAt <= Date.now() || retentionValue <= 50;
-                          const stageInfo = getStageDisplay(spirit.stage);
-                          const isMaxStage = spirit.stage === 5;
-
-                          return (
-                            <div 
-                              key={spirit.text}
-                              className={`bg-slate-950/75 border rounded-2.5xl p-5 flex flex-col justify-between relative group hover:-translate-y-1 transition-all duration-305 ${
-                                isDue ? 'border-indigo-500 shadow-lg shadow-indigo-500/10' : 'border-slate-850'
-                              }`}
-                            >
-                              {/* Top Status */}
-                              <div className="flex items-center justify-between pb-3.5 border-b border-slate-900 mb-4 text-xs font-black">
-                                <span className="p-1 px-2.5 bg-slate-900 text-slate-300 border border-slate-800 rounded-lg shrink-0 flex items-center md:gap-1 tracking-wide leading-none select-none">
-                                  {stageInfo.icon} Stage {spirit.stage} · {stageInfo.name}
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    {errorList.map((item) => {
+                      const mInfo = getMonsterClass(item.errorCount);
+                      return (
+                        <div 
+                          key={item.text}
+                          style={{ backgroundColor: mInfo.glowBg }}
+                          className={`bg-slate-950/40 p-4 rounded-2xl border-2 flex flex-col justify-between transition-all hover:scale-[1.01] ${mInfo.borderColor}`}
+                        >
+                          <div className="flex items-start justify-between">
+                            <div className="flex gap-3">
+                              <span className="text-4xl select-none shrink-0">{mInfo.emoji}</span>
+                              <div className="space-y-1">
+                                <h4 className="text-lg font-extrabold text-white font-mono uppercase tracking-wide">
+                                  {item.text}
+                                </h4>
+                                <p className="text-xs font-bold text-slate-405">中译: {item.translation}</p>
+                                <span className={`inline-block px-1.5 py-0.5 border text-[8px] font-black rounded-md ${mInfo.badgeColor}`}>
+                                  {mInfo.name}
                                 </span>
-                                
-                                <div className="text-right">
-                                  {isMaxStage ? (
-                                    <span className="bg-amber-500/20 text-amber-405 border border-amber-900/60 px-2 py-0.5 rounded-md text-[9px] font-black tracking-wide leading-none uppercase pr-1.5 select-none inline-flex items-center gap-0.5">
-                                      <Star size={7} fill="#fbbf24" stroke="none" /> 永恒圣果
-                                    </span>
-                                  ) : isDue ? (
-                                    <span className="bg-rose-500/15 text-rose-450 border border-rose-900/50 px-2 py-0.5 rounded-md text-[9px] font-black tracking-wider leading-none animate-pulse select-none uppercase">
-                                      🚨 急需召唤
-                                    </span>
-                                  ) : (
-                                    <span className="bg-slate-900 text-slate-450 border border-slate-800/85 px-2 py-0.5 rounded-md text-[9px] font-bold tracking-wider leading-none select-none uppercase">
-                                      修练中
-                                    </span>
-                                  )}
-                                </div>
                               </div>
+                            </div>
 
-                              {/* Central spelling */}
-                              <div className="space-y-1 text-left flex-1 pb-4">
-                                <div className="flex items-baseline space-x-1">
-                                  <h4 className="text-2xl font-black text-slate-100 font-mono uppercase tracking-wide leading-none">
-                                    {spirit.text}
-                                  </h4>
-                                  {spirit.syllables && spirit.syllables.length > 0 && (
-                                    <span className="text-[10px] text-slate-400 font-mono font-bold">
-                                      ({spirit.syllables.join('-')})
-                                    </span>
-                                  )}
-                                </div>
-                                <p className="text-slate-400 text-xs font-medium">{spirit.translation}</p>
-                                
-                                <div className="mt-3 bg-slate-900/60 p-2.5 rounded-xl border border-slate-900 space-y-1">
-                                  <div className="flex justify-between text-[9.5px] font-black">
-                                    <span className="text-slate-500">记忆残留</span>
-                                    <span className={retentionValue >= 80 ? 'text-emerald-400' : retentionValue >= 50 ? 'text-amber-400' : 'text-rose-450'}>
-                                      {retentionValue}%
-                                    </span>
-                                  </div>
-                                  <div className="w-full bg-slate-950 h-1.5 rounded-full overflow-hidden">
-                                    <div 
-                                      className="h-full bg-gradient-to-r from-indigo-550 to-teal-400"
-                                      style={{ width: `${retentionValue}%` }}
-                                    />
-                                  </div>
-                                </div>
-                              </div>
+                            <div className="text-right">
+                              <span className="text-[10px] text-rose-450 font-black tracking-wider uppercase bg-rose-950/40 border border-rose-900/60 px-2 py-0.5 rounded-md">
+                                犯错 x{item.errorCount} 次
+                              </span>
+                              <p className="text-[9px] text-slate-500 font-mono mt-1">最后露面: {new Date(item.lastErrorAt).toLocaleDateString()}</p>
+                            </div>
+                          </div>
 
-                              {/* Operations */}
-                              <div className="flex items-center space-x-2 pt-3 border-t border-slate-900 text-[10px]">
-                                {isDue ? (
-                                  <button 
-                                    onClick={() =>};�点被护送入圣殿进行永恒不灭的高频重构哦！
-                    </p>
-                  </div>
-                )}
+                          <p className="my-3 text-slate-400 text-xs leading-relaxed font-semibold italic">
+                            {mInfo.desc}
+                          </p>
 
-              </div>
-            )}
-
-          </div>
-
-        </div>
-      )}
-
-    </div>
-  );
-};
-};�选或通过已被消灭的错词，它们就会化成光点被护送入圣殿进行永恒不灭的高频重构哦！
-                    </p>
-                  </div>
-                )}
-
-              </div>
-            )}(spirit)}
-                                className="flex-1 py-2 bg-gradient-to-r from-indigo-500 to-indigo-600 hover:from-indigo-400 hover:to-indigo-500 text-white rounded-xl font-black inline-flex items-center justify-center gap-1 transition-all cursor-pointer shadow-md shadow-indigo-900/50 outline-none"
-                              >
-                                <Zap size={10} fill="currentColor" /> 温习召唤仪式
-                              </button>
-                            ) : (
-                              <button 
-                                onClick={() => { speakWord(spirit.text); audio.playClick(); }}
-                                className="flex-1 py-2 bg-slate-900 hover:bg-slate-850 text-slate-400 hover:text-white border border-slate-800 rounded-xl font-black inline-flex items-center justify-center gap-1 transition-all cursor-pointer shadow-sm"
-                              >
-                                <Volume2 size={11} /> 圣音自听
-                              </button>
-                            )}
-
-                            <button 
-                              onClick={() => handleReleaseSpirit(spirit.text)}
-                              title="超度词灵：将词灵彻底释放，不再进行遗忘复习温习"
-                              className="p-2 bg-slate-900/40 hover:bg-rose-950/20 text-slate-600 hover:text-rose-400 border border-slate-900 hover:border-rose-950 rounded-xl transition-all cursor-pointer"
+                          <div className="flex items-center gap-2 border-t border-slate-900 pt-3">
+                            <button
+                              onClick={() => { speakWord(item.text); audio.playClick(); }}
+                              className="px-3 py-1.5 bg-slate-900 rounded-lg hover:bg-slate-850 border border-slate-800 text-slate-350 text-xs font-black inline-flex items-center gap-1 cursor-pointer transition-all shadow-inner outline-none"
                             >
-                              <Trash2 size={12} />
+                              <Volume2 size={12} /> 听其真发音
+                            </button>
+                            <button
+                              onClick={() => handleManualPurify(item)}
+                              className="flex-1 py-1.5 bg-gradient-to-r from-teal-505 to-emerald-600 hover:from-teal-400 hover:to-emerald-505 text-white rounded-lg font-extrabold text-xs inline-flex items-center justify-center gap-1 cursor-pointer shadow-md shadow-emerald-900/30 outline-none"
+                            >
+                              🍀 彻底超拔度化 (XP+10)
                             </button>
                           </div>
                         </div>
@@ -1804,22 +861,662 @@ export const ErrorBookDashboard: React.FC<ErrorBookDashboardProps> = ({ stats, o
                     })}
                   </div>
                 ) : (
-                  <div className="py-20 text-center space-y-4">
-                    <span className="text-7xl block animate-bounce">⚔️</span>
-                    <h4 className="text-xl font-black text-indigo-400">圣殿静谧，尚未收容词灵</h4>
-                    <p className="text-slate-400 text-xs max-w-sm mx-auto font-medium leading-relaxed">
-                      你在 <strong>错词自修</strong> 或者 <strong>限时净化特训</strong> 中，只要勾选或通过已被消灭的错词，它们就会化成光点被护送入圣殿进行永恒不灭的高频重构哦！
+                  <div className="py-16 text-center space-y-4 bg-slate-950/40 border border-dashed border-slate-850 rounded-[35px] max-w-lg mx-auto p-4">
+                    <span className="text-5xl block animate-bounce">🛡️</span>
+                    <h4 className="text-md font-black text-emerald-400">天牢彻底清空！</h4>
+                    <p className="text-slate-400 text-xs font-semibold leading-relaxed">
+                      你完美降服了所有心魔。继续去主线关卡历练吧，如果有任何出错的字词，这里将会再次重铸封印印记！
                     </p>
                   </div>
                 )}
-
               </div>
             )}
 
+
+            {/* ----------------------------------------------------------- */}
+            {/* TAB 2: 铁匠铺·装备附魔 */}
+            {/* ----------------------------------------------------------- */}
+            {activeTab === 'ENCHANT' && (
+              <div className="space-y-4 text-left">
+                <div className="pb-2 border-b border-indigo-900/60 flex items-center justify-between">
+                  <div>
+                    <h3 className="text-lg font-black text-indigo-350 flex items-center gap-2">
+                      <Sparkle size={18} className="text-amber-400" /> 狮心附魔烈火铁匠铺
+                    </h3>
+                    <p className="text-xs text-slate-400">
+                      选择一件你的当前装备（或大剑），注入 5 个古老错词。全部融合正确后，装备耀目升级，获得为期2场战役的<strong>力量+5, 敏捷+3属性加成</strong>！
+                    </p>
+                  </div>
+                  <div className="px-3 py-1.5 bg-amber-500/10 border border-amber-500/30 rounded-xl text-yellow-450 text-[10px] font-black uppercase tracking-wider animate-pulse">
+                    🔥 属性灌注增益激活中!
+                  </div>
+                </div>
+
+                {enchantSuccessAlert && (
+                  <motion.div 
+                    initial={{ opacity: 0, scale: 0.95 }}
+                    animate={{ opacity: 1, scale: 1 }}
+                    className="bg-[#121228] border-2 border-amber-550/60 rounded-[28px] p-5 relative overflow-hidden flex flex-col md:flex-row items-center justify-between gap-4"
+                  >
+                    <div className="space-y-1">
+                      <h4 className="text-md font-black text-white flex items-center gap-2">
+                        <Star size={16} className="text-yellow-400 fill-yellow-400 animate-spin-slow" />
+                        【{enchantSuccessAlert.itemName}】临时极品完美附魔激活！
+                      </h4>
+                      <p className="text-xs text-slate-400 font-semibold">
+                        在后续 2 场战斗里狂暴触发：<strong>力量 +5，敏捷 +3！</strong>。相关的所有温养词灵已护送封印入圣殿自修。
+                      </p>
+                    </div>
+                    <div className="flex items-center gap-2 shrink-0 w-full md:w-auto">
+                      <div className="bg-emerald-500/10 text-emerald-400 border border-emerald-950 px-3 py-1.5 rounded-xl text-xs font-black">
+                        +{enchantSuccessAlert.xpEarned} XP
+                      </div>
+                      <div className="bg-amber-500/10 text-yellow-500 border border-amber-950 px-3 py-1.5 rounded-xl text-xs font-black">
+                        +{enchantSuccessAlert.coinsEarned} 🪙
+                      </div>
+                      <button 
+                        onClick={() => setEnchantSuccessAlert(null)}
+                        className="p-1 text-slate-400 hover:text-white rounded-lg hover:bg-slate-900 cursor-pointer"
+                      >
+                        <X size={15} />
+                      </button>
+                    </div>
+                  </motion.div>
+                )}
+
+                {/* Forging gear card board grid */}
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-5 pt-1">
+                  {playerForgeableItems.map((item) => {
+                    const itemSvgUri = getShopItemSvgUri(item.name);
+                    return (
+                      <div
+                        key={item.id}
+                        className="bg-slate-950/40 rounded-[28px] border-2 border-slate-850 p-5 flex flex-col justify-between hover:border-indigo-500 hover:bg-slate-950/70 transition-all shadow-lg"
+                      >
+                        <div className="flex items-center gap-4">
+                          <div className="w-16 h-16 rounded-2xl bg-[#0f0e21] border border-indigo-950 flex items-center justify-center p-2 shrink-0 relative overflow-hidden">
+                            {itemSvgUri ? (
+                              <img 
+                                src={itemSvgUri} 
+                                alt={item.name} 
+                                referrerPolicy="no-referrer"
+                                className="w-full h-full object-contain filter drop-shadow-[0_2px_4px_rgba(0,0,0,0.4)]"
+                              />
+                            ) : (
+                              <span className="text-3xl">⚔️</span>
+                            )}
+                            <div className="absolute top-0.5 left-0.5 font-mono text-[7px] tracking-wide font-black px-1.5 bg-blue-950/80 text-blue-450 rounded uppercase leading-none scale-90">
+                              {item.requiredSlot === 'RIGHT_HAND' ? '武器' : '防具'}
+                            </div>
+                          </div>
+
+                          <div>
+                            <h4 className="text-md sm:text-lg font-black text-white">{item.name}</h4>
+                            <span className="text-[10px] text-yellow-550 font-extrabold uppercase tracking-widest leading-none">
+                              🌟 神铸装备槽
+                            </span>
+                          </div>
+                        </div>
+
+                        <p className="text-xs text-slate-400 font-medium leading-relaxed my-4 min-h-[44px]">
+                          {item.desc}
+                        </p>
+
+                        <button
+                          onClick={() => startEnchantmentProcess(item.name)}
+                          className="w-full py-2.5 bg-gradient-to-r from-amber-500 to-indigo-600 hover:from-amber-450 hover:to-indigo-550 text-[#070913] hover:text-white font-black text-xs rounded-xl shadow border-b-[3px] border-indigo-900 cursor-pointer transition-all outline-none"
+                        >
+                          ⚒️ 选择该装备发起词印附魔
+                        </button>
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+            )}
+
+
+            {/* ----------------------------------------------------------- */}
+            {/* TAB 3: 败将通缉令 (Wanted Wall) */}
+            {/* ----------------------------------------------------------- */}
+            {activeTab === 'WANTED' && (
+              <div className="space-y-4 text-left">
+                <div className="pb-2 border-b border-slate-850">
+                  <h3 className="text-lg font-black text-yellow-500 flex items-center gap-2">
+                    <Swords size={18} /> 赏金围守 · 败将英魄通缉墙
+                  </h3>
+                  <p className="text-xs text-slate-400">
+                    这里是贴满心魔逃犯的赏金通缉墙。每次讨伐开启，单词将化身凶神小魔向你进行10秒狂击倒数！若能看破它的正确中译，即可将其<strong>一剑斩飞(Cleared)</strong>！
+                  </p>
+                </div>
+
+                {errorList.length > 0 ? (
+                  /* Custom dark medieval bounty wooden board styling */
+                  <div 
+                    className="p-6 bg-gradient-to-br from-[#20150d] via-[#2f1f13] to-[#150d08] border-8 border-[#3c2514] shadow-2xl rounded-3xl min-h-[450px]"
+                    style={{ boxShadow: 'inset 0 0 35px rgba(0,0,0,0.95), 0 10px 25px rgba(0,0,0,0.6)' }}
+                  >
+                    <div className="text-center mb-6 pb-2 border-b-2 border-dashed border-[#54341c]">
+                      <span className="font-serif text-[#a88265] tracking-widest font-black text-sm uppercase">⚔️ BOUNTY BOARD OF DESPAIR ⚔️</span>
+                    </div>
+
+                    <div className="grid grid-cols-1 sm:grid-cols-3 md:grid-cols-4 gap-5">
+                      {errorList.map((item, idx) => {
+                        const mInfo = getMonsterClass(item.errorCount);
+                        const isClearedInSession = clearedBountyTexts.includes(item.text);
+
+                        return (
+                          <div
+                            key={item.text}
+                            className="bg-[#ecdfcb] rounded-2xl border-2 border-dashed border-[#8c7457] p-4 text-center flex flex-col justify-between relative overflow-hidden shadow-xl min-h-[250px] transform hover:scale-102 transition-all"
+                            style={{ 
+                              backgroundImage: 'linear-gradient(150deg, #ecdfcb 0%, #d8cbb5 100%)',
+                              boxShadow: 'inset 0 0 15px rgba(0,0,0,0.05), 3px 6px 15px rgba(0,0,0,0.3)',
+                              transform: `rotate(${idx % 2 === 0 ? '-1.5deg' : '1.5deg'})`
+                            }}
+                          >
+                            <div className="border border-[#786146]/20 bg-[#614931]/10 py-0.5 text-[#593d25] font-serif text-[9px] font-black tracking-widest select-none leading-none">
+                              ⚔️ WANTED ⚔️
+                            </div>
+
+                            <div className="my-5 flex flex-col items-center space-y-2">
+                              {/* Monster symbol */}
+                              <div className="w-14 h-14 rounded-xl bg-[#0a0a09]/10 border-2 border-[#80674c] flex items-center justify-center text-4xl shadow-inner relative select-none">
+                                {mInfo.emoji}
+                              </div>
+                              
+                              <div className="space-y-0.5">
+                                <h4 className="text-lg font-extrabold font-mono text-[#4a2e16] tracking-wide uppercase">
+                                  {item.text}
+                                </h4>
+                                <p className="text-[10px] text-[#70563e] font-black">罪障致错震频: {item.errorCount}层</p>
+                              </div>
+                            </div>
+
+                            <div className="bg-[#503720] border border-[#3e2815] p-1 px-3 rounded-xl max-w-[140px] mx-auto text-center flex items-center justify-center gap-1.5 select-none leading-none">
+                              <span className="text-[9px] text-[#c2aba0] font-bold">捕获红利:</span>
+                              <span className="text-amber-300 font-extrabold text-xs">🪙 {item.errorCount * 15}</span>
+                            </div>
+
+                            <button
+                              onClick={() => startBountyBattle(item)}
+                              disabled={isClearedInSession}
+                              className={`w-full mt-3 py-2 bg-gradient-to-r from-[#85532c] to-[#54341c] hover:from-[#9c6338] hover:to-[#6c4426] text-amber-100 rounded-xl font-black text-xs cursor-pointer shadow border-b-[3px] border-[#3a200d] ${
+                                isClearedInSession ? 'opacity-40 pointer-events-none' : ''
+                              }`}
+                            >
+                              ⚔️ 发起对决讨伐
+                            </button>
+
+                            {/* Retro dual-border distress Red Cleared/Captured Stamp */}
+                            {isClearedInSession && (
+                              <div 
+                                className="absolute inset-x-0 top-[28%] mx-auto w-32 h-14 border-4 border-double border-red-650 rounded-xl flex items-center justify-center font-black text-red-650 bg-[#e08e8e]/20 select-none tracking-widest text-md uppercase active:scale-105"
+                                style={{ transform: 'rotate(-25deg)', textShadow: '1px 1px 0px rgba(0,0,0,0.1)' }}
+                              >
+                                已斩杀!
+                              </div>
+                            )}
+                          </div>
+                        );
+                      })}
+                    </div>
+                  </div>
+                ) : (
+                  <div className="py-16 text-center space-y-4 bg-slate-950/40 border border-dashed border-slate-850 rounded-[35px] max-w-lg mx-auto p-4">
+                    <span className="text-5xl block animate-bounce">📜</span>
+                    <h4 className="text-md font-black text-yellow-505">通缉告示板空了！</h4>
+                    <p className="text-slate-400 text-xs font-semibold leading-relaxed">
+                      证明周围十里词能怪兽已被清剿一空。极智无双！去主线卡牌探险积累新的词汇挑战吧！
+                    </p>
+                  </div>
+                )}
+              </div>
+            )}
+
+
+            {/* ----------------------------------------------------------- */}
+            {/* TAB 4: 圣殿·净化魂魄 (3D Card fip) */}
+            {/* ----------------------------------------------------------- */}
+            {activeTab === 'SANCTUM' && (
+              <div className="space-y-4 text-left">
+                <div className="pb-2 border-b border-purple-900/40 flex flex-col sm:flex-row items-center justify-between gap-4">
+                  <div className="space-y-1">
+                    <h3 className="text-lg font-black text-purple-350 flex items-center gap-2">
+                      <Star size={18} className="text-purple-400" /> 遗忘倒流 · 艾宾浩斯记忆圣殿
+                    </h3>
+                    <p className="text-xs text-slate-400">
+                      已被降伏和解救的词灵魂魄集结在圣殿底层自修。
+                      <strong>错词以反面的黑白卡牌排列</strong>。点击卡牌进行3D立体翻转。若为超危险词（错误x4以上），将唤醒其真实法音！拼对释义便能释放七彩色流，推进魂魄至永恒黄金神格。
+                    </p>
+                  </div>
+
+                  {metrics.dueReviewsCount > 0 && (
+                    <button 
+                      onClick={handleReviewAllDue}
+                      className="py-2.5 px-4 bg-gradient-to-r from-purple-550 to-indigo-650 hover:from-purple-450 hover:to-indigo-550 text-white rounded-xl font-black text-xs inline-flex items-center justify-center gap-1 cursor-pointer transition-all shadow-lg"
+                    >
+                      ⚡ 极速召唤临界词灵 ({metrics.dueReviewsCount})
+                    </button>
+                  )}
+                </div>
+
+                {purifiedSpirits.length > 0 ? (
+                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 pt-3">
+                    {purifiedSpirits.map((spirit) => {
+                      const retentionValue = calculateRetention(spirit);
+                      const isDue = spirit.nextReviewAt <= Date.now() || retentionValue <= 50;
+                      const stageInfo = getSpiritStageDisplay(spirit.stage);
+                      const isMaxStage = spirit.stage === 5;
+                      const isSuperStubborn = spirit.lapsesCount >= 4 || isDue;
+                      
+                      // Identify whether is currently Y-axis 3D flipped
+                      const isCurrentlyFlipped = activeFlippedSpirits.includes(spirit.text);
+                      const isCurrentlySelectedInChallenge = interactiveSpiritChallenge?.spiritText === spirit.text;
+
+                      return (
+                        <div 
+                          key={spirit.text}
+                          className="w-full h-64 [perspective:1000px] cursor-pointer"
+                        >
+                          {/* Inner 3D layout container */}
+                          <div 
+                            onClick={() => !isCurrentlyFlipped && toggleSpiritCardFlip(spirit)}
+                            className={`relative w-full h-full transition-transform duration-700 [transform-style:preserve-3d] ${
+                              isCurrentlyFlipped ? '[transform:rotateY(180deg)]' : ''
+                            }`}
+                          >
+                            
+                            {/* ---------------- CARD FACE A: REVERSE FACE (Monochromatic Sealed Dark Stone Card) ---------------- */}
+                            <div className="absolute inset-0 [backface-visibility:hidden] bg-[#0c0d12]/95 border-2 border-stone-880 rounded-2xl p-4 flex flex-col justify-between shadow-2xl overflow-hidden">
+                              {/* Chain decorative locks overlays */}
+                              <div className="absolute top-1 right-2 flex items-center gap-1">
+                                <span className="bg-[#1a1c22] text-xs px-2 py-0.5 rounded-md text-stone-550 font-mono font-black border border-stone-800 leading-none">
+                                  SEALED
+                                </span>
+                              </div>
+
+                              <div className="flex-1 flex flex-col items-center justify-center space-y-3 mt-4 text-center">
+                                {/* Large gray stone emblem */}
+                                <div className="w-14 h-14 rounded-full bg-stone-900 border border-stone-800 flex items-center justify-center text-4xl shadow-inner relative filter grayscale opacity-60">
+                                  🗿
+                                </div>
+                                
+                                <div className="space-y-1">
+                                  <h4 className="text-xl font-bold font-mono tracking-widest text-[#8c8d93] uppercase leading-none">
+                                    {spirit.text}
+                                  </h4>
+                                  <p className="text-[10px] text-stone-500 font-extrabold uppercase">
+                                    [ 点击法阵 · 立体翻转 ]
+                                  </p>
+                                </div>
+                              </div>
+
+                              <div className="border-t border-stone-900 pt-2 flex items-center justify-between text-[9px] text-stone-505 font-bold">
+                                <span>密封契合度: {stageInfo.lockEmoji}</span>
+                                <span className="text-yellow-600 font-extrabold">点击以超拔</span>
+                              </div>
+                            </div>
+
+                            {/* ---------------- CARD FACE B: OBSERVE FACE (Brilliant Purified Neon Spirit Card) ---------------- */}
+                            <div className="absolute inset-0 [backface-visibility:hidden] [transform:rotateY(180deg)] bg-gradient-to-br from-[#0e1026] via-[#120d2c] to-[#070514] border-2 border-purple-500 rounded-2xl p-4 flex flex-col justify-between shadow-lg overflow-hidden relative">
+                              {/* Shiny sparkles animation effect inside neon card */}
+                              <div className="absolute inset-0 bg-gradient-to-t from-purple-500/5 to-transparent pointer-events-none" />
+                              
+                              <div className="flex items-center justify-between pb-2 border-b border-white/5 text-[9px] font-black">
+                                <span className="bg-purple-950/60 border border-purple-500 text-purple-300 px-1.5 py-0.5 rounded-lg">
+                                  {stageInfo.icon} Stage {spirit.stage} · {stageInfo.name}
+                                </span>
+
+                                <button 
+                                  onClick={(e) => { e.stopPropagation(); toggleSpiritCardFlip(spirit); }}
+                                  className="text-slate-500 hover:text-white p-0.5 rounded-lg hover:bg-slate-900 outline-none"
+                                >
+                                  <X size={10} />
+                                </button>
+                              </div>
+
+                              {/* Interactive Spell selection right inside the card! */}
+                              <div className="my-2 flex-1 flex flex-col justify-center text-left space-y-1">
+                                <div className="flex items-baseline gap-2">
+                                  <h4 className="text-lg font-black font-mono text-white tracking-wide uppercase leading-none">
+                                    {spirit.text}
+                                  </h4>
+                                  {isSuperStubborn && (
+                                    <span className="text-[8px] font-black tracking-widest px-1 py-0.5 bg-rose-500/10 text-rose-400 border border-rose-500/20 rounded animate-pulse">
+                                      ⚠️ 顽固词
+                                    </span>
+                                  )}
+                                </div>
+
+                                <p className="text-[10.5px] text-slate-400 font-bold">真理释义: {spirit.translation}</p>
+                                
+                                <div className="space-y-1 pt-1">
+                                  <div className="flex items-center justify-between text-[8px] text-slate-550 uppercase font-black">
+                                    <span>自修稳固势能</span>
+                                    <span className="text-purple-400">{retentionValue}%</span>
+                                  </div>
+                                  <div className="w-full bg-slate-950 h-1.5 border border-slate-900 rounded-full overflow-hidden">
+                                    <div 
+                                      className="h-full rounded-full bg-gradient-to-r from-purple-550 to-pink-500 transition-all"
+                                      style={{ width: `${retentionValue}%` }}
+                                    />
+                                  </div>
+                                </div>
+
+                                {/* Multi-choice subchallenge */}
+                                {isCurrentlySelectedInChallenge && interactiveSpiritChallenge && (
+                                  <div className="pt-2">
+                                    {interactiveSpiritChallenge.feedback ? (
+                                      <p className={`text-[9.5px] font-black text-center p-1 rounded border ${
+                                        interactiveSpiritChallenge.success ? 'text-emerald-400 bg-emerald-950/20 border-emerald-900' : 'text-rose-450 bg-rose-950/20 border-rose-950'
+                                      }`}>
+                                        {interactiveSpiritChallenge.feedback}
+                                      </p>
+                                    ) : (
+                                      <div className="flex flex-col gap-1">
+                                        <p className="text-[8.5px] text-[#868da3] font-bold">请点击与之应答的中译唤醒自修：</p>
+                                        <div className="grid grid-cols-3 gap-1">
+                                          {interactiveSpiritChallenge.options.map(option => (
+                                            <button
+                                              key={option}
+                                              onClick={(e) => { e.stopPropagation(); handleSpiritVerification(spirit, option); }}
+                                              className="py-1 bg-slate-900 hover:bg-purple-900 text-[9px] font-extrabold text-slate-300 rounded border border-purple-950/80 transition-all cursor-pointer text-center outline-none"
+                                            >
+                                              {option}
+                                            </button>
+                                          ))}
+                                        </div>
+                                      </div>
+                                    )}
+                                  </div>
+                                )}
+                              </div>
+
+                              <div className="border-t border-slate-900 pt-1.5 flex items-center justify-between text-[9px]">
+                                <button 
+                                  onClick={(e) => { e.stopPropagation(); speakWord(spirit.text); audio.playClick(); }}
+                                  className="py-1 px-2.5 bg-slate-950 hover:bg-slate-900 rounded-lg text-slate-400 hover:text-white border border-slate-900 inline-flex items-center gap-0.5 cursor-pointer outline-none"
+                                >
+                                  <Volume2 size={9} /> 真实原音
+                                </button>
+
+                                <button 
+                                  onClick={(e) => { e.stopPropagation(); handleManualRelease(spirit.text); }}
+                                  title="驱解羁绊"
+                                  className="p-1 hover:bg-rose-950/25 text-slate-600 hover:text-rose-400 rounded-lg outline-none"
+                                >
+                                  <Trash2 size={10} />
+                                </button>
+                              </div>
+
+                            </div>
+
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                ) : (
+                  <div className="py-16 text-center space-y-4 bg-slate-950/40 border border-dashed border-slate-850 rounded-[35px] max-w-lg mx-auto p-4">
+                    <span className="text-5xl block animate-bounce">🔮</span>
+                    <h4 className="text-md font-black text-purple-400">目前暂无度化仙灵</h4>
+                    <p className="text-slate-400 text-xs font-semibold leading-relaxed">
+                      你在“怪兽天牢”中手动超度消灭的心魔怪物，或者在通缉挑战胜利后，极智灵魄才会作为不灭星能转移至圣殿自修！
+                    </p>
+                  </div>
+                )}
+              </div>
+            )}
           </div>
 
         </div>
       )}
+
+
+      {/* ============================================================= */}
+      {/* 2. OVERLAY FULLSCREEN ENCHANT PANEL (黑色高能附魔强化熔炉) */}
+      {/* ============================================================= */}
+      <AnimatePresence>
+        {isEnchantingActive && selectedEnchantJob && (
+          <motion.div 
+            initial={{ opacity: 0, scale: 0.95 }}
+            animate={{ opacity: 1, scale: 1 }}
+            exit={{ opacity: 0, scale: 0.95 }}
+            className="w-full max-w-md mx-auto my-auto bg-gradient-to-b from-slate-950 via-[#0a0a19] to-slate-900 rounded-[36px] border-4 border-indigo-550 shadow-2xl overflow-hidden flex flex-col p-6 min-h-[580px] justify-between text-center relative z-50 animate-jelly scrollbar-none"
+          >
+            {/* Close cross */}
+            <button 
+              onClick={exitEnchantmentGame}
+              className="absolute top-4 right-4 p-2 bg-slate-900/60 hover:bg-slate-800 border border-slate-800 hover:border-indigo-500 rounded-xl transition-all cursor-pointer z-30 outline-none"
+            >
+              <X size={15} />
+            </button>
+
+            {/* Runes tick progress container */}
+            <div className="flex items-center justify-between pb-3 border-b border-indigo-900/40 text-xs font-black">
+              <span className="bg-[#0e0e22] text-indigo-400 border border-indigo-950 px-3 py-1 rounded-xl">
+                🔨 附魔融词熔炉 · 第 {enchantIndex + 1} / 5 个字符
+              </span>
+              
+              {/* Magic runic spots */}
+              <div className="flex items-center space-x-1.5 select-none">
+                {['ᛋ', 'ᚺ', 'ᛏ', 'ᚱ', 'ᛗ'].map((runeChar, i) => (
+                  <div 
+                    key={i} 
+                    title={`附魔第 ${i + 1} 个神符`}
+                    className={`w-6 h-6 rounded-full border flex items-center justify-center font-mono text-[10px] font-black transition-all duration-300 ${
+                      i < enchantCorrectCount 
+                        ? 'bg-amber-450 border-amber-300 text-slate-950 shadow-[0_0_10px_rgba(245,158,11,0.9)] scale-110' 
+                        : 'bg-slate-950 border-slate-850 text-slate-650'
+                    }`} 
+                  >
+                    {runeChar}
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            {/* Forge layout graphics */}
+            <div className="flex-1 flex flex-col justify-around py-5 space-y-4">
+              
+              {/* Weapon artwork enclosed inside a spinning star compass */}
+              <div className="relative w-40 h-40 sm:w-44 sm:h-44 mx-auto flex items-center justify-center">
+                <div className="absolute inset-0 border border-indigo-505/10 rounded-full animate-spin-slow pointer-events-none" />
+                <div className="absolute inset-2 border-2 border-dashed border-indigo-505/5 rounded-full animate-rotate-slow-reverse pointer-events-none" />
+                
+                <div className="w-24 h-24 sm:w-28 sm:h-28 rounded-full bg-indigo-950/20 flex items-center justify-center relative p-3 backdrop-blur z-10">
+                  <img 
+                    src={getShopItemSvgUri(selectedEnchantJob)} 
+                    alt={selectedEnchantJob} 
+                    referrerPolicy="no-referrer"
+                    className="w-full h-full object-contain filter drop-shadow-[0_0_15px_rgba(245,158,11,0.85)] animate-bounce-slow" 
+                  />
+                </div>
+
+                {enchantFeedbackType === 'SUCCESS' && (
+                  <div className="absolute inset-0 bg-amber-500/10 rounded-full animate-ping pointer-events-none" />
+                )}
+              </div>
+
+              {/* Central text prompt */}
+              <div className="space-y-1">
+                <div className="flex items-center justify-center gap-2">
+                  <button 
+                    onClick={() => speakWord(enchantPool[enchantIndex].text)}
+                    className="p-1 px-3 bg-indigo-650 hover:bg-indigo-555 rounded-xl text-xs font-black inline-flex items-center gap-0.5 cursor-pointer text-white animate-pulse shadow-md outline-none"
+                  >
+                    <Volume2 size={13} /> {enchantPool[enchantIndex].text}
+                  </button>
+                </div>
+                <h3 className="text-3xl sm:text-4xl font-black font-mono text-white tracking-widest uppercase mt-1">
+                  {enchantPool[enchantIndex].text}
+                </h3>
+                <p className="text-[11px] text-[#818cb4] font-semibold">
+                  选择与之契合的远古中译释义，凝聚魔灵附体：
+                </p>
+              </div>
+            </div>
+
+            {/* Status alerts */}
+            <div className="h-10 flex items-center justify-center mb-1 select-none">
+              <AnimatePresence mode="wait">
+                {enchantFeedback && (
+                  <motion.div
+                    initial={{ opacity: 0, y: 8 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    exit={{ opacity: 0, y: -8 }}
+                    className={`text-xs font-black ${
+                      enchantFeedbackType === 'SUCCESS' ? 'text-emerald-400' : 'text-rose-450'
+                    }`}
+                  >
+                    {enchantFeedback}
+                  </motion.div>
+                )}
+              </AnimatePresence>
+            </div>
+
+            {/* Interactive Rune Selection Button Grid */}
+            <div className="grid grid-cols-2 gap-3 pt-1">
+              {enchantOptions.map((opt) => (
+                <button
+                  key={opt}
+                  onClick={() => handleEnchantAnswer(opt)}
+                  disabled={enchantFeedback !== null}
+                  className="py-3 px-3 bg-slate-950 hover:bg-slate-900 border-2 border-slate-850 hover:border-indigo-500 rounded-xl text-xs font-black text-slate-300 active:translate-y-0.5 disabled:opacity-50 cursor-pointer shadow transition-all duration-150 outline-none"
+                >
+                  {opt}
+                </button>
+              ))}
+            </div>
+
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+
+      {/* ============================================================= */}
+      {/* 3. OVERLAY BATTLE PLAY BOARD - BOUNTY WANTED败将通缉令 */}
+      {/* ============================================================= */}
+      <AnimatePresence>
+        {activeBountyWanted && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className={`fixed inset-0 z-55 bg-black/95 backdrop-blur-md flex items-center justify-center p-4 ${
+              isBountyBoardShaking ? 'animate-shake' : ''
+            }`}
+          >
+            <div 
+              className="bg-[#241a12] rounded-[36px] w-full max-w-sm border-4 border-[#85532c] p-6 text-center shadow-2xl flex flex-col justify-between min-h-[500px] relative scrollbar-none"
+              style={{
+                backgroundImage: 'radial-gradient(circle at center, #3c2919 0%, #150e09 100%)'
+              }}
+            >
+              {/* Close battle button */}
+              <button 
+                onClick={() => setActiveBountyWanted(null)}
+                className="absolute top-4 right-4 p-2 bg-[#1a120b] border border-[#3e2819] hover:border-red-500 text-slate-400 hover:text-white rounded-xl cursor-pointer outline-none"
+              >
+                <X size={15} />
+              </button>
+
+              {/* Status score ticker */}
+              <div className="flex items-center justify-between font-serif border-b border-[#473020] pb-3 text-xs">
+                {/* Heart containers HP */}
+                <div className="flex items-center space-x-1 font-sans">
+                  {[...Array(3)].map((_, i) => (
+                    <Heart 
+                      key={i} 
+                      size={14} 
+                      className={`transition-all ${
+                        i < bountyHP ? 'text-red-500 fill-red-500 filter drop-shadow-[0_0_4px_#ef4444]' : 'text-stone-700'
+                      }`} 
+                    />
+                  ))}
+                </div>
+
+                <div className="text-[#85654d] font-black tracking-widest uppercase text-[10px]">
+                  ⚔️ 征讨决战 · 速记狂击
+                </div>
+
+                {/* Fuse ticking down */}
+                <div className={`font-mono font-extrabold ${bountyTimer <= 3 ? 'text-red-400 animate-pulse' : 'text-amber-500'}`}>
+                  {bountyTimer}s
+                </div>
+              </div>
+
+              {/* Progress visual bar */}
+              <div className="w-full bg-black/50 h-1.5 rounded-full overflow-hidden mt-3">
+                <div 
+                  className={`h-full transition-all duration-1000 bg-gradient-to-r ${(bountyTimer <= 3) ? 'from-red-650 to-red-500 animate-pulse' : 'from-amber-500 to-amber-300'}`}
+                  style={{ width: `${(bountyTimer / 10) * 100}%` }}
+                />
+              </div>
+
+              {/* Arena graphics container */}
+              <div className="flex-1 flex flex-col justify-around py-5 space-y-4">
+                
+                {/* Combat portrait arena */}
+                <div className="relative w-36 h-36 mx-auto bg-black/40 border-2 border-[#503522] rounded-3xl flex items-center justify-center text-6xl shadow-inner overflow-hidden group">
+                  <span className="transform group-hover:scale-105 transition-transform">
+                    {getMonsterClass(activeBountyWanted.errorCount).emoji}
+                  </span>
+
+                  {/* Sword Strike line overlay slash */}
+                  <AnimatePresence>
+                    {lastSlashedText && (
+                      <motion.div 
+                        initial={{ opacity: 0, scale: 0.5, rotate: -25 }}
+                        animate={{ opacity: 1, scale: 1.2, rotate: 15 }}
+                        exit={{ opacity: 0 }}
+                        className="absolute inset-0 bg-red-600/20 z-10 flex items-center justify-center font-black"
+                      >
+                        <span className="text-5xl animate-pulse">💥⚔️</span>
+                      </motion.div>
+                    )}
+                  </AnimatePresence>
+                </div>
+
+                <div className="space-y-1">
+                  <div className="flex items-center justify-center gap-1.5">
+                    <button 
+                      onClick={() => speakWord(activeBountyWanted.text)}
+                      className="p-1 px-3.5 bg-[#150e09] hover:bg-black/50 border border-[#4e321e] rounded-lg text-amber-300 text-xs font-black inline-flex items-center gap-1 cursor-pointer transition-all outline-none"
+                    >
+                      <Volume2 size={13} /> {activeBountyWanted.text}
+                    </button>
+                  </div>
+                  <p className="font-serif text-[11px] text-[#866854] pt-1">
+                    心魔已经发起神魂冲击！在倒计时耗尽前刺中下方真译神格：
+                  </p>
+                </div>
+              </div>
+
+              {/* Combat feedback */}
+              <div className="h-12 flex items-center justify-center mb-1 font-serif text-xs px-2 text-rose-350">
+                {bountyFeedback}
+              </div>
+
+              {/* Runic translation choice tags */}
+              <div className="grid grid-cols-2 gap-2.5 pt-1">
+                {bountyOptions.map((opt) => (
+                  <button
+                    key={opt}
+                    onClick={() => attemptCaptureBounty(opt)}
+                    disabled={bountyStatus !== 'IDLE'}
+                    className="py-3 px-2 bg-black hover:bg-[#1a0f07] border border-[#523219] hover:border-[#a855f7] rounded-xl text-xs font-black text-amber-100 cursor-pointer disabled:opacity-45 transition-all outline-none"
+                  >
+                    {opt}
+                  </button>
+                ))}
+              </div>
+
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
 
     </div>
   );

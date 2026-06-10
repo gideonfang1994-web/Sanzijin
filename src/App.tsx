@@ -30,6 +30,8 @@ import WordMagnetRocket from './components/WordMagnetRocket';
 import WordSpellingPopit from './components/WordSpellingPopit';
 import WordPotionLab from './components/WordPotionLab';
 import WordParrotDubbing from './components/WordParrotDubbing';
+import MarioWordBuster from './components/MarioWordBuster';
+import WordClawMachine from './components/WordClawMachine';
 import Leaderboard from './components/Leaderboard';
 import UploadContent from './components/UploadContent';
 import MagicShop from './components/MagicShop';
@@ -1364,8 +1366,10 @@ const App: React.FC = () => {
           )}
           
           {/* Game Views - Smooth Scale Entrance */}
-          {['CHALLENGE', 'SCRAMBLE', 'SHEEP', 'BALLOON', 'WHACK', 'DUBBING', 'SPELLING', 'PLANTS', 'RAIDEN', 'FISHING', 'ALCHEMIST', 'MINER', 'SLASHER', 'SONAR', 'COOKING', 'FEEDING', 'HAMSTER', 'SHOOTER', 'ICECREAM', 'DINO', 'DJ', 'ROCKET', 'POPIT', 'POTION', 'PARROT'].includes(view) && (
+          {['CHALLENGE', 'SCRAMBLE', 'SHEEP', 'BALLOON', 'WHACK', 'DUBBING', 'SPELLING', 'PLANTS', 'RAIDEN', 'FISHING', 'ALCHEMIST', 'MINER', 'SLASHER', 'SONAR', 'COOKING', 'FEEDING', 'HAMSTER', 'SHOOTER', 'ICECREAM', 'DINO', 'DJ', 'ROCKET', 'POPIT', 'POTION', 'PARROT', 'MARIO', 'CLAW'].includes(view) && (
             <motion.div key="game" initial={{ scale: 0.9, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} exit={{ scale: 1.1, opacity: 0 }} transition={{ type: "spring", damping: 20 }}>
+              {view === 'CLAW' && <WordClawMachine groups={activeGroups} stats={stats} onFinish={handleGameFinish} onClose={() => handleNavigate('ARCADE')} />}
+              {view === 'MARIO' && <MarioWordBuster groups={activeGroups} stats={stats} onFinish={handleGameFinish} onClose={() => handleNavigate('ARCADE')} />}
               {view === 'CHALLENGE' && <WordChallenge groups={activeGroups} isReviewMode={isReviewChallenge} onFinish={handleGameFinish} onMistake={handleGameMistake} onSuccess={handleGameSuccess} onClose={() => handleNavigate('ARCADE')} />}
               {view === 'SCRAMBLE' && <LetterScramble groups={activeGroups} onFinish={handleGameFinish} onMistake={handleGameMistake} onClose={() => handleNavigate('ARCADE')} />}
               {view === 'SHEEP' && <SheepMatch groups={activeGroups} onFinish={handleGameFinish} onClose={() => handleNavigate('ARCADE')} />}

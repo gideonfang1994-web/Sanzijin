@@ -86,6 +86,8 @@ const ArcadePage: React.FC<ArcadePageProps> = ({ groups, stats, lastLearnedWords
   }, [progress, stats.reviewSchedules]);
 
   const games: GameInfo[] = [
+    { id: 'CLAW', title: '神奇抓娃娃机', icon: <Gamepad2 />, color: 'bg-fuchsia-500', xp: '+350', description: '控制悬臂机械夹爪！听准英文单词语音，在堆积如山的可可爱爱玩偶中抓起正确翻译！', category: 'ARCADE' },
+    { id: 'MARIO', title: '马里奥拼词造句', icon: <Gamepad2 />, color: 'bg-red-500', xp: '+500', description: '化身马里奥跳跃撞击！顶碎拼写、词义与整排整句Token，获取巨额金币与经验红利！', category: 'ARCADE' },
     { id: 'SCRAMBLE', title: '拼词大师', icon: <Zap />, color: 'bg-rose-500', xp: '+250', description: '释放字母能量，拼出正确的咒语。', category: 'CHALLENGE' },
     { id: 'HAMSTER', title: '疯狂打地鼠', icon: <Hammer />, color: 'bg-amber-500', xp: '+380', description: '仓鼠背着翻译牌出洞！看准正确翻译，一气呵成锤击它！', category: 'ARCADE' },
     { id: 'FISHING', title: '冰川吊词翁', icon: <Star />, color: 'bg-sky-500', xp: '+400', description: '控制悬挂的吊钩，钓起正确翻译的冰湖群鱼！', category: 'ARCADE' },
@@ -275,6 +277,7 @@ const ArcadePage: React.FC<ArcadePageProps> = ({ groups, stats, lastLearnedWords
           ];
 
           const gameMapEmojis: Record<string, string> = {
+            CLAW: '🧸',
             FEEDING: '👾',
             HAMSTER: '🐹',
             SHOOTER: '🎈',
