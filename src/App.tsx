@@ -32,6 +32,7 @@ import WordPotionLab from './components/WordPotionLab';
 import WordParrotDubbing from './components/WordParrotDubbing';
 import MarioWordBuster from './components/MarioWordBuster';
 import WordClawMachine from './components/WordClawMachine';
+import LetterLinkGame from './components/LetterLinkGame';
 import Leaderboard from './components/Leaderboard';
 import UploadContent from './components/UploadContent';
 import MagicShop from './components/MagicShop';
@@ -671,6 +672,9 @@ const App: React.FC = () => {
   }, []);
 
   const handleGameFinish = useCallback((score: number, coins: number) => {
+    let triggeredLevelUp = false;
+    let nextLevel = 1;
+
     setStats(prev => {
       const newXp = prev.xp + score;
       const newCoins = (prev.starCoins || 0) + coins;
@@ -678,14 +682,8 @@ const App: React.FC = () => {
       const newLevel = Math.floor(newXp / 1000) + 1;
       
       if (newLevel > prev.level) {
-        audio.playLevelUp();
-        setNewLevel(newLevel);
-        setShowLevelUp(true);
-        confetti({
-          particleCount: 150,
-          spread: 100,
-          origin: { y: 0.3 }
-        });
+        triggeredLevelUp = true;
+        nextLevel = newLevel;
       }
 
       const newRank = Math.max(1, 15 - Math.floor(newXp / 500));
@@ -700,6 +698,20 @@ const App: React.FC = () => {
         bestChallengeScore: Math.max(prev.bestChallengeScore, score)
       };
     });
+
+    // Run side effects outside the state updater callback to avoid React render phase updates
+    setTimeout(() => {
+      if (triggeredLevelUp) {
+        audio.playLevelUp();
+        setNewLevel(nextLevel);
+        setShowLevelUp(true);
+        confetti({
+          particleCount: 150,
+          spread: 100,
+          origin: { y: 0.3 }
+        });
+      }
+    }, 0);
 
     const sessionWords = activeGroups.flatMap(g => g.words);
     setArcadeSummaryData({
@@ -1366,8 +1378,9 @@ const App: React.FC = () => {
           )}
           
           {/* Game Views - Smooth Scale Entrance */}
-          {['CHALLENGE', 'SCRAMBLE', 'SHEEP', 'BALLOON', 'WHACK', 'DUBBING', 'SPELLING', 'PLANTS', 'RAIDEN', 'FISHING', 'ALCHEMIST', 'MINER', 'SLASHER', 'SONAR', 'COOKING', 'FEEDING', 'HAMSTER', 'SHOOTER', 'ICECREAM', 'DINO', 'DJ', 'ROCKET', 'POPIT', 'POTION', 'PARROT', 'MARIO', 'CLAW'].includes(view) && (
+          {['CHALLENGE', 'SCRAMBLE', 'SHEEP', 'BALLOON', 'WHACK', 'DUBBING', 'SPELLING', 'PLANTS', 'RAIDEN', 'FISHING', 'ALCHEMIST', 'MINER', 'SLASHER', 'SONAR', 'COOKING', 'FEEDING', 'HAMSTER', 'SHOOTER', 'ICECREAM', 'DINO', 'DJ', 'ROCKET', 'POPIT', 'POTION', 'PARROT', 'MARIO', 'CLAW', 'LETTER_LINK'].includes(view) && (
             <motion.div key="game" initial={{ scale: 0.9, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} exit={{ scale: 1.1, opacity: 0 }} transition={{ type: "spring", damping: 20 }}>
+              {view === 'LETTER_LINK' && <LetterLinkGame stats={stats} onFinish={handleGameFinish} onClose={() => handleNavigate('ARCADE')} />}
               {view === 'CLAW' && <WordClawMachine groups={activeGroups} stats={stats} onFinish={handleGameFinish} onClose={() => handleNavigate('ARCADE')} />}
               {view === 'MARIO' && <MarioWordBuster groups={activeGroups} stats={stats} onFinish={handleGameFinish} onClose={() => handleNavigate('ARCADE')} />}
               {view === 'CHALLENGE' && <WordChallenge groups={activeGroups} isReviewMode={isReviewChallenge} onFinish={handleGameFinish} onMistake={handleGameMistake} onSuccess={handleGameSuccess} onClose={() => handleNavigate('ARCADE')} />}
@@ -1687,6 +1700,7 @@ const App: React.FC = () => {
                 <h3 className="text-3xl font-black text-white mt-1 leading-none">
                   {(() => {
                     const GAME_NAMES: Record<string, string> = {
+                      LETTER_LINK: '大小写字母连连看',
                       CHALLENGE: '词灵对战挑战',
                       SCRAMBLE: '字母秘境拼词',
                       SHEEP: '词灵牧场对对碰',

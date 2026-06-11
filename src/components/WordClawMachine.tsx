@@ -20,43 +20,119 @@ interface ToyItem {
   word: WordItem;
   label: string; // The translation
   isCorrect: boolean;
-  xPercent: number; // Horizontal placement in the glass tank (e.g. 26, 44, 62, 80)
+  xPercent: number; // Horizontal placement in the glass tank
+  yOffset: number; // Vertical stacking offset in pixels to avoid overlaps
   plushEmoji: string;
   colorClass: string;
   textColor: string;
   animalName: string;
   isGrabbed: boolean;
   isCleared: boolean;
+  isGolden?: boolean;
 }
 
 export const WordClawMachine: React.FC<WordClawMachineProps> = ({ groups, stats, onFinish, onClose }) => {
-  // Extract all words from selected groups
+  const letterGroups = useMemo(() => [
+    { name: 'A - E', letters: ['A', 'B', 'C', 'D', 'E'] },
+    { name: 'F - J', letters: ['F', 'G', 'H', 'I', 'J'] },
+    { name: 'K - O', letters: ['K', 'L', 'M', 'N', 'O'] },
+    { name: 'P - T', letters: ['P', 'Q', 'R', 'S', 'T'] },
+    { name: 'U - Z', letters: ['U', 'V', 'W', 'X', 'Y', 'Z'] },
+  ], []);
+
+  const [selectedLetterGroup, setSelectedLetterGroup] = useState<number>(5); // 0: A-E, 1: F-J, 2: K-O, 3: P-T, 4: U-Z, 5: All (A-Z)
+  const [letterCaseMode, setLetterCaseMode] = useState<'UPPER' | 'LOWER' | 'MIXED'>('MIXED');
+
+  // Generate selected letters representing the core learning items
   const allWords = useMemo(() => {
-    let list: WordItem[] = [];
-    groups.forEach(g => {
-      if (g.words) {
-        g.words.forEach(w => {
-          list.push(w);
-        });
+    let baseLetters: string[] = [];
+    if (selectedLetterGroup === 5) {
+      baseLetters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ'.split('');
+    } else {
+      baseLetters = [...letterGroups[selectedLetterGroup].letters];
+    }
+
+    const list: WordItem[] = baseLetters.map((letter, idx) => {
+      let text = letter;
+      if (letterCaseMode === 'LOWER') {
+        text = letter.toLowerCase();
+      } else if (letterCaseMode === 'MIXED') {
+        text = idx % 2 === 0 ? letter.toUpperCase() : letter.toLowerCase();
+      } else {
+        text = letter.toUpperCase();
       }
+      return {
+        text: text,
+        translation: `字母 ${text}`,
+        imageUrl: ''
+      };
     });
 
-    // Fallback if no words present
-    if (list.length === 0) {
-      list = [
-        { text: 'family', translation: '家庭', imageUrl: '' },
-        { text: 'apple', translation: '苹果', imageUrl: '' },
-        { text: 'banana', translation: '香蕉', imageUrl: '' },
-        { text: 'orange', translation: '橘子', imageUrl: '' },
-        { text: 'cat', translation: '猫咪', imageUrl: '' },
-        { text: 'dog', translation: '小狗', imageUrl: '' },
-        { text: 'friend', translation: '朋友', imageUrl: '' },
-        { text: 'school', translation: '学校', imageUrl: '' }
-      ];
-    }
-    // Shuffle words for random seed
-    return [...list].sort(() => Math.random() - 0.5);
-  }, [groups]);
+    // Shuffle alphabet so each game round starts with random letters
+    return list.sort(() => Math.random() - 0.5);
+  }, [selectedLetterGroup, letterCaseMode, letterGroups]);
+
+  // Play short, ultra-quiet local synthesized chime for correct answer
+  const playQuietCorrectSound = () => {
+    try {
+      const AudioCtx = window.AudioContext || (window as any).webkitAudioContext;
+      if (!AudioCtx) return;
+      const ctx = new AudioCtx();
+      const now = ctx.currentTime;
+      
+      const osc1 = ctx.createOscillator();
+      const gain1 = ctx.createGain();
+      osc1.type = 'sine';
+      osc1.frequency.setValueAtTime(523.25, now); // C5
+      osc1.frequency.exponentialRampToValueAtTime(1046.50, now + 0.12); // Slips up nicely to C6
+      
+      gain1.gain.setValueAtTime(0.06, now); // soft volume
+      gain1.gain.exponentialRampToValueAtTime(0.001, now + 0.12);
+      
+      osc1.connect(gain1);
+      gain1.connect(ctx.destination);
+      osc1.start(now);
+      osc1.stop(now + 0.13);
+
+      const osc2 = ctx.createOscillator();
+      const gain2 = ctx.createGain();
+      osc2.type = 'sine';
+      osc2.frequency.setValueAtTime(659.25, now + 0.05); // E5
+      osc2.frequency.exponentialRampToValueAtTime(1318.51, now + 0.17); // Slips up nicely to E6
+      
+      gain2.gain.setValueAtTime(0.05, now + 0.05);
+      gain2.gain.exponentialRampToValueAtTime(0.001, now + 0.17);
+      
+      osc2.connect(gain2);
+      gain2.connect(ctx.destination);
+      osc2.start(now + 0.05);
+      osc2.stop(now + 0.18);
+    } catch (e) {}
+  };
+
+  // Play short, polite synth buzz for incorrect answer
+  const playQuietWrongSound = () => {
+    try {
+      const AudioCtx = window.AudioContext || (window as any).webkitAudioContext;
+      if (!AudioCtx) return;
+      const ctx = new AudioCtx();
+      const now = ctx.currentTime;
+      
+      const osc = ctx.createOscillator();
+      const gain = ctx.createGain();
+      osc.type = 'triangle';
+      osc.frequency.setValueAtTime(160, now);
+      osc.frequency.linearRampToValueAtTime(110, now + 0.15);
+      
+      gain.gain.setValueAtTime(0.08, now);
+      gain.gain.exponentialRampToValueAtTime(0.001, now + 0.15);
+      
+      osc.connect(gain);
+      gain.connect(ctx.destination);
+      osc.start(now);
+      osc.stop(now + 0.16);
+    } catch (e) {}
+  };
 
   // Game States
   const [gameState, setGameState] = useState<'INTRO' | 'PLAYING' | 'SUMMARY'>('INTRO');
@@ -146,37 +222,55 @@ export const WordClawMachine: React.FC<WordClawMachineProps> = ({ groups, stats,
       triggerSoundWave();
     }, 400);
 
-    // Grab 3 distractor words with unique translations
+    // Grab 3 distractor words with unique English texts
     const distractors: WordItem[] = [];
-    const usedTranslations = new Set<string>([target.translation]);
+    const usedTexts = new Set<string>([target.text]);
 
     const randomPool = [...allWords].sort(() => Math.random() - 0.5);
     for (const w of randomPool) {
       if (distractors.length >= 3) break;
-      if (!usedTranslations.has(w.translation) && w.translation !== target.translation) {
+      if (!usedTexts.has(w.text) && w.text !== target.text) {
         distractors.push(w);
-        usedTranslations.add(w.translation);
+        usedTexts.add(w.text);
       }
     }
 
-    // Handcraft placeholders if needed
+    // Handcraft placeholders if needed (ensure they are single letters in the correct style)
     while (distractors.length < 3) {
-      const dummyWord = `dummy-${distractors.length}`;
-      const dummyLabel = `词义-${distractors.length + 1}`;
-      if (!usedTranslations.has(dummyLabel)) {
-        distractors.push({ text: dummyWord, translation: dummyLabel, imageUrl: '' });
-        usedTranslations.add(dummyLabel);
+      const alphabet = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz'.split('');
+      let foundDummy = false;
+      for (const char of alphabet) {
+        let textToUse = char;
+        if (letterCaseMode === 'LOWER') {
+          textToUse = char.toLowerCase();
+        } else if (letterCaseMode === 'UPPER') {
+          textToUse = char.toUpperCase();
+        }
+        if (!usedTexts.has(textToUse) && textToUse.toUpperCase() !== target.text.toUpperCase()) {
+          distractors.push({ text: textToUse, translation: `字母 ${textToUse}`, imageUrl: '' });
+          usedTexts.add(textToUse);
+          foundDummy = true;
+          break;
+        }
+      }
+      if (!foundDummy) {
+        const randomChar = String.fromCharCode(65 + Math.floor(Math.random() * 26));
+        const finalChar = letterCaseMode === 'LOWER' ? randomChar.toLowerCase() : randomChar;
+        distractors.push({ text: finalChar, translation: `字母 ${finalChar}`, imageUrl: '' });
+        usedTexts.add(finalChar);
       }
     }
 
-    // Pool target and distractors
+    // Pool target and distractors (displays English words on the 4 dolls)
     const chosenOptions = [
-      { word: target, label: target.translation, isCorrect: true },
-      ...distractors.map(d => ({ word: d, label: d.translation, isCorrect: false }))
+      { word: target, label: target.text, isCorrect: true },
+      ...distractors.map(d => ({ word: d, label: d.text, isCorrect: false }))
     ].sort(() => Math.random() - 0.5);
 
-    // Position options evenly across the bottom of the machine (from ~26% to ~83%)
-    const spreadSpacing = [26, 44, 62, 80];
+    // Position options evenly across the bottom of the machine (widely spread out thanks to smaller exit)
+    const spreadSpacing = [19, 41, 63, 85];
+    // Stagger heights to prevent overlay and create 3D piled up look
+    const yOffsets = [2, 18, 5, 21];
     const randomizedTemplates = [...PLUSH_TEMPLATES].sort(() => Math.random() - 0.5);
 
     const generatedToys: ToyItem[] = chosenOptions.map((opt, i) => {
@@ -187,12 +281,14 @@ export const WordClawMachine: React.FC<WordClawMachineProps> = ({ groups, stats,
         label: opt.label,
         isCorrect: opt.isCorrect,
         xPercent: spreadSpacing[i],
+        yOffset: yOffsets[i],
         plushEmoji: template.emoji,
         colorClass: template.color,
         textColor: template.text,
         animalName: template.name,
         isGrabbed: false,
-        isCleared: false
+        isCleared: false,
+        isGolden: opt.isCorrect && Math.random() < 0.3
       };
     });
 
@@ -205,8 +301,6 @@ export const WordClawMachine: React.FC<WordClawMachineProps> = ({ groups, stats,
       timerIntervalRef.current = setInterval(() => {
         setTimeLeft(prev => {
           if (prev <= 1) {
-            clearInterval(timerIntervalRef.current!);
-            endGame();
             return 0;
           }
           return prev - 1;
@@ -218,11 +312,22 @@ export const WordClawMachine: React.FC<WordClawMachineProps> = ({ groups, stats,
     };
   }, [gameState]);
 
+  // Handle time out
+  useEffect(() => {
+    if (gameState === 'PLAYING' && timeLeft === 0) {
+      if (timerIntervalRef.current) {
+        clearInterval(timerIntervalRef.current);
+      }
+      endGame();
+    }
+  }, [timeLeft, gameState]);
+
   // Handle game finish
   const endGame = () => {
     setGameState('SUMMARY');
     try {
-      audio.playLevelUp();
+      // Shorter, delightful chime instead of the loud crowd cheer
+      audio.playUnlock();
     } catch (e) {}
 
     // Reward calculations
@@ -285,6 +390,7 @@ export const WordClawMachine: React.FC<WordClawMachineProps> = ({ groups, stats,
     setSelectedToyId(toy.id);
     setClawX(toy.xPercent);
     audio.playClick();
+    audio.speak(toy.label);
   };
 
   // Execute Claw sequence
@@ -376,11 +482,13 @@ export const WordClawMachine: React.FC<WordClawMachineProps> = ({ groups, stats,
           if (prev <= 12) {
             clearInterval(clampInterval);
 
-            // Hook current toy state
+            // Hook current toy state cleanly
+            if (selectedToyId) {
+              setGrabbedToyId(selectedToyId);
+            }
             setToys(prevToys => {
               return prevToys.map(toy => {
                 if (toy.id === selectedToyId) {
-                  setGrabbedToyId(toy.id);
                   return { ...toy, isGrabbed: true };
                 }
                 return toy;
@@ -415,11 +523,11 @@ export const WordClawMachine: React.FC<WordClawMachineProps> = ({ groups, stats,
       return () => clearInterval(ascendInterval);
     }
 
-    // 5. Carry the toy capsule sideways back to Left-hoop chute/basket (X: ~12%)
+    // 5. Carry the toy capsule sideways back to Left-hoop chute/basket (X: ~8%)
     if (clawState === 'RETURNING') {
       const returnInterval = setInterval(() => {
         setClawX(prev => {
-          const chuteTargetX = 13;
+          const chuteTargetX = 8;
           if (prev <= chuteTargetX) {
             clearInterval(returnInterval);
             setTimeout(() => {
@@ -493,19 +601,28 @@ export const WordClawMachine: React.FC<WordClawMachineProps> = ({ groups, stats,
   const assessChosenAnswer = (toy: ToyItem) => {
     if (toy.isCorrect) {
       // 1. CLEAR! Correct Word.
+      // Light, short success chime (very crisp synthetic sound) + grand cheer sound effect
+      playQuietCorrectSound();
       audio.playSuccess();
-      try {
-        confetti({ particleCount: 35, spread: 45, origin: { y: 0.8 } });
-      } catch (e) {}
 
       const newCombo = combo + 1;
       setCombo(newCombo);
       if (newCombo > maxCombo) setMaxCombo(newCombo);
 
-      // Score computations
-      const points = 100 + (newCombo * 10);
-      const coinsGained = 12 + Math.floor(newCombo * 1.5);
-      const xpGained = 15;
+      // Score details and multiplier boosts! (Fever & Gold capsules)
+      const isFeverMode = newCombo >= 3;
+      const scoreMultiplier = isFeverMode ? 2 : 1;
+      const coinMultiplier = isFeverMode ? 2 : 1;
+
+      const isGoldenToy = !!toy.isGolden;
+      const goldCoinMult = isGoldenToy ? 3 : 1;
+      const goldScoreBonus = isGoldenToy ? 200 : 0;
+
+      // Base reward calculation
+      const basePoints = 100 + (newCombo * 10);
+      const points = (basePoints * scoreMultiplier) + goldScoreBonus;
+      const coinsGained = (12 + Math.floor(newCombo * 1.5)) * coinMultiplier * goldCoinMult;
+      const xpGained = 15 * scoreMultiplier;
 
       setScore(s => s + points);
       setCoinsEarned(c => c + coinsGained);
@@ -525,11 +642,12 @@ export const WordClawMachine: React.FC<WordClawMachineProps> = ({ groups, stats,
 
     } else {
       // 2. ERROR! Incorrect toy word
+      playQuietWrongSound();
+      audio.playError();
       if (hasShield) {
         // Shield saves life
         setHasShield(false);
-        audio.playCelestialMagic(); // Shield shatter pop
-        audio.playSuccess(); // trigger positive feedback
+        audio.playCelestialMagic(); // Nice clean crystal bubble pop
         
         // Give positive warning
         setTimeout(() => {
@@ -538,7 +656,6 @@ export const WordClawMachine: React.FC<WordClawMachineProps> = ({ groups, stats,
         }, 1200);
       } else {
         // Deduct life
-        audio.playError();
         setCombo(0);
         const newHearts = hearts - 1;
         setHearts(newHearts);
@@ -617,19 +734,82 @@ export const WordClawMachine: React.FC<WordClawMachineProps> = ({ groups, stats,
             </p>
           </div>
 
+          {/* Custom Range & Case Selection */}
+          <div className="w-full max-w-sm space-y-4 bg-slate-950/65 border border-indigo-500/20 p-4.5 rounded-2xl text-left">
+            <div>
+              <h3 className="text-xs font-black tracking-wider text-indigo-400 select-none text-left uppercase flex items-center gap-1.5 mb-2">
+                <span>🎯</span> 字母范围分组 (5-6个一组)
+              </h3>
+              <div className="grid grid-cols-3 gap-2">
+                {letterGroups.map((g, idx) => (
+                  <button
+                    key={idx}
+                    type="button"
+                    onClick={() => {
+                      audio.playClick();
+                      setSelectedLetterGroup(idx);
+                    }}
+                    className={`py-2 px-1 text-xs font-black rounded-xl border-2 transition-all cursor-pointer ${
+                      selectedLetterGroup === idx
+                        ? 'bg-gradient-to-r from-fuchsia-600 to-indigo-600 border-fuchsia-400 text-white shadow-lg shadow-fuchsia-500/25 scale-105'
+                        : 'bg-slate-900 border-indigo-950 text-slate-400 hover:border-indigo-800 hover:text-slate-200'
+                    }`}
+                  >
+                    {g.name}
+                  </button>
+                ))}
+                <button
+                  type="button"
+                  onClick={() => {
+                    audio.playClick();
+                    setSelectedLetterGroup(5);
+                  }}
+                  className={`py-2 px-1 text-xs font-black rounded-xl border-2 transition-all col-span-3 cursor-pointer ${
+                    selectedLetterGroup === 5
+                      ? 'bg-gradient-to-r from-fuchsia-600 to-indigo-600 border-fuchsia-400 text-white shadow-lg shadow-fuchsia-500/25 scale-102'
+                      : 'bg-slate-900 border-indigo-950 text-slate-400 hover:border-indigo-800 hover:text-slate-200'
+                  }`}
+                >
+                  全部 26 个字母 (A - Z)
+                </button>
+              </div>
+            </div>
+
+            <div className="border-t border-slate-900/60 pt-3">
+              <h3 className="text-xs font-black tracking-wider text-indigo-400 select-none text-left uppercase flex items-center gap-1.5 mb-2">
+                <span>🔤</span> 字母大小写模式
+              </h3>
+              <div className="grid grid-cols-3 gap-2">
+                {[
+                  { value: 'MIXED', label: '大+小写混合' },
+                  { value: 'UPPER', label: '纯大写 (A-Z)' },
+                  { value: 'LOWER', label: '纯小写 (a-z)' },
+                ].map((item) => (
+                  <button
+                    key={item.value}
+                    type="button"
+                    onClick={() => {
+                      audio.playClick();
+                      setLetterCaseMode(item.value as any);
+                    }}
+                    className={`py-2 px-1 text-[11px] font-extrabold rounded-xl border-2 transition-all cursor-pointer ${
+                      letterCaseMode === item.value
+                        ? 'bg-gradient-to-r from-indigo-600 via-indigo-650 to-indigo-500 border-indigo-400 text-white shadow'
+                        : 'bg-slate-900 border-indigo-950 text-slate-400 hover:border-indigo-800 hover:text-slate-200'
+                    }`}
+                  >
+                    {item.label}
+                  </button>
+                ))}
+              </div>
+            </div>
+          </div>
+
           {/* Tutorial description */}
-          <div className="bg-slate-950/60 border border-fuchsia-500/20 p-5 rounded-2xl w-full max-w-sm space-y-3.5 text-xs text-left leading-relaxed text-slate-300">
-            <div className="flex items-start gap-2.5">
-              <span className="text-base select-none">🔊</span>
-              <p><strong>听音辨词：</strong>金蛋音响会自动播发单词读音，点击音响重新收听。</p>
-            </div>
-            <div className="flex items-start gap-2.5 border-t border-slate-800 pt-3">
-              <span className="text-base select-none">🕹️</span>
-              <p><strong>操控夹子：</strong>直接点击地面的毛绒小动物，机械爪会自动行进抓取！抓到正确翻译的娃娃即可兑奖！</p>
-            </div>
-            <div className="flex items-start gap-2.5 border-t border-slate-800 pt-3">
-              <span className="text-base select-none">🪙</span>
-              <p><strong>随身背囊：</strong>赚取金币即可购买防护免错盾牌、复活香菇与智慧魔法弹！</p>
+          <div className="bg-slate-950/40 border border-slate-900/50 p-4 rounded-xl w-full max-w-sm space-y-2.5 text-[11px] text-left leading-relaxed text-slate-400">
+            <div className="flex items-start gap-2">
+              <span className="text-xs select-none">🔊</span>
+              <p><strong>听音辨字：</strong>点击金蛋可收听发音，操控夹子选中对应的字母娃娃即可兑奖！</p>
             </div>
           </div>
 
@@ -695,7 +875,7 @@ export const WordClawMachine: React.FC<WordClawMachineProps> = ({ groups, stats,
 
             {/* Neon level round tracker */}
             <div className="bg-indigo-950 px-3 py-0.5 rounded-full text-[10px] font-black text-indigo-300 font-mono tracking-widest border border-indigo-500/25 uppercase shrink-0">
-              词 {currentWordIndex + 1}/{allWords.length}
+              字母 {currentWordIndex + 1}/{allWords.length}
             </div>
           </div>
 
@@ -708,13 +888,13 @@ export const WordClawMachine: React.FC<WordClawMachineProps> = ({ groups, stats,
           </div>
 
           {/* THE MAGICAL SPEAKER BOX SOUND TRANSMITTER & PROMPTS */}
-          <div className="bg-indigo-950/45 px-4.5 py-3 border-b border-indigo-950/60 flex items-center justify-between gap-3 relative z-35 shrink-0">
+          <div className="bg-indigo-950/45 px-4.5 py-3 border-b border-indigo-950/60 flex items-center justify-between gap-3 relative z-30 shrink-0">
             <div className="flex-1 text-left">
               <span className="text-[9px] font-black text-fuchsia-400 tracking-wider block uppercase mb-0.5 select-none font-sans">
-                🔊 点击金蛋收听单词发音
+                🔊 点击金蛋收听字母发音
               </span>
               <span className="text-xs font-bold text-slate-300 leading-tight">
-                听完读音，选择下方带有正确中文解释的小玩偶吧：
+                听完读音，选择下方带有对应英文字母的小玩偶吧：
               </span>
             </div>
 
@@ -736,26 +916,53 @@ export const WordClawMachine: React.FC<WordClawMachineProps> = ({ groups, stats,
 
           {/* CABINET GLASS CHAMBER WIND (The physical stage representation) */}
           <div 
-            className="flex-1 w-full bg-[#130d24] relative overflow-hidden flex flex-col justify-end p-2.5 pb-0 select-none min-h-[300px]"
+            className="flex-1 w-full bg-[#130d24] relative overflow-hidden flex flex-col justify-end p-2.5 pb-0 select-none min-h-[300px] border-x-[10px] border-slate-950"
             style={{ backgroundImage: 'radial-gradient(circle at 50% 30%, #20173a 0%, #0d081b 100%)' }}
           >
+            {/* Left and Right Glowing Neon Tube Side-Bezels */}
+            <div className="absolute top-0 bottom-0 left-0 w-1.5 bg-gradient-to-r from-pink-500 via-fuchsia-500 to-transparent opacity-85 z-25 pointer-events-none shadow-[0_0_12px_#ec4899]" />
+            <div className="absolute top-0 bottom-0 right-0 w-1.5 bg-gradient-to-l from-pink-500 via-fuchsia-500 to-transparent opacity-85 z-25 pointer-events-none shadow-[0_0_12px_#ec4899]" />
+
+            {/* Glowing marquee bulb sequence (flashing miniature arcade dots) */}
+            <div className="absolute top-1 inset-x-0 flex justify-around px-4 opacity-75 z-25 pointer-events-none">
+              <div className="w-1.5 h-1.5 rounded-full bg-yellow-400 animate-pulse" />
+              <div className="w-1.5 h-1.5 rounded-full bg-cyan-400 animate-ping [animation-delay:0.3s]" />
+              <div className="w-1.5 h-1.5 rounded-full bg-pink-400 animate-pulse [animation-delay:0.6s]" />
+              <div className="w-1.5 h-1.5 rounded-full bg-yellow-400 animate-ping [animation-delay:0.9s]" />
+              <div className="w-1.5 h-1.5 rounded-full bg-cyan-400 animate-pulse [animation-delay:1.2s]" />
+              <div className="w-1.5 h-1.5 rounded-full bg-pink-400 animate-ping [animation-delay:1.5s]" />
+            </div>
+
             {/* Mirror reflection slash line on glass overlay side background */}
             <div className="absolute inset-0 bg-gradient-to-tr from-transparent via-white/2 opacity-[0.035] pointer-events-none z-10" />
 
             {/* Left side Chute / Prize collector hopper box bottom */}
-            <div className="absolute bottom-0 left-1 w-[20%] h-20 bg-slate-900 rounded-t-2xl border-2 border-slate-800 z-10 overflow-hidden flex flex-col items-center justify-end font-sans">
+            <div className="absolute bottom-0 left-1 w-[13%] min-w-[34px] h-20 bg-slate-900 rounded-t-2xl border-2 border-slate-800 z-10 overflow-hidden flex flex-col items-center justify-end font-sans">
               <div className="absolute inset-0 bg-radial-vignette opacity-20 pointer-events-none" />
               {/* Prize label sign */}
-              <div className="text-[8px] font-black tracking-widest text-[#d946ef] text-center w-full bg-slate-950 border-b border-indigo-950 py-0.5 select-none uppercase">
-                🎁 出口
+              <div className="text-[7.5px] font-black tracking-normal text-[#d946ef] text-center w-full bg-slate-950 border-b border-indigo-950 py-0.5 select-none uppercase">
+                🎁出口
               </div>
-              <div className="h-10 text-center flex items-center justify-center text-3xl">
+              <div className="h-10 text-center flex items-center justify-center text-xl sm:text-2xl">
                 {grabbedToyId ? '🤖' : '✨'}
               </div>
             </div>
 
+            {/* Glass Chamber Retro Laser Sign indicator */}
+            <div className="absolute top-5 inset-x-0 text-center z-12 select-none pointer-events-none">
+              {combo >= 3 ? (
+                <span className="px-3 py-1 border border-orange-500 bg-slate-950/90 text-[10px] font-bold tracking-widest text-orange-400 rounded-md shadow-[0_0_15px_rgba(249,115,22,0.4)] animate-pulse uppercase">
+                  🔥 FEVER DOUBLE COINS ACTIVE 🔥
+                </span>
+              ) : (
+                <span className="px-3 py-0.5 border border-fuchsia-500/20 text-[8px] font-mono tracking-widest text-fuchsia-400 rounded-sm bg-slate-950/50 font-black uppercase opacity-40">
+                  ⚡ CRANE ARCADE SYSTEM ⚡
+                </span>
+              )}
+            </div>
+
             {/* CRANE MECHANICS OVERLAY PANEL (Top of Chamber) */}
-            <div className="absolute top-0 inset-x-0 h-4 bg-slate-950 border-b-2 border-indigo-950 flex items-center relative z-25">
+            <div className="absolute top-0 inset-x-0 h-4 bg-slate-950 border-b-2 border-indigo-950 flex items-center relative z-20">
               {/* Slider rail beam */}
               <div className="w-full h-1 bg-slate-800 border-b border-slate-900" />
             </div>
@@ -801,17 +1008,17 @@ export const WordClawMachine: React.FC<WordClawMachineProps> = ({ groups, stats,
               </div>
             </div>
 
-            {/* CONGRATULATIONS COMBO WATERFALL FLOAT NOTICE */}
+            {/* COPIOUS RETRO COMBO COUNTER FLOATER */}
             {combo > 1 && (
-              <div className="absolute top-[3px] left-1/2 -translate-x-1/2 z-30">
-                <span className="px-2.5 py-0.5 bg-pink-500 border border-white text-[9px] font-black text-white rounded-full uppercase tracking-wider shadow-md animate-bounce inline-block">
-                  ⚡ 连击 COMBOS X{combo}!
+              <div className="absolute top-[3px] left-1/2 -translate-x-1/2 z-30 pointer-events-none">
+                <span className={`px-2.5 py-0.5 border border-white text-[9.5px] font-black text-white rounded-full uppercase tracking-wider block shadow-md ${combo >= 3 ? 'bg-orange-500 animate-pulse scale-105' : 'bg-pink-500'}`}>
+                  {combo >= 3 ? `🔥 FEVER 双倍金币 ×${combo}` : `⚡ 连击 COMBOS ×${combo}`}
                 </span>
               </div>
             )}
 
             {/* CUTE PLUSH TOYS BED (Piled at the chamber ground) */}
-            <div className="w-full h-24 relative flex items-end justify-center z-15 select-none">
+            <div className="w-full h-24 relative flex items-end justify-center z-20 select-none">
               
               <AnimatePresence>
                 {toys.map((toy) => {
@@ -827,12 +1034,13 @@ export const WordClawMachine: React.FC<WordClawMachineProps> = ({ groups, stats,
                         ? { 
                             y: -10, 
                             scale: 1, 
+                            opacity: 1,
                             rotate: [0, -10, 10, -5, 5, 0],
                             transition: { repeat: Infinity, duration: 1.5 }
                           } 
                         : isHighlighted 
-                          ? { y: -8, scale: 1.05, filter: 'brightness(1.1)' } 
-                          : { y: 0, scale: 1 }
+                          ? { y: -8, scale: 1.05, opacity: 1, filter: 'brightness(1.1)' } 
+                          : { y: 0, scale: 1, opacity: 1 }
                       }
                       exit={{ 
                         y: 110, 
@@ -842,40 +1050,60 @@ export const WordClawMachine: React.FC<WordClawMachineProps> = ({ groups, stats,
                         transition: { duration: 0.4, ease: 'easeIn' }
                       }}
                       onClick={() => selectPlushDoll(toy)}
-                      className="absolute bottom-1.5 cursor-pointer flex flex-col items-center justify-between text-center group pointer-events-auto select-none"
+                      className="absolute cursor-pointer flex flex-col items-center justify-between text-center group pointer-events-auto select-none"
                       style={{ 
                         left: `${toy.xPercent}%`, 
+                        bottom: `${6 + toy.yOffset}px`,
                         transform: 'translateX(-50%)',
-                        width: '74px'
+                        width: '76px'
                       }}
                     >
                       {/* Interactive Pointer Ring Tag */}
-                      <div className="h-5 flex items-center justify-center mb-1">
+                      <div className="h-4 flex items-center justify-center mb-0.5">
                         {isHighlighted && (
-                          <span className="text-sm animate-bounce text-yellow-300 filter drop-shadow-md select-none">
+                          <span className="text-xs animate-bounce text-yellow-300 filter drop-shadow-md select-none">
                             👇
                           </span>
                         )}
                       </div>
 
+                      {/* Golden crown tag overlay */}
+                      {toy.isGolden && (
+                        <div className="absolute top-3 right-3 w-4 h-4 bg-yellow-400 rounded-full flex items-center justify-center border border-white text-[8px] animate-bounce shadow-md shadow-yellow-500 z-30">
+                          👑
+                        </div>
+                      )}
+
                       {/* Plush capsule bubble shape body */}
                       <div 
-                        className={`w-14 sm:w-15 h-14 sm:h-15 bg-gradient-to-b ${toy.colorClass} border-2 ${isHighlighted ? 'border-yellow-300 ring-2 ring-yellow-400' : 'border-slate-900'} rounded-2xl flex flex-col items-center justify-between p-1 shadow-md hover:shadow-xl transition-all select-none duration-150`}
+                        className={`w-12 sm:w-13 h-12 sm:h-13 rounded-full flex items-center justify-center p-1 transition-all select-none duration-150 border-3 ${
+                          toy.isGolden 
+                            ? 'bg-gradient-to-b from-yellow-300 via-amber-400 to-yellow-600 border-yellow-300 shadow-[0_0_12px_rgba(234,179,8,0.7)]'
+                            : `bg-gradient-to-b ${toy.colorClass} border-slate-950 shadow-md`
+                        } ${isHighlighted ? 'ring-4 ring-yellow-400/50 scale-105 saturate-110' : ''}`}
                       >
                         {/* Animal Facials */}
-                        <div className="text-2xl sm:text-3.5xl scale-110 select-none flex-1 flex items-center justify-center">
+                        <div className="text-xl sm:text-2xl select-none flex items-center justify-center">
                           {toy.plushEmoji}
-                        </div>
-
-                        {/* HIGH-CONTRAST FULL ENLARGED CHINESE LABELS */}
-                        <div className={`px-1 bg-black/75 rounded text-center w-full text-[10px] sm:text-[11.5px] font-black tracking-tight leading-none overflow-hidden text-ellipsis whitespace-nowrap ${toy.textColor}`}>
-                          {toy.label}
                         </div>
                       </div>
 
+                      {/* HIGH-CONTRAST CHUBBY WORDS LABEL - STANDOUT CONTRAST & READABLE FONT */}
+                      <div 
+                        className={`mt-1 px-1.5 py-0.5 bg-yellow-300 border-2 border-slate-950 rounded-xl text-center shadow shadow-black/40 w-full overflow-hidden text-ellipsis whitespace-nowrap transition-transform duration-100 ${
+                          isHighlighted ? 'scale-105 bg-yellow-250' : ''
+                        }`}
+                      >
+                        <span className="font-extrabold tracking-wider leading-none text-slate-950 font-sans block truncate select-none text-[16px] sm:text-[18px]">
+                          {toy.label}
+                        </span>
+                      </div>
+
                       {/* Cute Animal Foot Base Decal */}
-                      <div className="text-[10px] font-black text-slate-400 mt-1 uppercase scale-90 select-none group-hover:text-fuchsia-300 transition-colors">
-                        {toy.animalName}
+                      <div className={`text-[10px] font-extrabold mt-1 uppercase scale-90 select-none ${
+                        toy.isGolden ? 'text-yellow-400 font-bold saturate-150' : 'text-slate-400 group-hover:text-fuchsia-300'
+                      } transition-colors`}>
+                        {toy.isGolden ? `✨金${toy.animalName.slice(2)}` : toy.animalName}
                       </div>
 
                     </motion.div>
@@ -886,7 +1114,7 @@ export const WordClawMachine: React.FC<WordClawMachineProps> = ({ groups, stats,
             </div>
 
             {/* Glass capsule base dirt shelf board floor layout */}
-            <div className="h-4 w-full bg-slate-950 border-t-3 border-indigo-950 flex justify-between px-6 z-15 relative">
+            <div className="h-4 w-full bg-slate-950 border-t-3 border-indigo-950 flex justify-between px-6 z-20 relative">
               <div className="w-1.5 h-1.5 rounded-full bg-slate-800" />
               <div className="w-1.5 h-1.5 rounded-full bg-slate-800" />
               <div className="w-1.5 h-1.5 rounded-full bg-slate-800" />
@@ -912,7 +1140,7 @@ export const WordClawMachine: React.FC<WordClawMachineProps> = ({ groups, stats,
                     ◀
                   </button>
                   {/* Virtual glowing stick head */}
-                  <div className="w-5 h-5 rounded-full bg-gradient-to-br from-fuchsia-400 to-indigo-600 shadow-[0_0_8px_rgba(168,85,247,0.5)] select-none" />
+                  <div className="w-5 h-5 rounded-full bg-gradient-to-br from-fuchsia-400 to-indigo-650 shadow-[0_0_8px_rgba(168,85,247,0.5)] select-none" />
                   
                   <button 
                     onClick={() => moveClawHand('RIGHT')}
@@ -921,6 +1149,13 @@ export const WordClawMachine: React.FC<WordClawMachineProps> = ({ groups, stats,
                     ▶
                   </button>
                 </div>
+              </div>
+
+              {/* COIN INLET DOOR LIGHT ACCENT */}
+              <div className="hidden sm:flex flex-col items-center justify-center border border-slate-800 bg-slate-950 px-4 py-1.5 rounded-xl">
+                <span className="text-[7px] font-black text-slate-500 uppercase tracking-widest select-none">COIN RETURN</span>
+                <div className="w-2 h-5 bg-amber-500/80 rounded shadow-[0_0_8px_rgba(245,158,11,0.6)] animate-pulse mt-1" />
+                <span className="text-[7.5px] font-extrabold text-amber-500 mt-0.5 select-none font-mono">INSERT COIN</span>
               </div>
 
               {/* ACTION: RED CRANE GRAB ACTION PANEL BAR */}

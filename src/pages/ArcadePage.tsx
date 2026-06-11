@@ -86,6 +86,7 @@ const ArcadePage: React.FC<ArcadePageProps> = ({ groups, stats, lastLearnedWords
   }, [progress, stats.reviewSchedules]);
 
   const games: GameInfo[] = [
+    { id: 'LETTER_LINK', title: '大小写字母连连看', icon: <Sparkles />, color: 'bg-indigo-500', xp: '+185', description: '配对连线认字母！拉出彩色流光线条，将大写字母与正确的小写字母连接到一起，解锁好玩字母百科！', category: 'ARCADE' },
     { id: 'CLAW', title: '神奇抓娃娃机', icon: <Gamepad2 />, color: 'bg-fuchsia-500', xp: '+350', description: '控制悬臂机械夹爪！听准英文单词语音，在堆积如山的可可爱爱玩偶中抓起正确翻译！', category: 'ARCADE' },
     { id: 'MARIO', title: '马里奥拼词造句', icon: <Gamepad2 />, color: 'bg-red-500', xp: '+500', description: '化身马里奥跳跃撞击！顶碎拼写、词义与整排整句Token，获取巨额金币与经验红利！', category: 'ARCADE' },
     { id: 'SCRAMBLE', title: '拼词大师', icon: <Zap />, color: 'bg-rose-500', xp: '+250', description: '释放字母能量，拼出正确的咒语。', category: 'CHALLENGE' },

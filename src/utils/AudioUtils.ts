@@ -1139,7 +1139,7 @@ export const audio = {
     // to unlock exact, grain-level pronunciation character boundaries for our triplet drumroll hits!
     const isSanzijingOrPhrase = cleanWord.length >= 3 && (isChinese || cleanWord.includes(' '));
 
-    if (!isPhonicSegmentSound && (cleanWord.length > 1 || isChinese) && !isSanzijingOrPhrase) {
+    if (!isPhonicSegmentSound && (cleanWord.length > 1 || /^[a-zA-Z]$/.test(cleanWord) || isChinese) && !isSanzijingOrPhrase) {
       isBypassed: {
         try {
           // Play Youdao Premium Human TTS
@@ -1148,8 +1148,9 @@ export const audio = {
             : `https://dict.youdao.com/dictvoice?audio=${encodeURIComponent(cleanWord)}&type=2`; // type=2 is US Accent
           
           const aud = new Audio(audioUrl);
-          aud.defaultPlaybackRate = 0.67; // set playback rate to 1.5 times slower (1 / 1.5 ≈ 0.67) Before loading
-          aud.playbackRate = 0.67;
+          const ttsSpeed = cleanWord.length === 1 ? 1.0 : 0.67;
+          aud.defaultPlaybackRate = ttsSpeed; // set playback rate to 1.5 times slower for words, normal for single letters
+          aud.playbackRate = ttsSpeed;
           activeWordAudio = aud;
           aud.volume = 1.0; // Boosted volume
 
