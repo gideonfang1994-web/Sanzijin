@@ -185,7 +185,9 @@ export const MarioWordBuster: React.FC<MarioWordBusterProps> = ({ groups, stats,
   }, [groups]);
 
   // Game configuration
-  const TOTAL_ROUNDS = 5;
+  const [gameQueue, setGameQueue] = useState<{ word: WordItem; isRepetition: boolean; repetitionCount: number }[]>([]);
+  const [wrongWords, setWrongWords] = useState<WordItem[]>([]);
+  const TOTAL_ROUNDS = gameQueue.length || poolWords.length || 5;
   const [currentRound, setCurrentRound] = useState(1);
   const [gameMode, setGameMode] = useState<GameMode>('CORE_VOCAB');
   const [gameState, setGameState] = useState<'INTRO' | 'PLAYING' | 'SUMMARY'>('INTRO');
@@ -473,20 +475,19 @@ export const MarioWordBuster: React.FC<MarioWordBusterProps> = ({ groups, stats,
   };
 
   // Initialize word study target and build question state
-  const generateQuestion = (round: number) => {
-    if (poolWords.length === 0) return;
+  const generateQuestion = (round: number, queueOverride?: { word: WordItem; isRepetition: boolean; repetitionCount: number }[]) => {
+    const activeQueue = queueOverride || gameQueue;
+    if (activeQueue.length === 0) return;
 
-    // Direct look-at English, Select Chinese core mechanic
-    const selectedIndex = (round - 1) % poolWords.length;
-    const currentWord = poolWords[selectedIndex];
+    const selectedIndex = round - 1;
+    if (selectedIndex < 0 || selectedIndex >= activeQueue.length) return;
 
-    // Direct vocabulary dictionary mapping exclusively
-    const nextGameMode: GameMode = 'CORE_VOCAB';
-    setGameMode(nextGameMode);
+    const activeItem = activeQueue[selectedIndex];
+    const currentWord = activeItem.word;
 
     let newQuestion: QuestionState;
 
-    if (nextGameMode === 'CORE_VOCAB') {
+    if (gameMode === 'CORE_VOCAB') {
       const dists = getDynamicDistractors(currentWord.translation, 3);
       const options = [
         { id: 'correct', label: currentWord.translation, isCorrect: true },
@@ -502,7 +503,7 @@ export const MarioWordBuster: React.FC<MarioWordBusterProps> = ({ groups, stats,
     } else {
       // BLANK_COMPLETION mode (Read contextual sentence containing blank in English, choose translation)
       const contextualSentenceBank = [
-        { en: 'We had a ___ adventure in the green woods.', wordText: 'wonderful', wordZh: '奇妙的' },
+        { en: 'We had a ___ adventure in the green woods.', wordText: 'wonderful', wordZh: '极好的' },
         { en: 'This is an unforgettable ___ for us.', wordText: 'experience', wordZh: '经历 / 体验' },
         { en: 'We got the ultimate ___ after hard work.', wordText: 'victory', wordZh: '红利胜利' },
         { en: 'He wrote an ancient ___ about the dragon.', wordText: 'legend', wordZh: '英雄传说' },
@@ -656,6 +657,9 @@ export const MarioWordBuster: React.FC<MarioWordBusterProps> = ({ groups, stats,
       if (marioState !== 'FALLEN') setMarioState('IDLE');
     }, 280);
 
+    const activeItem = gameQueue[currentRound - 1];
+    const isRep = activeItem?.isRepetition;
+
     if (brick.isCorrect) {
       // 1. Calculate and add coins with multipliers
       const baseCoinPayout = 8;
@@ -666,11 +670,20 @@ export const MarioWordBuster: React.FC<MarioWordBusterProps> = ({ groups, stats,
       setScore(s => s + 30 * (combo + 1));
       setCombo(cb => cb + 1);
 
-      setCoinPop({
-        x: brick.x,
-        text: `+${30 * (combo + 1)} XP (连击 x${combo + 1})`,
-        id: Date.now()
-      });
+      if (isRep) {
+        setCoinPop({
+          x: brick.x,
+          text: `🎉 艾宾浩斯攻克！击碎错词特训幽灵！+50 XP`,
+          id: Date.now()
+        });
+        setScore(s => s + 50); // custom repetition clear bonus XP!
+      } else {
+        setCoinPop({
+          x: brick.x,
+          text: `+${30 * (combo + 1)} XP (连击 x${combo + 1})`,
+          id: Date.now()
+        });
+      }
 
       // Spawn traditional Mario floating/spinning coin popping out of the block!
       setPopCoinAnim({
@@ -715,10 +728,58 @@ export const MarioWordBuster: React.FC<MarioWordBusterProps> = ({ groups, stats,
           id: Date.now()
         });
 
+        // Ebbinghaus scheduling & mistake tracking logic
+        const wrongWordItem = gameQueue[currentRound - 1]?.word;
+        if (wrongWordItem) {
+          // Record wrong word
+          setWrongWords(prev => {
+            if (prev.some(w => w.text === wrongWordItem.text)) return prev;
+            return [...prev, wrongWordItem];
+          });
+
+          // Insert into gameQueue 2 steps forward
+          const isAlreadyScheduledAhead = gameQueue.slice(currentRound).some(item => item.word.text === wrongWordItem.text);
+          if (!isAlreadyScheduledAhead) {
+            const repeatedItem = {
+              word: wrongWordItem,
+              isRepetition: true,
+              repetitionCount: (gameQueue[currentRound - 1]?.repetitionCount || 0) + 1
+            };
+
+            setGameQueue(prev => {
+              const nextQueue = [...prev];
+              const targetIdx = currentRound + 2; // e.g. if round is 1 (index 0), next is index 1, index 2, repeat is index 3
+              if (targetIdx < nextQueue.length) {
+                nextQueue.splice(targetIdx, 0, repeatedItem);
+              } else {
+                nextQueue.push(repeatedItem);
+              }
+              return nextQueue;
+            });
+
+            setTimeout(() => {
+              setCoinPop({
+                x: marioX,
+                text: `👾 艾宾浩斯机制：此词幽灵已被送回，2关后将再次出现重现！`,
+                id: Date.now() + 1
+              });
+            }, 1400);
+          }
+        }
+
         setHearts(prev => {
           const remaining = prev - 1;
           if (remaining <= 0) {
-            setTimeout(() => finishGame(), 1500);
+            // Infinite training auto-revival mushrooms instead of Game Over
+            setTimeout(() => {
+              setHearts(3);
+              setCoinPop({
+                x: 50,
+                text: `🍄 奇迹绿蘑菇！生命恢复健康值 3 ❤️`,
+                id: Date.now() + 2
+              });
+              playRetroSound('UPGRADE');
+            }, 1800);
           }
           return remaining;
         });
@@ -736,7 +797,7 @@ export const MarioWordBuster: React.FC<MarioWordBusterProps> = ({ groups, stats,
     setMaxCombo(prev => Math.max(prev, combo + 1));
 
     setTimeout(() => {
-      if (currentRound >= TOTAL_ROUNDS) {
+      if (currentRound >= gameQueue.length) {
         finishGame();
       } else {
         setCurrentRound(prev => prev + 1);
@@ -774,9 +835,19 @@ export const MarioWordBuster: React.FC<MarioWordBusterProps> = ({ groups, stats,
     setHearts(3);
     setHasShield(false);
     setPowerupCoinsMultiplier(1);
+    setWrongWords([]);
     setCurrentRound(1);
     setGameState('PLAYING');
-    generateQuestion(1);
+
+    // Build initial game session queue driving Ebbinghaus recurrence logic
+    const initialQueue = poolWords.map(w => ({
+      word: w,
+      isRepetition: false,
+      repetitionCount: 0
+    }));
+    setGameQueue(initialQueue);
+
+    generateQuestion(1, initialQueue);
     audio.playClick();
   };
 
@@ -796,14 +867,18 @@ export const MarioWordBuster: React.FC<MarioWordBusterProps> = ({ groups, stats,
   };
 
   return (
-    <div id="mario_game_root" className="min-h-screen w-full bg-[#090b14] text-white flex flex-col items-center justify-start p-3 sm:p-6 font-mono relative overflow-hidden select-none">
+    <div id="mario_game_root" className="min-h-screen w-full bg-gradient-to-b from-[#060814] via-[#020309] to-[#010103] text-white flex flex-col items-center justify-center p-3 sm:p-6 font-mono relative overflow-y-auto select-none overflow-x-hidden">
       
       {/* Moving pixel stars backdrop */}
-      <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,_rgba(16,24,64,0.45)_0%,_rgba(3,5,15,1)_100%)] pointer-events-none" />
-      <div className="absolute inset-0 opacity-[0.03] bg-[linear-gradient(45deg,#fff_25%,transparent_25%),linear-gradient(-45deg,#fff_25%,transparent_25%),linear-gradient(45deg,transparent_75%,#fff_75%),linear-gradient(-45deg,transparent_75%,#fff_75%)] bg-[size:20px_20px] pointer-events-none" />
+      <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,_rgba(16,24,64,0.3)_0%,_rgba(2,3,10,1)_100%)] pointer-events-none" />
+      <div className="absolute inset-0 opacity-[0.04] bg-[linear-gradient(45deg,#fff_25%,transparent_25%),linear-gradient(-45deg,#fff_25%,transparent_25%),linear-gradient(45deg,transparent_75%,#fff_75%),linear-gradient(-45deg,transparent_75%,#fff_75%)] bg-[size:16px_16px] pointer-events-none" />
+
+      {/* Decorative vertical cabinet neon tubes on far sides (visible on large viewports) */}
+      <div className="hidden lg:block absolute left-4 xl:left-8 top-1/6 bottom-1/6 w-1 bg-gradient-to-b from-transparent via-red-500 to-transparent blur-[4px] opacity-40 rounded-full animate-pulse" />
+      <div className="hidden lg:block absolute right-4 xl:right-8 top-1/6 bottom-1/6 w-1 bg-gradient-to-b from-transparent via-blue-500 to-transparent blur-[4px] opacity-40 rounded-full animate-pulse" />
 
       {/* Arcade cabinet outer glow effects */}
-      <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[700px] h-[350px] bg-red-600/10 rounded-full blur-[100px] pointer-events-none" />
+      <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[700px] h-[350px] bg-red-600/10 rounded-full blur-[100px] pointer-events-none animate-pulse" />
       <div className="absolute bottom-0 left-1/2 -translate-x-1/2 w-[600px] h-[300px] bg-blue-600/10 rounded-full blur-[90px] pointer-events-none" />
 
       {/* Header bar: Arcade Console Marquee */}
@@ -903,52 +978,103 @@ export const MarioWordBuster: React.FC<MarioWordBusterProps> = ({ groups, stats,
               <div>
                 <span className="text-xs sm:text-sm font-black text-teal-300 block mb-1">随身背囊防错道具</span>
                 <p className="text-[11px] text-slate-400 leading-relaxed font-sans">
-                  使用累积的游戏金币快捷兑换【防错护盾】、生命恢复等好礼！支持电脑端 A/D/Space 键盘方向行跳控制！
+                  使用累积的游戏金币快捷兑换【防错护盾】、生命恢复等好礼！支持自动护体。
                 </p>
               </div>
             </div>
           </div>
 
-          <button 
-            onClick={startGame}
-            className="px-10 py-5 bg-gradient-to-r from-red-600 via-orange-550 to-yellow-500 hover:from-red-500 hover:to-yellow-450 text-white font-black text-2xl rounded-3xl shadow-[0_10px_25px_-5px_rgba(239,68,68,0.4)] border-b-8 border-red-800 active:border-b-2 hover:scale-[1.03] active:scale-[0.98] transition-all flex items-center justify-center gap-3 mx-auto cursor-pointer outline-none"
-          >
-            <Play size={22} className="fill-white" />
-            <span>开启冒险 (START MISSION)</span>
-          </button>
+          {/* Mode Selector Option Cards */}
+          <div className="mb-8 max-w-xl mx-auto text-left">
+            <h4 className="text-xs sm:text-sm font-extrabold text-[#a4bcfc] uppercase mb-3 flex items-center gap-1.5 justify-center tracking-wider">
+              <span>🕹️</span> <span>请选择游戏挑战模式 (SELECT GAME MODE)</span>
+            </h4>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+              <button
+                onClick={() => { setGameMode('CORE_VOCAB'); playRetroSound('SELECT_CHIRP'); }}
+                className={`p-4 rounded-2xl border-2 text-left transition-all relative overflow-hidden flex flex-col group ${
+                  gameMode === 'CORE_VOCAB'
+                    ? 'bg-[#192147]/80 border-yellow-450 shadow-[0_0_15px_rgba(234,179,8,0.2)] text-white'
+                    : 'bg-[#0a0c1a]/70 border-slate-800 text-slate-400 hover:border-slate-700'
+                }`}
+              >
+                <div className="flex items-center justify-between w-full mb-1">
+                  <span className={`text-xs sm:text-sm font-black ${gameMode === 'CORE_VOCAB' ? 'text-yellow-300' : 'text-slate-300'}`}>
+                    🍄 英汉直译模式
+                  </span>
+                  {gameMode === 'CORE_VOCAB' && <span className="text-xs">⭐️</span>}
+                </div>
+                <span className="text-[10px] text-slate-400 font-sans leading-tight">
+                  直观关联单词与首要释义，快速建立口语听辨与母语神经翻译连接。
+                </span>
+              </button>
+
+              <button
+                onClick={() => { setGameMode('BLANK_COMPLETION'); playRetroSound('SELECT_CHIRP'); }}
+                className={`p-4 rounded-2xl border-2 text-left transition-all relative overflow-hidden flex flex-col group ${
+                  gameMode === 'BLANK_COMPLETION'
+                    ? 'bg-[#192147]/80 border-sky-400 shadow-[0_0_15px_rgba(56,189,248,0.2)] text-white'
+                    : 'bg-[#0a0c1a]/70 border-slate-800 text-slate-400 hover:border-slate-700'
+                }`}
+              >
+                <div className="flex items-center justify-between w-full mb-1">
+                  <span className={`text-xs sm:text-sm font-black ${gameMode === 'BLANK_COMPLETION' ? 'text-sky-300' : 'text-slate-300'}`}>
+                    🌾 例句填空挑战
+                  </span>
+                  {gameMode === 'BLANK_COMPLETION' && <span className="text-xs">⚡</span>}
+                </div>
+                <span className="text-[10px] text-slate-400 font-sans leading-tight">
+                  结合例句上下文空缺进行高阶释义匹配，深化单词运用的理解！
+                </span>
+              </button>
+            </div>
+          </div>
+
+          {/* Start button */}
+          <div className="text-center mt-6">
+            <button
+              onClick={startGame}
+              className="px-10 py-4 bg-gradient-to-r from-red-650 via-red-500 to-amber-500 hover:from-red-500 hover:to-amber-400 text-white font-extrabold rounded-2xl text-base sm:text-lg shadow-[0_8px_20px_-4px_rgba(239,68,68,0.4)] hover:shadow-[0_12px_24px_-4px_rgba(239,68,68,0.5)] border-b-4 border-red-800 active:border-b-2 active:scale-95 transition-all outline-none select-none animate-pulse w-full max-w-sm"
+            >
+              🚀 启动大厅冒险 (START)
+            </button>
+          </div>
         </motion.div>
       )}
 
       {/* ------------------------------------------------------------- */}
       {/* 2. PLAYING GAMEPLAY SCREEN CONTAINER */}
       {/* ------------------------------------------------------------- */}
+      
       {gameState === 'PLAYING' && question && (
-        <div className="w-full max-w-4xl flex flex-col space-y-4 relative z-10">
+        <div className="w-full max-w-4xl bg-[#14122d] border-4 sm:border-8 border-[#3b3473] rounded-[38px] p-3 sm:p-5 shadow-2 shadow-black/80 ring-8 ring-indigo-950/25 relative z-10 flex flex-col space-y-4">
           
-          {/* LED CLASSIC HUD BAR (Monochrome black panel styled with retro glow text) */}
-          <div className="grid grid-cols-4 gap-2 bg-black border-4 border-slate-700/80 p-3 rounded-2xl text-center select-none shadow-2xl relative">
+          {/* LED CLASSIC HUD BAR (Glow scoreboard styled with retro green/yellow LEDs) */}
+          <div className="grid grid-cols-4 gap-2 bg-gradient-to-b from-stone-900 to-black border-4 border-slate-700/80 p-3 rounded-2xl text-center select-none shadow-inner relative">
             <div className="absolute inset-0 bg-gradient-to-b from-transparent via-white/5 to-transparent pointer-events-none rounded-xl" />
             
             <div className="border-r border-slate-900">
-              <p className="text-[10px] text-slate-500 font-extrabold uppercase mb-0.5 tracking-wider">WORLD ROUND</p>
-              <p className="text-sm sm:text-lg font-black text-red-500 leading-none font-mono">0{currentRound} / 0{TOTAL_ROUNDS}</p>
+              <p className="text-[9px] text-slate-500 font-extrabold uppercase mb-0.5 tracking-wider">WORLD ROUND</p>
+              <p className="text-sm sm:text-lg font-black text-red-500 leading-none font-mono">
+                {currentRound < 10 ? `0${currentRound}` : currentRound} / {TOTAL_ROUNDS < 10 ? `0${TOTAL_ROUNDS}` : TOTAL_ROUNDS}
+              </p>
             </div>
             
             <div className="border-r border-slate-900">
-              <p className="text-[10px] text-slate-500 font-extrabold uppercase mb-0.5 tracking-wider">MY COINS</p>
-              <p className="text-sm sm:text-lg font-black text-yellow-400 leading-none flex items-center justify-center gap-1 font-mono">
+              <p className="text-[9px] text-slate-500 font-extrabold uppercase mb-0.5 tracking-wider">MY COINS</p>
+              <p className="text-sm sm:text-lg font-black text-yellow-405 leading-none flex items-center justify-center gap-1 font-mono">
                 <span className="text-yellow-500 scale-110 drop-shadow-[0_0_4px_rgba(234,179,8,0.5)]">🪙</span>
                 <span>{coins}</span>
               </p>
             </div>
             
             <div className="border-r border-slate-900">
-              <p className="text-[10px] text-slate-500 font-extrabold uppercase mb-0.5 tracking-wider">TOTAL POINTS</p>
+              <p className="text-[9px] text-slate-500 font-extrabold uppercase mb-0.5 tracking-wider">TOTAL POINTS</p>
               <p className="text-sm sm:text-lg font-black text-emerald-400 leading-none font-mono tracking-tight">{score} XP</p>
             </div>
             
             <div className="flex flex-col items-center justify-center">
-              <p className="text-[10px] text-slate-500 font-extrabold uppercase mb-0.5 tracking-wider">LIVES LEFT</p>
+              <p className="text-[9px] text-slate-500 font-extrabold uppercase mb-0.5 tracking-wider">LIVES LEFT</p>
               <div className="flex items-center gap-1">
                 {[...Array(3)].map((_, i) => (
                   <Heart 
@@ -956,7 +1082,7 @@ export const MarioWordBuster: React.FC<MarioWordBusterProps> = ({ groups, stats,
                     size={14} 
                     className={`${
                       i < hearts 
-                        ? 'fill-red-600 text-red-500 drop-shadow-[0_0_6px_rgba(239,68,68,0.6)] animate-pulse' 
+                        ? 'fill-red-650 text-red-550 drop-shadow-[0_0_6px_rgba(239,68,68,0.7)] animate-pulse' 
                         : 'text-slate-800'
                     }`} 
                   />
@@ -965,25 +1091,45 @@ export const MarioWordBuster: React.FC<MarioWordBusterProps> = ({ groups, stats,
             </div>
           </div>
 
-          {/* MAIN 2D PLAYGROUND STAGE WITH CRT MOCK BEZEL */}
-          <div className="relative rounded-[36px] bg-slate-950 p-2.5 border-4 border-slate-800 shadow-2xl">
+          {/* MAIN 2D PLAYGROUND STAGE WITH CRT MOCK BEZEL & IMPROVED HEIGHT */}
+          <div className="relative rounded-[32px] bg-slate-950 p-2 border-4 border-slate-900 shadow-2xl relative overflow-hidden">
+            
+            {/* Left and right inner cabinet glowing strips for console realism */}
+            <div className="absolute left-[3px] top-4 bottom-4 w-[3px] bg-red-500/20 blur-[1px] pointer-events-none rounded" />
+            <div className="absolute right-[3px] top-4 bottom-4 w-[3px] bg-blue-500/20 blur-[1px] pointer-events-none rounded" />
 
             <div 
               id="mario-stage"
-              className="w-full h-[320px] bg-[#5c94fc] rounded-[26px] relative overflow-hidden shadow-inner flex flex-col justify-end pointer-events-auto"
+              className="w-full h-[350px] sm:h-[400px] bg-[#5c94fc] rounded-[22px] relative overflow-hidden shadow-inner flex flex-col justify-end pointer-events-auto"
               style={{ imageRendering: 'pixelated' }}
             >
               {/* Retro television CRT raster grid lines */}
-              <div className="pointer-events-none absolute inset-0 bg-[linear-gradient(rgba(18,16,16,0)_50%,_rgba(0,0,0,0.15)_50%),_linear-gradient(90deg,_rgba(255,0,0,0.04),_rgba(0,255,0,0.01),_rgba(0,0,255,0.04))] bg-[size:100%_4px,_6px_100%] z-25 opacity-25" />
-              <div className="absolute inset-0 bg-radial-vignette opacity-20 pointer-events-none z-25" />
+              <div className="pointer-events-none absolute inset-0 bg-[linear-gradient(rgba(18,16,16,0)_50%,_rgba(0,0,0,0.12)_50%),_linear-gradient(90deg,_rgba(255,0,0,0.03),_rgba(0,255,0,0.01),_rgba(0,0,255,0.03))] bg-[size:100%_4px,_6px_100%] z-25 opacity-25" />
+              <div className="absolute inset-0 bg-radial-vignette opacity-15 pointer-events-none z-25" />
 
-              {/* TARGET WORD BANNER FLOATING IN THE SKY CLOUDS (IN LOWERCASE) - MOVED SIGNIFICANTLY UPWARD FOR AN IMPROVED VIEW & COMFORT */}
-              <div className="absolute top-[4px] sm:top-[6px] left-1/2 -translate-x-1/2 z-30 flex flex-col items-center pointer-events-auto">
-                <div className="bg-white/98 border-[3px] border-sky-200 px-7 py-2 rounded-2xl shadow-[0_6px_22px_rgba(14,165,233,0.25)] flex items-center gap-3">
-                  <span className="text-3xl sm:text-4xl font-extrabold text-slate-950 font-sans tracking-tight lowercase select-text">
+              {/* TARGET WORD BANNER FLOATING IN THE SKY CLOUDS (IN LOWERCASE) */}
+              <div className="absolute top-[12px] sm:top-[20px] left-1/2 -translate-x-1/2 z-30 flex flex-col items-center pointer-events-auto w-full max-w-xs sm:max-w-md">
+                {gameQueue[currentRound - 1]?.isRepetition && (
+                  <motion.div 
+                    initial={{ scale: 0.8, opacity: 0 }}
+                    animate={{ scale: [1, 1.05, 1], opacity: 1 }}
+                    transition={{ repeat: Infinity, duration: 1.5 }}
+                    className="mb-1.5 px-3 py-1 bg-purple-650 border border-purple-400 text-purple-100 text-[9px] sm:text-[10px] font-black rounded-full shadow-[0_0_12px_rgba(168,85,247,0.5)] flex items-center gap-1 uppercase tracking-wider whitespace-nowrap"
+                  >
+                    <span>👾 [错词特训幽灵]</span> <span>Ebbinghaus Spaced Recall</span>
+                  </motion.div>
+                )}
+                <div className={`border-[3px] px-8 py-2.5 rounded-2xl flex items-center gap-3 ${
+                  gameQueue[currentRound - 1]?.isRepetition
+                    ? 'bg-[#1e0d37]/95 border-purple-500 shadow-[0_8px_24px_rgba(168,85,247,0.4)] text-purple-100'
+                    : 'bg-white/95 border-sky-300 shadow-[0_8px_24px_rgba(14,165,233,0.3)] text-slate-950'
+                } animate-bounce`} style={{ animationDuration: '4s' }}>
+                  <span className={`text-2xl sm:text-4.5xl font-extrabold font-sans tracking-tight lowercase select-text ${
+                    gameQueue[currentRound - 1]?.isRepetition ? 'text-purple-200' : 'text-slate-950'
+                  }`}>
                     {gameMode === 'CORE_VOCAB' 
                       ? question.englishChallenge.toLowerCase() 
-                      : poolWords[(currentRound - 1) % poolWords.length].text.toLowerCase()}
+                      : (gameQueue[currentRound - 1]?.word?.text || '').toLowerCase()}
                   </span>
                   
                   {/* Micro pronunciation audio button inside target banner */}
@@ -992,13 +1138,17 @@ export const MarioWordBuster: React.FC<MarioWordBusterProps> = ({ groups, stats,
                       e.stopPropagation();
                       const speakTarget = gameMode === 'CORE_VOCAB' 
                         ? question.englishChallenge 
-                        : poolWords[(currentRound - 1) % poolWords.length].text;
+                        : (gameQueue[currentRound - 1]?.word?.text || '');
                       audio.speak(speakTarget);
                     }}
-                    className="p-2 hover:bg-sky-50 rounded-full text-indigo-750 bg-slate-50 hover:text-indigo-850 transition-all cursor-pointer flex items-center justify-center border border-sky-100 shadow-sm active:scale-95 duration-75"
+                    className={`p-2 rounded-full transition-all cursor-pointer flex items-center justify-center border shadow-sm active:scale-95 duration-75 ${
+                      gameQueue[currentRound - 1]?.isRepetition
+                        ? 'bg-purple-900 hover:bg-purple-800 text-purple-300 border-purple-700'
+                        : 'bg-slate-100 hover:bg-sky-100 text-indigo-750 border-sky-200'
+                    }`}
                     title="播放发音"
                   >
-                    <Volume2 size={20} className="stroke-[3]" />
+                    <Volume2 size={24} className="stroke-[3]" />
                   </button>
                 </div>
               </div>
@@ -1265,6 +1415,80 @@ export const MarioWordBuster: React.FC<MarioWordBusterProps> = ({ groups, stats,
           <p className="text-xs text-slate-400 italic max-w-sm mx-auto mb-8 leading-relaxed font-medium">
             “词灵神光，不灭金身。恭喜你在马里奥看词大冒险中斩获大量金币！这些词汇释义已经在跌宕起伏的冒险中深深烙刻在你心中！”
           </p>
+
+          {/* EBBINGHAUS TESTING & WRONG WORDS REVIEW MODULE */}
+          {wrongWords.length > 0 ? (
+            <div className="mt-2 mb-8 bg-[#090b1e] border-2 border-red-500/30 rounded-3xl p-5 text-left shadow-lg">
+              <div className="flex items-center justify-between mb-4 pb-2 border-b border-slate-800">
+                <h4 className="text-xs sm:text-sm font-black text-red-400 flex items-center gap-1.5 uppercase tracking-wider">
+                  <span>👹</span> <span>库巴遗忘古堡 · 本局错词温故 ({wrongWords.length} 词)</span>
+                </h4>
+                <span className="text-[10px] text-slate-450 font-sans hidden sm:inline">
+                  一键击碎复习方块，清除错误记录！
+                </span>
+              </div>
+
+              {/* Dynamic wrong words grid */}
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 max-h-[180px] overflow-y-auto pr-1">
+                {wrongWords.map((word) => (
+                  <div key={word.text} className="bg-[#11132a] border border-slate-800 hover:border-red-500/20 rounded-2xl p-3 flex items-center justify-between transition-all">
+                    <div className="flex flex-col min-w-0 pr-2">
+                      <span className="text-sm font-bold text-slate-100 font-mono select-text truncate">{word.text}</span>
+                      <span className="text-[11px] text-slate-400 font-sans mt-0.5 line-clamp-1">{word.translation}</span>
+                    </div>
+                    
+                    <div className="flex items-center gap-1.5 shrink-0">
+                      {/* Listen button */}
+                      <button
+                        onClick={() => {
+                          audio.playClick();
+                          audio.speak(word.text);
+                        }}
+                        className="p-1.5 bg-slate-900 border border-slate-700 hover:border-slate-600 rounded-lg text-teal-400 active:scale-95 transition-all flex items-center justify-center cursor-pointer"
+                        title="听发音"
+                      >
+                        <Volume2 size={13} className="stroke-[2.5]" />
+                      </button>
+                      
+                      {/* Clear review button */}
+                      <button
+                        onClick={() => {
+                          playRetroSound('COIN');
+                          audio.speak(word.text);
+                          confetti({
+                            particleCount: 15,
+                            spread: 20,
+                          });
+                          // Reward points and coins for correcting mistake
+                          setScore(s => s + 10);
+                          setCoins(c => c + 1);
+                          // Clear item from wrongWords state
+                          setWrongWords(prev => prev.filter(w => w.text !== word.text));
+                        }}
+                        className="px-2 py-1.5 bg-gradient-to-b from-yellow-400 to-amber-500 hover:from-yellow-350 hover:to-amber-400 text-slate-950 font-black rounded-lg text-[10px] shadow-md border border-yellow-700 active:scale-95 cursor-pointer transition-all whitespace-nowrap"
+                        title="击破清除"
+                      >
+                        🔨 击破 (+1🪙)
+                      </button>
+                    </div>
+                  </div>
+                ))}
+              </div>
+
+              <div className="mt-3.5 flex items-center text-[10px] text-slate-400 leading-normal border-t border-slate-800/80 pt-2.5">
+                <span>💡 <strong>温故知新：</strong>每击破一个错词卡可额外获得 <strong>+10 XP</strong> 与 <strong>+1 🪙</strong> 奖励大礼！</span>
+              </div>
+            </div>
+          ) : (
+            <div className="mt-2 mb-8 bg-emerald-950/20 border-2 border-emerald-500/20 rounded-3xl p-5 text-center shadow-md">
+              <div className="flex items-center justify-center gap-2 text-emerald-400 font-black text-sm mb-1">
+                <span>✨</span> <span>完美清除错词！荣获【黄金抗忘勋章】</span> <span>✨</span>
+              </div>
+              <p className="text-[11px] text-slate-400 leading-relaxed font-sans max-w-sm mx-auto">
+                恭喜你，你本关没有留下任何错词幽灵，所有的单词已被你无伤击顶！艾宾浩斯忘却曲线在你的完美挑战面前已彻底溃败！
+              </p>
+            </div>
+          )}
 
           <div className="flex flex-col sm:flex-row gap-3">
             <button

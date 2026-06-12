@@ -1,7 +1,8 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { 
   X, Volume2, Sparkles, Trash2, Heart, Timer, Check, Flame, Zap, 
-  BookOpen, Star, Shield, Award, Skull, Swords, RefreshCw, Sparkle, Info
+  BookOpen, Star, Shield, Award, Skull, Swords, RefreshCw, Sparkle, Info,
+  Trophy, Target, Square, CheckSquare
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { UserStats } from '../types';
@@ -20,6 +21,15 @@ import {
 import { getCharacterPortraitSvgUri } from '../utils/CharacterIllustrator';
 import { getShopItemSvgUri } from '../utils/ShopItemIllustrator';
 import { CHARACTERS, SHOP_ITEMS } from '../constants';
+
+export interface BountyChallenge {
+  id: string;
+  word: IncorrectVocabularyItem;
+  type: 'EN_TO_ZH' | 'ZH_TO_EN' | 'SPELLING';
+  prompt: string;
+  correctAnswer: string;
+  options: string[];
+}
 
 interface ErrorBookDashboardProps {
   stats: UserStats;
@@ -419,6 +429,250 @@ export const ErrorBookDashboard: React.FC<ErrorBookDashboardProps> = ({ stats, o
   const [lastSlashedText, setLastSlashedText] = useState<boolean>(false);
   // Track cleared words on this session to show persistent stamp directly on the wanted list
   const [clearedBountyTexts, setClearedBountyTexts] = useState<string[]>([]);
+
+  // =============================================================
+  // 🕹️ GAMEPLAY MODE B2: NEW GROUP BOUNTY HUNT (逃犯缉拿大作战)
+  // =============================================================
+  const [selectedBountyTexts, setSelectedBountyTexts] = useState<string[]>([]);
+  const [huntGameActive, setHuntGameActive] = useState<boolean>(false);
+  const [huntChallenges, setHuntChallenges] = useState<BountyChallenge[]>([]);
+  const [huntCurrentIndex, setHuntCurrentIndex] = useState<number>(0);
+  const [huntLives, setHuntLives] = useState<number>(3);
+  const [huntScore, setHuntScore] = useState<number>(0);
+  const [huntEarnedCoins, setHuntEarnedCoins] = useState<number>(0);
+  const [huntEarnedXP, setHuntEarnedXP] = useState<number>(0);
+  const [huntAnimation, setHuntAnimation] = useState<'NONE' | 'SLASH' | 'CAPTURE' | 'ERROR'>('NONE');
+  const [huntFeedback, setHuntFeedback] = useState<string | null>(null);
+
+  // Spelling state
+  const [huntSpellingInput, setHuntSpellingInput] = useState<string>('');
+  const [huntScrambledLetters, setHuntScrambledLetters] = useState<string[]>([]);
+  const [huntSelectedLetterIndices, setHuntSelectedLetterIndices] = useState<number[]>([]);
+
+  const initSpellingLetters = (text: string) => {
+    const letters = text.toLowerCase().replace(/[^a-z]/g, '').split('');
+    const alphabet = 'abcdefghijklmnopqrstuvwxyz';
+    const minLetters = Math.max(6, letters.length + 2);
+    while (letters.length < minLetters) {
+      const randChar = alphabet[Math.floor(Math.random() * 26)];
+      if (!letters.includes(randChar)) {
+        letters.push(randChar);
+      }
+    }
+    return letters.sort(() => Math.random() - 0.5);
+  };
+
+  const getBountyDistractors = (correct: string, type: 'en' | 'zh', list: IncorrectVocabularyItem[]) => {
+    const others = list
+      .filter(item => (type === 'en' ? item.text.toLowerCase() : item.translation) !== correct.toLowerCase())
+      .map(item => (type === 'en' ? item.text.toLowerCase() : item.translation));
+    
+    const fallbackZh = ['守护神光', '幽火护盾', '复原秘药', '圣洁之水', '星界晶核', '太古尘埃', '迷失虚空', '远古号角', '秘法符文', '金辉勋章'];
+    const fallbackEn = ['temple', 'legend', 'victory', 'courage', 'wisdom', 'glory', 'quest', 'dragon', 'knight', 'avatar'];
+
+    const fallback = type === 'en' ? fallbackEn : fallbackZh;
+    const combined = Array.from(new Set([...others, ...fallback])).filter(item => item !== correct);
+    
+    return combined.sort(() => Math.random() - 0.5).slice(0, 3);
+  };
+
+  const startHuntForWords = (words: IncorrectVocabularyItem[]) => {
+    if (words.length === 0) return;
+    
+    audio.playClick();
+    const preparedChallenges: BountyChallenge[] = [];
+    
+    words.forEach((word) => {
+      const lowerText = word.text.toLowerCase();
+      // 1. EN_TO_ZH
+      const zhDists = getBountyDistractors(word.translation, 'zh', errorList);
+      preparedChallenges.push({
+        id: `${word.text}-en2zh`,
+        word,
+        type: 'EN_TO_ZH',
+        prompt: lowerText,
+        correctAnswer: word.translation,
+        options: [word.translation, ...zhDists].sort(() => Math.random() - 0.5)
+      });
+      
+      // 2. ZH_TO_EN
+      const enDists = getBountyDistractors(lowerText, 'en', errorList);
+      preparedChallenges.push({
+        id: `${word.text}-zh2en`,
+        word,
+        type: 'ZH_TO_EN',
+        prompt: word.translation,
+        correctAnswer: lowerText,
+        options: [lowerText, ...enDists.map(o => o.toLowerCase())].sort(() => Math.random() - 0.5)
+      });
+      
+      // 3. SPELLING
+      preparedChallenges.push({
+        id: `${word.text}-spelling`,
+        word,
+        type: 'SPELLING',
+        prompt: word.translation,
+        correctAnswer: lowerText,
+        options: []
+      });
+    });
+    
+    const shuffledChallenges = preparedChallenges.sort(() => Math.random() - 0.5);
+    
+    setHuntChallenges(shuffledChallenges);
+    setHuntCurrentIndex(0);
+    setHuntLives(3);
+    setHuntScore(0);
+    setHuntEarnedCoins(0);
+    setHuntEarnedXP(0);
+    setHuntAnimation('NONE');
+    setHuntFeedback(null);
+    setHuntGameActive(true);
+    
+    if (shuffledChallenges[0]) {
+      speakWord(shuffledChallenges[0].word.text);
+      if (shuffledChallenges[0].type === 'SPELLING') {
+        const letters = initSpellingLetters(shuffledChallenges[0].word.text);
+        setHuntScrambledLetters(letters);
+        setHuntSelectedLetterIndices([]);
+        setHuntSpellingInput('');
+      }
+    }
+  };
+
+  const handleHuntAnswer = (answer: string) => {
+    if (huntAnimation !== 'NONE') return;
+    
+    const activeChallenge = huntChallenges[huntCurrentIndex];
+    const isCorrect = answer.trim().toLowerCase() === activeChallenge.correctAnswer.trim().toLowerCase();
+    
+    if (isCorrect) {
+      audio.playSuccess();
+      const isSpelling = activeChallenge.type === 'SPELLING';
+      const animType: 'SLASH' | 'CAPTURE' = isSpelling ? 'CAPTURE' : 'SLASH';
+      setHuntAnimation(animType);
+      
+      const stepXP = activeChallenge.type === 'SPELLING' ? 15 : 10;
+      const stepCoins = activeChallenge.type === 'SPELLING' ? 5 : 2;
+      setHuntEarnedXP(prev => prev + stepXP);
+      setHuntEarnedCoins(prev => prev + stepCoins);
+      setHuntScore(prev => prev + 100);
+      
+      setHuntFeedback(`🎯 完美命中！[${activeChallenge.word.text}] 被你精准削弱打击！XP +${stepXP} 🪙 +${stepCoins}`);
+      
+      confetti({
+        particleCount: 25,
+        spread: 35,
+        colors: ['#3b82f6', '#10b981', '#f59e0b']
+      });
+      
+      setTimeout(() => {
+        setHuntAnimation('NONE');
+        setHuntFeedback(null);
+        
+        const nextIndex = huntCurrentIndex + 1;
+        if (nextIndex >= huntChallenges.length) {
+          finishHuntSession(true);
+        } else {
+          setHuntCurrentIndex(nextIndex);
+          const nextChallenge = huntChallenges[nextIndex];
+          speakWord(nextChallenge.word.text);
+          if (nextChallenge.type === 'SPELLING') {
+            const letters = initSpellingLetters(nextChallenge.word.text);
+            setHuntScrambledLetters(letters);
+            setHuntSelectedLetterIndices([]);
+            setHuntSpellingInput('');
+          }
+        }
+      }, 1500);
+      
+    } else {
+      audio.playError();
+      setHuntAnimation('ERROR');
+      
+      const newLives = huntLives - 1;
+      setHuntLives(newLives);
+      
+      setHuntFeedback(`⚠️ 击空！心魔发起噬魂反震！${activeChallenge.type === 'SPELLING' ? `拼写应为: ${activeChallenge.correctAnswer.toLowerCase()}` : `真译是: ${activeChallenge.correctAnswer}`}`);
+      
+      if (newLives <= 0) {
+        setTimeout(() => {
+          finishHuntSession(false);
+        }, 1800);
+      } else {
+        setTimeout(() => {
+          setHuntAnimation('NONE');
+          setHuntFeedback(null);
+          
+          const nextIndex = huntCurrentIndex + 1;
+          if (nextIndex >= huntChallenges.length) {
+            finishHuntSession(true);
+          } else {
+            setHuntCurrentIndex(nextIndex);
+            const nextChallenge = huntChallenges[nextIndex];
+            speakWord(nextChallenge.word.text);
+            if (nextChallenge.type === 'SPELLING') {
+              const letters = initSpellingLetters(nextChallenge.word.text);
+              setHuntScrambledLetters(letters);
+              setHuntSelectedLetterIndices([]);
+              setHuntSpellingInput('');
+            }
+          }
+        }, 2100);
+      }
+    }
+  };
+
+  const finishHuntSession = (isVictory: boolean) => {
+    const selectedWordsList = huntChallenges.map(c => c.word.text);
+    const uniqueSelectedWords = Array.from(new Set(selectedWordsList));
+
+    if (isVictory) {
+      audio.playSuccess();
+      confetti({
+        particleCount: 150,
+        spread: 85,
+        origin: { y: 0.6 }
+      });
+      
+      // Promote all unique playing words to purified spirits
+      uniqueSelectedWords.forEach(wordText => {
+        const item = errorList.find(i => i.text === wordText);
+        if (item) promoteToSpirit(item);
+      });
+      
+      const bonusXP = 40;
+      const bonusCoins = 15;
+      const finalXP = huntEarnedXP + bonusXP;
+      const finalCoins = huntEarnedCoins + bonusCoins;
+      onReward(finalXP, finalCoins);
+      
+      setClearedBountyTexts(prev => [...prev, ...uniqueSelectedWords]);
+      
+      setTimeout(() => {
+        loadData();
+      }, 500);
+    } else {
+      if (huntEarnedXP > 0 || huntEarnedCoins > 0) {
+        onReward(huntEarnedXP, huntEarnedCoins);
+      }
+      setTimeout(() => {
+        loadData();
+      }, 500);
+    }
+    setHuntFeedback(isVictory ? 'VICTORY_SCREEN' : 'DEFEAT_SCREEN');
+  };
+
+  const toggleSelectCard = (wordText: string) => {
+    audio.playClick();
+    setSelectedBountyTexts(prev => {
+      if (prev.includes(wordText)) {
+        return prev.filter(t => t !== wordText);
+      } else {
+        return [...prev, wordText];
+      }
+    });
+  };
 
   const startBountyBattle = (item: IncorrectVocabularyItem) => {
     setActiveBountyWanted(item);
@@ -996,26 +1250,90 @@ export const ErrorBookDashboard: React.FC<ErrorBookDashboardProps> = ({ stats, o
                     className="p-6 bg-gradient-to-br from-[#20150d] via-[#2f1f13] to-[#150d08] border-8 border-[#3c2514] shadow-2xl rounded-3xl min-h-[450px]"
                     style={{ boxShadow: 'inset 0 0 35px rgba(0,0,0,0.95), 0 10px 25px rgba(0,0,0,0.6)' }}
                   >
-                    <div className="text-center mb-6 pb-2 border-b-2 border-dashed border-[#54341c]">
-                      <span className="font-serif text-[#a88265] tracking-widest font-black text-sm uppercase">⚔️ BOUNTY BOARD OF DESPAIR ⚔️</span>
+                    {/* Header Controls for Multi-Select and Group Hunt */}
+                    <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-6 pb-4 border-b-2 border-dashed border-[#54341c]">
+                      <div>
+                        <span className="font-serif text-[#a88265] tracking-widest font-black text-sm uppercase block">⚔️ BOUNTY BOARD OF DESPAIR ⚔️</span>
+                        <span className="text-[11px] text-[#866854] font-serif mt-1 block">
+                          点击卡牌可选中/取消。选中心魔心腹，发起缉拿大作战，将其全部捉拿净化！
+                        </span>
+                      </div>
+                      
+                      <div className="flex flex-wrap items-center gap-2 shrink-0">
+                        <button
+                          onClick={() => {
+                            audio.playClick();
+                            setSelectedBountyTexts(errorList.map(item => item.text));
+                          }}
+                          className="px-3 py-1.5 bg-[#4a2e16] hover:bg-[#623c1d] text-amber-250 border border-[#8a5732] text-[11px] font-black rounded-lg cursor-pointer transition-all active:scale-95"
+                        >
+                          📜 全选心魔
+                        </button>
+                        <button
+                          onClick={() => {
+                            audio.playPop();
+                            setSelectedBountyTexts([]);
+                          }}
+                          className="px-3 py-1.5 bg-[#1b1008] hover:bg-[#2c1c11] text-stone-400 border border-[#3e2819] text-[11px] font-black rounded-lg cursor-pointer transition-all active:scale-95"
+                        >
+                          ❌ 清空选择
+                        </button>
+                        
+                        <button
+                          onClick={() => startHuntForWords(errorList.filter(item => selectedBountyTexts.includes(item.text)))}
+                          disabled={selectedBountyTexts.length === 0}
+                          className="px-4 py-1.5 bg-gradient-to-r from-red-600 via-amber-500 to-yellow-500 hover:brightness-110 disabled:opacity-40 disabled:pointer-events-none text-slate-950 font-black text-xs rounded-xl shadow-lg border border-yellow-300 animate-pulse active:scale-95 transition-all cursor-pointer"
+                        >
+                          ⚔️ 开启缉拿消灭战 ({selectedBountyTexts.length} 词)
+                        </button>
+                      </div>
                     </div>
 
                     <div className="grid grid-cols-1 sm:grid-cols-3 md:grid-cols-4 gap-5">
                       {errorList.map((item, idx) => {
                         const mInfo = getMonsterClass(item.errorCount);
                         const isClearedInSession = clearedBountyTexts.includes(item.text);
+                        const isSelected = selectedBountyTexts.includes(item.text);
 
                         return (
                           <div
                             key={item.text}
-                            className="bg-[#ecdfcb] rounded-2xl border-2 border-dashed border-[#8c7457] p-4 text-center flex flex-col justify-between relative overflow-hidden shadow-xl min-h-[250px] transform hover:scale-102 transition-all"
+                            onClick={() => !isClearedInSession && toggleSelectCard(item.text)}
+                            className={`rounded-2xl border-2 p-4 text-center flex flex-col justify-between relative overflow-hidden shadow-xl min-h-[250px] transform hover:scale-102 transition-all cursor-[#54341c] ${
+                              isSelected 
+                                ? 'border-[#e4a853] shadow-[0_0_15px_rgba(245,158,11,0.45)] ring-2 ring-amber-500/20' 
+                                : 'border-dashed border-[#8c7457] hover:border-[#b09678]'
+                            } ${isClearedInSession ? 'opacity-65' : ''}`}
                             style={{ 
-                              backgroundImage: 'linear-gradient(150deg, #ecdfcb 0%, #d8cbb5 100%)',
-                              boxShadow: 'inset 0 0 15px rgba(0,0,0,0.05), 3px 6px 15px rgba(0,0,0,0.3)',
+                              backgroundImage: isSelected
+                                ? 'linear-gradient(150deg, #f5eacf 0%, #dfcbab 100%)'
+                                : 'linear-gradient(150deg, #ecdfcb 0%, #d8cbb5 100%)',
+                              boxShadow: isSelected
+                                ? 'inset 0 0 20px rgba(245,158,11,0.1), 4px 8px 18px rgba(0,0,0,0.3)'
+                                : 'inset 0 0 15px rgba(0,0,0,0.05), 3px 6px 15px rgba(0,0,0,0.3)',
                               transform: `rotate(${idx % 2 === 0 ? '-1.5deg' : '1.5deg'})`
                             }}
                           >
-                            <div className="border border-[#786146]/20 bg-[#614931]/10 py-0.5 text-[#593d25] font-serif text-[9px] font-black tracking-widest select-none leading-none">
+                            {/* Wax Seal / Medieval Selector */}
+                            {!isClearedInSession && (
+                              <div className="absolute top-2.5 right-2 text-right">
+                                <div
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    toggleSelectCard(item.text);
+                                  }}
+                                  className={`w-5.5 h-5.5 rounded-full flex items-center justify-center cursor-pointer border transition-all ${
+                                    isSelected
+                                      ? 'bg-amber-600 border-amber-300 text-white shadow-[0_0_8px_rgba(245,158,11,0.6)] scale-110'
+                                      : 'bg-[#614931]/20 border-[#786146]/45 text-transparent hover:border-amber-600 hover:bg-[#614931]/30'
+                                  }`}
+                                >
+                                  <Check size={11} className="stroke-[4]" />
+                                </div>
+                              </div>
+                            )}
+
+                            <div className="border border-[#786146]/20 bg-[#614931]/10 py-0.5 text-[#593d25] font-serif text-[9px] font-black tracking-widest select-none leading-none pr-8 text-left pl-2">
                               ⚔️ WANTED ⚔️
                             </div>
 
@@ -1039,7 +1357,10 @@ export const ErrorBookDashboard: React.FC<ErrorBookDashboardProps> = ({ stats, o
                             </div>
 
                             <button
-                              onClick={() => startBountyBattle(item)}
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                startHuntForWords([item]);
+                              }}
                               disabled={isClearedInSession}
                               className={`w-full mt-3 py-2 bg-gradient-to-r from-[#85532c] to-[#54341c] hover:from-[#9c6338] hover:to-[#6c4426] text-amber-100 rounded-xl font-black text-xs cursor-pointer shadow border-b-[3px] border-[#3a200d] ${
                                 isClearedInSession ? 'opacity-40 pointer-events-none' : ''
@@ -1054,7 +1375,7 @@ export const ErrorBookDashboard: React.FC<ErrorBookDashboardProps> = ({ stats, o
                                 className="absolute inset-x-0 top-[28%] mx-auto w-32 h-14 border-4 border-double border-red-650 rounded-xl flex items-center justify-center font-black text-red-650 bg-[#e08e8e]/20 select-none tracking-widest text-md uppercase active:scale-105"
                                 style={{ transform: 'rotate(-25deg)', textShadow: '1px 1px 0px rgba(0,0,0,0.1)' }}
                               >
-                                已斩杀!
+                                已捉拿!
                               </div>
                             )}
                           </div>
@@ -1518,6 +1839,459 @@ export const ErrorBookDashboard: React.FC<ErrorBookDashboardProps> = ({ stats, o
         )}
       </AnimatePresence>
 
+
+      {/* ============================================================= */}
+      {/* 4. OVERLAY MASS GAME BOARD - 逃犯缉拿大作战 (Group Bounty Hunt) */}
+      {/* ============================================================= */}
+      <AnimatePresence>
+        {huntGameActive && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 z-55 bg-black/95 backdrop-blur-md flex items-center justify-center p-4 overflow-y-auto"
+          >
+            <div 
+              className={`bg-[#20150d] rounded-[36px] w-full max-w-lg border-4 border-[#85532c] p-6 text-center shadow-2xl flex flex-col justify-between min-h-[550px] relative transition-transform ${
+                huntAnimation === 'ERROR' ? 'animate-shake' : ''
+              }`}
+              style={{
+                backgroundImage: 'radial-gradient(circle at center, #352214 0%, #110905 100%)',
+                boxShadow: '0 20px 50px rgba(0,0,0,0.8), inset 0 0 40px rgba(0,0,0,0.8)'
+              }}
+            >
+              {/* Close Button only if not in animations or end screen */}
+              {huntFeedback !== 'VICTORY_SCREEN' && huntFeedback !== 'DEFEAT_SCREEN' && (
+                <button 
+                  onClick={() => {
+                    audio.playPop();
+                    setHuntGameActive(false);
+                  }}
+                  className="absolute top-4 right-4 p-2 bg-[#1a120b] border border-[#3e2819] hover:border-red-500 text-slate-400 hover:text-white rounded-xl cursor-pointer transition-all outline-none"
+                  title="撤军离场"
+                >
+                  <X size={15} />
+                </button>
+              )}
+
+              {/* GAMEPLAY ACTIVE PLAY VIEW */}
+              {huntFeedback !== 'VICTORY_SCREEN' && huntFeedback !== 'DEFEAT_SCREEN' && huntChallenges.length > 0 && (
+                (() => {
+                  const activeChallenge = huntChallenges[huntCurrentIndex];
+                  if (!activeChallenge) return null;
+                  
+                  return (
+                    <div className="flex-1 flex flex-col justify-between h-full pt-2">
+                      {/* Game Header Stats Dashboard */}
+                      <div>
+                        <div className="flex items-center justify-between font-serif border-b border-[#473020] pb-3 text-xs">
+                          {/* Heart representation */}
+                          <div className="flex items-center space-x-1.5 bg-black/20 px-2 py-1 rounded-lg">
+                            {[...Array(3)].map((_, i) => (
+                              <Heart 
+                                key={i} 
+                                size={14} 
+                                className={`transition-all ${
+                                  i < huntLives 
+                                    ? 'text-red-500 fill-red-500 filter drop-shadow-[0_0_5px_#f43f5e]' 
+                                    : 'text-stone-700 stroke-[1.5]'
+                                }`} 
+                              />
+                            ))}
+                          </div>
+
+                          <div className="text-yellow-501 font-black tracking-widest uppercase text-[10.5px]">
+                            ⚔️ 逃犯缉拿消灭战 ⚔️
+                          </div>
+
+                          <div className="font-mono text-amber-200 text-[11px] font-black bg-amber-900/20 px-2 py-1 rounded-lg border border-amber-800/30">
+                            进度: {huntCurrentIndex + 1} / {huntChallenges.length}
+                          </div>
+                        </div>
+
+                        {/* Progress visual energy bar */}
+                        <div className="w-full bg-black/50 h-1.5 rounded-full overflow-hidden mt-3">
+                          <div 
+                            className="h-full bg-gradient-to-r from-yellow-600 via-amber-500 to-amber-300 transition-all duration-300"
+                            style={{ width: `${((huntCurrentIndex) / huntChallenges.length) * 100}%` }}
+                          />
+                        </div>
+                      </div>
+
+                      {/* Interactive Battle Arena Graphic */}
+                      <div className="my-6 space-y-4">
+                        {/* Combat Portrait Frame */}
+                        <div className="relative w-32 h-32 mx-auto bg-gradient-to-br from-stone-900 to-black border-4 border-[#503522] rounded-3xl flex items-center justify-center text-6xl shadow-2xl overflow-hidden group">
+                          {/* Monster Avatar */}
+                          <span className={`transform transition-transform ${huntAnimation === 'NONE' ? 'group-hover:scale-105' : ''}`}>
+                            {getMonsterClass(activeChallenge.word.errorCount).emoji}
+                          </span>
+
+                          {/* Dynamic Action Animations Overlay */}
+                          
+                          {/* 1. CAPTURE EFFECT (看词选义捉拿特效) */}
+                          <AnimatePresence>
+                            {huntAnimation === 'SLASH' && (
+                              <motion.div 
+                                initial={{ opacity: 0 }}
+                                animate={{ opacity: 1 }}
+                                exit={{ opacity: 0 }}
+                                className="absolute inset-0 bg-amber-500/10 z-25 flex flex-col items-center justify-center pointer-events-none"
+                              >
+                                {/* Glowing capturing golden chains/bars */}
+                                <motion.div 
+                                  initial={{ width: '0%', height: '4px', rotate: -45, top: '20%', left: '10%' }}
+                                  animate={{ width: '130%', height: '6px' }}
+                                  transition={{ duration: 0.25, ease: "easeOut" }}
+                                  className="absolute bg-gradient-to-r from-amber-500 via-yellow-250 to-amber-300 shadow-[0_0_15px_#f59e0b] rounded"
+                                />
+                                <motion.div 
+                                  initial={{ width: '0%', height: '4px', rotate: 45, top: '20%', right: '10%' }}
+                                  animate={{ width: '130%', height: '6px' }}
+                                  transition={{ delay: 0.1, duration: 0.25, ease: "easeOut" }}
+                                  className="absolute bg-gradient-to-r from-amber-500 via-white to-yellow-250 shadow-[0_0_15px_#fbbf24] rounded"
+                                />
+                                <motion.span 
+                                  initial={{ scale: 0 }}
+                                  animate={{ scale: [0, 1.4, 1] }}
+                                  className="text-3xl font-extrabold text-amber-400 animate-bounce tracking-widest z-30"
+                                  style={{ textShadow: '2px 2px 0px #000' }}
+                                >
+                                  🔒 捉拿归案!
+                                </motion.span>
+                              </motion.div>
+                            )}
+                          </AnimatePresence>
+
+                          {/* 2. CAPTURE EFFECT (拼写缚神网捉拿特效) */}
+                          <AnimatePresence>
+                            {huntAnimation === 'CAPTURE' && (
+                              <motion.div 
+                                initial={{ opacity: 0 }}
+                                animate={{ opacity: 1 }}
+                                exit={{ opacity: 0 }}
+                                className="absolute inset-0 bg-emerald-950/20 z-25 flex flex-col items-center justify-center pointer-events-none"
+                              >
+                                {/* Grid network net line draws */}
+                                <motion.div 
+                                  initial={{ scale: 0 }}
+                                  animate={{ scale: 1.1 }}
+                                  transition={{ type: 'spring', damping: 10 }}
+                                  className="absolute inset-2 border-2 border-dashed border-emerald-400 rounded-2xl animate-spin-slow shadow-[inset_0_0_15px_#10b981]"
+                                />
+                                <motion.div 
+                                  initial={{ scale: 0, rotate: -15 }}
+                                  animate={{ scale: 1, rotate: -15 }}
+                                  className="z-30 px-2.5 py-1.5 border-4 border-double border-emerald-400 text-emerald-300 font-serif font-black bg-stone-900 rounded-xl text-center flex flex-col items-center leading-none"
+                                >
+                                  <span className="text-[9px] uppercase tracking-widest text-[#5eead4]">CAPTURED</span>
+                                  <span className="text-sm mt-0.5">🔒 捕获归案!</span>
+                                </motion.div>
+                              </motion.div>
+                            )}
+                          </AnimatePresence>
+
+                          {/* 3. SHAKE & BLOOD VIGNETTE (失败反之震荡) */}
+                          {huntAnimation === 'ERROR' && (
+                            <div className="absolute inset-0 bg-rose-950/40 border-2 border-red-500 p-2 flex items-center justify-center z-25 pointer-events-none animate-pulse">
+                              <span className="text-4xl">🔱</span>
+                            </div>
+                          )}
+                        </div>
+
+                        {/* Title Clue Area */}
+                        <div className="space-y-1 mt-3">
+                          <div className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-black/40 border border-[#503522] rounded-2xl">
+                            {activeChallenge.type === 'EN_TO_ZH' && (
+                              <>
+                                <span className="text-[10px] bg-amber-500/10 text-amber-300 border border-amber-500/20 px-2 py-0.5 rounded-lg font-bold">
+                                  看英文选中文
+                                </span>
+                                <h4 className="text-lg font-serif font-black text-amber-100 tracking-wide select-text">
+                                  {activeChallenge.prompt}
+                                </h4>
+                              </>
+                            )}
+
+                            {activeChallenge.type === 'ZH_TO_EN' && (
+                              <>
+                                <span className="text-[10px] bg-purple-500/10 text-purple-300 border border-purple-500/20 px-2 py-0.5 rounded-lg font-bold">
+                                  看中文选英文
+                                </span>
+                                <h4 className="text-xs font-serif font-medium text-amber-100 select-text">
+                                  {activeChallenge.prompt}
+                                </h4>
+                              </>
+                            )}
+
+                            {activeChallenge.type === 'SPELLING' && (
+                              <>
+                                <span className="text-[10px] bg-indigo-500/10 text-indigo-300 border border-indigo-500/20 px-2 py-0.5 rounded-lg font-bold">
+                                  拼写大作战
+                                </span>
+                                <h4 className="text-xs font-serif font-medium text-[#c084fc] select-text">
+                                  [ {activeChallenge.prompt} ]
+                                </h4>
+                              </>
+                            )}
+
+                            <button 
+                              onClick={() => speakWord(activeChallenge.word.text)}
+                              className="p-1 hover:bg-black/50 rounded text-amber-300 transition-all outline-none"
+                              title="发音朗读"
+                            >
+                              <Volume2 size={13} />
+                            </button>
+                          </div>
+                        </div>
+                      </div>
+
+                      {/* Score accumulation logs preview */}
+                      <div className="h-10 flex items-center justify-center my-1 font-serif text-xs px-2 text-stone-300">
+                        {huntFeedback ? (
+                          <div className="text-[#a78bfa] font-black tracking-wide animate-pulse">
+                            {huntFeedback}
+                          </div>
+                        ) : (
+                          <p className="text-[10px] text-stone-500 font-serif">
+                            提示：{activeChallenge.type === 'SPELLING' ? '根据中译，在下方拼出英文单词。' : '看上方词汇，点选下方对应的正确卡牌破防。'}
+                          </p>
+                        )}
+                      </div>
+
+                      {/* ANSWERS PORT - MULTI CHOICE VS SPELLING */}
+                      <div className="mt-2 min-h-[140px]">
+                        {/* 1. Multi choices */}
+                        {activeChallenge.type !== 'SPELLING' && (
+                          <div className="grid grid-cols-2 gap-3 pb-2">
+                            {activeChallenge.options.map((option) => (
+                              <button
+                                key={option}
+                                onClick={() => handleHuntAnswer(option)}
+                                disabled={huntAnimation !== 'NONE'}
+                                className={`py-3.5 px-3 bg-black/60 hover:bg-[#1a0f07] border border-[#523219] hover:border-amber-500 rounded-2xl text-xs font-extrabold text-amber-100 cursor-pointer disabled:opacity-45 transition-all outline-none text-center ${
+                                  huntAnimation !== 'NONE' ? 'pointer-events-none' : ''
+                                }`}
+                              >
+                                {option}
+                              </button>
+                            ))}
+                          </div>
+                        )}
+
+                        {/* 2. Interactive Spelling board */}
+                        {activeChallenge.type === 'SPELLING' && (
+                          <div className="space-y-4">
+                            {/* Blanks/Tiles represent current spelt string */}
+                            <div className="flex flex-wrap gap-1.5 justify-center my-3">
+                              {activeChallenge.correctAnswer.split('').map((char, index) => {
+                                const charInput = huntSpellingInput[index] || '';
+                                return (
+                                  <div
+                                    key={index}
+                                    className={`w-9 h-9 rounded-lg border-2 flex items-center justify-center font-black text-sm lowercase ${
+                                      charInput 
+                                        ? 'bg-[#1b1008] text-amber-300 border-amber-500 shadow-[0_0_8px_rgba(245,158,11,0.3)]' 
+                                        : 'bg-black/30 text-stone-500 border-stone-800 animate-pulse'
+                                    }`}
+                                  >
+                                    {charInput}
+                                  </div>
+                                );
+                              })}
+                            </div>
+
+                            {/* Letter select grid (Interactive touch keyboard scrambler) */}
+                            <div className="bg-black/30 p-3 rounded-2xl border border-[#4e321e]/60 space-y-3">
+                              {/* Selection row */}
+                              <div className="flex flex-wrap gap-1.5 justify-center">
+                                {huntScrambledLetters.map((letter, idx) => {
+                                  const isSelected = huntSelectedLetterIndices.includes(idx);
+                                  return (
+                                    <button
+                                      key={idx}
+                                      disabled={isSelected || huntAnimation !== 'NONE'}
+                                      onClick={() => {
+                                        audio.playPop();
+                                        setHuntSpellingInput(prev => prev + letter);
+                                        setHuntSelectedLetterIndices(prev => [...prev, idx]);
+                                      }}
+                                      className={`w-8 h-8 rounded-lg font-black text-xs flex items-center justify-center border cursor-pointer transition-all ${
+                                        isSelected
+                                          ? 'bg-stone-900 border-stone-950 text-stone-700 pointer-events-none opacity-20'
+                                          : 'bg-[#402917] hover:bg-[#5a3a21] border-[#7d502d] text-amber-100 hover:scale-105 active:scale-95'
+                                      }`}
+                                    >
+                                      {letter}
+                                    </button>
+                                  );
+                                })}
+                              </div>
+
+                              {/* Helper actions */}
+                              <div className="flex items-center justify-between gap-2.5 pt-1">
+                                <button
+                                  onClick={() => {
+                                    audio.playClick();
+                                    setHuntSpellingInput('');
+                                    setHuntSelectedLetterIndices([]);
+                                  }}
+                                  className="flex-1 py-1.5 bg-stone-900 hover:bg-stone-850 text-stone-400 border border-stone-800 rounded-lg text-[10px] font-bold cursor-pointer transition-all active:scale-95 outline-none"
+                                >
+                                  🧹 重置
+                                </button>
+                                <button
+                                  onClick={() => {
+                                    if (huntSpellingInput.length === 0) return;
+                                    audio.playClick();
+                                    // Undo last selected char
+                                    const lastIdx = huntSelectedLetterIndices[huntSelectedLetterIndices.length - 1];
+                                    setHuntSelectedLetterIndices(prev => prev.slice(0, -1));
+                                    setHuntSpellingInput(prev => prev.slice(0, -1));
+                                  }}
+                                  disabled={huntSpellingInput.length === 0}
+                                  className="flex-1 py-1.5 bg-[#5d3118] hover:bg-[#723d1f] text-amber-250 border border-[#834927] rounded-lg text-[10px] font-bold cursor-pointer transition-all disabled:opacity-45 active:scale-95 outline-none"
+                                >
+                                  ⬅️ 退格
+                                </button>
+                                <button
+                                  onClick={() => handleHuntAnswer(huntSpellingInput)}
+                                  disabled={huntSpellingInput.length === 0 || huntAnimation !== 'NONE'}
+                                  className="flex-1 py-1.5 bg-gradient-to-r from-amber-550 to-orange-550 hover:brightness-110 text-stone-950 rounded-lg text-[10px] font-extrabold cursor-pointer transition-all shadow border border-amber-300 disabled:opacity-45 active:scale-95 outline-none"
+                                >
+                                  🔨 捉拿归案
+                                </button>
+                              </div>
+                            </div>
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  );
+                })()
+              )}
+
+              {/* VICTORY OVERLAY SCREEN (大获全胜) */}
+              {huntFeedback === 'VICTORY_SCREEN' && (
+                <div className="flex-1 flex flex-col justify-center items-center py-6 space-y-6">
+                  {/* Rotating radiant shield aura */}
+                  <div className="relative w-24 h-24 bg-gradient-to-tr from-amber-500 to-yellow-400 rounded-full flex items-center justify-center border-4 border-yellow-250 shadow-[0_0_25px_rgba(245,158,11,0.5)] animate-bounce">
+                    <Trophy size={48} className="text-slate-950 filter drop-shadow-[1px_2px_0px_#fff]" />
+                    <Sparkles className="absolute -top-2 -right-2 text-yellow-300 animate-pulse" size={24} />
+                  </div>
+
+                  <div className="space-y-2">
+                    <h2 className="font-serif text-2xl font-black text-yellow-501 tracking-widest uppercase">
+                      大获全胜 · 精心清剿
+                    </h2>
+                    <p className="text-xs text-[#a08470] max-w-sm mx-auto font-serif leading-relaxed">
+                      赏金猎人智算无双！成功将所选通缉心魔全数捉拿归案。功勋已经入档！
+                    </p>
+                  </div>
+
+                  {/* Loot reward cards details */}
+                  <div className="bg-black/35 rounded-2xl border-2 border-dashed border-[#573b24] p-4 w-full max-w-xs space-y-3 select-none">
+                    <p className="text-[10px] text-stone-500 font-extrabold uppercase tracking-widest">领赏名录与奖赏</p>
+                    
+                    <div className="flex items-center justify-around font-bold py-1 border-b border-[#402a1a]/40">
+                      <div className="flex items-center gap-1">
+                        <span className="text-base text-yellow-405">🪙</span>
+                        <span className="text-sm font-extrabold text-amber-200">+{huntEarnedCoins + 15} 金鹰金币</span>
+                      </div>
+                      <div className="flex items-center gap-1">
+                        <span className="text-base">✨</span>
+                        <span className="text-sm font-extrabold text-blue-300">+{huntEarnedXP + 40} 心力XP</span>
+                      </div>
+                    </div>
+                    
+                    <div className="text-[10px] text-stone-400 max-h-[100px] overflow-y-auto scrollbar-none space-y-1 text-left px-1">
+                      <p className="font-semibold text-center text-[#90735e] mb-1.5 border-b border-stone-850 pb-0.5">净化心魔清单</p>
+                      {Array.from(new Set(huntChallenges.map(c => c.word.text))).map((originalText) => {
+                        const wordObj = errorList.find(e => e.text === originalText);
+                        const strText = originalText as string;
+                        return (
+                          <div key={strText} className="flex justify-between items-center text-[11px] leading-tight text-amber-200/80">
+                            <span>💀 {strText.toLowerCase()}</span>
+                            <span className="text-[9.5px] text-[#866854] truncate max-w-[140px]" title={wordObj?.translation}>
+                              {wordObj?.translation}
+                            </span>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  </div>
+
+                  {/* Finish action buttons */}
+                  <button
+                    onClick={() => {
+                      audio.playReward();
+                      setHuntGameActive(false);
+                      setSelectedBountyTexts([]);
+                    }}
+                    className="w-full max-w-xs py-3.5 bg-gradient-to-r from-yellow-500 via-amber-500 to-orange-500 hover:brightness-110 border border-yellow-300 rounded-2xl font-black text-sm text-slate-950 cursor-pointer shadow-lg tracking-wider active:scale-95 transition-all outline-none"
+                  >
+                    🏛️ 凯旋复命
+                  </button>
+                </div>
+              )}
+
+              {/* DEFEAT OVERLAY SCREEN (负伤离场) */}
+              {huntFeedback === 'DEFEAT_SCREEN' && (
+                <div className="flex-1 flex flex-col justify-center items-center py-6 space-y-6">
+                  {/* Cracked gravestone monument */}
+                  <div className="relative w-24 h-24 bg-stone-900 border-4 border-stone-600 rounded-3xl flex items-center justify-center shadow-xl animate-shake">
+                    <Skull size={44} className="text-stone-500" />
+                    <span className="absolute text-xs font-black text-red-500 bg-black/9 hover:scale-105 rounded-md px-1.5 top-1 right-1">HP 0</span>
+                  </div>
+
+                  <div className="space-y-2">
+                    <h2 className="font-serif text-2xl font-black text-rose-500 tracking-widest uppercase">
+                      英勇负伤 · 捕获未竟
+                    </h2>
+                    <p className="text-xs text-stone-400 max-w-sm mx-auto font-serif leading-relaxed">
+                      本次缉拿心魔过于凶猛，神魂震频过高。少侠护体气血耗尽！别气馁，重整攻势再来！
+                    </p>
+                  </div>
+
+                  {/* Mini compensation details */}
+                  <div className="bg-black/35 rounded-2xl border border-stone-800 p-4 w-full max-w-xs space-y-2 text-center text-xs text-stone-400">
+                    <p className="text-[10px] text-stone-500 font-extrabold uppercase">英勇抚恤金</p>
+                    <div className="flex items-center justify-center gap-3 font-semibold text-stone-200">
+                      <span>🪙 +{huntEarnedCoins} 金币</span>
+                      <span>✨ +{huntEarnedXP} XP</span>
+                    </div>
+                  </div>
+
+                  {/* Actions buttons row */}
+                  <div className="flex gap-3 w-full max-w-xs">
+                    <button
+                      onClick={() => {
+                        audio.playClick();
+                        startHuntForWords(errorList.filter(item => selectedBountyTexts.includes(item.text)));
+                      }}
+                      className="flex-1 py-3 bg-[#523219] hover:bg-[#6c4222] border border-[#7d502d] text-amber-200 rounded-xl font-black text-xs cursor-pointer transition-all active:scale-95 outline-none"
+                    >
+                      🛡️ 重整旗鼓
+                    </button>
+                    <button
+                      onClick={() => {
+                        audio.playPop();
+                        setHuntGameActive(false);
+                      }}
+                      className="flex-1 py-3 bg-stone-900 hover:bg-stone-800 border border-stone-800 text-stone-400 rounded-xl font-black text-xs cursor-pointer transition-all active:scale-95 outline-none"
+                    >
+                      🚪 暂退休息
+                    </button>
+                  </div>
+                </div>
+              )}
+
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
     </div>
   );
 };
+
