@@ -990,7 +990,8 @@ export const audio = {
     try { drumController.stop(); } catch (e) {}
 
     const now = Date.now();
-    if (text && text === lastSpeakText && now - lastSpeakTime < 800) {
+    const isSingleLetterOrShort = text && text.trim().length <= 2;
+    if (text && !isSingleLetterOrShort && text === lastSpeakText && now - lastSpeakTime < 800) {
       console.log("[AudioUtils] Deduplicated rapid repeat speak request for:", text);
       return;
     }

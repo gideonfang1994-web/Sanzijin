@@ -255,7 +255,7 @@ const HomePage: React.FC<HomePageProps> = ({ stats, groups, reviewNeeded, onNavi
         </div>
         <div className="absolute top-[-1%] left-1/2 -translate-x-1/2 w-[220px] h-[220px] rounded-full border border-emerald-400/25 pointer-events-none select-none animate-[spin_30s_linear_infinite_reverse] flex items-center justify-center opacity-60">
           <div className="text-[7.5px] text-emerald-700/50 tracking-widest font-mono uppercase font-black">
-            ✦ PHONICS WORLD ✦ LEARN & PLAY ✦ LEVEL UP ✦
+            ✦ PHONICS WORLD ✦ LEARN & PLAY ✦ EXPLORE ✦
           </div>
         </div>
 
@@ -327,11 +327,8 @@ const HomePage: React.FC<HomePageProps> = ({ stats, groups, reviewNeeded, onNavi
 
             <div className="text-left min-w-0">
               <div className="flex items-center gap-1 whitespace-nowrap">
-                <span className="text-[13.5px] sm:text-[14.5px] font-black text-emerald-950 tracking-wide leading-none whitespace-nowrap select-none">
+                <span className="text-[13.5px] sm:text-[14.5px] font-black text-emerald-955 tracking-wide leading-none whitespace-nowrap select-none">
                   {selectedChar.name}
-                </span>
-                <span className="text-[8.5px] font-extrabold text-white bg-emerald-600 px-1 py-0.2 rounded-md shrink-0 select-none">
-                  LV.{stats.level}
                 </span>
               </div>
               <div className="text-[9.5px] font-extrabold text-emerald-700 mt-0.5 truncate whitespace-nowrap select-none leading-none">
@@ -765,7 +762,7 @@ const HomePage: React.FC<HomePageProps> = ({ stats, groups, reviewNeeded, onNavi
                         <div className="flex items-center gap-2 flex-wrap">
                           <h5 className="font-sans font-black text-emerald-955 text-lg sm:text-xl truncate">{selectedChar.name}</h5>
                           <span className="text-[11px] bg-emerald-100 text-emerald-900 font-extrabold px-2.5 py-0.5 rounded-full border border-emerald-300">
-                            英雄 LV.{charStats.level}
+                            守护英雄
                           </span>
                         </div>
                         <p className="text-xs font-bold text-amber-700 mt-1 italic block leading-none truncate">★ {selectedChar.title}</p>
@@ -974,7 +971,7 @@ const HomePage: React.FC<HomePageProps> = ({ stats, groups, reviewNeeded, onNavi
                                   <div className="flex items-center gap-2">
                                     <h5 className="font-sans font-black text-emerald-950 text-base sm:text-lg truncate">{pet.name}</h5>
                                     <span className="text-xs bg-[#10b981]/15 text-emerald-800 font-extrabold px-2 py-0.5 rounded-full uppercase border border-emerald-200">
-                                      LV.{pet.level}
+                                      萌宠伙伴
                                     </span>
                                   </div>
                                   <div className="flex items-center space-x-3 text-xs font-black text-[#14532d] mt-2">

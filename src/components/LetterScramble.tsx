@@ -31,7 +31,7 @@ const LetterScramble: React.FC<Props> = ({ groups, isReviewMode, onFinish, onMis
     { 
       threshold: 2, 
       slogans: ['林间疾风!', '灵感火花!', '初露锋芒!', '草木共鸣!', '星火燎原!'],
-      subtext: 'LEVEL UP',
+      subtext: 'NEXT STAGE',
       color: 'text-amber-600',
       bgColor: 'bg-amber-50',
       borderColor: 'border-amber-200'

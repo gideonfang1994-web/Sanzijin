@@ -218,6 +218,18 @@ const LetterLinkGame: React.FC<LetterLinkGameProps> = ({ stats, onFinish, onClos
 
   // Interaction resolver for clicking/dragging on a cell (r, c)
   const handleCellInteract = (r: number, c: number) => {
+    // Speak pronunciation whenever we enter a new letter cell
+    const char = grid[r]?.[c];
+    if (char) {
+      const isSameCell = lastPronouncedCellRef.current?.r === r && lastPronouncedCellRef.current?.c === c;
+      if (!isSameCell) {
+        lastPronouncedCellRef.current = { r, c };
+        try {
+          audio.speak(char);
+        } catch (e) {}
+      }
+    }
+
     // If already solved, ignore
     const isAlreadySolved = solvedPath.some(([sr, sc]) => sr === r && sc === c);
     if (isAlreadySolved) return;
@@ -395,40 +407,44 @@ const LetterLinkGame: React.FC<LetterLinkGameProps> = ({ stats, onFinish, onClos
   return (
     <div 
       id="letter-maze-game-root" 
-      className="w-full max-w-5xl mx-auto bg-gradient-to-b from-[#eef2f3] to-[#e4e8eb] min-h-screen flex flex-col md:flex-row gap-6 p-4 font-sans text-slate-800"
+      className="w-full max-w-4xl mx-auto bg-gradient-to-b from-[#eef2f3] to-[#e4e8eb] min-h-screen flex flex-col gap-4 p-4 font-sans text-slate-800"
     >
-      {/* LEFT COLUMN: Letter Selector Rail (List of 26 letters with score metrics) */}
-      <div className="w-full md:w-56 shrink-0 bg-white rounded-3xl p-4 shadow-md border-2 border-slate-200/60 flex flex-col h-[220px] md:h-[84vh] shrink-0">
-        <div className="flex items-center justify-between mb-3 shrink-0">
-          <button 
-            id="btn-close-maze"
-            onClick={onClose}
-            className="p-2 hover:bg-slate-100 rounded-xl transition-all text-slate-600 active:scale-95 border border-slate-200 flex items-center gap-1.5"
-            title="返回游戏大厅"
-          >
-            <ChevronLeft size={16} />
-            <span className="text-xs font-black">返回</span>
-          </button>
+      {/* TOP ROW: Back button & Help button + Horizontal Letter Selection Slider */}
+      <div className="w-full bg-white rounded-3xl p-4 shadow-md border-2 border-slate-200/60 flex flex-col gap-3 shrink-0">
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-2">
+            <button 
+              id="btn-close-maze"
+              onClick={onClose}
+              className="px-4 py-2 hover:bg-slate-100 rounded-xl transition-all text-slate-600 active:scale-95 border border-slate-200 flex items-center gap-1.5"
+              title="返回游戏大厅"
+            >
+              <ChevronLeft size={16} />
+              <span className="text-sm font-black">返回大厅</span>
+            </button>
+          </div>
           
-          <button 
-            id="btn-how"
-            onClick={() => {
-              audio.playClick();
-              setShowHowToPlay(true);
-            }}
-            className="p-2 bg-indigo-50 text-indigo-700 hover:bg-indigo-100 rounded-xl transition-all text-xs font-black flex items-center gap-1"
-          >
-            <HelpCircle size={14} />
-            帮助
-          </button>
+          <h3 className="text-sm font-black text-slate-500 uppercase tracking-widest hidden sm:inline-flex items-center gap-1.5">
+            📚 字母探索关卡 (A-Z)
+          </h3>
+
+          <div className="flex items-center gap-1.5">
+            <button 
+              id="btn-how"
+              onClick={() => {
+                audio.playClick();
+                setShowHowToPlay(true);
+              }}
+              className="px-3.5 py-2 bg-indigo-50 text-indigo-700 hover:bg-indigo-100 rounded-xl transition-all text-xs font-black flex items-center gap-1"
+            >
+              <HelpCircle size={14} />
+              帮助指南
+            </button>
+          </div>
         </div>
 
-        <h3 className="text-xs font-black text-slate-400 uppercase tracking-widest mb-3 px-1.5 shrink-0 hidden md:block">
-          📚 所有字母关卡 (A-Z)
-        </h3>
-
         {/* Scrollable Letter Catalog Cards */}
-        <div className="flex-1 overflow-x-auto md:overflow-y-auto flex md:flex-col gap-2 pb-2 pr-1 scrollbar-thin select-none">
+        <div className="flex gap-2.5 pb-1.5 pr-1 overflow-x-auto scrollbar-thin select-none py-1">
           {Object.keys(ALPHABET_DATA).map(letter => {
             const isCompleted = activeLetter !== letter && activeLetter.charCodeAt(0) > letter.charCodeAt(0);
             const isCurrent = activeLetter === letter;
@@ -441,18 +457,15 @@ const LetterLinkGame: React.FC<LetterLinkGameProps> = ({ stats, onFinish, onClos
                   audio.playClick();
                   setActiveLetter(letter);
                 }}
-                className={`flex items-center gap-3 px-4 py-3 rounded-2xl text-left border-b-4 transition-all shrink-0 md:w-full ${
+                className={`flex items-center gap-2.5 px-4.5 py-2.5 rounded-2xl text-left border-b-4 transition-all shrink-0 ${
                   isCurrent
                     ? 'bg-emerald-500 text-white border-b-emerald-700 shadow-md scale-102 ring-2 ring-emerald-200'
                     : isCompleted
                       ? 'bg-emerald-50 text-emerald-800 border-slate-200 hover:bg-emerald-100 border-b-emerald-200'
-                      : 'bg-slate-50 text-slate-700 border-slate-200 hover:bg-slate-100 border-b-slate-300'
+                      : 'bg-slate-50 text-slate-700 border-slate-200 hover:bg-slate-100 border-b-slate-350'
                 }`}
               >
-                <span className="text-xl font-black font-mono">{letter}{letter.toLowerCase()}</span>
-                <span className="text-sm shrink-0 font-bold hidden md:inline ml-auto opacity-90">
-                  {isCompleted ? '⭐ 3' : isCurrent ? '进行中' : '待解锁'}
-                </span>
+                <span className="text-lg font-black font-mono">{letter}{letter.toLowerCase()}</span>
                 <span className="text-base select-none">{ALPHABET_DATA[letter].emoji}</span>
               </button>
             );
@@ -460,7 +473,7 @@ const LetterLinkGame: React.FC<LetterLinkGameProps> = ({ stats, onFinish, onClos
         </div>
       </div>
 
-      {/* RIGHT COLUMN / CENTER: Active Letter Pathfinder Worksheet Grid */}
+      {/* REMAINDER / CENTER: Active Letter Pathfinder Worksheet Grid */}
       <div className="flex-1 flex flex-col space-y-2.5">
         {/* Dynamic Head Stat Indicators */}
         <div className="flex flex-wrap items-center justify-between gap-3 bg-white py-2.5 px-4 rounded-3xl shadow-sm border border-slate-100">
@@ -520,9 +533,6 @@ const LetterLinkGame: React.FC<LetterLinkGameProps> = ({ stats, onFinish, onClos
               <div className="text-5xl sm:text-6xl font-black font-serif tracking-tight text-slate-800 relative select-none">
                 {activeDetail.upper}
                 <span className="text-4xl text-slate-600 font-normal">{activeDetail.lower}</span>
-                <span className="absolute -top-3 -right-3 text-sm font-sans px-1.5 py-0.5 bg-emerald-500 text-white font-black rounded-lg uppercase tracking-widest shadow-xs">
-                  LEVEL
-                </span>
               </div>
               <div className="h-10 w-[2px] bg-slate-300 rounded-full" />
               <div className="text-left">
